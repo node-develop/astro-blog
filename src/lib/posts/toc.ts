@@ -7,12 +7,47 @@ export interface TocNode {
   readonly children: readonly TocNode[];
 }
 
-/**
- * Builds a two-level (h2 → h3) nested tree from Astro's flat heading list.
- * Ignores h1 (the post title is rendered separately) and h4+ (noise in a TOC).
- * Orphan h3s (appearing before any h2) attach to a synthetic "Introduction"
- * h2 so scroll-spy still has a target.
- */
-export function buildTocTree(_headings: readonly MarkdownHeading[]): readonly TocNode[] {
-  throw new Error("not implemented");
+interface MutableTocNode {
+  depth: 2 | 3;
+  text: string;
+  slug: string;
+  children: MutableTocNode[];
+}
+
+const SYNTHETIC_INTRO: Readonly<Pick<MutableTocNode, "depth" | "text" | "slug">> = {
+  depth: 2,
+  text: "Introduction",
+  slug: "__intro",
+};
+
+export function buildTocTree(headings: readonly MarkdownHeading[]): readonly TocNode[] {
+  const result: MutableTocNode[] = [];
+  let currentParent: MutableTocNode | null = null;
+
+  for (const heading of headings) {
+    if (heading.depth === 2) {
+      const node: MutableTocNode = {
+        depth: 2,
+        text: heading.text,
+        slug: heading.slug,
+        children: [],
+      };
+      result.push(node);
+      currentParent = node;
+    } else if (heading.depth === 3) {
+      if (currentParent === null) {
+        currentParent = { ...SYNTHETIC_INTRO, children: [] };
+        result.push(currentParent);
+      }
+      currentParent.children.push({
+        depth: 3,
+        text: heading.text,
+        slug: heading.slug,
+        children: [],
+      });
+    }
+    // depth 1 and 4+ are intentionally dropped
+  }
+
+  return result;
 }
