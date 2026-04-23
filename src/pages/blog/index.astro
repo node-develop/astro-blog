@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 
 type Post = CollectionEntry<"posts">;
@@ -13,7 +14,8 @@ const allTags: readonly string[] = Array.from(
 ).sort();
 ---
 
-<BaseLayout title="Статьи" description="Все публикации блога">
+<BaseLayout title="Статьи" description="Все публикации блога" fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
   <h1 class="mb-6 text-3xl font-bold">Статьи</h1>
 
   {

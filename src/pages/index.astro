@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 
 type Post = CollectionEntry<"posts">;
@@ -9,7 +10,8 @@ const posts: Post[] = (await getCollection("posts", (entry: Post) => !entry.data
   .slice(0, 5);
 ---
 
-<BaseLayout title="Personal Blog" description="Главная страница">
+<BaseLayout title="Personal Blog" description="Главная страница" fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
   <section class="mb-12">
     <h1 class="text-3xl font-bold">Привет!</h1>
     <p class="mt-2 text-slate-600 dark:text-slate-400">
