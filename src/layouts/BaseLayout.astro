@@ -2,6 +2,7 @@
 import "~/styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import Header from "~/components/Header.astro";
+import MobileDrawer from "~/components/MobileDrawer.astro";
 import SkipLink from "~/components/SkipLink.astro";
 
 interface Props {
@@ -37,6 +38,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString(
   <body>
     <SkipLink />
     <Header />
+    <MobileDrawer>
+      <slot name="sidebar" />
+    </MobileDrawer>
     <div class="layout" data-full-width={fullWidth}>
       <aside class="layout__sidebar" aria-label="Статьи блога">
         <slot name="sidebar" />
