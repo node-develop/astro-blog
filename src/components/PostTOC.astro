@@ -1,0 +1,139 @@
+---
+import type { MarkdownHeading } from "astro";
+import { buildTocTree, type TocNode } from "~/lib/posts/toc";
+
+interface Props {
+  headings: readonly MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const tree = buildTocTree(headings);
+---
+
+{
+  tree.length > 0 && (
+    <nav class="toc" aria-label="Оглавление статьи">
+      <p class="toc__label">На этой странице</p>
+      <ol class="toc__list">
+        {tree.map((node: TocNode) => (
+          <li>
+            <a href={`#${node.slug}`} class="toc__link" data-toc-slug={node.slug}>
+              {node.text}
+            </a>
+            {node.children.length > 0 && (
+              <ol class="toc__sublist">
+                {node.children.map((child) => (
+                  <li>
+                    <a
+                      href={`#${child.slug}`}
+                      class="toc__link toc__link--sub"
+                      data-toc-slug={child.slug}
+                    >
+                      {child.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+<style>
+  .toc {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+  }
+  .toc__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0 0 var(--space-3) 0;
+  }
+  .toc__list,
+  .toc__sublist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .toc__sublist {
+    margin: var(--space-1) 0 var(--space-2) var(--space-4);
+    border-left: 1px solid var(--color-border);
+    padding-left: var(--space-3);
+  }
+  .toc__link {
+    display: block;
+    padding: 4px 0;
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease-out);
+    border-left: 2px solid transparent;
+    padding-left: var(--space-3);
+    margin-left: calc(-1 * var(--space-3));
+  }
+  .toc__link:hover {
+    color: var(--color-fg);
+  }
+  .toc__link--sub {
+    font-size: 0.95em;
+  }
+  .toc__link[data-active="true"] {
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+  }
+</style>
+
+<script>
+  /**
+   * Scroll-spy: observes each heading referenced by a TOC link, marks the
+   * closest-to-top visible one as active. Robust to Astro view transitions
+   * by re-wiring on `astro:page-load`.
+   */
+  function initTocScrollSpy(): void {
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>(".toc__link[data-toc-slug]"),
+    );
+    if (links.length === 0) return;
+
+    const linksBySlug = new Map(links.map((link) => [link.dataset["tocSlug"] ?? "", link]));
+
+    const targets = links
+      .map((link) => document.getElementById(link.dataset["tocSlug"] ?? ""))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (targets.length === 0) return;
+
+    let current: string | null = null;
+    const setActive = (slug: string | null): void => {
+      if (slug === current) return;
+      if (current !== null) linksBySlug.get(current)?.removeAttribute("data-active");
+      if (slug !== null) linksBySlug.get(slug)?.setAttribute("data-active", "true");
+      current = slug;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort(
+            (a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top,
+          );
+        if (visible.length > 0 && visible[0] !== undefined) {
+          setActive(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: "0px 0px -70% 0px",
+        threshold: [0, 1],
+      },
+    );
+    targets.forEach((t) => observer.observe(t));
+  }
+
+  document.addEventListener("astro:page-load", initTocScrollSpy);
+</script>
