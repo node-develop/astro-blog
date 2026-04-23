@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# pre-commit: lint только изменённых файлов + быстрый typecheck
+set -e
+
+echo "▶ lint-staged (eslint --fix + prettier on staged files)"
+pnpm exec lint-staged
+
+echo "▶ typecheck (astro check + tsc)"
+pnpm typecheck

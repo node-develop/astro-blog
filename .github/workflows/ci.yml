@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  check:
-    name: Typecheck + lint + test
+  build:
+    name: Test + build
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -26,7 +26,7 @@ jobs:
     env:
       DATABASE_URL: postgres://blog:blog@localhost:5432/blog
       SITE_URL: http://localhost:4321
-      BETTER_AUTH_SECRET: ci-secret-not-for-production
+      BETTER_AUTH_SECRET: ci-secret-not-for-production-min-32-chars-long
       BETTER_AUTH_URL: http://localhost:4321
       LOG_LEVEL: warn
     steps:
@@ -38,7 +38,5 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate
-      - run: pnpm typecheck
-      - run: pnpm lint
       - run: pnpm test
       - run: pnpm build

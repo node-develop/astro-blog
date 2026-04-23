@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# pre-push: полные тесты + build. Защищает удалённый main от заведомо сломанного кода.
+set -e
+
+echo "▶ vitest"
+pnpm test
+
+echo "▶ astro build"
+pnpm build
+
+echo "✅ pre-push checks passed"
