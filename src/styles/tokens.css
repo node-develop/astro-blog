@@ -35,9 +35,9 @@
   --color-fg-subtle: #6f6350;
   --color-border: #e8e0cf;
   --color-border-strong: #d7cbb2;
-  --color-accent: #b8860b;
-  --color-accent-hover: #9c6f08;
-  --color-accent-soft: #f5e9c8;
+  --color-accent: #946708;
+  --color-accent-hover: #7b5607;
+  --color-accent-soft: #fdf4e3;
   --color-danger: #c0392b;
 
   /* Focus ring derived from accent, at AA contrast against bg. */
