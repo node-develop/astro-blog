@@ -1,0 +1,113 @@
+---
+/**
+ * Site header with title, primary nav, and the mobile drawer trigger.
+ * The trigger is a `<button>` controlling the drawer via a custom event;
+ * the drawer itself lives in MobileDrawer.astro (added in Task 13).
+ */
+const { pathname } = Astro.url;
+const isActive = (prefix: string): boolean =>
+  prefix === "/" ? pathname === "/" : pathname.startsWith(prefix);
+---
+
+<header class="site-header" role="banner">
+  <div class="site-header__inner">
+    <a href="/" class="site-header__brand" aria-label="На главную">
+      <span class="site-header__label">Блог</span>
+      <span class="site-header__dot" aria-hidden="true">·</span>
+      <span class="site-header__author">artka.dev</span>
+    </a>
+
+    <nav class="site-header__nav" aria-label="Основная навигация">
+      <a href="/blog" aria-current={isActive("/blog") ? "page" : undefined}>Статьи</a>
+      <a href="/about" aria-current={isActive("/about") ? "page" : undefined}>Обо мне</a>
+    </nav>
+
+    <button
+      type="button"
+      class="site-header__drawer-btn"
+      aria-label="Открыть список статей"
+      aria-controls="site-drawer"
+      aria-expanded="false"
+      data-drawer-trigger
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 6h16M4 12h16M4 18h16"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .site-header__inner {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+  }
+  .site-header__brand {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    color: var(--color-fg);
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .site-header__dot {
+    color: var(--color-accent);
+  }
+  .site-header__author {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .site-header__nav {
+    margin-left: auto;
+    display: flex;
+    gap: var(--space-5);
+    font-size: var(--fs-sm);
+  }
+  .site-header__nav a {
+    color: var(--color-fg-muted);
+    text-decoration: none;
+  }
+  .site-header__nav a[aria-current="page"] {
+    color: var(--color-fg);
+    border-bottom: 1px solid var(--color-accent);
+  }
+  .site-header__nav a:hover {
+    color: var(--color-fg);
+  }
+
+  .site-header__drawer-btn {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    color: var(--color-fg);
+    cursor: pointer;
+  }
+
+  @media (max-width: 1023px) {
+    .site-header__drawer-btn {
+      display: inline-flex;
+    }
+    .site-header__nav {
+      margin-left: 0;
+    }
+  }
+</style>

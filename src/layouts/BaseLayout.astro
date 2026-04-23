@@ -1,15 +1,18 @@
 ---
 import "~/styles/global.css";
-import "katex/dist/katex.min.css";
 import { ClientRouter } from "astro:transitions";
+import Header from "~/components/Header.astro";
+import SkipLink from "~/components/SkipLink.astro";
 
 interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  /** When true, omits the right TOC column for list/about/home pages. */
+  fullWidth?: boolean;
 }
 
-const { title, description = "Personal blog", ogImage } = Astro.props;
+const { title, description = "Personal blog", ogImage, fullWidth = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 ---
 
@@ -31,21 +34,83 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString(
     <link rel="alternate" type="application/rss+xml" title={title} href="/rss.xml" />
     <ClientRouter />
   </head>
-  <body class="mx-auto max-w-3xl px-4 py-8 font-sans">
-    <header class="mb-8 flex items-center justify-between">
-      <a href="/" class="hover:text-brand-500 text-xl font-bold">Blog</a>
-      <nav class="flex gap-4 text-sm">
-        <a href="/blog" class="hover:underline">Статьи</a>
-        <a href="/about" class="hover:underline">Обо мне</a>
-      </nav>
-    </header>
-    <main>
-      <slot />
-    </main>
-    <footer
-      class="mt-16 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800"
-    >
-      <p>© {new Date().getFullYear()} — Powered by Astro</p>
+  <body>
+    <SkipLink />
+    <Header />
+    <div class="layout" data-full-width={fullWidth}>
+      <aside class="layout__sidebar" aria-label="Статьи блога">
+        <slot name="sidebar" />
+      </aside>
+      <main id="main" class="layout__main">
+        <slot />
+      </main>
+      <aside class="layout__toc" aria-label="Оглавление статьи">
+        <slot name="toc" />
+      </aside>
+    </div>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© {new Date().getFullYear()} — artka.dev</p>
+        <p class="site-footer__meta">Astro · on-demand · WCAG AA</p>
+      </div>
     </footer>
+
+    <style>
+      .layout {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: var(--space-6) var(--space-5);
+        display: grid;
+        grid-template-columns: var(--col-sidebar) minmax(0, 1fr) var(--col-toc);
+        gap: var(--gutter);
+      }
+      .layout[data-full-width="true"] {
+        grid-template-columns: var(--col-sidebar) minmax(0, 1fr);
+      }
+      .layout[data-full-width="true"] .layout__toc {
+        display: none;
+      }
+      .layout__sidebar,
+      .layout__toc {
+        position: sticky;
+        top: var(--space-5);
+        align-self: start;
+        max-height: calc(100vh - var(--space-6));
+        overflow-y: auto;
+      }
+      .layout__main {
+        min-width: 0;
+      }
+      @media (max-width: 1023px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .layout__sidebar,
+        .layout__toc {
+          display: none;
+        }
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        margin-top: var(--space-9);
+      }
+      .site-footer__inner {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: var(--space-5);
+        font-size: var(--fs-sm);
+        color: var(--color-fg-muted);
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-4);
+      }
+      .site-footer__meta {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        letter-spacing: var(--tracking-wide);
+        text-transform: uppercase;
+      }
+    </style>
   </body>
 </html>

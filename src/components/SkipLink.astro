@@ -1,0 +1,29 @@
+---
+/**
+ * Accessible skip-link. Visually hidden until focused, then pinned to
+ * top-left so keyboard users can jump past the sidebar/header.
+ */
+---
+
+<a href="#main" class="skip-link">Перейти к содержимому</a>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: var(--space-4);
+    z-index: 100;
+    background: var(--color-bg-elevated);
+    color: var(--color-fg);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    transform: translateY(-200%);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+</style>
