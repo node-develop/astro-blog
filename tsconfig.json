@@ -1,0 +1,29 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"]
+    },
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": false,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ES2023",
+    "jsx": "preserve",
+    "jsxImportSource": "react",
+    "types": ["astro/client", "vitest/globals"]
+  },
+  "include": [
+    "src/**/*",
+    ".astro/**/*.d.ts",
+    "drizzle.config.ts",
+    "astro.config.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["dist", "node_modules", "tests/e2e/**/*.spec.ts"]
+}

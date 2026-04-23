@@ -1,0 +1,17 @@
+node_modules
+dist
+.astro
+.output
+coverage
+playwright-report
+test-results
+
+# generated
+drizzle/
+pnpm-lock.yaml
+
+# docs (сохраняем как есть)
+docs/
+
+# lock-and-generated files
+*.min.*

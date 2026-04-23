@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1.7
+
+# ---------- base ----------
+FROM node:24-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm \
+    PATH=/pnpm:$PATH \
+    CI=true
+RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
+WORKDIR /app
+
+# ---------- deps (cached by lockfile) ----------
+FROM base AS deps
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# ---------- builder ----------
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+# Playwright (для rehype-mermaid) тянет Chromium на этапе билда
+RUN pnpm exec playwright install --with-deps chromium
+ENV NODE_ENV=production
+RUN pnpm build
+# Отделяем прод-зависимости
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# ---------- runner ----------
+FROM node:24-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=4321
+
+# Непривилегированный пользователь
+RUN groupadd -r astro && useradd -r -g astro astro
+
+COPY --from=builder --chown=astro:astro /app/dist ./dist
+COPY --from=builder --chown=astro:astro /app/node_modules ./node_modules
+COPY --from=builder --chown=astro:astro /app/package.json ./package.json
+COPY --from=builder --chown=astro:astro /app/drizzle ./drizzle
+COPY --from=builder --chown=astro:astro /app/src/lib/db ./src/lib/db
+
+USER astro
+EXPOSE 4321
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD node -e "fetch('http://127.0.0.1:4321/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
+CMD ["node", "./dist/server/entry.mjs"]

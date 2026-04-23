@@ -1,0 +1,82 @@
+{
+  "$schema": "https://claude.com/schemas/settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(node:*)",
+      "Bash(npx:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(docker build:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker run:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh workflow:*)"
+    ],
+    "ask": ["Bash(rm:*)", "Bash(git push:*)", "Bash(git reset:*)", "Bash(pnpm db:migrate)"],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(git push --force:*)",
+      "Bash(git push:* main*)",
+      "Bash(chmod 777:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/no-secrets.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/format.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/notify-stop.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

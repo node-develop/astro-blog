@@ -1,0 +1,40 @@
+---
+export const prerender = false;
+import BaseLayout from "~/layouts/BaseLayout.astro";
+
+if (Astro.locals.user) return Astro.redirect("/admin");
+const next = Astro.url.searchParams.get("next") ?? "/admin";
+---
+
+<BaseLayout title="Вход" description="Страница входа в админку">
+  <h1 class="mb-6 text-3xl font-bold">Вход</h1>
+  <form
+    method="post"
+    action={`/api/auth/sign-in/email?callbackURL=${encodeURIComponent(next)}`}
+    class="space-y-4"
+  >
+    <label class="block">
+      <span class="text-sm font-medium">Email</span>
+      <input
+        type="email"
+        name="email"
+        required
+        autocomplete="email"
+        class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+      />
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium">Пароль</span>
+      <input
+        type="password"
+        name="password"
+        required
+        autocomplete="current-password"
+        class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+      />
+    </label>
+    <button type="submit" class="bg-brand-500 hover:bg-brand-700 rounded px-4 py-2 text-white">
+      Войти
+    </button>
+  </form>
+</BaseLayout>

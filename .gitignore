@@ -1,0 +1,40 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+.astro/
+.output/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# test
+coverage/
+playwright-report/
+test-results/
+
+# editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# claude
+CLAUDE.local.md
+.claude/settings.local.json
+
+# misc
+*.tsbuildinfo

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<"posts">;
+
+const posts: Post[] = (await getCollection("posts", (entry: Post) => !entry.data.draft))
+  .sort((a: Post, b: Post) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 5);
+---
+
+<BaseLayout title="Personal Blog" description="Главная страница">
+  <section class="mb-12">
+    <h1 class="text-3xl font-bold">Привет!</h1>
+    <p class="mt-2 text-slate-600 dark:text-slate-400">
+      Здесь я пишу о программировании, архитектуре и немного о жизни.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="mb-4 text-2xl font-semibold">Свежие статьи</h2>
+    {
+      posts.length === 0 ? (
+        <p class="text-slate-500">Пока ни одной статьи — скоро исправим.</p>
+      ) : (
+        <ul class="space-y-4">
+          {posts.map((post: Post) => (
+            <li>
+              <a href={`/blog/${post.id}`} class="group block">
+                <h3 class="group-hover:text-brand-500 text-lg font-semibold">{post.data.title}</h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {post.data.description}
+                </p>
+                <time
+                  datetime={post.data.pubDate.toISOString()}
+                  class="mt-1 block text-xs text-slate-500"
+                >
+                  {post.data.pubDate.toLocaleDateString("ru-RU")}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</BaseLayout>

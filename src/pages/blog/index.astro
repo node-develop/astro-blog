@@ -1,0 +1,52 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<"posts">;
+
+const posts: Post[] = (await getCollection("posts", (entry: Post) => !entry.data.draft)).sort(
+  (a: Post, b: Post) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+
+const allTags: readonly string[] = Array.from(
+  new Set(posts.flatMap((p: Post) => p.data.tags)),
+).sort();
+---
+
+<BaseLayout title="Статьи" description="Все публикации блога">
+  <h1 class="mb-6 text-3xl font-bold">Статьи</h1>
+
+  {
+    allTags.length > 0 && (
+      <nav class="mb-8 flex flex-wrap gap-2" aria-label="Теги">
+        {allTags.map((tag: string) => (
+          <a
+            href={`/blog/tags/${tag}`}
+            class="hover:bg-brand-50 rounded bg-slate-100 px-2 py-1 text-sm dark:bg-slate-800"
+          >
+            #{tag}
+          </a>
+        ))}
+      </nav>
+    )
+  }
+
+  <ul class="space-y-6">
+    {
+      posts.map((post: Post) => (
+        <li>
+          <a href={`/blog/${post.id}`} class="group block">
+            <h2 class="group-hover:text-brand-500 text-xl font-semibold">{post.data.title}</h2>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">{post.data.description}</p>
+            <time
+              datetime={post.data.pubDate.toISOString()}
+              class="mt-1 block text-xs text-slate-500"
+            >
+              {post.data.pubDate.toLocaleDateString("ru-RU")}
+            </time>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>

@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-brand-50: oklch(0.97 0.02 265);
+  --color-brand-500: oklch(0.62 0.21 265);
+  --color-brand-700: oklch(0.45 0.22 265);
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-white text-slate-900 antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+.prose pre {
+  @apply rounded-lg;
+}
+
+/* Mermaid SVG: make it responsive */
+.prose svg[role="img"] {
+  max-width: 100%;
+  height: auto;
+}
