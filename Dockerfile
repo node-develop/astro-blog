@@ -18,8 +18,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Playwright (для rehype-mermaid) тянет Chromium на этапе билда
-RUN pnpm exec playwright install --with-deps chromium
+# Playwright (для rehype-mermaid) тянет headless chromium на этапе билда
+RUN pnpm exec playwright install --with-deps chromium-headless-shell
 ENV NODE_ENV=production
 RUN pnpm build
 # Отделяем прод-зависимости
