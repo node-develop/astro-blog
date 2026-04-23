@@ -13,10 +13,18 @@ export const createDb = (connectionString: string) => {
   return drizzle(client, { schema });
 };
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  throw new Error("DATABASE_URL env variable is required");
-}
+let cached: Database | null = null;
 
-export const db: Database = createDb(url);
+const getDb = (): Database => {
+  if (cached) return cached;
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL env variable is required");
+  cached = createDb(url);
+  return cached;
+};
+
+export const db: Database = new Proxy({} as Database, {
+  get: (_target, prop) => Reflect.get(getDb() as object, prop),
+});
+
 export { schema };
