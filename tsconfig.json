@@ -20,6 +20,7 @@
   },
   "include": [
     "src/**/*",
+    "scripts/**/*",
     ".astro/**/*.d.ts",
     "drizzle.config.ts",
     "astro.config.ts",

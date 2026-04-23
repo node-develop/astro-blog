@@ -23,6 +23,7 @@
     "db:migrate": "node --experimental-strip-types src/lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:backfill": "tsx scripts/backfill-posts-meta.ts",
     "prepare": "husky"
   },
   "lint-staged": {
