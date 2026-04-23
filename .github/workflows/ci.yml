@@ -37,6 +37,8 @@ jobs:
           node-version: "24"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - name: Install Playwright chromium (for rehype-mermaid)
+        run: pnpm exec playwright install --with-deps chromium-headless-shell
       - run: pnpm db:migrate
       - run: pnpm test
       - run: pnpm build
