@@ -1,8 +1,9 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { config } from "dotenv";
 
 const envPath = resolve(process.cwd(), ".env");
 
-if (existsSync(envPath) && typeof process.loadEnvFile === "function") {
-  process.loadEnvFile(envPath);
+if (existsSync(envPath)) {
+  config({ path: envPath, quiet: true });
 }
