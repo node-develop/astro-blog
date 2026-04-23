@@ -2,16 +2,15 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db, schema } from "./db/index.js";
 
-const secret = process.env.BETTER_AUTH_SECRET;
-const baseUrl = process.env.BETTER_AUTH_URL ?? process.env.SITE_URL;
-
-if (!secret) throw new Error("BETTER_AUTH_SECRET is required");
-if (!baseUrl) throw new Error("BETTER_AUTH_URL or SITE_URL is required");
-
 export type Auth = ReturnType<typeof createAuth>;
 
-export const createAuth = () =>
-  betterAuth({
+export const createAuth = () => {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  const baseUrl = process.env.BETTER_AUTH_URL ?? process.env.SITE_URL;
+  if (!secret) throw new Error("BETTER_AUTH_SECRET is required");
+  if (!baseUrl) throw new Error("BETTER_AUTH_URL or SITE_URL is required");
+
+  return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
@@ -47,5 +46,16 @@ export const createAuth = () =>
       updateAge: 60 * 60 * 24,
     },
   });
+};
 
-export const auth: Auth = createAuth();
+let cached: Auth | null = null;
+
+const getAuth = (): Auth => {
+  if (cached) return cached;
+  cached = createAuth();
+  return cached;
+};
+
+export const auth: Auth = new Proxy({} as Auth, {
+  get: (_target, prop) => Reflect.get(getAuth() as object, prop),
+});
