@@ -8,6 +8,13 @@
       "when": 1776936876753,
       "tag": "0000_stale_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776973756593,
+      "tag": "0001_cms_core",
+      "breakpoints": true
     }
   ]
 }
