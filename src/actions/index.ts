@@ -1,25 +1,16 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { db } from "~/lib/db";
-import { posts } from "~/lib/db/schema";
-import { eq } from "drizzle-orm";
-
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-|-$/g, "");
+import { postsMeta, postRevisions } from "~/lib/db/schema";
 
 export const server = {
-  createPost: defineAction({
+  upsertPostMeta: defineAction({
     accept: "form",
     input: z.object({
-      title: z.string().min(3).max(120),
-      description: z.string().min(10).max(200),
-      contentMdx: z.string().min(10),
-      tags: z.string().default(""),
-      published: z.boolean().default(false),
+      slug: z.string().min(1).max(200),
+      order: z.coerce.number().int().nonnegative(),
+      pinned: z.boolean().default(false),
+      hiddenFromList: z.boolean().default(false),
     }),
     handler: async (input, context) => {
       const user = context.locals.user;
@@ -27,53 +18,63 @@ export const server = {
         throw new ActionError({ code: "FORBIDDEN", message: "Admins only" });
       }
 
-      const tags = input.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-
-      const [created] = await db
-        .insert(posts)
+      await db
+        .insert(postsMeta)
         .values({
-          slug: slugify(input.title),
-          title: input.title,
-          description: input.description,
-          contentMdx: input.contentMdx,
-          tags,
-          published: input.published,
-          authorId: user.id,
-          publishedAt: input.published ? new Date() : null,
+          slug: input.slug,
+          order: input.order,
+          pinned: input.pinned,
+          hiddenFromList: input.hiddenFromList,
+          updatedAt: new Date(),
         })
-        .returning();
+        .onConflictDoUpdate({
+          target: postsMeta.slug,
+          set: {
+            order: input.order,
+            pinned: input.pinned,
+            hiddenFromList: input.hiddenFromList,
+            updatedAt: new Date(),
+          },
+        });
 
-      if (!created)
-        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "insert failed" });
-      return { id: created.id, slug: created.slug };
+      return { slug: input.slug };
     },
   }),
 
-  togglePublish: defineAction({
+  createRevision: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().uuid() }),
-    handler: async ({ id }, context) => {
+    input: z.object({
+      slug: z.string().min(1).max(200),
+      frontmatter: z.string().min(2), // JSON string
+      body: z.string(),
+    }),
+    handler: async (input, context) => {
       const user = context.locals.user;
       if (!user || (user.role !== "admin" && user.role !== "editor")) {
         throw new ActionError({ code: "FORBIDDEN", message: "Admins only" });
       }
-      const [post] = await db.select().from(posts).where(eq(posts.id, id));
-      if (!post) throw new ActionError({ code: "NOT_FOUND", message: "post not found" });
 
-      const nextPublished = !post.published;
-      await db
-        .update(posts)
-        .set({
-          published: nextPublished,
-          publishedAt: nextPublished ? new Date() : null,
-          updatedAt: new Date(),
+      let frontmatter: unknown;
+      try {
+        frontmatter = JSON.parse(input.frontmatter);
+      } catch {
+        throw new ActionError({ code: "BAD_REQUEST", message: "frontmatter must be valid JSON" });
+      }
+
+      const [revision] = await db
+        .insert(postRevisions)
+        .values({
+          slug: input.slug,
+          frontmatter,
+          body: input.body,
+          authorId: user.id,
         })
-        .where(eq(posts.id, id));
+        .returning();
 
-      return { published: nextPublished };
+      if (!revision)
+        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "insert failed" });
+
+      return { id: revision.id, slug: revision.slug };
     },
   }),
 };

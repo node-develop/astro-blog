@@ -2,13 +2,13 @@
 export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { db } from "~/lib/db";
-import { desc } from "drizzle-orm";
-import { posts } from "~/lib/db/schema";
+import { asc } from "drizzle-orm";
+import { postsMeta } from "~/lib/db/schema";
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login");
 
-const recentPosts = await db.select().from(posts).orderBy(desc(posts.updatedAt)).limit(20);
+const recentMeta = await db.select().from(postsMeta).orderBy(asc(postsMeta.order)).limit(20);
 ---
 
 <BaseLayout title="Админка" description="Управление блогом">
@@ -18,21 +18,22 @@ const recentPosts = await db.select().from(posts).orderBy(desc(posts.updatedAt))
   </p>
 
   <section class="mb-8">
-    <h2 class="mb-3 text-xl font-semibold">Посты в БД</h2>
+    <h2 class="mb-3 text-xl font-semibold">Посты</h2>
     {
-      recentPosts.length === 0 ? (
-        <p class="text-slate-500">Нет записей. Добавьте первую.</p>
+      recentMeta.length === 0 ? (
+        <p class="text-slate-500">Нет записей с метаданными.</p>
       ) : (
         <ul class="divide-y divide-slate-200 dark:divide-slate-800">
-          {recentPosts.map((post) => (
+          {recentMeta.map((meta) => (
             <li class="py-3">
               <a
-                href={`/admin/posts/${post.id}`}
+                href={`/blog/${meta.slug}`}
                 class="hover:text-brand-500 flex items-center justify-between"
               >
-                <span>{post.title}</span>
+                <span>{meta.slug}</span>
                 <span class="text-xs text-slate-500">
-                  {post.published ? "✓ published" : "draft"}
+                  {meta.pinned ? "📌 " : ""}
+                  {meta.hiddenFromList ? "hidden" : "visible"} · #{meta.order}
                 </span>
               </a>
             </li>
