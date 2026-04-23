@@ -1,0 +1,107 @@
+/* Editorial × Technical — single source of truth for visual tokens.
+   Consumed by Tailwind 4 @theme in global.css and directly by components. */
+
+:root {
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.875rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: 2.75rem;
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-normal: 1.55;
+  --lh-relaxed: 1.7;
+
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.08em;
+
+  /* ── Colors (light) ───────────────────────────────────────── */
+  --color-bg: #fdfcf7;
+  --color-bg-elevated: #f7f3e8;
+  --color-bg-subtle: #f2edde;
+  --color-fg: #1f1b16;
+  --color-fg-muted: #6b5d4f;
+  --color-fg-subtle: #6f6350;
+  --color-border: #e8e0cf;
+  --color-border-strong: #d7cbb2;
+  --color-accent: #946708;
+  --color-accent-hover: #7b5607;
+  --color-accent-soft: #fdf4e3;
+  --color-danger: #c0392b;
+
+  /* Focus ring derived from accent, at AA contrast against bg. */
+  --color-focus-ring: color-mix(in srgb, var(--color-accent) 65%, transparent);
+
+  /* ── Space scale (4px base) ───────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* ── Radii ────────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  /* ── Shadows ──────────────────────────────────────────────── */
+  --shadow-soft: 0 1px 2px rgba(31, 27, 22, 0.04), 0 4px 12px rgba(31, 27, 22, 0.06);
+  --shadow-lifted: 0 2px 4px rgba(31, 27, 22, 0.06), 0 12px 32px rgba(31, 27, 22, 0.08);
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --col-sidebar: 240px;
+  --col-content: 720px;
+  --col-toc: 220px;
+  --gutter: var(--space-6);
+  --content-max: 1280px;
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1a1712;
+    --color-bg-elevated: #221e17;
+    --color-bg-subtle: #2b261e;
+    --color-fg: #f2ede0;
+    --color-fg-muted: #b4a993;
+    --color-fg-subtle: #9e907a;
+    --color-border: #3a3328;
+    --color-border-strong: #554a38;
+    --color-accent: #d4a22a;
+    --color-accent-hover: #e6b441;
+    --color-accent-soft: #3a2f18;
+    --color-danger: #e55c4f;
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}

@@ -1,47 +1,128 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import { getCollection, type CollectionEntry } from "astro:content";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getPublishedPosts } from "~/lib/posts/list";
 
-type Post = CollectionEntry<"posts">;
-
-const posts: Post[] = (await getCollection("posts", (entry: Post) => !entry.data.draft))
-  .sort((a: Post, b: Post) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
-  .slice(0, 5);
+const posts = await getPublishedPosts();
+const latest = posts.slice(0, 3);
 ---
 
-<BaseLayout title="Personal Blog" description="Главная страница">
-  <section class="mb-12">
-    <h1 class="text-3xl font-bold">Привет!</h1>
-    <p class="mt-2 text-slate-600 dark:text-slate-400">
-      Здесь я пишу о программировании, архитектуре и немного о жизни.
+<BaseLayout title="artka.dev" description="Персональный блог" fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
+
+  <section class="hero">
+    <p class="hero__eyebrow">Personal blog · on writing code with AI</p>
+    <h1 class="hero__title">
+      Конкретные записи про Claude Code, AI-агентов и разработку на Astro.
+    </h1>
+    <p class="hero__lede">
+      Серия из четырнадцати частей про то, как устроен Claude Code изнутри — context, skills, hooks,
+      MCP, subagents, модели и антипаттерны.
     </p>
+    <a href="/blog" class="hero__cta">Все статьи →</a>
   </section>
 
-  <section>
-    <h2 class="mb-4 text-2xl font-semibold">Свежие статьи</h2>
-    {
-      posts.length === 0 ? (
-        <p class="text-slate-500">Пока ни одной статьи — скоро исправим.</p>
-      ) : (
-        <ul class="space-y-4">
-          {posts.map((post: Post) => (
-            <li>
-              <a href={`/blog/${post.id}`} class="group block">
-                <h3 class="group-hover:text-brand-500 text-lg font-semibold">{post.data.title}</h3>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {post.data.description}
-                </p>
-                <time
-                  datetime={post.data.pubDate.toISOString()}
-                  class="mt-1 block text-xs text-slate-500"
-                >
-                  {post.data.pubDate.toLocaleDateString("ru-RU")}
-                </time>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )
-    }
+  <section class="latest">
+    <h2 class="latest__label">Последние публикации</h2>
+    <ul class="latest__list">
+      {
+        latest.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}`} class="latest__link">
+              <span class="latest__title">{post.data.title}</span>
+              <time datetime={post.data.pubDate.toISOString()} class="latest__date">
+                {post.data.pubDate.toLocaleDateString("ru-RU", { month: "short", day: "numeric" })}
+              </time>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
   </section>
+
+  <style>
+    .hero {
+      max-width: 720px;
+      padding: var(--space-6) 0;
+    }
+    .hero__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-4) 0;
+    }
+    .hero__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-3xl);
+      line-height: var(--lh-tight);
+      letter-spacing: var(--tracking-tight);
+      font-weight: 500;
+      margin: 0 0 var(--space-4) 0;
+      color: var(--color-fg);
+    }
+    .hero__lede {
+      font-size: var(--fs-lg);
+      line-height: var(--lh-normal);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-5) 0;
+    }
+    .hero__cta {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--color-accent);
+      padding-bottom: 1px;
+    }
+    .hero__cta:hover {
+      color: var(--color-accent-hover);
+    }
+
+    .latest {
+      margin-top: var(--space-8);
+      padding-top: var(--space-5);
+      border-top: 1px solid var(--color-border);
+      max-width: 720px;
+    }
+    .latest__label {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      font-weight: 500;
+      margin: 0 0 var(--space-4) 0;
+    }
+    .latest__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .latest__link {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-4);
+      padding: var(--space-3) 0;
+      border-bottom: 1px dotted var(--color-border);
+      color: var(--color-fg);
+      text-decoration: none;
+    }
+    .latest__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-lg);
+      line-height: var(--lh-snug);
+    }
+    .latest__date {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-subtle);
+    }
+    .latest__link:hover .latest__title {
+      color: var(--color-accent-hover);
+    }
+  </style>
 </BaseLayout>

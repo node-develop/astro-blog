@@ -1,0 +1,105 @@
+---
+/**
+ * Mobile drawer — wraps the sidebar in a slide-in panel.
+ * Toggled by `[data-drawer-trigger]` buttons (e.g. in Header.astro).
+ * Uses the native <dialog> element for free focus-trap and Esc-to-close.
+ */
+---
+
+<dialog id="site-drawer" class="drawer" aria-label="Статьи блога">
+  <div class="drawer__panel">
+    <div class="drawer__head">
+      <p class="drawer__title">Статьи</p>
+      <button type="button" class="drawer__close" aria-label="Закрыть" data-drawer-close>
+        ✕
+      </button>
+    </div>
+    <div class="drawer__body">
+      <slot />
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .drawer {
+    border: none;
+    padding: 0;
+    margin: 0;
+    max-width: 320px;
+    width: 85vw;
+    height: 100%;
+    max-height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    margin-right: auto;
+    margin-left: 0;
+    box-shadow: var(--shadow-lifted);
+  }
+  .drawer::backdrop {
+    background: rgba(31, 27, 22, 0.45);
+    backdrop-filter: blur(2px);
+  }
+  .drawer__panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .drawer__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    margin: 0;
+  }
+  .drawer__close {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    color: var(--color-fg);
+    cursor: pointer;
+    font-family: var(--font-mono);
+  }
+  .drawer__body {
+    padding: var(--space-4) var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+  }
+</style>
+
+<script>
+  function initDrawer(): void {
+    const drawer = document.getElementById("site-drawer");
+    if (!(drawer instanceof HTMLDialogElement)) return;
+
+    const triggers = document.querySelectorAll<HTMLButtonElement>("[data-drawer-trigger]");
+    const closers = drawer.querySelectorAll<HTMLButtonElement>("[data-drawer-close]");
+
+    const sync = (isOpen: boolean): void => {
+      triggers.forEach((btn) => btn.setAttribute("aria-expanded", String(isOpen)));
+    };
+
+    triggers.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        drawer.showModal();
+        sync(true);
+      });
+    });
+    closers.forEach((btn) => {
+      btn.addEventListener("click", () => drawer.close());
+    });
+    drawer.addEventListener("close", () => sync(false));
+
+    // Click-on-backdrop closes (dialog fires click where target === dialog)
+    drawer.addEventListener("click", (event) => {
+      if (event.target === drawer) drawer.close();
+    });
+  }
+
+  document.addEventListener("astro:page-load", initDrawer);
+</script>

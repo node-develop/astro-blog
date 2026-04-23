@@ -1,35 +1,73 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@import "./tokens.css";
+
+/* Self-hosted variable fonts */
+@import "@fontsource-variable/source-serif-4";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@import "./prose.css";
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-brand-50: oklch(0.97 0.02 265);
-  --color-brand-500: oklch(0.62 0.21 265);
-  --color-brand-700: oklch(0.45 0.22 265);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --color-bg: var(--color-bg);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-subtle: var(--color-bg-subtle);
+  --color-fg: var(--color-fg);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-subtle: var(--color-fg-subtle);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-danger: var(--color-danger);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lifted: var(--shadow-lifted);
 }
 
 html {
   scroll-behavior: smooth;
   color-scheme: light dark;
+  background: var(--color-bg);
+  color: var(--color-fg);
 }
 
 body {
-  @apply bg-white text-slate-900 antialiased;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    @apply bg-slate-950 text-slate-100;
-  }
+/* Focus-visible uses the accent-derived ring across the app */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
-.prose pre {
-  @apply rounded-lg;
+/* Use mono for code even outside prose. */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
 }
 
-/* Mermaid SVG: make it responsive */
-.prose svg[role="img"] {
-  max-width: 100%;
-  height: auto;
-}
+/* Preserve KaTeX layer */
+@import "katex/dist/katex.min.css";

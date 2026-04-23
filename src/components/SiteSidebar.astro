@@ -1,0 +1,126 @@
+---
+import { getPublishedPosts, parseSlugOrder } from "~/lib/posts/list";
+
+interface Props {
+  /** Slug of the currently-displayed post, if any — used for active highlight. */
+  activeSlug?: string;
+}
+
+const { activeSlug } = Astro.props;
+const posts = await getPublishedPosts();
+
+// Split into "guide series" (numeric slugs) and "other" so the sidebar can
+// group them visually — matches the structure of the existing content.
+const series = posts.filter((p) => parseSlugOrder(p.id) !== null);
+const extras = posts.filter((p) => parseSlugOrder(p.id) === null);
+---
+
+<nav class="sidebar">
+  {
+    series.length > 0 && (
+      <section class="sidebar__section">
+        <h2 class="sidebar__label">Claude Code Guide</h2>
+        <ol class="sidebar__list" reversed={false}>
+          {series.map((post) => {
+            const n = parseSlugOrder(post.id);
+            const isActive = post.id === activeSlug;
+            return (
+              <li>
+                <a
+                  href={`/blog/${post.id}`}
+                  class="sidebar__link"
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <span class="sidebar__num">{n !== null ? String(n).padStart(2, "0") : ""}</span>
+                  <span class="sidebar__title">{post.data.title}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    )
+  }
+  {
+    extras.length > 0 && (
+      <section class="sidebar__section">
+        <h2 class="sidebar__label">Другие статьи</h2>
+        <ul class="sidebar__list">
+          {extras.map((post) => (
+            <li>
+              <a
+                href={`/blog/${post.id}`}
+                class="sidebar__link"
+                aria-current={post.id === activeSlug ? "page" : undefined}
+              >
+                <span class="sidebar__title">{post.data.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</nav>
+
+<style>
+  .sidebar {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+  }
+  .sidebar__section + .sidebar__section {
+    margin-top: var(--space-6);
+  }
+  .sidebar__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0 0 var(--space-3) 0;
+    font-weight: 500;
+  }
+  .sidebar__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sidebar__link {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: var(--space-2);
+    align-items: baseline;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .sidebar__link:hover {
+    color: var(--color-fg);
+    background: var(--color-bg-elevated);
+  }
+  .sidebar__link[aria-current="page"] {
+    color: var(--color-fg);
+    background: var(--color-accent-soft);
+    box-shadow: inset 2px 0 0 var(--color-accent);
+  }
+  .sidebar__num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  .sidebar__link[aria-current="page"] .sidebar__num {
+    color: var(--color-accent);
+  }
+  .sidebar__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

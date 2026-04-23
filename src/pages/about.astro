@@ -1,9 +1,11 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
 ---
 
-<BaseLayout title="Обо мне" description="Страница об авторе">
-  <article class="prose prose-slate dark:prose-invert max-w-none">
+<BaseLayout title="Обо мне" description="Страница об авторе" fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
+  <article class="prose">
     <h1>Обо мне</h1>
     <p>
       Привет! Меня зовут <strong>Имя Фамилия</strong>. Я занимаюсь разработкой и пишу о том, что

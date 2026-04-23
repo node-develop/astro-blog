@@ -1,52 +1,153 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import { getCollection, type CollectionEntry } from "astro:content";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getPublishedPosts, parseSlugOrder } from "~/lib/posts/list";
 
-type Post = CollectionEntry<"posts">;
-
-const posts: Post[] = (await getCollection("posts", (entry: Post) => !entry.data.draft)).sort(
-  (a: Post, b: Post) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
-);
-
-const allTags: readonly string[] = Array.from(
-  new Set(posts.flatMap((p: Post) => p.data.tags)),
-).sort();
+const posts = await getPublishedPosts();
+const allTags = Array.from(new Set(posts.flatMap((p) => p.data.tags))).sort();
 ---
 
-<BaseLayout title="Статьи" description="Все публикации блога">
-  <h1 class="mb-6 text-3xl font-bold">Статьи</h1>
+<BaseLayout title="Статьи" description="Все публикации блога" fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
 
-  {
-    allTags.length > 0 && (
-      <nav class="mb-8 flex flex-wrap gap-2" aria-label="Теги">
-        {allTags.map((tag: string) => (
-          <a
-            href={`/blog/tags/${tag}`}
-            class="hover:bg-brand-50 rounded bg-slate-100 px-2 py-1 text-sm dark:bg-slate-800"
-          >
-            #{tag}
-          </a>
-        ))}
-      </nav>
-    )
-  }
+  <section class="list">
+    <header class="list__header">
+      <p class="list__eyebrow">Архив</p>
+      <h1 class="list__title">Статьи</h1>
+    </header>
 
-  <ul class="space-y-6">
     {
-      posts.map((post: Post) => (
-        <li>
-          <a href={`/blog/${post.id}`} class="group block">
-            <h2 class="group-hover:text-brand-500 text-xl font-semibold">{post.data.title}</h2>
-            <p class="mt-1 text-slate-600 dark:text-slate-400">{post.data.description}</p>
-            <time
-              datetime={post.data.pubDate.toISOString()}
-              class="mt-1 block text-xs text-slate-500"
-            >
-              {post.data.pubDate.toLocaleDateString("ru-RU")}
-            </time>
-          </a>
-        </li>
-      ))
+      allTags.length > 0 && (
+        <nav class="list__tags" aria-label="Теги">
+          {allTags.map((tag: string) => (
+            <a href={`/blog/tags/${tag}`}>#{tag}</a>
+          ))}
+        </nav>
+      )
     }
-  </ul>
+
+    <ul class="list__posts">
+      {
+        posts.map((post) => {
+          const n = parseSlugOrder(post.id);
+          return (
+            <li class="list__item">
+              <a href={`/blog/${post.id}`} class="list__link">
+                <span class="list__num">{n !== null ? String(n).padStart(2, "0") : "·"}</span>
+                <span class="list__body">
+                  <h2 class="list__post-title">{post.data.title}</h2>
+                  <p class="list__post-desc">{post.data.description}</p>
+                  <time datetime={post.data.pubDate.toISOString()} class="list__post-date">
+                    {post.data.pubDate.toLocaleDateString("ru-RU", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                </span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </section>
+
+  <style>
+    .list {
+      max-width: 720px;
+    }
+    .list__header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .list__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .list__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-3xl);
+      font-weight: 500;
+      margin: 0;
+      color: var(--color-fg);
+      letter-spacing: var(--tracking-tight);
+    }
+    .list__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+    }
+    .list__tags a {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-muted);
+      text-decoration: none;
+      padding: 2px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .list__tags a:hover {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+    .list__posts {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .list__item + .list__item {
+      border-top: 1px solid var(--color-border);
+    }
+    .list__link {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: var(--space-4);
+      padding: var(--space-5) 0;
+      color: inherit;
+      text-decoration: none;
+      transition: transform var(--dur-fast) var(--ease-out);
+    }
+    .list__link:hover {
+      transform: translateX(2px);
+    }
+    .list__num {
+      font-family: var(--font-mono);
+      font-size: var(--fs-lg);
+      color: var(--color-fg-subtle);
+      font-variant-numeric: tabular-nums;
+      padding-top: 2px;
+    }
+    .list__post-title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-xl);
+      line-height: var(--lh-snug);
+      letter-spacing: var(--tracking-tight);
+      font-weight: 500;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+    }
+    .list__link:hover .list__post-title {
+      color: var(--color-accent-hover);
+    }
+    .list__post-desc {
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+    }
+    .list__post-date {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+    }
+  </style>
 </BaseLayout>

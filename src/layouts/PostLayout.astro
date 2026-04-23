@@ -1,35 +1,122 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import PostTOC from "~/components/PostTOC.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
 import type { CollectionEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
 
 interface Props {
   post: CollectionEntry<"posts">;
+  headings: readonly MarkdownHeading[];
 }
 
-const { post } = Astro.props;
+const { post, headings } = Astro.props;
 const { title, description, pubDate, updatedDate, tags } = post.data;
+const readingTime = estimateReadingTimeMinutes(post.body ?? "");
+
+function estimateReadingTimeMinutes(body: string): number {
+  const words = body.trim().split(/\s+/).length;
+  return Math.max(1, Math.round(words / 220));
+}
 ---
 
 <BaseLayout title={title} description={description}>
-  <article class="prose prose-slate dark:prose-invert max-w-none">
-    <header class="not-prose mb-6">
-      <h1 class="text-4xl font-bold tracking-tight">{title}</h1>
-      <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+  <SiteSidebar slot="sidebar" activeSlug={post.id} />
+  <PostTOC slot="toc" headings={headings} />
+
+  <article class="post">
+    <header class="post__header">
+      <p class="post__eyebrow">
         <time datetime={pubDate.toISOString()}>
           {pubDate.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" })}
         </time>
-        {updatedDate && <span>· обновлено {updatedDate.toLocaleDateString("ru-RU")}</span>}
+        <span aria-hidden="true">·</span>
+        <span>{readingTime} мин</span>
         {
-          tags.length > 0 && (
-            <ul class="flex flex-wrap gap-2">
-              {tags.map((tag: string) => (
-                <li class="rounded bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">#{tag}</li>
-              ))}
-            </ul>
+          updatedDate && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>обновлено {updatedDate.toLocaleDateString("ru-RU")}</span>
+            </>
           )
         }
-      </div>
+      </p>
+      <h1 class="post__title">{title}</h1>
+      {description && <p class="post__lede">{description}</p>}
+      {
+        tags.length > 0 && (
+          <ul class="post__tags" aria-label="Теги">
+            {tags.map((tag: string) => (
+              <li>
+                <a href={`/blog/tags/${tag}`}>#{tag}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
     </header>
-    <slot />
+    <div class="post__body prose">
+      <slot />
+    </div>
   </article>
+
+  <style>
+    .post {
+      max-width: 720px;
+    }
+    .post__header {
+      margin-bottom: var(--space-7);
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .post__eyebrow {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-3) 0;
+    }
+    .post__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-4xl);
+      line-height: var(--lh-tight);
+      letter-spacing: var(--tracking-tight);
+      font-weight: 500;
+      margin: 0 0 var(--space-3) 0;
+      color: var(--color-fg);
+    }
+    .post__lede {
+      font-family: var(--font-sans);
+      font-size: var(--fs-lg);
+      line-height: var(--lh-normal);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-4) 0;
+    }
+    .post__tags {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .post__tags a {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-muted);
+      text-decoration: none;
+      padding: 2px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .post__tags a:hover {
+      color: var(--color-fg);
+      border-color: var(--color-accent);
+    }
+  </style>
 </BaseLayout>
