@@ -64,4 +64,52 @@ describe("cms integration", () => {
 
     expect(Number(count[0]?.n)).toBe(50);
   });
+
+  it("upsert writes file and appends revision (file I/O happy path)", async () => {
+    const slug = `test-upsert-${Date.now()}`;
+
+    const { writePostAtomically } = await import("~/lib/fs/post-writer");
+    const { serializeFrontmatter } = await import("~/lib/content/frontmatter");
+    const { appendRevision } = await import("~/lib/db/repo/revisions");
+    const { ensureMeta } = await import("~/lib/db/repo/posts-meta");
+    const { mkdtemp, rm, readFile } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    // Use the real DB for user insertion so FK constraints pass when
+    // appendRevision / ensureMeta call the production DB client.
+    const { db: realDb } = await import("~/lib/db");
+    const [user] = await realDb
+      .insert(users)
+      .values({ email: `editor-upsert-test-${Date.now()}@example.com`, role: "editor" })
+      .returning();
+    if (!user) throw new Error("seed failed");
+
+    const baseDir = await mkdtemp(join(tmpdir(), "cms-test-"));
+    try {
+      const fm = {
+        title: "Test",
+        description: "x".repeat(20),
+        pubDate: new Date("2026-04-23"),
+        tags: [],
+        draft: true,
+      };
+      await ensureMeta(slug);
+      const rev = await appendRevision({
+        slug,
+        frontmatter: fm,
+        body: "hello",
+        authorId: user.id,
+      });
+      const written = await writePostAtomically(baseDir, slug, serializeFrontmatter(fm, "hello"));
+      const onDisk = await readFile(written, "utf8");
+      expect(onDisk).toContain("title: Test");
+      expect(rev.id).toBeGreaterThan(0);
+    } finally {
+      await rm(baseDir, { recursive: true, force: true });
+      // Clean up test data from production DB (FK order: revisions → meta → user).
+      await realDb.delete(postRevisions).where(eq(postRevisions.slug, slug));
+      await realDb.delete(postsMeta).where(eq(postsMeta.slug, slug));
+      await realDb.delete(users).where(eq(users.id, user.id));
+    }
+  });
 });
