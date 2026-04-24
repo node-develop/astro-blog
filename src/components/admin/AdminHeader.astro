@@ -1,0 +1,95 @@
+---
+import { auth } from "~/lib/auth";
+
+const session = await auth.api.getSession({ headers: Astro.request.headers });
+const user = session?.user ?? null;
+---
+
+<header class="admin-header" role="banner">
+  <a href="/admin/posts" class="admin-header__brand">
+    <span>artka.dev</span>
+    <span class="admin-header__divider" aria-hidden="true">/</span>
+    <span class="admin-header__label">admin</span>
+  </a>
+  <nav class="admin-header__nav" aria-label="Admin">
+    <a href="/admin/posts">Статьи</a>
+    <a href="/admin/media">Медиа</a>
+    <a href="/" class="admin-header__out">На сайт ↗</a>
+  </nav>
+  <div class="admin-header__user">
+    {user && <span class="admin-header__email">{user.email}</span>}
+    <form method="POST" action="/api/auth/sign-out">
+      <button type="submit" class="admin-header__logout">Выйти</button>
+    </form>
+  </div>
+</header>
+
+<style>
+  .admin-header {
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-3) var(--space-5);
+    background: var(--color-bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .admin-header__brand {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    color: var(--color-fg);
+    text-decoration: none;
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+  .admin-header__label,
+  .admin-header__divider {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .admin-header__nav {
+    margin-left: auto;
+    display: flex;
+    gap: var(--space-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .admin-header__nav a {
+    color: var(--color-fg-muted);
+    text-decoration: none;
+  }
+  .admin-header__nav a:hover {
+    color: var(--color-fg);
+  }
+  .admin-header__out {
+    color: var(--color-accent);
+  }
+  .admin-header__user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+  }
+  .admin-header__logout {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-fg);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+  }
+  .admin-header__logout:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>
