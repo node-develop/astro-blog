@@ -4,20 +4,28 @@ import FrontmatterForm, { type FrontmatterInput } from "./FrontmatterForm";
 import PostEditor from "./PostEditor";
 
 interface Props {
-  readonly slug: string;
+  readonly slug: string | null;
   readonly initial: {
     frontmatter: FrontmatterInput;
     body: string;
   };
 }
 
-export default function EditorShell({ slug, initial }: Props): React.JSX.Element {
+export default function EditorShell({ slug: propsSlug, initial }: Props): React.JSX.Element {
+  const [slug, setSlug] = useState(propsSlug ?? "");
   const [frontmatter, setFrontmatter] = useState(initial.frontmatter);
   const [body, setBody] = useState(initial.body);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const slugOk = /^[a-z0-9][a-z0-9-]*$/.test(slug);
+
   async function save(): Promise<void> {
+    if (!slugOk) {
+      setStatus("error");
+      setErrorMsg("Слаг не прошёл валидацию");
+      return;
+    }
     setStatus("saving");
     setErrorMsg(null);
     const payload = {
@@ -45,12 +53,35 @@ export default function EditorShell({ slug, initial }: Props): React.JSX.Element
       setErrorMsg(result.data.error ?? "Не удалось сохранить");
       return;
     }
+    if (propsSlug === null) {
+      window.location.href = `/admin/posts/${encodeURIComponent(slug)}`;
+      return;
+    }
     setStatus("saved");
     setTimeout(() => setStatus("idle"), 1200);
   }
 
   return (
     <div className="editor-shell">
+      {propsSlug === null && (
+        <div className="editor-shell__slug">
+          <label className="fm-form__field">
+            <span>Slug</span>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="my-new-post"
+              maxLength={100}
+            />
+            {slug !== "" && !slugOk && (
+              <span className="editor-shell__error">
+                Слаг: только a–z, 0–9 и дефисы; должен начинаться с буквы или цифры
+              </span>
+            )}
+          </label>
+        </div>
+      )}
       <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
       <PostEditor value={body} onChange={setBody} />
       <div className="editor-shell__bar">
