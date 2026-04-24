@@ -8,6 +8,20 @@ async function login(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/admin\/posts/);
 }
 
+/** Navigate with retry to handle dev-server HMR aborts between tests. */
+async function gotoWithRetry(page: Page, url: string, maxAttempts = 3): Promise<void> {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await page.goto(url, { waitUntil: "load", timeout: 10_000 });
+      return;
+    } catch {
+      if (i === maxAttempts - 1)
+        throw new Error(`Failed to navigate to ${url} after ${maxAttempts} attempts`);
+      await page.waitForTimeout(1_000);
+    }
+  }
+}
+
 test("admin edits a post, sees revision, restores prior version", async ({ page }) => {
   await login(page);
 
@@ -37,7 +51,7 @@ test("admin edits a post, sees revision, restores prior version", async ({ page 
   // Visit history.
   const slugMatch = href!.match(/\/admin\/posts\/([^/]+)/);
   const slug = slugMatch?.[1] ?? "";
-  await page.goto(`/admin/revisions/${slug}`);
+  await gotoWithRetry(page, `/admin/revisions/${slug}`);
 
   const items = page.locator(".revision-list__item");
   await expect(items.first()).toBeVisible();
@@ -51,7 +65,7 @@ test("admin edits a post, sees revision, restores prior version", async ({ page 
   }
 
   // Cleanup: edit back to remove the [edited] suffix.
-  await page.goto(`/admin/posts/${slug}`);
+  await gotoWithRetry(page, `/admin/posts/${slug}`);
   await page.locator(".editor-shell").waitFor({ state: "visible" });
   const titleInput2 = page.locator('input[type="text"]').first();
   const current = await titleInput2.inputValue();
