@@ -1,5 +1,6 @@
 import React from "react";
 import TagInput from "./TagInput";
+import MediaPicker from "./MediaPicker";
 
 export interface FrontmatterInput {
   title: string;
@@ -64,6 +65,18 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
         <span>Теги</span>
         <TagInput value={value.tags} onChange={(next) => set("tags", next)} />
       </div>
+      <div className="fm-form__field">
+        <span>Обложка</span>
+        <MediaPicker value={value.cover} onChange={(path) => set("cover", path)} />
+      </div>
+      <label className="fm-form__field">
+        <span>Alt-текст обложки</span>
+        <input
+          type="text"
+          value={value.coverAlt ?? ""}
+          onChange={(e) => set("coverAlt", e.target.value === "" ? null : e.target.value)}
+        />
+      </label>
       <label className="fm-form__checkbox">
         <input
           type="checkbox"
