@@ -37,9 +37,11 @@ interface Props {
 interface RowProps {
   item: PostListItem;
   index: number;
+  onToggleHidden: (item: PostListItem) => void;
+  onTogglePinned: (item: PostListItem) => void;
 }
 
-function SortableRow({ item, index }: RowProps): React.JSX.Element {
+function SortableRow({ item, index, onToggleHidden, onTogglePinned }: RowProps): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.slug,
   });
@@ -69,8 +71,30 @@ function SortableRow({ item, index }: RowProps): React.JSX.Element {
         <div className="post-list__meta">
           <time>{new Date(item.pubDate).toLocaleDateString("ru-RU")}</time>
           {item.draft && <span className="post-list__flag">draft</span>}
-          {item.hidden && <span className="post-list__flag">скрыт</span>}
-          {item.pinned && <span className="post-list__flag post-list__flag--accent">pinned</span>}
+          <button
+            type="button"
+            className={`post-list__toggle ${item.hidden ? "post-list__toggle--on" : ""}`}
+            aria-pressed={item.hidden}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleHidden(item);
+            }}
+          >
+            {item.hidden ? "скрыт" : "видим"}
+          </button>
+          <button
+            type="button"
+            className={`post-list__toggle ${item.pinned ? "post-list__toggle--accent" : ""}`}
+            aria-pressed={item.pinned}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePinned(item);
+            }}
+          >
+            {item.pinned ? "pinned" : "pin"}
+          </button>
         </div>
       </div>
     </li>
@@ -88,6 +112,25 @@ export default function PostList({ initial }: Props): React.JSX.Element {
   );
 
   const ids = useMemo(() => items.map((i) => i.slug), [items]);
+
+  async function toggleHidden(item: PostListItem): Promise<void> {
+    const previous = items;
+    const next = items.map((i) => (i.slug === item.slug ? { ...i, hidden: !item.hidden } : i));
+    setItems(next);
+    const res = await actions.posts.setVisibility({
+      slug: item.slug,
+      hiddenFromList: !item.hidden,
+    });
+    if (res.error) setItems(previous);
+  }
+
+  async function togglePinned(item: PostListItem): Promise<void> {
+    const previous = items;
+    const next = items.map((i) => (i.slug === item.slug ? { ...i, pinned: !item.pinned } : i));
+    setItems(next);
+    const res = await actions.posts.setPinned({ slug: item.slug, pinned: !item.pinned });
+    if (res.error) setItems(previous);
+  }
 
   async function handleDragEnd(event: DragEndEvent): Promise<void> {
     const { active, over } = event;
@@ -126,7 +169,13 @@ export default function PostList({ initial }: Props): React.JSX.Element {
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <ul className="post-list">
             {items.map((item, index) => (
-              <SortableRow key={item.slug} item={item} index={index} />
+              <SortableRow
+                key={item.slug}
+                item={item}
+                index={index}
+                onToggleHidden={toggleHidden}
+                onTogglePinned={togglePinned}
+              />
             ))}
           </ul>
         </SortableContext>
@@ -181,6 +230,28 @@ export default function PostList({ initial }: Props): React.JSX.Element {
         }
         .post-list__flag--accent {
           border-color: var(--color-accent); color: var(--color-accent);
+        }
+        .post-list__toggle {
+          font-family: var(--font-mono);
+          font-size: var(--fs-xs);
+          color: var(--color-fg-subtle);
+          background: transparent;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          padding: 1px 6px;
+          cursor: pointer;
+        }
+        .post-list__toggle:hover {
+          color: var(--color-fg);
+          border-color: var(--color-fg-subtle);
+        }
+        .post-list__toggle--on {
+          color: var(--color-fg);
+          background: var(--color-bg-elevated);
+        }
+        .post-list__toggle--accent {
+          color: var(--color-accent);
+          border-color: var(--color-accent);
         }
         .post-list__error {
           margin-bottom: var(--space-4);
