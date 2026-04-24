@@ -1,9 +1,11 @@
 ---
+export const prerender = false;
+
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
-import { getPublishedPosts } from "~/lib/posts/list";
+import { getOrderedPosts } from "~/lib/content/loader";
 
-const posts = await getPublishedPosts();
+const posts = await getOrderedPosts();
 const latest = posts.slice(0, 3);
 ---
 
@@ -26,12 +28,15 @@ const latest = posts.slice(0, 3);
     <h2 class="latest__label">Последние публикации</h2>
     <ul class="latest__list">
       {
-        latest.map((post) => (
+        latest.map((p) => (
           <li>
-            <a href={`/blog/${post.id}`} class="latest__link">
-              <span class="latest__title">{post.data.title}</span>
-              <time datetime={post.data.pubDate.toISOString()} class="latest__date">
-                {post.data.pubDate.toLocaleDateString("ru-RU", { month: "short", day: "numeric" })}
+            <a href={`/blog/${p.entry.id}`} class="latest__link">
+              <span class="latest__title">{p.entry.data.title}</span>
+              <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
+                {p.entry.data.pubDate.toLocaleDateString("ru-RU", {
+                  month: "short",
+                  day: "numeric",
+                })}
               </time>
             </a>
           </li>

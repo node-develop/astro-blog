@@ -1,10 +1,12 @@
 ---
+export const prerender = false;
+
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
-import { getPublishedPosts, parseSlugOrder } from "~/lib/posts/list";
+import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 
-const posts = await getPublishedPosts();
-const allTags = Array.from(new Set(posts.flatMap((p) => p.data.tags))).sort();
+const posts = await getOrderedPosts();
+const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 ---
 
 <BaseLayout title="Статьи" description="Все публикации блога" fullWidth={true}>
@@ -28,27 +30,24 @@ const allTags = Array.from(new Set(posts.flatMap((p) => p.data.tags))).sort();
 
     <ul class="list__posts">
       {
-        posts.map((post) => {
-          const n = parseSlugOrder(post.id);
-          return (
-            <li class="list__item">
-              <a href={`/blog/${post.id}`} class="list__link">
-                <span class="list__num">{n !== null ? String(n).padStart(2, "0") : "·"}</span>
-                <span class="list__body">
-                  <h2 class="list__post-title">{post.data.title}</h2>
-                  <p class="list__post-desc">{post.data.description}</p>
-                  <time datetime={post.data.pubDate.toISOString()} class="list__post-date">
-                    {post.data.pubDate.toLocaleDateString("ru-RU", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </time>
-                </span>
-              </a>
-            </li>
-          );
-        })
+        posts.map((p: PostWithMeta) => (
+          <li class="list__item">
+            <a href={`/blog/${p.entry.id}`} class="list__link">
+              <span class="list__num">{String(p.meta.order).padStart(2, "0")}</span>
+              <span class="list__body">
+                <h2 class="list__post-title">{p.entry.data.title}</h2>
+                <p class="list__post-desc">{p.entry.data.description}</p>
+                <time datetime={p.entry.data.pubDate.toISOString()} class="list__post-date">
+                  {p.entry.data.pubDate.toLocaleDateString("ru-RU", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </time>
+              </span>
+            </a>
+          </li>
+        ))
       }
     </ul>
   </section>
