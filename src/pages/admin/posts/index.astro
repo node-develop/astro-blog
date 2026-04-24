@@ -1,0 +1,69 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import PostList, { type PostListItem } from "~/components/admin/PostList";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { listAllMeta } from "~/lib/db/repo/posts-meta";
+import { defaultMetaFor, sortWithMeta, type PostWithMeta } from "~/lib/content/loader";
+
+type Entry = CollectionEntry<"posts">;
+
+// Admin sees ALL entries including drafts/hidden — don't filter by draft here.
+const entries = await getCollection("posts");
+const metaRows = await listAllMeta();
+const metaBySlug = new Map(metaRows.map((m) => [m.slug, m]));
+const merged: PostWithMeta[] = entries.map((entry: Entry) => ({
+  entry,
+  meta: metaBySlug.get(entry.id) ?? defaultMetaFor(entry.id),
+}));
+const initial: PostListItem[] = sortWithMeta(merged).map((p) => ({
+  slug: p.entry.id,
+  title: p.entry.data.title,
+  description: p.entry.data.description,
+  pubDate: p.entry.data.pubDate.toISOString(),
+  draft: p.entry.data.draft,
+  tags: p.entry.data.tags,
+  order: p.meta.order,
+  pinned: p.meta.pinned,
+  hidden: p.meta.hiddenFromList,
+}));
+---
+
+<AdminLayout title="Статьи">
+  <header class="admin-page-header">
+    <h1>Статьи</h1>
+    <a href="/admin/posts/new" class="admin-button">Новая статья</a>
+  </header>
+
+  <PostList client:load initial={initial} />
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-6);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .admin-button {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-bg);
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .admin-button:hover {
+    background: var(--color-accent-hover);
+  }
+</style>
