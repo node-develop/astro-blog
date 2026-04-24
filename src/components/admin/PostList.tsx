@@ -1,4 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { actions } from "astro:actions";
 
 export interface PostListItem {
   slug: string;
@@ -16,41 +34,132 @@ interface Props {
   readonly initial: readonly PostListItem[];
 }
 
-export default function PostList({ initial }: Props): React.JSX.Element {
-  const [items] = useState(initial);
+interface RowProps {
+  item: PostListItem;
+  index: number;
+}
+
+function SortableRow({ item, index }: RowProps): React.JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.slug,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
   return (
-    <ul className="post-list">
-      {items.map((p) => (
-        <li key={p.slug} className="post-list__item">
-          <span className="post-list__order">{String(p.order).padStart(2, "0")}</span>
-          <div className="post-list__body">
-            <a href={`/admin/posts/${encodeURIComponent(p.slug)}`} className="post-list__title">
-              {p.title}
-            </a>
-            <p className="post-list__desc">{p.description}</p>
-            <div className="post-list__meta">
-              <time>{new Date(p.pubDate).toLocaleDateString("ru-RU")}</time>
-              {p.draft && <span className="post-list__flag">draft</span>}
-              {p.hidden && <span className="post-list__flag">скрыт</span>}
-              {p.pinned && <span className="post-list__flag post-list__flag--accent">pinned</span>}
-            </div>
-          </div>
-        </li>
-      ))}
+    <li ref={setNodeRef} style={style} className="post-list__item" {...attributes}>
+      <button
+        type="button"
+        className="post-list__handle"
+        aria-label={`Перетащить "${item.title}"`}
+        {...listeners}
+      >
+        ⋮⋮
+      </button>
+      <span className="post-list__order" aria-hidden="true">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div className="post-list__body">
+        <a href={`/admin/posts/${encodeURIComponent(item.slug)}`} className="post-list__title">
+          {item.title}
+        </a>
+        <p className="post-list__desc">{item.description}</p>
+        <div className="post-list__meta">
+          <time>{new Date(item.pubDate).toLocaleDateString("ru-RU")}</time>
+          {item.draft && <span className="post-list__flag">draft</span>}
+          {item.hidden && <span className="post-list__flag">скрыт</span>}
+          {item.pinned && <span className="post-list__flag post-list__flag--accent">pinned</span>}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export default function PostList({ initial }: Props): React.JSX.Element {
+  const [items, setItems] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const ids = useMemo(() => items.map((i) => i.slug), [items]);
+
+  async function handleDragEnd(event: DragEndEvent): Promise<void> {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.slug === active.id);
+    const newIndex = items.findIndex((i) => i.slug === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const previous = items;
+    const next = arrayMove([...items], oldIndex, newIndex);
+    setItems(next);
+    setPending(true);
+    setError(null);
+
+    const result = await actions.posts.reorder({ slugs: next.map((i) => i.slug) });
+    setPending(false);
+    if (result.error) {
+      setItems(previous);
+      setError(result.error.message ?? "Не удалось сохранить порядок");
+    }
+  }
+
+  return (
+    <div>
+      {error && (
+        <div role="alert" className="post-list__error">
+          {error}
+        </div>
+      )}
+      {pending && (
+        <div role="status" className="post-list__status">
+          Сохраняю порядок…
+        </div>
+      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <ul className="post-list">
+            {items.map((item, index) => (
+              <SortableRow key={item.slug} item={item} index={index} />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
+
       <style>{`
         .post-list { list-style: none; padding: 0; margin: 0; }
         .post-list__item {
           display: grid;
-          grid-template-columns: 36px 1fr;
-          gap: var(--space-4);
+          grid-template-columns: 28px 36px 1fr;
+          gap: var(--space-3);
           padding: var(--space-4) 0;
           border-top: 1px solid var(--color-border);
+          align-items: start;
+          background: var(--color-bg);
         }
+        .post-list__handle {
+          background: transparent;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          color: var(--color-fg-subtle);
+          cursor: grab;
+          padding: var(--space-1) 0;
+          font-family: var(--font-mono);
+          font-size: var(--fs-xs);
+        }
+        .post-list__handle:active { cursor: grabbing; }
         .post-list__order {
           font-family: var(--font-mono);
           font-size: var(--fs-sm);
           color: var(--color-fg-subtle);
           font-variant-numeric: tabular-nums;
+          padding-top: 2px;
         }
         .post-list__title {
           font-family: var(--font-serif);
@@ -64,23 +173,30 @@ export default function PostList({ initial }: Props): React.JSX.Element {
           color: var(--color-fg-muted);
         }
         .post-list__meta {
-          display: flex;
-          gap: var(--space-3);
-          align-items: center;
-          font-family: var(--font-mono);
-          font-size: var(--fs-xs);
-          color: var(--color-fg-subtle);
+          display: flex; gap: var(--space-3); align-items: center;
+          font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-fg-subtle);
         }
         .post-list__flag {
-          padding: 1px 6px;
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-sm);
+          padding: 1px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
         }
         .post-list__flag--accent {
-          border-color: var(--color-accent);
-          color: var(--color-accent);
+          border-color: var(--color-accent); color: var(--color-accent);
+        }
+        .post-list__error {
+          margin-bottom: var(--space-4);
+          padding: var(--space-3);
+          border: 1px solid var(--color-danger);
+          color: var(--color-danger);
+          border-radius: var(--radius-md);
+        }
+        .post-list__status {
+          margin-bottom: var(--space-4);
+          padding: var(--space-3);
+          color: var(--color-fg-muted);
+          font-family: var(--font-mono);
+          font-size: var(--fs-sm);
         }
       `}</style>
-    </ul>
+    </div>
   );
 }
