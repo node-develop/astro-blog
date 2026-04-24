@@ -39,9 +39,16 @@ interface RowProps {
   index: number;
   onToggleHidden: (item: PostListItem) => void;
   onTogglePinned: (item: PostListItem) => void;
+  onDelete: (item: PostListItem) => Promise<void>;
 }
 
-function SortableRow({ item, index, onToggleHidden, onTogglePinned }: RowProps): React.JSX.Element {
+function SortableRow({
+  item,
+  index,
+  onToggleHidden,
+  onTogglePinned,
+  onDelete,
+}: RowProps): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.slug,
   });
@@ -95,6 +102,18 @@ function SortableRow({ item, index, onToggleHidden, onTogglePinned }: RowProps):
           >
             {item.pinned ? "pinned" : "pin"}
           </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(item);
+            }}
+            className="post-list__delete"
+            aria-label={`Удалить "${item.title}"`}
+          >
+            удалить
+          </button>
         </div>
       </div>
     </li>
@@ -130,6 +149,22 @@ export default function PostList({ initial }: Props): React.JSX.Element {
     setItems(next);
     const res = await actions.posts.setPinned({ slug: item.slug, pinned: !item.pinned });
     if (res.error) setItems(previous);
+  }
+
+  async function handleDelete(item: PostListItem): Promise<void> {
+    if (
+      !confirm(
+        `Удалить «${item.title}»? Файл ${item.slug}.md будет удалён, revision-история сохранится.`,
+      )
+    )
+      return;
+    const previous = items;
+    const next = items.filter((i) => i.slug !== item.slug);
+    setItems(next);
+    const res = await actions.posts.delete({ slug: item.slug });
+    if (res.error) {
+      setItems(previous);
+    }
   }
 
   async function handleDragEnd(event: DragEndEvent): Promise<void> {
@@ -175,6 +210,7 @@ export default function PostList({ initial }: Props): React.JSX.Element {
                 index={index}
                 onToggleHidden={toggleHidden}
                 onTogglePinned={togglePinned}
+                onDelete={handleDelete}
               />
             ))}
           </ul>
@@ -252,6 +288,21 @@ export default function PostList({ initial }: Props): React.JSX.Element {
         .post-list__toggle--accent {
           color: var(--color-accent);
           border-color: var(--color-accent);
+        }
+        .post-list__delete {
+          font-family: var(--font-mono);
+          font-size: var(--fs-xs);
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--color-fg-subtle);
+          padding: 1px 6px;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          margin-left: auto;
+        }
+        .post-list__delete:hover {
+          color: var(--color-danger);
+          border-color: var(--color-danger);
         }
         .post-list__error {
           margin-bottom: var(--space-4);

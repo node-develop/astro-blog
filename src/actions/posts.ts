@@ -1,13 +1,14 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { eq } from "drizzle-orm";
+import { unlink } from "node:fs/promises";
 import { db } from "~/lib/db";
 import { postsMeta } from "~/lib/db/schema";
-import { reorderMeta, ensureMeta } from "~/lib/db/repo/posts-meta";
+import { reorderMeta, ensureMeta, deleteMeta } from "~/lib/db/repo/posts-meta";
 import { appendRevision } from "~/lib/db/repo/revisions";
 import { serializeFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
-import { POSTS_DIR } from "~/lib/fs/paths";
+import { POSTS_DIR, resolveSafe } from "~/lib/fs/paths";
 
 function assertAdmin(user: { role?: string | null } | null | undefined): void {
   if (!user || (user.role !== "admin" && user.role !== "editor")) {
@@ -114,6 +115,23 @@ export const posts = {
       }
 
       return { ok: true as const, revisionId: revision.id, order: meta.order };
+    },
+  }),
+
+  delete: defineAction({
+    input: z.object({ slug: z.string().min(1) }),
+    handler: async ({ slug }, context) => {
+      assertAdmin(context.locals.user as { role?: string | null } | null);
+      for (const ext of [".md", ".mdx"]) {
+        const target = resolveSafe(POSTS_DIR, `${slug}${ext}`);
+        try {
+          await unlink(target);
+        } catch (err) {
+          if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+        }
+      }
+      await deleteMeta(slug);
+      return { ok: true as const };
     },
   }),
 };
