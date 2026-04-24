@@ -1,5 +1,18 @@
 /// <reference types="astro/client" />
 
+declare module "probe-image-size/sync.js" {
+  interface ProbeResult {
+    width: number;
+    height: number;
+    type: string;
+    mime: string;
+    wUnits: string;
+    hUnits: string;
+  }
+  function probe(buf: Buffer): ProbeResult | null;
+  export default probe;
+}
+
 declare namespace App {
   interface Locals {
     user: {
