@@ -15,6 +15,10 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // We keep `pnpm dev` because Astro 5 enforces CSRF-style origin checks on
+  // form POSTs in preview mode that admin tests rely on bypassing. global-setup
+  // ensures dist/client/pagefind is built and symlinked into public/pagefind so
+  // the ⌘K palette can fetch /pagefind/pagefind.js via the dev static handler.
   webServer: process.env.CI
     ? undefined
     : {

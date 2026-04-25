@@ -44,3 +44,6 @@ CLAUDE.local.md
 
 # Uploaded media — persistent volume in prod, local-only in dev
 public/uploads/
+
+# Pagefind index symlinked from dist/client/pagefind by tests/e2e/global-setup.ts
+public/pagefind
