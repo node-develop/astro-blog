@@ -3,10 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  // File-mutation tests (create/edit/delete posts) trigger Astro HMR restarts
+  // which abort concurrent connections — run sequentially everywhere.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 2 : 1,
+  workers: 1,
   reporter: process.env.CI ? "github" : "html",
   use: {
     baseURL: process.env.BASE_URL ?? "http://localhost:4321",

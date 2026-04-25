@@ -46,4 +46,13 @@ test("admin uploads an image and attaches it as post cover", async ({ page }) =>
   await page.getByRole("button", { name: /сохранить/i }).click();
   await saveResponsePromise;
   await expect(page.locator(".editor-shell__hint")).toBeVisible({ timeout: 10_000 });
+
+  // Cleanup: remove the cover so the post file stays clean for subsequent runs.
+  await page.getByRole("button", { name: /убрать/i }).click();
+  const cleanupResponse = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
+    timeout: 15_000,
+  });
+  await page.getByRole("button", { name: /сохранить/i }).click();
+  await cleanupResponse;
+  await expect(page.locator(".editor-shell__hint")).toBeVisible({ timeout: 10_000 });
 });

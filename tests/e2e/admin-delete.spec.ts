@@ -18,18 +18,12 @@ test("admin creates and then deletes a post", async ({ page }) => {
   await page.locator(".editor-shell").waitFor({ state: "visible" });
   const slug = `e2edelete${Date.now()}`;
   const slugInput = page.locator('input[type="text"]').first();
-  await slugInput.click();
-  await slugInput.pressSequentially(slug, { delay: 20 });
+  await slugInput.fill(slug);
   await expect(slugInput).toHaveValue(slug);
 
-  await page.locator('input[type="text"]').nth(1).click({ clickCount: 3 });
-  await page.locator('input[type="text"]').nth(1).pressSequentially("Delete me", { delay: 10 });
+  await page.locator('input[type="text"]').nth(1).fill("Delete me");
 
-  await page.locator("textarea").first().click();
-  await page
-    .locator("textarea")
-    .first()
-    .pressSequentially("This post is about to be deleted.", { delay: 10 });
+  await page.locator("textarea").first().fill("This post is about to be deleted.");
 
   const saveResponse = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
     timeout: 15_000,
@@ -42,7 +36,11 @@ test("admin creates and then deletes a post", async ({ page }) => {
   await page.goto("/admin/posts");
   const row = page.locator(".post-list__item", { hasText: "Delete me" });
   page.on("dialog", (d) => d.accept());
+  const deleteResponse = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
+    timeout: 15_000,
+  });
   await row.getByRole("button", { name: /удалить/i }).click();
+  await deleteResponse;
 
   await expect(row).toHaveCount(0, { timeout: 5_000 });
   const files = await readdir(join(process.cwd(), "src/content/posts"));

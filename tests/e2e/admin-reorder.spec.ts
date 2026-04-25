@@ -25,13 +25,16 @@ async function dragRowDown(page: Page, fromIndex: number): Promise<void> {
   const startX = dragBox.x + dragBox.width / 2;
   const startY = dragBox.y + dragBox.height / 2;
   const endX = dropBox.x + dropBox.width / 2;
-  const endY = dropBox.y + dropBox.height + 4; // slightly below drop target
+  const endY = dropBox.y + dropBox.height / 2; // center of drop target row
 
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  // Slow move to trigger dnd-kit pointer sensor (requires 5px activation distance)
-  await page.mouse.move(startX, startY + 5, { steps: 3 });
-  await page.mouse.move(endX, endY, { steps: 20 });
+  // Brief pause so dnd-kit's pointer sensor registers the press before movement.
+  await page.waitForTimeout(50);
+  // Slow move to trigger dnd-kit pointer sensor (requires 5px activation distance).
+  await page.mouse.move(startX, startY + 3, { steps: 5 });
+  await page.mouse.move(startX, startY + 8, { steps: 5 });
+  await page.mouse.move(endX, endY, { steps: 30 });
   await page.mouse.up();
 }
 
@@ -41,33 +44,62 @@ test("admin reorder persists across refresh and reflects on public blog", async 
 
   const rows = page.locator(".post-list__item");
   await expect(rows.first()).toBeVisible();
-  const firstTitleBefore = await rows.nth(0).locator(".post-list__title").innerText();
-  const secondTitleBefore = await rows.nth(1).locator(".post-list__title").innerText();
 
-  // Drag first row down by one.
-  await dragRowDown(page, 0);
+  // The admin list may start with pinned/hidden posts (e.g. hello-world, 01-introduction).
+  // We need two consecutive rows that are BOTH visible in the public blog (not hidden,
+  // not pinned — so their relative order determines their rank on /blog).
+  // Scan rows for the first non-pinned pair by checking the "pinned" toggle button state.
+  const rowCount = await rows.count();
+  let firstIdx = -1;
+  for (let i = 0; i + 1 < rowCount; i++) {
+    const row = rows.nth(i);
+    // A pinned row has the accent-coloured toggle; aria-pressed="true" indicates pinned.
+    const isPinned = (await row.locator(".post-list__toggle--accent").count()) > 0;
+    const nextRow = rows.nth(i + 1);
+    const nextIsPinned = (await nextRow.locator(".post-list__toggle--accent").count()) > 0;
+    if (!isPinned && !nextIsPinned) {
+      firstIdx = i;
+      break;
+    }
+  }
+  if (firstIdx < 0) throw new Error("Could not find two consecutive non-pinned rows");
+
+  const firstTitle = await rows.nth(firstIdx).locator(".post-list__title").innerText();
+  const secondTitle = await rows
+    .nth(firstIdx + 1)
+    .locator(".post-list__title")
+    .innerText();
+
+  // Drag firstIdx down by one.
+  await dragRowDown(page, firstIdx);
 
   // Wait for the save status element to appear then disappear.
-  await expect(page.locator(".post-list__status")).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator(".post-list__status")).toBeVisible({ timeout: 8_000 });
   await expect(page.locator(".post-list__status")).toHaveCount(0, { timeout: 10_000 });
 
-  // Verify optimistic UI update: titles should be swapped already.
-  await expect(rows.nth(0).locator(".post-list__title")).toHaveText(secondTitleBefore);
-  await expect(rows.nth(1).locator(".post-list__title")).toHaveText(firstTitleBefore);
+  // Verify optimistic UI update: titles should be swapped.
+  await expect(rows.nth(firstIdx).locator(".post-list__title")).toHaveText(secondTitle);
+  await expect(rows.nth(firstIdx + 1).locator(".post-list__title")).toHaveText(firstTitle);
 
   // Refresh and verify the new order persisted in the DB.
   await page.reload();
-  await expect(rows.nth(0).locator(".post-list__title")).toHaveText(secondTitleBefore);
-  await expect(rows.nth(1).locator(".post-list__title")).toHaveText(firstTitleBefore);
+  await expect(rows.nth(firstIdx).locator(".post-list__title")).toHaveText(secondTitle);
+  await expect(rows.nth(firstIdx + 1).locator(".post-list__title")).toHaveText(firstTitle);
 
-  // Public list reflects it.
+  // Public list reflects it: secondTitle is now before firstTitle.
   await page.goto("/blog");
   const publicTitles = page.locator(".list__post-title");
-  await expect(publicTitles.nth(0)).toHaveText(secondTitleBefore);
+  // Find both titles on the page and verify secondTitle comes first.
+  const allTitles = await publicTitles.allInnerTexts();
+  const secondPos = allTitles.indexOf(secondTitle);
+  const firstPos = allTitles.indexOf(firstTitle);
+  expect(secondPos).toBeGreaterThanOrEqual(0);
+  expect(firstPos).toBeGreaterThanOrEqual(0);
+  expect(secondPos).toBeLessThan(firstPos);
 
-  // Cleanup: restore original order.
+  // Cleanup: restore original order by dragging back.
   await page.goto("/admin/posts");
-  await dragRowDown(page, 0);
-  await expect(page.locator(".post-list__status")).toBeVisible({ timeout: 5_000 });
+  await dragRowDown(page, firstIdx);
+  await expect(page.locator(".post-list__status")).toBeVisible({ timeout: 8_000 });
   await expect(page.locator(".post-list__status")).toHaveCount(0, { timeout: 10_000 });
 });

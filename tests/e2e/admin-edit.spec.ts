@@ -37,8 +37,7 @@ test("admin edits a post, sees revision, restores prior version", async ({ page 
   const titleInput = page.locator('input[type="text"]').first();
   const original = await titleInput.inputValue();
   const modified = `${original} [edited]`;
-  await titleInput.click({ clickCount: 3 });
-  await titleInput.pressSequentially(modified, { delay: 10 });
+  await titleInput.fill(modified);
   await expect(titleInput).toHaveValue(modified);
 
   const saveResponse1 = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
@@ -71,8 +70,7 @@ test("admin edits a post, sees revision, restores prior version", async ({ page 
   const current = await titleInput2.inputValue();
   const cleaned = current.replace(/ \[edited\]$/, "");
   if (cleaned !== current) {
-    await titleInput2.click({ clickCount: 3 });
-    await titleInput2.pressSequentially(cleaned, { delay: 10 });
+    await titleInput2.fill(cleaned);
     await expect(titleInput2).toHaveValue(cleaned);
     const saveResponse2 = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
       timeout: 15_000,

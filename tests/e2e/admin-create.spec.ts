@@ -17,23 +17,17 @@ test("admin creates a new post from scratch", async ({ page }) => {
   const slug = `e2enew${Date.now()}`;
   // Slug is the FIRST input on the new-post page (rendered because slug prop is null).
   const slugInput = page.locator('input[type="text"]').first();
-  // Use pressSequentially to fire keyboard events React can observe.
-  await slugInput.click();
-  await slugInput.pressSequentially(slug, { delay: 20 });
+  await slugInput.fill(slug);
   // Confirm React state reflects the value.
   await expect(slugInput).toHaveValue(slug);
 
   // Title comes next — the second text input.
   const titleInput = page.locator('input[type="text"]').nth(1);
-  await titleInput.click();
-  await titleInput.pressSequentially("E2E Created Post", { delay: 10 });
+  await titleInput.fill("E2E Created Post");
 
   // Description is the first textarea.
   const descInput = page.locator("textarea").first();
-  await descInput.click();
-  await descInput.pressSequentially("Description for e2e created post testing purposes.", {
-    delay: 10,
-  });
+  await descInput.fill("Description for e2e created post testing purposes.");
 
   const saveResponsePromise = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
     timeout: 15_000,
