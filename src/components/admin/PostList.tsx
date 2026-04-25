@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -37,6 +37,7 @@ interface Props {
 interface RowProps {
   item: PostListItem;
   index: number;
+  dragDisabled?: boolean;
   onToggleHidden: (item: PostListItem) => void;
   onTogglePinned: (item: PostListItem) => void;
   onDelete: (item: PostListItem) => Promise<void>;
@@ -45,6 +46,7 @@ interface RowProps {
 function SortableRow({
   item,
   index,
+  dragDisabled = false,
   onToggleHidden,
   onTogglePinned,
   onDelete,
@@ -57,7 +59,7 @@ function SortableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.slug });
+  } = useSortable({ id: item.slug, disabled: dragDisabled });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -70,6 +72,7 @@ function SortableRow({
         type="button"
         className="post-list__handle"
         aria-label={`Перетащить "${item.title}"`}
+        disabled={dragDisabled}
         {...attributes}
         {...listeners}
       >
@@ -132,6 +135,8 @@ export default function PostList({ initial }: Props): React.JSX.Element {
   const [items, setItems] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filteredSlugs, setFilteredSlugs] = useState<readonly string[] | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -139,6 +144,22 @@ export default function PostList({ initial }: Props): React.JSX.Element {
   );
 
   const ids = useMemo(() => items.map((i) => i.slug), [items]);
+
+  useEffect(() => {
+    if (query.trim().length === 0) {
+      setFilteredSlugs(null);
+      return;
+    }
+    const handle = window.setTimeout(async () => {
+      const { data, error: actionError } = await actions.posts.search({ query });
+      if (actionError || !data?.ok) return;
+      setFilteredSlugs(data.hits.map((h) => h.slug));
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [query]);
+
+  const filterActive = filteredSlugs !== null;
+  const filterSet = useMemo(() => (filteredSlugs ? new Set(filteredSlugs) : null), [filteredSlugs]);
 
   async function toggleHidden(item: PostListItem): Promise<void> {
     const previous = items;
@@ -196,8 +217,27 @@ export default function PostList({ initial }: Props): React.JSX.Element {
     }
   }
 
+  const visibleEntries = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => !filterSet || filterSet.has(item.slug));
+
   return (
     <div>
+      <div className="post-list__search">
+        <input
+          type="search"
+          placeholder="Поиск по заголовку, тегам, тексту…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Поиск постов"
+        />
+        {filterActive && (
+          <span className="post-list__search-status" aria-live="polite">
+            {visibleEntries.length} {visibleEntries.length === 1 ? "результат" : "результатов"} ·
+            перетаскивание выключено
+          </span>
+        )}
+      </div>
       {error && (
         <div role="alert" className="post-list__error">
           {error}
@@ -211,11 +251,12 @@ export default function PostList({ initial }: Props): React.JSX.Element {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <ul className="post-list">
-            {items.map((item, index) => (
+            {visibleEntries.map(({ item, index }) => (
               <SortableRow
                 key={item.slug}
                 item={item}
                 index={index}
+                dragDisabled={filterActive}
                 onToggleHidden={toggleHidden}
                 onTogglePinned={togglePinned}
                 onDelete={handleDelete}
@@ -226,6 +267,34 @@ export default function PostList({ initial }: Props): React.JSX.Element {
       </DndContext>
 
       <style>{`
+        .post-list__search {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          margin-bottom: var(--space-4);
+        }
+        .post-list__search input[type="search"] {
+          flex: 1;
+          padding: var(--space-2) var(--space-3);
+          background: var(--color-bg-elevated);
+          color: var(--color-fg);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md, 6px);
+          font: var(--fs-sm) / 1.4 var(--font-sans);
+        }
+        .post-list__search input[type="search"]:focus {
+          outline: none;
+          border-color: var(--color-accent);
+        }
+        .post-list__search-status {
+          font-family: var(--font-mono);
+          font-size: var(--fs-xs);
+          color: var(--color-fg-subtle);
+        }
+        .post-list__handle:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
         .post-list { list-style: none; padding: 0; margin: 0; }
         .post-list__item {
           display: grid;
