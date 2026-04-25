@@ -1,12 +1,34 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-const PAGES = ["/", "/blog", "/blog/02-context-and-cache"] as const;
+interface PageDef {
+  readonly path: string;
+  readonly auth: "public" | "admin";
+}
+
+const PAGES: readonly PageDef[] = [
+  { path: "/", auth: "public" },
+  { path: "/blog", auth: "public" },
+  { path: "/blog/02-context-and-cache", auth: "public" },
+  { path: "/admin/posts", auth: "admin" },
+  { path: "/admin/posts/new", auth: "admin" },
+  { path: "/admin/media", auth: "admin" },
+];
+
+async function loginAsAdmin(page: Page): Promise<void> {
+  await page.goto("/login");
+  await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
+  await page.locator('input[name="password"]').fill("e2e-admin-password");
+  await page.getByRole("button", { name: /войти/i }).click();
+  await expect(page).toHaveURL(/\/admin\/posts/);
+}
 
 test.describe("accessibility baseline", () => {
-  for (const path of PAGES) {
+  for (const { path, auth } of PAGES) {
     test(`no serious/critical a11y violations on ${path}`, async ({ page }) => {
+      if (auth === "admin") await loginAsAdmin(page);
       await page.goto(path);
+
       const result = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();
