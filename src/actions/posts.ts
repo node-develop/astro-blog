@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
 import { db } from "~/lib/db";
 import { postsMeta } from "~/lib/db/schema";
-import { reorderMeta, ensureMeta, deleteMeta } from "~/lib/db/repo/posts-meta";
+import { reorderMeta, ensureMeta, deleteMeta, setSearchVector } from "~/lib/db/repo/posts-meta";
 import { appendRevision } from "~/lib/db/repo/revisions";
 import { serializeFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
@@ -100,6 +100,13 @@ export const posts = {
         frontmatter: fmObject,
         body: input.body,
         authorId: user!.id,
+      });
+
+      // Step 1b: Update FTS vector (separate statement; cheap and idempotent).
+      await setSearchVector(input.slug, {
+        title: input.frontmatter.title,
+        tags: input.frontmatter.tags,
+        body: input.body,
       });
 
       // Step 2: Serialize + atomic file write.

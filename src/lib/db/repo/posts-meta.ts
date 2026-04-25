@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "~/lib/db";
 import { postsMeta, type PostMeta, type NewPostMeta } from "~/lib/db/schema";
+import { buildSearchVectorSql, type SearchVectorParts } from "~/lib/search/vector";
 
 export async function listAllMeta(): Promise<readonly PostMeta[]> {
   return db.select().from(postsMeta);
@@ -45,6 +46,13 @@ export async function reorderMeta(slugs: readonly string[]): Promise<void> {
         .where(eq(postsMeta.slug, slugs[i]!));
     }
   });
+}
+
+export async function setSearchVector(slug: string, parts: SearchVectorParts): Promise<void> {
+  await db
+    .update(postsMeta)
+    .set({ searchVector: buildSearchVectorSql(parts) as unknown as string })
+    .where(eq(postsMeta.slug, slug));
 }
 
 /**
