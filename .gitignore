@@ -41,3 +41,6 @@ CLAUDE.local.md
 
 # Visual companion brainstorm artifacts
 .superpowers/
+
+# Uploaded media — persistent volume in prod, local-only in dev
+public/uploads/
