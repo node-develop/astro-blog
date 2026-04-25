@@ -15,6 +15,7 @@ import { appendRevision } from "~/lib/db/repo/revisions";
 import { serializeFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { POSTS_DIR, resolveSafe } from "~/lib/fs/paths";
+import { schedulePagefindRebuild } from "~/lib/search/pagefind-rebuild";
 
 function assertAdmin(user: { role?: string | null } | null | undefined): void {
   if (!user || (user.role !== "admin" && user.role !== "editor")) {
@@ -127,6 +128,9 @@ export const posts = {
         };
       }
 
+      // Step 3: Schedule pagefind rebuild (no-op if dist/ is missing).
+      schedulePagefindRebuild(input.slug);
+
       return { ok: true as const, revisionId: revision.id, order: meta.order };
     },
   }),
@@ -144,6 +148,7 @@ export const posts = {
         }
       }
       await deleteMeta(slug);
+      schedulePagefindRebuild(slug);
       return { ok: true as const };
     },
   }),
