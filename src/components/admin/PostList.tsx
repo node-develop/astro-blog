@@ -49,20 +49,28 @@ function SortableRow({
   onTogglePinned,
   onDelete,
 }: RowProps): React.JSX.Element {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: item.slug,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.slug });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <li ref={setNodeRef} style={style} className="post-list__item" {...attributes}>
+    <li ref={setNodeRef} style={style} className="post-list__item">
       <button
+        ref={setActivatorNodeRef}
         type="button"
         className="post-list__handle"
         aria-label={`Перетащить "${item.title}"`}
+        {...attributes}
         {...listeners}
       >
         ⋮⋮

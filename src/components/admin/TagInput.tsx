@@ -49,6 +49,7 @@ export default function TagInput({ value, onChange }: Props): React.JSX.Element 
         onKeyDown={onKeyDown}
         onBlur={commit}
         placeholder="Тег и Enter"
+        aria-label="Новый тег"
       />
       <style>{`
         .tag-input {

@@ -61,12 +61,12 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
           />
         </label>
       </div>
-      <div className="fm-form__field">
-        <span>Теги</span>
+      <div className="fm-form__field" role="group" aria-label="Теги">
+        <span aria-hidden="true">Теги</span>
         <TagInput value={value.tags} onChange={(next) => set("tags", next)} />
       </div>
-      <div className="fm-form__field">
-        <span>Обложка</span>
+      <div className="fm-form__field" role="group" aria-label="Обложка">
+        <span aria-hidden="true">Обложка</span>
         <MediaPicker value={value.cover} onChange={(path) => set("cover", path)} />
       </div>
       <label className="fm-form__field">
