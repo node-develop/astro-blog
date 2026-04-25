@@ -10,16 +10,15 @@ let pagefindPromise: Promise<PagefindApi> | null = null;
 
 export function loadPagefind(): Promise<PagefindApi> {
   if (pagefindPromise) return pagefindPromise;
-  // The URL is absolute and resolved by the browser at runtime — TS can't
-  // statically locate it, hence the suppression. `@vite-ignore` keeps Vite's
-  // import-analysis from trying to bundle it.
-  pagefindPromise = (
-    import(
-      /* @vite-ignore */
-      // @ts-expect-error — runtime-resolved absolute URL, no module type
-      "/pagefind/pagefind.js"
-    ) as Promise<PagefindApi>
-  )
+  // The Pagefind bundle is emitted into `dist/client/pagefind/` by the
+  // `pagefind` CLI after `astro build` and served at the absolute URL
+  // `/pagefind/pagefind.js`. Rollup cannot resolve it at build time, and
+  // `@vite-ignore` only quiets dev warnings — so we hide the import behind
+  // `new Function()` to make it fully opaque to bundlers.
+  const dynamicImport = new Function("url", "return import(url)") as (
+    url: string,
+  ) => Promise<PagefindApi>;
+  pagefindPromise = dynamicImport("/pagefind/pagefind.js")
     .then((mod) => {
       window.__pagefind = mod;
       return mod;
