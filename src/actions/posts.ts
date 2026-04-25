@@ -4,7 +4,13 @@ import { eq } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
 import { db } from "~/lib/db";
 import { postsMeta } from "~/lib/db/schema";
-import { reorderMeta, ensureMeta, deleteMeta, setSearchVector } from "~/lib/db/repo/posts-meta";
+import {
+  reorderMeta,
+  ensureMeta,
+  deleteMeta,
+  setSearchVector,
+  searchPostsMeta,
+} from "~/lib/db/repo/posts-meta";
 import { appendRevision } from "~/lib/db/repo/revisions";
 import { serializeFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
@@ -139,6 +145,17 @@ export const posts = {
       }
       await deleteMeta(slug);
       return { ok: true as const };
+    },
+  }),
+
+  search: defineAction({
+    input: z.object({
+      query: z.string().max(200),
+    }),
+    handler: async ({ query }, context) => {
+      assertAdmin(context.locals.user as { role?: string | null } | null);
+      const hits = await searchPostsMeta(query, 50);
+      return { ok: true as const, hits };
     },
   }),
 };
