@@ -55,6 +55,25 @@ export async function setSearchVector(slug: string, parts: SearchVectorParts): P
     .where(eq(postsMeta.slug, slug));
 }
 
+export interface SearchHit {
+  readonly slug: string;
+  readonly rank: number;
+}
+
+export async function searchPostsMeta(query: string, limit = 20): Promise<readonly SearchHit[]> {
+  if (query.trim().length === 0) return [];
+  const rows = await db.execute<{ slug: string; rank: number }>(sql`
+    SELECT slug,
+           ts_rank_cd(search_vector, websearch_to_tsquery('simple', unaccent(${query}))) AS rank
+    FROM posts_meta
+    WHERE search_vector @@ websearch_to_tsquery('simple', unaccent(${query}))
+    ORDER BY rank DESC
+    LIMIT ${limit}
+  `);
+  const list = rows as unknown as { slug: string; rank: number }[];
+  return list.map((r) => ({ slug: r.slug, rank: Number(r.rank) }));
+}
+
 /**
  * Ensures a posts_meta row exists for `slug`. If missing, inserts with
  * order = max + 1 in a single transaction to avoid races. Returns the row.
