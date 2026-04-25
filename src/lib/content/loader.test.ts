@@ -14,7 +14,14 @@ function fakeEntry(id: string): CollectionEntry<"posts"> {
 }
 
 function fakeMeta(slug: string, order: number, pinned = false): PostMeta {
-  return { slug, order, pinned, hiddenFromList: false, updatedAt: new Date() };
+  return {
+    slug,
+    order,
+    pinned,
+    hiddenFromList: false,
+    searchVector: null,
+    updatedAt: new Date(),
+  };
 }
 
 describe("defaultMetaFor", () => {

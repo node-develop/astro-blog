@@ -10,7 +10,12 @@ import {
   jsonb,
   serial,
   primaryKey,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType: () => "tsvector",
+});
 
 // ── Better-Auth tables (unchanged) ────────────────────────────
 
@@ -96,6 +101,7 @@ export const postsMeta = pgTable(
     order: integer("order").notNull(),
     pinned: boolean("pinned").notNull().default(false),
     hiddenFromList: boolean("hidden_from_list").notNull().default(false),
+    searchVector: tsvector("search_vector"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

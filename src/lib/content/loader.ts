@@ -14,6 +14,7 @@ export function defaultMetaFor(slug: string): PostMeta {
     order: Number.MAX_SAFE_INTEGER,
     pinned: false,
     hiddenFromList: true,
+    searchVector: null,
     updatedAt: new Date(0),
   };
 }
