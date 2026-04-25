@@ -11,7 +11,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build && pnpm pagefind:rebuild",
-    "pagefind:rebuild": "pagefind --site dist --output-subdir pagefind",
+    "pagefind:rebuild": "pagefind --site dist/client --output-subdir pagefind",
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "astro sync && astro check && tsc --noEmit",
