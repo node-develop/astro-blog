@@ -55,44 +55,24 @@ allowed-tools: ["Read", "Grep", "Glob"]
 
 ## Формат отчёта
 
-````
-# UI design review — <зона>
+Структура (заголовки markdown, без обёрток):
 
-## Сводка
-- 🟢 Всё ок: <N>
-- 🟡 Warnings: <N>
-- 🔴 Failures: <N>
+**`# UI design review — <зона>`**
 
-## Critical
-### `src/components/Foo.astro:42`
-**Что:** color-contrast 3.1:1 (требуется 4.5:1).
-**Цитата:**
-```css
-color: var(--color-fg-subtle); background: var(--color-bg-elevated);
-````
+**`## Сводка`** — три счётчика: 🟢 pass, 🟡 warn, 🔴 fail.
 
-**Фикс:** заменить на `var(--color-fg-muted)` (4.7:1) или поднять контраст самого `--color-fg-subtle`. Делегировать → `frontender` / `design-system-tokens`.
+**`## Critical`** — каждый пункт:
 
-## Important
+- Заголовок: `### \`<файл>:<строка>\``
+- Поле **Что:** одно предложение про нарушение, с метрикой если применимо (`color-contrast 3.1:1, требуется 4.5:1`).
+- Поле **Цитата:** короткий фрагмент кода в fenced-блоке `css`/`astro`/`tsx`.
+- Поле **Фикс:** конкретное действие + кому делегировать (`→ frontender` или `→ design-system-tokens`).
 
-### `src/layouts/BaseLayout.astro:78`
+**`## Important`** — те же поля, severity ниже.
 
-**Что:** Хардкод `padding: 14px 22px` — не из шкалы `--space-*`.
-**Фикс:** `padding: var(--space-3) var(--space-5)` (12 24) или ввести `--space-3-5` через `design-system-tokens`. Делегировать → `frontender`.
+**`## Nit`** — заголовок + одно предложение.
 
-## Nit
-
-### `src/components/Card.astro`
-
-**Что:** Используется `--shadow-lifted` для hover-карточки в списке. Обычно достаточно `--shadow-soft`.
-
-## Что прошло (✅)
-
-- Все цвета имеют dark counterpart.
-- Focus-visible виден на всех интерактивных элементах.
-- Motion использует `--dur-base` + `--ease-out`.
-
-```
+**`## Что прошло (✅)`** — буллет-список 3–5 ключевых пунктов, которые прошли (контраст, dark counterpart, motion, focus-visible). Подтверждает, что ревью реально проводилось, а не «всё гуд» по умолчанию.
 
 ## Принципы
 
@@ -100,4 +80,3 @@ color: var(--color-fg-subtle); background: var(--color-bg-elevated);
 - **Severity-honest.** Critical — реально ломает доступность/читаемость. Important — нарушение системы, но текущее значение работает. Nit — стилевая придирка.
 - **Не выдумывай токены.** Если предлагаешь использовать `--color-X`, сначала проверь, что он есть в `tokens.css`. Если нет — предложи добавить через `design-system-tokens`.
 - **Не делай работу `frontender`-а.** Ревью указывает что и где, но не пишет финальный код. Эскизы фиксов — в комментариях, не в файлах.
-```
