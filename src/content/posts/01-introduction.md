@@ -1,8 +1,12 @@
 ---
 title: "01. Что такое Claude Code: harness, agent loop и ваше место в нём"
-description: "Перед тем как разбирать `CLAUDE.md`, skills и subagents, надо договориться о терминах. Иначе обсуждение «кэша» и «контекста» превращается в спор про разные сущности."
+description: >-
+  Перед тем как разбирать `CLAUDE.md`, skills и subagents, надо договориться о терминах. Иначе обсуждение «кэша» и
+  «контекста» превращается в спор про разные сущности.
 pubDate: 2026-04-23
-tags: ["claude-code", "guide"]
+tags:
+  - claude-code
+  - guide
 draft: false
 ---
 

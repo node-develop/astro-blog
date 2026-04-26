@@ -1,0 +1,38 @@
+---
+export const prerender = false;
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import MediaPage from "~/components/admin/MediaPage";
+import { listMedia } from "~/lib/db/repo/media";
+
+const items = (await listMedia()).map((a) => ({
+  id: a.id,
+  path: a.path,
+  originalName: a.originalName,
+  mimeType: a.mimeType,
+  width: a.width,
+  height: a.height,
+  byteSize: a.byteSize,
+  uploadedAt: a.uploadedAt.toISOString(),
+}));
+---
+
+<AdminLayout title="Медиа">
+  <header class="admin-page-header">
+    <h1>Медиа</h1>
+  </header>
+  <MediaPage client:load initial={items} />
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-5);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+</style>

@@ -20,10 +20,11 @@
   },
   "include": [
     "src/**/*",
+    "scripts/**/*",
     ".astro/**/*.d.ts",
     "drizzle.config.ts",
     "astro.config.ts",
     "vitest.config.ts"
   ],
-  "exclude": ["dist", "node_modules", "tests/e2e/**/*.spec.ts"]
+  "exclude": ["dist", "node_modules", "tests/e2e/**/*.spec.ts", "tests/e2e/global-setup.ts"]
 }

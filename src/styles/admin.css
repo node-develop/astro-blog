@@ -1,0 +1,19 @@
+.post-editor .cm-editor {
+  height: 70vh;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  background: var(--color-bg);
+}
+.post-editor .cm-content {
+  padding: var(--space-4);
+}
+.post-editor .cm-scroller {
+  background: var(--color-bg);
+}
+.post-editor .cm-gutters {
+  background: var(--color-bg-elevated);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-fg-subtle);
+}

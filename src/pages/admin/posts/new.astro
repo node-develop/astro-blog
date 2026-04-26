@@ -1,0 +1,41 @@
+---
+export const prerender = false;
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import EditorShell from "~/components/admin/EditorShell";
+
+const today = new Date().toISOString().slice(0, 10);
+const initial = {
+  frontmatter: {
+    title: "",
+    description: "",
+    pubDate: today,
+    updatedDate: null,
+    tags: [],
+    draft: true,
+    cover: null,
+    coverAlt: null,
+  },
+  body: "# Заголовок\n\nТело статьи.\n",
+};
+---
+
+<AdminLayout title="Новая статья">
+  <header class="admin-page-header">
+    <h1>Новая статья</h1>
+  </header>
+  <EditorShell client:load slug={null} initial={initial} />
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-5);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+</style>

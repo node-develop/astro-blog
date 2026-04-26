@@ -7,7 +7,17 @@ import {
   index,
   integer,
   pgEnum,
+  jsonb,
+  serial,
+  primaryKey,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType: () => "tsvector",
+});
+
+// ── Better-Auth tables (unchanged) ────────────────────────────
 
 export const userRole = pgEnum("user_role", ["admin", "editor", "reader"]);
 
@@ -78,32 +88,82 @@ export const verifications = pgTable(
   (t) => ({ identifierIdx: index("verifications_identifier_idx").on(t.identifier) }),
 );
 
-export const posts = pgTable(
-  "posts",
+// ── CMS tables (new in Plan 2) ────────────────────────────────
+
+/**
+ * Mutable metadata layered over the markdown file for each post.
+ * slug = filename (without extension) in src/content/posts/.
+ */
+export const postsMeta = pgTable(
+  "posts_meta",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    slug: text("slug").notNull().unique(),
-    title: text("title").notNull(),
-    description: text("description").notNull(),
-    contentMdx: text("content_mdx").notNull(),
-    tags: text("tags").array().notNull().default([]),
-    published: boolean("published").notNull().default(false),
-    authorId: uuid("author_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "restrict" }),
-    views: integer("views").notNull().default(0),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    slug: text("slug").primaryKey(),
+    order: integer("order").notNull(),
+    pinned: boolean("pinned").notNull().default(false),
+    hiddenFromList: boolean("hidden_from_list").notNull().default(false),
+    searchVector: tsvector("search_vector"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-    publishedAt: timestamp("published_at", { withTimezone: true }),
   },
   (t) => ({
-    slugIdx: index("posts_slug_idx").on(t.slug),
-    publishedIdx: index("posts_published_idx").on(t.published, t.publishedAt),
-    authorIdx: index("posts_author_idx").on(t.authorId),
+    orderIdx: index("posts_meta_order_idx").on(t.order),
+    pinnedIdx: index("posts_meta_pinned_idx").on(t.pinned),
   }),
 );
 
+/**
+ * Immutable snapshots of a post's frontmatter + body, produced on every
+ * create/update. Triggers prune to the most recent 50 per slug.
+ */
+export const postRevisions = pgTable(
+  "post_revisions",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull(),
+    frontmatter: jsonb("frontmatter").notNull(),
+    body: text("body").notNull(),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugCreatedIdx: index("post_revisions_slug_created_idx").on(t.slug, t.createdAt),
+  }),
+);
+
+/**
+ * Metadata for uploaded media. File bytes live under public/uploads/.
+ */
+export const mediaAssets = pgTable(
+  "media_assets",
+  {
+    id: serial("id").primaryKey(),
+    path: text("path").notNull().unique(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    byteSize: integer("byte_size").notNull(),
+    uploadedById: uuid("uploaded_by_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ uploadedAtIdx: index("media_assets_uploaded_at_idx").on(t.uploadedAt) }),
+);
+
+// ── Type aliases ──────────────────────────────────────────────
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Post = typeof posts.$inferSelect;
-export type NewPost = typeof posts.$inferInsert;
+
+export type PostMeta = typeof postsMeta.$inferSelect;
+export type NewPostMeta = typeof postsMeta.$inferInsert;
+
+export type PostRevision = typeof postRevisions.$inferSelect;
+export type NewPostRevision = typeof postRevisions.$inferInsert;
+
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+export type NewMediaAsset = typeof mediaAssets.$inferInsert;
+
+export { primaryKey };

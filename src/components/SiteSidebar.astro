@@ -1,5 +1,5 @@
 ---
-import { getPublishedPosts, parseSlugOrder } from "~/lib/posts/list";
+import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 
 interface Props {
   /** Slug of the currently-displayed post, if any — used for active highlight. */
@@ -7,12 +7,13 @@ interface Props {
 }
 
 const { activeSlug } = Astro.props;
-const posts = await getPublishedPosts();
+const posts = await getOrderedPosts();
 
 // Split into "guide series" (numeric slugs) and "other" so the sidebar can
 // group them visually — matches the structure of the existing content.
-const series = posts.filter((p) => parseSlugOrder(p.id) !== null);
-const extras = posts.filter((p) => parseSlugOrder(p.id) === null);
+const NUMERIC_SLUG = /^\d{2}[-_]/;
+const series = posts.filter((p: PostWithMeta) => NUMERIC_SLUG.test(p.entry.id));
+const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id));
 ---
 
 <nav class="sidebar">
@@ -21,18 +22,17 @@ const extras = posts.filter((p) => parseSlugOrder(p.id) === null);
       <section class="sidebar__section">
         <h2 class="sidebar__label">Claude Code Guide</h2>
         <ol class="sidebar__list" reversed={false}>
-          {series.map((post) => {
-            const n = parseSlugOrder(post.id);
-            const isActive = post.id === activeSlug;
+          {series.map((p: PostWithMeta) => {
+            const isActive = p.entry.id === activeSlug;
             return (
               <li>
                 <a
-                  href={`/blog/${post.id}`}
+                  href={`/blog/${p.entry.id}`}
                   class="sidebar__link"
                   aria-current={isActive ? "page" : undefined}
                 >
-                  <span class="sidebar__num">{n !== null ? String(n).padStart(2, "0") : ""}</span>
-                  <span class="sidebar__title">{post.data.title}</span>
+                  <span class="sidebar__num">{String(p.meta.order).padStart(2, "0")}</span>
+                  <span class="sidebar__title">{p.entry.data.title}</span>
                 </a>
               </li>
             );
@@ -46,14 +46,14 @@ const extras = posts.filter((p) => parseSlugOrder(p.id) === null);
       <section class="sidebar__section">
         <h2 class="sidebar__label">Другие статьи</h2>
         <ul class="sidebar__list">
-          {extras.map((post) => (
+          {extras.map((p: PostWithMeta) => (
             <li>
               <a
-                href={`/blog/${post.id}`}
+                href={`/blog/${p.entry.id}`}
                 class="sidebar__link"
-                aria-current={post.id === activeSlug ? "page" : undefined}
+                aria-current={p.entry.id === activeSlug ? "page" : undefined}
               >
-                <span class="sidebar__title">{post.data.title}</span>
+                <span class="sidebar__title">{p.entry.data.title}</span>
               </a>
             </li>
           ))}

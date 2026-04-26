@@ -4,15 +4,53 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 
 if (Astro.locals.user) return Astro.redirect("/admin");
 const next = Astro.url.searchParams.get("next") ?? "/admin";
+
+// Handle form POST: proxy to Better-Auth and redirect on success.
+let loginError: string | null = null;
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const email = form.get("email") as string;
+  const password = form.get("password") as string;
+  const callbackURL = Astro.url.searchParams.get("callbackURL") ?? "/admin";
+
+  const apiURL = new URL("/api/auth/sign-in/email", Astro.url.origin);
+  const res = await fetch(apiURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Forward cookies from the browser so Better-Auth can locate an existing session.
+      cookie: Astro.request.headers.get("cookie") ?? "",
+      origin: Astro.url.origin,
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (res.ok) {
+    // Forward Set-Cookie headers from Better-Auth to the browser.
+    const setCookies = res.headers.getSetCookie
+      ? res.headers.getSetCookie()
+      : [res.headers.get("set-cookie") ?? ""].filter(Boolean);
+    const headers = new Headers({ Location: callbackURL });
+    for (const cookie of setCookies) {
+      headers.append("Set-Cookie", cookie);
+    }
+    return new Response(null, { status: 302, headers });
+  }
+
+  loginError = "Неверный email или пароль";
+}
 ---
 
 <BaseLayout title="Вход" description="Страница входа в админку">
   <h1 class="mb-6 text-3xl font-bold">Вход</h1>
-  <form
-    method="post"
-    action={`/api/auth/sign-in/email?callbackURL=${encodeURIComponent(next)}`}
-    class="space-y-4"
-  >
+  <form method="post" action={`/login?callbackURL=${encodeURIComponent(next)}`} class="space-y-4">
+    {
+      loginError && (
+        <p class="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/40 dark:text-red-300">
+          {loginError}
+        </p>
+      )
+    }
     <label class="block">
       <span class="text-sm font-medium">Email</span>
       <input

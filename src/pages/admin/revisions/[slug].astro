@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import RevisionList from "~/components/admin/RevisionList";
+import { listRevisionsBySlug } from "~/lib/db/repo/revisions";
+
+const { slug } = Astro.params as { slug: string };
+const raw = await listRevisionsBySlug(slug);
+const items = raw.map((r) => ({
+  id: r.id,
+  slug: r.slug,
+  body: r.body,
+  createdAt: r.createdAt.toISOString(),
+  authorId: r.authorId,
+}));
+---
+
+<AdminLayout title={`История · ${slug}`}>
+  <header class="admin-page-header">
+    <h1>История: <code>{slug}</code></h1>
+    <a href={`/admin/posts/${encodeURIComponent(slug)}`}>← К редактированию</a>
+  </header>
+  {
+    items.length === 0 ? (
+      <p>Нет сохранённых ревизий.</p>
+    ) : (
+      <RevisionList client:load slug={slug} items={items} />
+    )
+  }
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-5);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .admin-page-header a {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-accent);
+  }
+</style>
