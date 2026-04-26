@@ -19,6 +19,7 @@ describe("buildSearchVectorSql", () => {
     expect(text).toContain("'C'");
     expect(text).toContain("unaccent");
     expect(text).toContain("'simple'");
+    expect(text).toContain("'russian'");
   });
 
   it("handles empty tags array", () => {

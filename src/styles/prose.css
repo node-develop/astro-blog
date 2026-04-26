@@ -48,6 +48,7 @@
   font-size: var(--fs-sm);
 }
 
+/* .prose pre base styles are overridden by .code-block pre.astro-code below */
 .prose pre {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -59,6 +60,11 @@
   padding: 1px 6px;
   border-radius: var(--radius-sm);
   font-size: 0.9em;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
 }
 
 .prose a {
@@ -76,6 +82,117 @@
   border-left-width: 3px;
   padding-left: var(--space-4);
   color: var(--color-fg-muted);
+}
+
+/* ── Shiki dual-theme swap ────────────────────────────────────── */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark);
+    background-color: var(--shiki-dark-bg, transparent);
+  }
+}
+
+/* ── Code block container (variant B: craft left stripe) ─────── */
+.code-block {
+  position: relative;
+  margin: var(--space-5) 0;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-strong);
+  border-left: 3px solid var(--color-accent-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+/* Override .prose pre defaults when pre is inside .code-block */
+.code-block pre.astro-code {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-4) var(--space-5);
+  overflow-x: auto;
+}
+
+/* ── Code block header (shown when language is known) ────────── */
+.code-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.code-block__lang {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-fg-muted);
+}
+
+/* ── Copy button ─────────────────────────────────────────────── */
+.code-block__copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.code-block__copy:hover {
+  color: var(--color-fg);
+  background: color-mix(in srgb, var(--color-fg) 6%, transparent);
+}
+
+.code-block__copy:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.code-block__copy[data-state="copied"] {
+  color: var(--color-accent);
+}
+
+/* Floating copy button (no header — language unknown) */
+.code-block--floating > .code-block__copy {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  opacity: 0.5;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.code-block--floating:hover > .code-block__copy {
+  opacity: 1;
+}
+
+/* On touch devices — always visible */
+@media (hover: none) {
+  .code-block--floating > .code-block__copy {
+    opacity: 1;
+  }
 }
 
 /* Mermaid / KaTeX rendered elements inherit token-backed colors */

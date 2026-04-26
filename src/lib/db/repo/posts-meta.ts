@@ -62,11 +62,19 @@ export interface SearchHit {
 
 export async function searchPostsMeta(query: string, limit = 20): Promise<readonly SearchHit[]> {
   if (query.trim().length === 0) return [];
+  // Bilingual match: OR-combine `simple` (literal/EN) and `russian` (stemmed)
+  // tsqueries so a search for "скилл" matches stems "скиллы"/"скиллов",
+  // while "CLAUDE.md" still matches as a literal token.
   const rows = await db.execute<{ slug: string; rank: number }>(sql`
+    WITH q AS (
+      SELECT
+        websearch_to_tsquery('simple',  unaccent(${query})) AS q_simple,
+        websearch_to_tsquery('russian', unaccent(${query})) AS q_russian
+    )
     SELECT slug,
-           ts_rank_cd(search_vector, websearch_to_tsquery('simple', unaccent(${query}))) AS rank
-    FROM posts_meta
-    WHERE search_vector @@ websearch_to_tsquery('simple', unaccent(${query}))
+           ts_rank_cd(search_vector, q.q_simple || q.q_russian) AS rank
+    FROM posts_meta, q
+    WHERE search_vector @@ (q.q_simple || q.q_russian)
     ORDER BY rank DESC
     LIMIT ${limit}
   `);

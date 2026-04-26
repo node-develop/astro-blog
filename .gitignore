@@ -47,3 +47,4 @@ public/uploads/
 
 # Pagefind index symlinked from dist/client/pagefind by tests/e2e/global-setup.ts
 public/pagefind
+.gitnexus

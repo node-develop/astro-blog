@@ -20,11 +20,11 @@ draft: false
 
 ```mermaid
 flowchart LR
-  A[git pull] --> B[claude в корне репо]
-  B --> C[/cost вчерашний день]
-  C --> D[Просмотр TODO в TodoWrite]
-  D --> E[Уточнение задач у себя]
-  E --> F[Поехали]
+  A["git pull"] --> B["claude в корне репо"]
+  B --> C["/cost вчерашний день"]
+  C --> D["Просмотр TODO в TodoWrite"]
+  D --> E["Уточнение задач у себя"]
+  E --> F["Поехали"]
 ```
 
 📘 Конкретные шаги:

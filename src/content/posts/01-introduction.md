@@ -193,4 +193,4 @@ flowchart TB
 
 ---
 
-**Дальше →** [02. Контекстное окно и prompt cache](./02-context-and-cache.md)
+**Дальше →** [02. Контекстное окно и prompt cache](./02-context-and-cache)

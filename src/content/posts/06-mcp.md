@@ -118,8 +118,8 @@ flowchart TD
   proj[".mcp.json (в репо)<br/>командные MCP (амадеус, дуффел)"]
   local[".mcp.local.json<br/>локальные MCP только для разработчика"]
   user --> proj --> local
-  proj --> commit[git commit]
-  local -. в .gitignore .-> none[не коммитится]
+  proj --> commit["git commit"]
+  local -.->|"в .gitignore"| none["не коммитится"]
 ```
 
 💡 Логика та же, что у CLAUDE.md: общее в репо, личное — в local или user.

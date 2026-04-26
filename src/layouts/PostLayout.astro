@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import { renderInlineCode } from "~/lib/inline-md";
 import type { CollectionEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
 
@@ -11,7 +12,15 @@ interface Props {
 }
 
 const { post, headings } = Astro.props;
-const { title, description, pubDate, updatedDate, tags } = post.data;
+const { title, description, pubDate, updatedDate, tags, cover, coverAlt } = post.data;
+
+// Cover is stored as a path relative to /uploads/ (e.g. "2026/04/file.png").
+// Accept both bare relatives and pre-prefixed absolutes for forward compatibility.
+const coverUrl = cover
+  ? cover.startsWith("/") || /^https?:\/\//.test(cover)
+    ? cover
+    : `/uploads/${cover}`
+  : null;
 const readingTime = estimateReadingTimeMinutes(post.body ?? "");
 
 function estimateReadingTimeMinutes(body: string): number {
@@ -42,7 +51,7 @@ function estimateReadingTimeMinutes(body: string): number {
         }
       </p>
       <h1 class="post__title">{title}</h1>
-      {description && <p class="post__lede">{description}</p>}
+      {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
       {
         tags.length > 0 && (
           <ul class="post__tags" aria-label="Теги">
@@ -55,10 +64,25 @@ function estimateReadingTimeMinutes(body: string): number {
         )
       }
     </header>
+    {
+      coverUrl && (
+        <figure class="post__cover">
+          <img src={coverUrl} alt={coverAlt ?? ""} loading="eager" decoding="async" />
+        </figure>
+      )
+    }
     <div class="post__body prose">
       <slot />
     </div>
   </article>
+
+  <script>
+    import { enhanceCodeBlocks } from "~/lib/enhance-code-blocks";
+
+    // astro:page-load fires on initial mount and after every View Transitions navigation.
+    // DOMContentLoaded is redundant and would register a second listener on subsequent pages.
+    document.addEventListener("astro:page-load", () => enhanceCodeBlocks(document));
+  </script>
 
   <style>
     .post {
@@ -117,6 +141,18 @@ function estimateReadingTimeMinutes(body: string): number {
     .post__tags a:hover {
       color: var(--color-fg);
       border-color: var(--color-accent);
+    }
+    .post__cover {
+      margin: 0 0 var(--space-7) 0;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-elevated);
+    }
+    .post__cover img {
+      display: block;
+      width: 100%;
+      height: auto;
     }
   </style>
 </BaseLayout>

@@ -153,6 +153,9 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      '@types/mdast':
+        specifier: ^4.0.4
+        version: 4.0.4
       '@types/node':
         specifier: ^24.2.0
         version: 24.12.2
@@ -189,6 +192,9 @@ importers:
       lint-staged:
         specifier: ^16.4.0
         version: 16.4.0
+      mdast-util-to-string:
+        specifier: ^4.0.0
+        version: 4.0.0
       playwright:
         specifier: ^1.55.0
         version: 1.59.1
@@ -201,12 +207,24 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
         version: 0.6.14(prettier-plugin-astro@0.14.1)(prettier@3.8.3)
+      remark-parse:
+        specifier: ^11.0.0
+        version: 11.0.0
+      remark-stringify:
+        specifier: ^11.0.0
+        version: 11.0.0
       testcontainers:
         specifier: ^10.28.0
         version: 10.28.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      unified:
+        specifier: ^11.0.5
+        version: 11.0.5
+      vfile:
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^3.2.0
         version: 3.2.4(@types/debug@4.1.13)(@types/node@24.12.2)(@vitest/ui@3.2.4)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
