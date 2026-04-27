@@ -75,12 +75,26 @@ export default defineConfig({
   site: SITE_URL,
   output: "static",
   adapter: node({ mode: "standalone" }),
+  i18n: {
+    defaultLocale: "ru",
+    locales: ["ru", "en"],
+    routing: {
+      prefixDefaultLocale: false,
+      redirectToDefaultLocale: false,
+    },
+    fallback: { en: "ru" },
+  },
   integrations: [
     mdx({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath],
       rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: "img-svg", dark: true }]],
     }),
-    sitemap(),
+    sitemap({
+      i18n: {
+        defaultLocale: "ru",
+        locales: { ru: "ru-RU", en: "en-US" },
+      },
+    }),
     react(),
   ],
   markdown: {
