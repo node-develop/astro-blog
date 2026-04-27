@@ -71,6 +71,30 @@ describe("detectDrift", () => {
     expect(result.warnings).toEqual(["01-foo"]);
   });
 
+  it("ignores e2e fixture slugs (e2e-*) regardless of state", () => {
+    const result = detectDrift([
+      {
+        slug: "e2e-ru-only",
+        ruHash: "x",
+        enHash: null,
+        enExists: false,
+        enManual: false,
+        ruDraft: false,
+      },
+      {
+        slug: "e2e-something",
+        ruHash: "y",
+        enHash: "stale",
+        enExists: true,
+        enManual: false,
+        ruDraft: false,
+      },
+    ]);
+    expect(result.missing).toEqual([]);
+    expect(result.drift).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
   it("aggregates multiple files correctly", () => {
     const result = detectDrift([
       { slug: "ok", ruHash: "a", enHash: "a", enExists: true, enManual: false, ruDraft: false },

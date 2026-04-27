@@ -1,3 +1,6 @@
+const FIXTURE_SLUG = /^e2e-/;
+export const isFixtureSlug = (slug: string): boolean => FIXTURE_SLUG.test(slug);
+
 export interface FileState {
   readonly slug: string;
   readonly ruHash: string;
@@ -18,7 +21,7 @@ export const detectDrift = (files: readonly FileState[]): DriftReport => {
   const drift: string[] = [];
   const warnings: string[] = [];
   for (const f of files) {
-    if (f.ruDraft) continue;
+    if (f.ruDraft || isFixtureSlug(f.slug)) continue;
     if (!f.enExists) {
       missing.push(f.slug);
       continue;

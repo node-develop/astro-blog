@@ -8,6 +8,7 @@ import { extractProse, reassemble } from "./lib/extract-prose";
 import { translateProse, translateStrings } from "./lib/claude-translate";
 import { decideAction } from "./lib/decide-action";
 import { PATHS } from "./lib/site-config";
+import { isFixtureSlug } from "./lib/sync-check";
 import { parseFrontmatter } from "../src/lib/content/frontmatter";
 import type { Frontmatter } from "../src/lib/content/frontmatter";
 
@@ -172,10 +173,12 @@ const collectEnSlugs = async (postsDir: string): Promise<Set<string>> => {
     (f) => /\.(md|mdx)$/.test(f) && !f.startsWith("."),
   );
   for (const file of ruFiles) {
+    const slug = file.replace(/\.(md|mdx)$/, "");
+    if (isFixtureSlug(slug)) continue;
     const src = await readFile(join(postsDir, file), "utf8");
     const { frontmatter } = parseFrontmatter(src);
     if (frontmatter.draft === true) continue;
-    slugs.add(file.replace(/\.(md|mdx)$/, ""));
+    slugs.add(slug);
   }
   return slugs;
 };
@@ -188,6 +191,10 @@ const translateAllPosts = async (): Promise<readonly FileResult[]> => {
   const results: FileResult[] = [];
   for (const file of ruFiles) {
     const slug = file.replace(/\.(md|mdx)$/, "");
+    if (isFixtureSlug(slug)) {
+      console.warn(`[posts] ${slug}: skipped (e2e fixture)`);
+      continue;
+    }
     const inputPath = join(PATHS.postsDir, file);
     const outputPath = join(PATHS.postsEnDir, file);
     try {

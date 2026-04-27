@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { load as parseYaml } from "js-yaml";
 import { sha256 } from "./lib/hash";
-import { detectDrift, type FileState } from "./lib/sync-check";
+import { detectDrift, isFixtureSlug, type FileState } from "./lib/sync-check";
 import { PATHS } from "./lib/site-config";
 
 interface FrontmatterPeek {
@@ -27,6 +27,7 @@ const main = async (): Promise<void> => {
 
   for (const file of ruFiles) {
     const slug = file.replace(/\.(md|mdx)$/, "");
+    if (isFixtureSlug(slug)) continue;
     const ruSrc = await readFile(join(PATHS.postsDir, file), "utf8");
     const ruHash = sha256(ruSrc);
     const ruFm = peekFrontmatter(ruSrc);
