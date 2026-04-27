@@ -1,41 +1,59 @@
 ---
 /**
- * Site header with title, primary nav, and the mobile drawer trigger.
+ * Site header with title, primary nav, language toggle, and the mobile drawer trigger.
  * The trigger is a `<button>` controlling the drawer via a custom event;
  * the drawer itself lives in MobileDrawer.astro (added in Task 13).
  */
+import LangToggle from "./LangToggle.astro";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
 const { pathname } = Astro.url;
+const locale = getLocaleFromPath(pathname);
+
+// For active-state matching, compare against the locale-stripped path so /en/blog still matches /blog
+const localPath = locale === "en" ? pathname.replace(/^\/en/, "") || "/" : pathname;
 const isActive = (prefix: string): boolean =>
-  prefix === "/" ? pathname === "/" : pathname.startsWith(prefix);
+  prefix === "/" ? localPath === "/" : localPath.startsWith(prefix);
+
+const homeHref = locale === "en" ? "/en/" : "/";
+const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const aboutHref = locale === "en" ? "/en/about" : "/about";
 ---
 
 <header class="site-header" role="banner">
   <div class="site-header__inner">
-    <a href="/" class="site-header__brand" aria-label="На главную">
-      <span class="site-header__label">Блог</span>
+    <a href={homeHref} class="site-header__brand" aria-label={t(locale, "nav.posts")}>
+      <span class="site-header__label">{t(locale, "nav.posts")}</span>
       <span class="site-header__dot" aria-hidden="true">·</span>
       <span class="site-header__author">artka.dev</span>
     </a>
 
-    <nav class="site-header__nav" aria-label="Основная навигация">
-      <a href="/blog" aria-current={isActive("/blog") ? "page" : undefined}>Статьи</a>
-      <a href="/about" aria-current={isActive("/about") ? "page" : undefined}>Обо мне</a>
+    <nav class="site-header__nav" aria-label={t(locale, "nav.posts")}>
+      <a href={blogHref} aria-current={isActive("/blog") ? "page" : undefined}
+        >{t(locale, "nav.posts")}</a
+      >
+      <a href={aboutHref} aria-current={isActive("/about") ? "page" : undefined}
+        >{t(locale, "nav.about")}</a
+      >
     </nav>
+
+    <LangToggle />
 
     <button
       type="button"
       class="site-header__search"
-      aria-label="Поиск (⌘K)"
+      aria-label={t(locale, "nav.search") + " (⌘K)"}
       onclick="window.dispatchEvent(new CustomEvent('astro-open-search'))"
     >
       <span aria-hidden="true">⌘K</span>
-      <span class="visually-hidden">Поиск</span>
+      <span class="visually-hidden">{t(locale, "nav.search")}</span>
     </button>
 
     <button
       type="button"
       class="site-header__drawer-btn"
-      aria-label="Открыть список статей"
+      aria-label={t(locale, "drawer.openAria")}
       aria-controls="site-drawer"
       aria-expanded="false"
       data-drawer-trigger
