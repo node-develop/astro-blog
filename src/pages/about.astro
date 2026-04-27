@@ -1,25 +1,22 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getEntry, render } from "astro:content";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const slug = locale === "en" ? "en/about" : "about";
+const entry = await getEntry("site", slug);
+if (!entry) {
+  return new Response(null, { status: 404 });
+}
+const { Content } = await render(entry);
 ---
 
-<BaseLayout title="Обо мне" description="Страница об авторе" fullWidth={true}>
+<BaseLayout title={entry.data.title} description={t(locale, "nav.about")} fullWidth={true}>
   <SiteSidebar slot="sidebar" />
   <article class="prose">
-    <h1>Обо мне</h1>
-    <p>
-      Привет! Меня зовут <strong>Имя Фамилия</strong>. Я занимаюсь разработкой и пишу о том, что
-      узнал по пути.
-    </p>
-    <h2>Чем занимаюсь</h2>
-    <ul>
-      <li>Бэкенд на Node.js / TypeScript</li>
-      <li>Архитектура распределённых систем</li>
-      <li>DevOps и инфраструктура</li>
-    </ul>
-    <h2>Контакты</h2>
-    <p>
-      <a href="mailto:hi@example.com">hi@example.com</a>
-    </p>
+    <Content />
   </article>
 </BaseLayout>
