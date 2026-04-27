@@ -63,7 +63,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString(
       </div>
     </footer>
 
-    <CommandPalette client:idle placeholder={t(locale, "search.placeholder")} />
+    <CommandPalette
+      client:idle
+      placeholder={t(locale, "search.placeholder")}
+      searchingLabel={t(locale, "search.searching")}
+      noResultsLabel={t(locale, "search.noResults")}
+      shortcutHint={t(locale, "search.shortcutHint")}
+    />
 
     <style>
       .layout {

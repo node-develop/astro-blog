@@ -25,5 +25,8 @@
   "drawer.closeAria": "Закрыть",
   "skip.toContent": "Перейти к содержимому",
   "search.placeholder": "Поиск по статьям…",
+  "search.searching": "Идёт поиск…",
+  "search.noResults": "Ничего не найдено.",
+  "search.shortcutHint": "↑↓ навигация · ⏎ открыть · Esc закрыть",
   "footer.meta": "Astro · on-demand · WCAG AA"
 }

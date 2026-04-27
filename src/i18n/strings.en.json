@@ -25,5 +25,8 @@
   "drawer.closeAria": "Close",
   "skip.toContent": "Skip to content",
   "search.placeholder": "Search posts…",
+  "search.searching": "Searching…",
+  "search.noResults": "No results.",
+  "search.shortcutHint": "↑↓ navigate · ⏎ open · Esc close",
   "footer.meta": "Astro · on-demand · WCAG AA"
 }

@@ -12,10 +12,16 @@ interface Hit {
 
 interface CommandPaletteProps {
   placeholder?: string;
+  searchingLabel?: string;
+  noResultsLabel?: string;
+  shortcutHint?: string;
 }
 
 export default function CommandPalette({
   placeholder = "Search…",
+  searchingLabel = "Searching…",
+  noResultsLabel = "No results.",
+  shortcutHint = "↑↓ navigate · ⏎ open · Esc close",
 }: CommandPaletteProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -93,10 +99,8 @@ export default function CommandPalette({
     >
       <Command.Input value={query} onValueChange={setQuery} placeholder={placeholder} autoFocus />
       <Command.List>
-        {loading && <Command.Loading>Идёт поиск…</Command.Loading>}
-        {!loading && query && hits.length === 0 && (
-          <Command.Empty>Ничего не найдено.</Command.Empty>
-        )}
+        {loading && <Command.Loading>{searchingLabel}</Command.Loading>}
+        {!loading && query && hits.length === 0 && <Command.Empty>{noResultsLabel}</Command.Empty>}
         {hits.map((h) => (
           <Command.Item
             key={h.id}
@@ -118,10 +122,7 @@ export default function CommandPalette({
           </Command.Item>
         ))}
       </Command.List>
-      <div className="command-palette__hint">
-        <kbd>↑</kbd>
-        <kbd>↓</kbd> навигация · <kbd>Enter</kbd> открыть · <kbd>Esc</kbd> закрыть
-      </div>
+      <div className="command-palette__hint">{shortcutHint}</div>
     </Command.Dialog>
   );
 }
