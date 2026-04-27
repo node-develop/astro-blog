@@ -27,6 +27,7 @@
     "db:studio": "drizzle-kit studio",
     "db:backfill": "tsx scripts/backfill-posts-meta.ts",
     "db:backfill-search": "tsx scripts/backfill-search-vector.ts",
+    "translate": "tsx scripts/translate.ts",
     "prepare": "husky"
   },
   "lint-staged": {
