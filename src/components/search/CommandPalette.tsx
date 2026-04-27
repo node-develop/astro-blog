@@ -62,7 +62,8 @@ export default function CommandPalette({
     const handle = window.setTimeout(async () => {
       try {
         const pagefind = await loadPagefind();
-        const { results } = await pagefind.search(query);
+        const lang = (document.documentElement.lang || "ru") as "ru" | "en";
+        const { results } = await pagefind.search(query, { language: lang });
         const limited = results.slice(0, 8);
         const enriched: Hit[] = await Promise.all(
           limited.map(async (r) => {

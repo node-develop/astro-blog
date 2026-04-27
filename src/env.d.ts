@@ -30,8 +30,16 @@ interface PagefindResult {
   }>;
 }
 
+interface PagefindSearchOptions {
+  readonly language?: string;
+  readonly filters?: Record<string, string | readonly string[]>;
+}
+
 interface PagefindApi {
-  readonly search: (query: string) => Promise<{ readonly results: readonly PagefindResult[] }>;
+  readonly search: (
+    query: string,
+    options?: PagefindSearchOptions,
+  ) => Promise<{ readonly results: readonly PagefindResult[] }>;
 }
 
 interface Window {
