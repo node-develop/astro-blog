@@ -31,10 +31,10 @@ export default function CommandPalette({
   // ⌘K / Ctrl+K toggle, Escape closes, plus a custom event hook so non-React
   // triggers (e.g. the header button) can open the palette without coupling.
   useEffect(() => {
-    function openHandler(): void {
+    const openHandler = (): void => {
       setOpen(true);
-    }
-    function onKey(e: KeyboardEvent): void {
+    };
+    const onKey = (e: KeyboardEvent): void => {
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
@@ -42,7 +42,7 @@ export default function CommandPalette({
         setOpen((v) => !v);
       }
       if (e.key === "Escape") setOpen(false);
-    }
+    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("astro-open-search", openHandler);
     return () => {
@@ -122,7 +122,7 @@ export default function CommandPalette({
           </Command.Item>
         ))}
       </Command.List>
-      <div className="command-palette__hint">{shortcutHint}</div>
+      <div className="command-palette__hint" dangerouslySetInnerHTML={{ __html: shortcutHint }} />
     </Command.Dialog>
   );
 }

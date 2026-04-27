@@ -27,6 +27,6 @@
   "search.placeholder": "Search posts…",
   "search.searching": "Searching…",
   "search.noResults": "No results.",
-  "search.shortcutHint": "↑↓ navigate · ⏎ open · Esc close",
+  "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close",
   "footer.meta": "Astro · on-demand · WCAG AA"
 }

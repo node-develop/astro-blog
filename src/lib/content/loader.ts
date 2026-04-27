@@ -62,6 +62,8 @@ export const getOrderedPosts = async (
   const merged: PostWithMeta[] = entries.map((entry: CollectionEntry<"posts">) => {
     // Strip "en/" prefix so EN entries resolve to the same meta row as their
     // RU counterparts (posts_meta is keyed by the RU slug).
+    // INVARIANT: EN posts live under exactly src/content/posts/en/<slug>.md (single-level).
+    // If we ever nest EN posts deeper, this strip pattern will produce wrong meta keys silently.
     const metaKey = entry.id.replace(/^en\//, "");
     return {
       entry,

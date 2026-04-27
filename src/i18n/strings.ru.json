@@ -27,6 +27,6 @@
   "search.placeholder": "Поиск по статьям…",
   "search.searching": "Идёт поиск…",
   "search.noResults": "Ничего не найдено.",
-  "search.shortcutHint": "↑↓ навигация · ⏎ открыть · Esc закрыть",
+  "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> навигация · <kbd>Enter</kbd> открыть · <kbd>Esc</kbd> закрыть",
   "footer.meta": "Astro · on-demand · WCAG AA"
 }
