@@ -30,7 +30,7 @@ const TRANSLATABLE_BLOCKS = new Set([
   "paragraph",
   "blockquote",
   "listItem",
-  "tableCell",
+  "table",
   "footnoteDefinition",
 ]);
 

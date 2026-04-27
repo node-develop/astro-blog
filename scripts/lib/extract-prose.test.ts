@@ -3,6 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { extractProse, reassemble } from "./extract-prose";
 
+const tableFixture = `| Model | Price |
+|---|---|
+| Opus | $15/MTok |
+| Sonnet | $3/MTok |
+| Haiku | $1/MTok |
+`;
+
 const fixturePath = join(__dirname, "fixtures/sample.md");
 const fixture = readFileSync(fixturePath, "utf8");
 
@@ -87,6 +94,29 @@ describe("extractProse", () => {
         (t) => !t.includes("](https://example.com)") || t.includes("https://example.com"),
       ),
     ).toBe(true);
+  });
+});
+
+describe("extractProse with GFM tables", () => {
+  it("captures the entire table as one prose placeholder", () => {
+    const result = extractProse(tableFixture);
+    expect(result.placeholders).toHaveLength(1);
+    expect(result.placeholders[0]?.kind).toBe("prose");
+    expect(result.placeholders[0]?.text).toContain("| Model | Price |");
+    expect(result.placeholders[0]?.text).toContain("Sonnet");
+  });
+
+  it("round-trips a table preserving cell content", () => {
+    const { placeholders, skeleton } = extractProse(tableFixture);
+    const translated = placeholders.map((p) => ({
+      id: p.id,
+      text: p.text.replace(/Model/g, "Модель").replace(/Price/g, "Цена"),
+    }));
+    const result = reassemble(skeleton, translated);
+    expect(result).toContain("Модель");
+    expect(result).toContain("Цена");
+    expect(result).toContain("Opus");
+    expect(result).toContain("$15/MTok");
   });
 });
 
