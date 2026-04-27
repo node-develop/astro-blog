@@ -1,11 +1,27 @@
 import { execSync } from "node:child_process";
 import { existsSync, lstatSync, symlinkSync, unlinkSync } from "node:fs";
-import { resolve } from "node:path";
+import { copyFile, rm } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import type { FullConfig } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { auth } from "../../src/lib/auth";
 import { db } from "../../src/lib/db";
 import { users } from "../../src/lib/db/schema";
+
+const FIXTURE_SRC = join(process.cwd(), "tests/e2e/fixtures/e2e-ru-only.md");
+const FIXTURE_DEST = join(process.cwd(), "src/content/posts/e2e-ru-only.md");
+
+export const installFixtures = async (): Promise<void> => {
+  if (existsSync(FIXTURE_SRC) && !existsSync(FIXTURE_DEST)) {
+    await copyFile(FIXTURE_SRC, FIXTURE_DEST);
+  }
+};
+
+export const removeFixtures = async (): Promise<void> => {
+  if (existsSync(FIXTURE_DEST)) {
+    await rm(FIXTURE_DEST);
+  }
+};
 
 const DIST_PAGEFIND = resolve(process.cwd(), "dist", "client", "pagefind");
 const PUBLIC_PAGEFIND = resolve(process.cwd(), "public", "pagefind");
@@ -40,6 +56,7 @@ function lstatExistsSafe(p: string): boolean {
  * Seeds a predictable admin user for Playwright tests.
  */
 export default async function globalSetup(_config: FullConfig): Promise<void> {
+  await installFixtures();
   ensurePagefindArtifacts();
 
   const email = "e2e-admin@test.dev";
