@@ -58,7 +58,7 @@ The model sees tool descriptions and decides whether it needs to call something.
 }
 ```
 
-The Harness (Claude Code in our case) sees this, executes `read_file`, and sends the next request with `tool_result`:
+Harness (Claude Code in our case) sees this, executes `read_file`, and sends the next request with `tool_result`:
 
 ```json
 {
@@ -84,7 +84,7 @@ And so on until the model returns `stop_reason: "end_turn"` — this is its sign
 
 ---
 
-## 8.2. Complete agent loop in one image
+## 8.2. Full agent loop in one image
 
 ```mermaid
 sequenceDiagram
@@ -122,38 +122,38 @@ Important nuances:
 
 ## 8.3. What harness gives the model "for free" (built-in tools)
 
-Claude Code comes with pre-installed tools (without MCP):
+Claude Code comes with preset tools (without MCP):
 
-|                |     |
-| -------------- | --- |
-| `Read`         |     |
-| `Write`        |     |
-| `Edit`         |     |
-| `MultiEdit`    |     |
-| `Bash`         |     |
-| `Glob`         |     |
-| `Grep`         |     |
-| `WebFetch`     |     |
-| `WebSearch`    |     |
-|                |     |
-| `TodoWrite`    |     |
-| `NotebookEdit` |     |
+| Tool                      | What it does                                  |
+| ------------------------- | --------------------------------------------- |
+| `Read`                    | Read file (with offset/limit for large files) |
+| `Write`                   | Create / overwrite file                       |
+| `Edit`                    | Pinpoint replacement in file                  |
+| `MultiEdit`               | Multiple Edits in one tool call               |
+| `Bash`                    | Execute shell command                         |
+| `Glob`                    | Find files by pattern                         |
+| `Grep`                    | Search content (under the hood — ripgrep)     |
+| `WebFetch`                | Fetch URL                                     |
+| `WebSearch`               | Search the web                                |
+| `Agent` (formerly `Task`) | Run subagent                                  |
+| `TodoWrite`               | Manage built-in task list                     |
+| `NotebookEdit`            | Edit Jupyter notebooks                        |
 
-📘 In version **2.1.63**, the `Task` tool was renamed to `Agent`. Old `Task(...)` still works as an alias. If you see `Task tool` in other guides — it's about subagents.
+📘 In version **2.1.63**, the `Task` tool was renamed to `Agent`. Old `Task(...)` calls still work as an alias. If you see `Task tool` in other guides — it's about subagents.
 
 ---
 
 ## 8.4. Model vs harness: who decides what
 
-|     |     |
-| --- | --- |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
+| Decision                         | Who decides                                   |
+| -------------------------------- | --------------------------------------------- |
+| Which tool to call               | Model                                         |
+| What arguments                   | Model                                         |
+| Can it be executed (permissions) | Harness (by rules + asking user)              |
+| How to deliver result back       | Harness (formats tool_result)                 |
+| When to stop                     | Model (`end_turn`) or harness (budget limits) |
+| What goes in context             | Harness (manages window)                      |
+| What gets cached                 | Harness (places `cache_control`)              |
 
 ⚠️ This separation explains why **hooks work**: you intervene at the harness level, bypassing the model.
 
@@ -203,9 +203,9 @@ assistant.content = [
 ]
 ```
 
-Harness executes them **in parallel** (if they have no dependencies and don't contradict permissions). This greatly speeds up the browse phase.
+Harness executes them **in parallel** (if they have no dependencies and don't conflict with permissions). This greatly speeds up the browse phase.
 
-💡 If your skill says "do steps sequentially" — the model will do that. But if there's no strict sequence, leave room for freedom — parallelism pays off.
+💡 If your skill says "do steps sequentially" — the model will do that. But if there's no hard sequence, leave room for freedom — parallelism pays off.
 
 ---
 
@@ -228,20 +228,20 @@ Bad example: `Bash(cat huge.log)` → returns 80k lines → entire context is fi
 
 ## 8.8. Timings and retry
 
-Harness keeps timeouts for each tool call. By default:
+Harness keeps timeouts on each tool call. By default:
 
 - `Bash` — 2 minutes (can be raised to 10).
 - `Read`, `Edit`, `Write` — instant (these are file operations).
 - `WebFetch`, `WebSearch` — a few seconds.
-- MCP tools — defined by the server, but harness also imposes a limit.
+- MCP tools — defined by server, but harness also imposes a limit.
 
-⚠️ If your MCP tool regularly exceeds the timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with status "in progress, check later" and implement polling.
+⚠️ If your MCP tool regularly exceeds timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with "in progress, check later" status and implement polling.
 
 ---
 
 ## 8.9. Streaming
 
-For UX, harness streams the model's response token-by-token. If your backend also uses the Anthropic SDK (like in Travel Agent), use `stream: true`:
+For UX, harness streams the model's response token-by-token. If your backend also uses Anthropic SDK (like in Travel Agent), use `stream: true`:
 
 ```typescript
 const stream = await anthropic.messages.stream({
@@ -273,7 +273,7 @@ After everything above, an important practical takeaway:
 - Has a narrow, meaningful set of tools (not 50 "just in case").
 - Each tool with clear description and schema.
 - Returns compact tool_results (doesn't dump gigabytes).
-- Has a system prompt that sets the goal and work style.
+- Has system prompt that sets goal and work style.
 - Has hooks that limit damage.
 - Uses subagents for browse-heavy tasks to save main context.
 

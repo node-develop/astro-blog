@@ -24,12 +24,12 @@ manuallyEdited: false
 
 Limits as of 23.04.2026:
 
-|     |     |     |
-| --- | --- | --- |
-|     |     |     |
-|     |     |     |
-|     |     |     |
-|     |     |     |
+| Model             | Standard window | 1M mode                   |
+| ----------------- | --------------- | ------------------------- |
+| Claude Opus 4.7   | 200k            | ✅ via alias `opus[1m]`   |
+| Claude Opus 4.6   | 200k            | ✅ via alias `opus[1m]`   |
+| Claude Sonnet 4.6 | 200k            | ✅ via alias `sonnet[1m]` |
+| Claude Haiku 4.5  | 200k            | ❌                        |
 
 📘 From docs (`model-config#extended-context`): "Opus 4.7, Opus 4.6, and Sonnet 4.6 support a 1 million token context window".
 
@@ -91,12 +91,12 @@ If you change an **earlier** layer — all later ones are also recalculated. For
 
 **How much cache vs no-cache costs** (using Sonnet 4.6 as example, $3 per 1M input tokens):
 
-|     |     |     |
-| --- | --- | --- |
-|     |     |     |
-|     |     |     |
-|     |     |     |
-|     |     |     |
+| Operation                  | Price                            | When                                      |
+| -------------------------- | -------------------------------- | ----------------------------------------- |
+| Cache **write** (5min TTL) | 1.25 × input = $3.75 / 1M tokens | First request with this prefix            |
+| Cache **read** (hit)       | 0.10 × input = $0.30 / 1M tokens | All subsequent within TTL window          |
+| Cache **write** (1h TTL)   | 2 × input = $6 / 1M tokens       | If you requested `cache_control.ttl="1h"` |
+| No-cache (regular input)   | $3 / 1M tokens                   | If there's no cache at all                |
 
 **Savings calculation in a real Travel Agent session:**
 
@@ -113,24 +113,24 @@ Savings — **80%**. This is why prompt cache is a must-have, and losing it is a
 
 Cache is invalidated (or expires) when:
 
-|            |     |     |
-| ---------- | --- | --- |
-|            |     |     |
-|            |     |     |
-|            |     |     |
-|            |     |     |
-|            |     |     |
-| `/compact` |     |     |
+| Event                                           | What happens                                                    | How to avoid                                                       |
+| ----------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 5 minutes pass without requests                 | TTL expires, next request — write anew                          | Raise TTL to 1h (`cache_control.ttl: "1h"`) or work without pauses |
+| You change `tools` (add MCP, plugin)            | Cache invalidated at tools level                                | Don't connect MCP in the middle of a session                       |
+| You change `system` (edit CLAUDE.md, add skill) | Cache invalidated at system level                               | Finalize CLAUDE.md before starting work                            |
+| You switch models via `/model`                  | Cache is specific to each model                                 | Use `opusplan` (it manages switching) or start a new session       |
+| `/clear` or new session                         | Prefix is recreated from scratch                                | This is normal, cache write is a one-time cost                     |
+| `/compact`                                      | Old history replaced with summary, then new prefix for messages | Also normal, saves window at cost of one cache write               |
 
-⚠️ **Myth:** "switching models breaks prompt cache forever". Reality: the next request will be a cache miss (costs more once), then everything gets cached again on the new model.
+⚠️ **Myth:** "switching models breaks prompt cache forever". Reality: the next request will be a cache miss (one-time more expensive), then everything caches again on the new model.
 
 📘 From docs `/model`: "opens a picker that asks for confirmation when the conversation has prior output, since the next response re-reads the full history without cached context".
 
-That is, switching models is a **one-time** extra cost. Not "forever" and not "impossible". Just account for it.
+That is, model switching is a **one-time** extra charge. Not "forever" and not "impossible". Just account for it.
 
 ---
 
-## 2.5. `opusplan` — the feature incorrectly called "Advisor mode"
+## 2.5. `opusplan` — a feature often wrongly called "Advisor mode"
 
 In the thread we started with, "Advisor mode" was mentioned. In official docs, there's **no such feature**. The real feature is called **`opusplan`**.
 
@@ -163,7 +163,7 @@ sequenceDiagram
 **Limitations of `opusplan`:**
 
 - ⚠️ Opus phase runs in **standard 200k**, even if you enabled `sonnet[1m]`.
-- ⚠️ Switching is still two different models → one cache miss at the boundary (but then each model caches separately).
+- ⚠️ The switch is still two different models → one cache miss at the boundary (but then each model caches separately).
 - 💡 Good for architectural tasks: "plan a big refactor" → detailed plan from Opus → cheap execution by Sonnet.
 
 🔧 **For Travel Agent:** enable `opusplan` when rewriting Amadeus integration or changing DB schema. Not needed for routine React component fixes.
@@ -205,11 +205,11 @@ export CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000  # держать сессию в 
 flowchart TD
   start{"Window > 70%?"}
   start -- no --> work["Continue working"]
-  start -- yes --> task{"Current task<br/>almost complete?"}
+  start -- yes --> task{"Current session task<br/>almost complete?"}
   task -- yes --> finish["Finish, then /clear"]
-  task -- no --> related{"New part of task<br/>depends on history?"}
+  task -- no --> related{"New task part<br/>depends on history?"}
   related -- yes --> compact["/compact with hint"]
-  related -- no --> session{"Stack/module<br/>of project changing?"}
+  related -- no --> session{"Stack/module change<br/>in project?"}
   session -- yes --> newsession["New session"]
   session -- no --> compact
 ```
@@ -227,17 +227,17 @@ flowchart TD
 ✅ Before a long task, run `/context` — assess starting fill.
 ✅ Keep CLAUDE.md ≤ 5k tokens. Larger — split into subdirectory CLAUDE.md (see [03](./03-claude-md.md)).
 ✅ Connect MCP servers before starting work, not in the middle.
-✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (config flag or pass `cache_control.ttl="1h"` via SDK).
+✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (setting flag or passing `cache_control.ttl="1h"` via SDK).
 ✅ Don't `Read` entire huge files (50k-line logs) — use `Grep` or offset/limit.
 ✅ After each completed task — `/clear`.
 ✅ For architectural decisions enable `opusplan` (plan by Opus, execution by Sonnet).
-✅ If you catch "model is dumb after long session" — do `/compact` or start fresh.
+✅ If you catch "model acting dumb after long session" — do `/compact` or start fresh.
 
 ⚠️ **What NOT to do:**
-❌ Use 1M window "because it's there" — it's both expensive and worse for quality.
+❌ Use 1M window "because it exists" — it's both expensive and worse quality.
 ❌ Connect all MCP servers "just in case" — each bloats `tools`.
 ❌ Dump entire README, license, changelog, and dependency list into CLAUDE.md.
-❌ Switch models mid-complex task without reason (or use `opusplan`).
+❌ Switch models mid-complex-task without reason (or use `opusplan`).
 
 ---
 

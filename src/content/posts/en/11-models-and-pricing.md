@@ -2,7 +2,7 @@
 title: 11. Models and pricing
 description: >-
   Choosing a model is not 'always Opus because it's the best'. It's a trade-off between speed / cost / quality for a
-  specific task. This chapter covers tables, budgets, and combination strategies.
+  specific task. This chapter covers tables, budgets, and strategies for combining
 pubDate: 2026-04-23
 tags:
   - claude-code
@@ -14,18 +14,18 @@ manuallyEdited: false
 
 # 11. Models and pricing
 
-> Choosing a model isn't "always Opus because it's better." It's a tradeoff between speed / cost / quality for a specific task. This chapter covers tables, budgets, and strategies for combining models.
+> Choosing a model isn't "always Opus because it's better." It's a tradeoff between speed / cost / quality for a specific task. This chapter covers tables, budgets, and combination strategies.
 
 ---
 
 ## 11.1. Available models as of 23.04.2026
 
-|     |                   |     |     |
-| --- | ----------------- | --- | --- |
-|     |                   |     |     |
-|     | `claude-opus-4-6` |     |     |
-|     |                   |     |     |
-|     |                   |     |     |
+| Model                 | API Alias                            | Context                    | Strengths                                  |
+| --------------------- | ------------------------------------ | -------------------------- | ------------------------------------------ |
+| **Claude Opus 4.7**   | `opus`, `claude-opus-4-7`            | 200k (1M via `opus[1m]`)   | Best agentic coding, complex reasoning     |
+| **Claude Opus 4.6**   | `claude-opus-4-6`                    | 200k (1M via `opus[1m]`)   | Legacy, same pricing, old tokenizer        |
+| **Claude Sonnet 4.6** | `sonnet`, `claude-sonnet-4-6`        | 200k (1M via `sonnet[1m]`) | Best speed-to-quality ratio                |
+| **Claude Haiku 4.5**  | `haiku`, `claude-haiku-4-5-20251001` | 200k                       | Fast and cheap, near-frontier intelligence |
 
 ⚠️ **On Bedrock / Vertex / Foundry, default aliases are shifted back one version.** `opus` there → 4.6, `sonnet` → 4.5. If you need the latest — specify the full model name.
 
@@ -35,11 +35,11 @@ manuallyEdited: false
 
 ## 11.2. Prices (April 2026)
 
-|     |     |     |     |     |     |
-| --- | --- | --- | --- | --- | --- |
-|     |     |     |     |     |     |
-|     |     |     |     |     |     |
-|     |     |     |     |     |     |
+| Model          | Input ($/MTok) | Output ($/MTok) | Cache write 5min ($/MTok) | Cache write 1h ($/MTok) | Cache read ($/MTok) |
+| -------------- | -------------- | --------------- | ------------------------- | ----------------------- | ------------------- |
+| Opus 4.7 / 4.6 | $5             | $25             | $6.25                     | $10                     | $0.50               |
+| Sonnet 4.6     | $3             | $15             | $3.75                     | $6                      | $0.30               |
+| Haiku 4.5      | $1             | $5              | $1.25                     | $2                      | $0.10               |
 
 Key multipliers (same for all models):
 
@@ -50,7 +50,7 @@ Key multipliers (same for all models):
 
 ---
 
-## 11.3. Psychological model of "when to use what"
+## 11.3. Psychological model "when to use what"
 
 Use metaphors from the original Twitter thread — they work:
 
@@ -65,7 +65,7 @@ flowchart LR
 
 ---
 
-## 11.4. Strategies for combining models
+## 11.4. Model combination strategies
 
 ### 11.4.1. Default: Sonnet
 
@@ -77,7 +77,7 @@ Start most sessions with Sonnet 4.6. It's a sensible baseline.
 /model opusplan
 ```
 
-Enable plan mode on Opus. After `ExitPlanMode` it automatically switches to Sonnet for implementation. **This is the right pattern: "think with Opus, do with Sonnet."**
+Enables plan mode on Opus. After `ExitPlanMode` automatically switches to Sonnet for implementation. **This is the right pattern: "think with Opus, do with Sonnet."**
 
 ⚠️ In opusplan, the **plan phase runs in standard 200k**, even if you enabled a 1M window.
 
@@ -139,12 +139,12 @@ Savings — **65%**. And that's on a modest session. On longer ones with large C
 
 ## 11.6. 1M context: when it's justified
 
-|     |     |
-| --- | --- |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
+| Case                                             | 1M justified?                                      |
+| ------------------------------------------------ | -------------------------------------------------- |
+| Load entire monorepo as context once             | ✅ If many small tasks follow. Cache + 1M = okay   |
+| Long multi-hour session with accumulated history | ⚠️ Better to use /compact, otherwise quality drops |
+| Parse huge log in one request                    | ✅ One request beats ten with pagination           |
+| "Just in case"                                   | ❌ Pay more, get worse                             |
 
 📘 Enabled via alias `opus[1m]` or `sonnet[1m]`. On Max/Team/Enterprise.
 
@@ -158,13 +158,13 @@ Savings — **65%**. And that's on a modest session. On longer ones with large C
 
 📘 Commands:
 
-|                  |     |
-| ---------------- | --- |
-| `/cost`          |     |
-| `/usage`         |     |
-| `/release-notes` |     |
+| Command          | What it shows                                  |
+| ---------------- | ---------------------------------------------- |
+| `/cost`          | Current and accumulated costs for this session |
+| `/usage`         | Costs for a period, by model                   |
+| `/release-notes` | Version news (sometimes pricing updates)       |
 
-🔧 Environment variables for alerts:
+🔧 Env variables for alerts:
 
 ```bash
 export CLAUDE_CODE_BUDGET_USD_SESSION=5      # warn at $5/session
@@ -180,21 +180,21 @@ export CLAUDE_CODE_BUDGET_USD_DAILY=50       # daily ceiling
 Reality:
 
 - CLAUDE.md itself usually stays relevant (project stack changes less often than models).
-- Skills can become outdated if you stuffed them with "the model doesn't understand X well, always remind it" — but the new model understands X just fine.
+- Skills can become outdated if you stuffed them with "model understands X poorly, always remind it" — but the new model understands X on its own.
 - Hooks usually don't depend on the model.
 
-💡 Once a quarter, quickly review CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?". Especially hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
+💡 Once a quarter, quickly scan CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?" Especially hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
 
 ---
 
-## 11.9. Context windows of subagents
+## 11.9. Subagent context windows
 
 📝 Each subagent has **its own** limit:
 
-- On a Haiku-subagent, the window is 200k.
-- On a Sonnet/Opus-subagent — 200k or 1M (if enabled).
+- On Haiku-subagent, window is 200k.
+- On Sonnet/Opus-subagent — 200k or 1M (if enabled).
 
-This gives a convenient pattern: **keep the main context on 200k Sonnet, and a browse-heavy subagent on 1M Sonnet**. The subagent reads most of the repo, returns a summary, the main context doesn't suffer.
+This gives a convenient pattern: **keep main context on 200k Sonnet, and a browse-heavy subagent on 1M Sonnet**. The subagent reads most of the repo, returns a summary, main context doesn't suffer.
 
 ```mermaid
 flowchart LR
@@ -209,7 +209,7 @@ flowchart LR
 
 ❌ **Always Opus.** Expensive and unnecessary. Sonnet handles 80% of tasks.
 
-❌ **Always Haiku.** Fast and cheap, but on a complex task it'll go in circles and end up costing more than Sonnet.
+❌ **Always Haiku.** Fast and cheap, but on a complex task it'll loop and end up costing more than Sonnet.
 
 ❌ **Switch models mid-task without opusplan.** Cache miss + loss of context trust. Use opusplan if you need switching.
 

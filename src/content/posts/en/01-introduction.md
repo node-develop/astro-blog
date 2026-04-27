@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: f26dfaaed192fe85bced4b88d1095ac1a23218a6e0b32636a8a674e08223759a
+sourceHash: 4409015c8be42168b4186b57c2c6caee2644d423348961ea6bbe308bada0ffcf
 manuallyEdited: false
 ---
 
@@ -29,7 +29,7 @@ manuallyEdited: false
 3. Gets the tool result back.
 4. Decides: either call another tool or answer the user.
 
-This loop is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
+This cycle is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
 
 ```mermaid
 sequenceDiagram
@@ -58,17 +58,17 @@ sequenceDiagram
 
 **Harness** — a local program (Claude Code CLI or IDE plugin) that:
 
-|     |     |
-| --- | --- |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
+| Function               | What it does                                                             |
+| ---------------------- | ------------------------------------------------------------------------ |
+| Prompt assembly        | Concatenates system prompt + CLAUDE.md + skills + history + tool results |
+| Tool dispatch          | Receives `tool_use` from model, executes it, returns result              |
+| Permission gating      | Asks user permission for "dangerous" tools (Bash, Edit)                  |
+| Cache management       | Marks cacheable blocks, updates TTL                                      |
+| Subagent orchestration | Launches child sessions on `Agent` tool call                             |
+| Hooks                  | Triggers your scripts on lifecycle events                                |
+| MCP transport          | Supports stdio/SSE/HTTP connections to MCP servers                       |
 
-Harness is **not the model**. The model is in Anthropic's cloud. Harness is the model's eyes, hands, and memory.
+Harness is **not the model**. The model lives in Anthropic's cloud. Harness is the model's eyes, hands, and memory.
 
 ```mermaid
 flowchart LR
@@ -89,7 +89,7 @@ flowchart LR
   cli <--> mcp
 ```
 
-⚠️ This is important to understand: when we say "the model read a file" — this is shorthand for "the model made a tool_use Read, the harness read the file, returned the contents in tool_result, the model saw this in the next step". The model has no direct disk access.
+⚠️ This is important to understand: when we say "the model read a file" — it's shorthand for "the model made a tool_use Read, harness read the file, returned the contents in tool_result, the model saw it in the next step". The model has no direct disk access.
 
 ---
 
@@ -125,18 +125,18 @@ See details in [02-context-and-cache.md](./02-context-and-cache.md).
 
 ## 1.4. Versions and editions
 
-As of 23.04.2026, current:
+As of 04.23.2026, current are:
 
 - **Claude Code** v2.1.89 (CLI, IDE plugins)
 - **Default models on Anthropic API:**
-  - `opus` → Opus 4.7 (released 16.04.2026)
+  - `opus` → Opus 4.7 (released 04.16.2026)
   - `sonnet` → Sonnet 4.6
   - `haiku` → Haiku 4.5
 - **On Bedrock/Vertex/Foundry** defaults are shifted: `opus`→4.6, `sonnet`→4.5 (new models arrive later).
 
 🧪 **Agent Teams** — experimental feature, requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. See [10-agent-teams.md](./10-agent-teams.md).
 
-⚠️ **Opus 4.7** has a new tokenizer — on the same texts it uses up to 35% more tokens than Opus 4.6. If you're upgrading from 4.6 — recalculate your limit estimates.
+⚠️ **Opus 4.7** has a new tokenizer — on the same texts it consumes up to 35% more tokens than Opus 4.6. If you're upgrading from 4.6 — recalculate your limit estimates.
 
 ---
 
@@ -179,19 +179,19 @@ In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint.md) the final repo
 
 ---
 
-## 1.6. Quick reference of CLI commands used in the guide
+## 1.6. Quick reference of CLI commands mentioned in the guide
 
-|                         |     |     |
-| ----------------------- | --- | --- |
-| `/context`              |     |     |
-| `/compact [hint]`       |     |     |
-| `/clear`                |     |     |
-| `/model [name]`         |     |     |
-| `/agents`               |     |     |
-| `/plugin install <ref>` |     |     |
-| `/mcp`                  |     |     |
-| `/permissions`          |     |     |
-| `/release-notes`        |     |     |
+| Command                 | What it does                              | Chapter                                                           |
+| ----------------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| `/context`              | Visualizes current window fill            | [02](./02-context-and-cache.md)                                   |
+| `/compact [hint]`       | Compresses history, frees space           | [02](./02-context-and-cache.md)                                   |
+| `/clear`                | Full session reset (restarts, cache lost) | [02](./02-context-and-cache.md)                                   |
+| `/model [name]`         | Switch model in current session           | [02](./02-context-and-cache.md), [10](./11-models-and-pricing.md) |
+| `/agents`               | Subagent manager                          | [09](./09-subagents.md)                                           |
+| `/plugin install <ref>` | Install plugin from marketplace           | [07](./07-plugins.md)                                             |
+| `/mcp`                  | List connected MCP servers                | [06](./06-mcp.md)                                                 |
+| `/permissions`          | Current allow/deny rules                  | [05](./05-hooks.md)                                               |
+| `/release-notes`        | Changes in version                        | —                                                                 |
 
 ---
 

@@ -14,7 +14,7 @@ manuallyEdited: false
 
 # 06. MCP Servers
 
-> MCP (Model Context Protocol) is an open protocol for connecting external tools, resources, and data to Claude Code. Claude Code can communicate with MCP servers over three transports: stdio, SSE, and HTTP. For Travel Agent, this is a critical part of the architecture — all integrations with flights/hotels/weather are implemented as MCP servers.
+> MCP (Model Context Protocol) is an open protocol for connecting external tools, resources, and data to Claude Code. Claude Code can communicate with MCP servers over three transports: stdio, SSE, and HTTP. For Travel Agent, this is a critical part of the architecture — all integrations with airlines/hotels/weather are implemented as MCP servers.
 
 ---
 
@@ -56,11 +56,11 @@ Claude Code consumes **tools** and **resources** most actively. Prompts become a
 
 MCP supports three ways to communicate:
 
-|     |     |     |     |
-| --- | --- | --- | --- |
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
+| Transport | When to use                                       | Pros                     | Cons                    |
+| --------- | ------------------------------------------------- | ------------------------ | ----------------------- |
+| **stdio** | Local server launched by harness as child process | Simple, fast, no network | Local only              |
+| **SSE**   | Remote server, persistent connection              | Streaming, remote access | More complex deployment |
+| **HTTP**  | Remote server, request/response                   | Stateless, scales easily | No server-initiated     |
 
 For Travel Agent in local development — **stdio**. For production multi-tenant SaaS — **HTTP** through your API gateway.
 
@@ -112,7 +112,7 @@ After that:
 
 - `claude` will pick up the config on startup,
 - show in `/mcp` the list of connected servers and their tools,
-- the model will be able to call these tools like normal.
+- the model will be able to call these tools as usual.
 
 ---
 
@@ -246,7 +246,7 @@ When the `flights` MCP server is connected, a tool definitions block appears in 
 
 (The prefix `mcp__<server-name>__<tool-name>` is a standard convention.)
 
-In the CLI you can see which tools are provided:
+In the CLI you can see what tools are provided:
 
 ```bash
 /mcp
@@ -379,13 +379,13 @@ server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
 });
 ```
 
-In Claude Code, resources become available via `@`-mention in the prompt: `@flights:airports/list`.
+In Claude Code, resources become available through `@`-mention in the prompt: `@flights:airports/list`.
 
 ---
 
 ## 6.9. MCP Security
 
-⚠️ The MCP server runs on your machine (for stdio) or on a trusted server (for HTTP/SSE). It has full access to whatever you give it (env, network access).
+⚠️ MCP server runs on your machine (for stdio) or on a trusted server (for HTTP/SSE). It has full access to what you give it (env, network access).
 
 **Security checklist:**
 
@@ -415,18 +415,18 @@ Full registry: <https://github.com/modelcontextprotocol/servers> and community m
 
 ## 6.11. Commands for working with MCP
 
-|                                   |     |
-| --------------------------------- | --- |
-| `/mcp`                            |     |
-| `/mcp <server>`                   |     |
-| `claude mcp add <name> <command>` |     |
-| `claude mcp test <name>`          |     |
+| Command                           | What it does                                        |
+| --------------------------------- | --------------------------------------------------- |
+| `/mcp`                            | List of connected servers and their tools/resources |
+| `/mcp <server>`                   | Details of a specific server (status, tools list)   |
+| `claude mcp add <name> <command>` | Quickly add MCP to current configuration            |
+| `claude mcp test <name>`          | Check that the server starts and responds           |
 
 ---
 
 ## 6.12. Antipatterns
 
-❌ **Connecting 10+ MCP servers "just in case".** Each bloats the tools section (can be +20-50k tokens). Cache breaks when adding/removing.
+❌ **Connecting 10+ MCP servers "just in case".** Each inflates the tools section (can be +20-50k tokens). Cache breaks when adding/removing.
 
 ❌ **Tool without description.** Model doesn't understand when to call it.
 

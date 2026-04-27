@@ -20,13 +20,13 @@ manuallyEdited: false
 
 ## 9.1. What it is and why
 
-📘 From docs (`sub-agents`): «Each subagent runs in its own context window with a custom system prompt, specific tool access, and independent permissions».
+📘 From docs (`sub-agents`): "Each subagent runs in its own context window with a custom system prompt, specific tool access, and independent permissions".
 
 Main use case: **isolation of browse-heavy tasks**.
 
-Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3-endpoint".
+Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3 endpoint".
 
-Without subagent: model `Grep` across the repo → 200 matches → reads 30 files → analyzes → solution. All intermediate tool_results stay in the main context. After such a task, the window is 60% full.
+Without subagent: model `Grep` through the repo → 200 matches → reads 30 files → analyzes → solution. All intermediate tool_results stay in the main context. After such a task, the window is 60% full.
 
 With subagent: the main agent makes one tool call `Agent(subagent_type="Explore", prompt="...")`. The subagent searches and reads everything in **its own** window, returns a 500-word summary. The main context grew by 500 words.
 
@@ -52,7 +52,7 @@ flowchart TB
 
 ## 9.2. How Claude calls a subagent
 
-Through the built-in tool **`Agent`** (formerly called `Task`).
+Through the built-in **`Agent`** tool (formerly called `Task`).
 
 Inside the agent loop, the model does:
 
@@ -146,24 +146,24 @@ You are a senior travel architect. Your job is to compose multi-city itineraries
 Markdown table per day + cost breakdown. No prose-style narratives.
 ```
 
-|                   |     |
-| ----------------- | --- |
-| `name`            |     |
-| `description`     |     |
-| `model`           |     |
-| `color`           |     |
-| `tools`           |     |
-| `disallowedTools` |     |
-| `permissionMode`  |     |
-| `mcpServers`      |     |
-| `hooks`           |     |
-| `maxTurns`        |     |
-| `skills`          |     |
-| `memory`          |     |
-| `effort`          |     |
-| `background`      |     |
-| `isolation`       |     |
-| `initialPrompt`   |     |
+| Field             | Meaning                                                     |
+| ----------------- | ----------------------------------------------------------- |
+| `name`            | Identifier (slug)                                           |
+| `description`     | Model uses it to decide who to call                         |
+| `model`           | `sonnet` / `opus` / `haiku` / `claude-opus-4-7` / `inherit` |
+| `color`           | UI color in `/agents` manager                               |
+| `tools`           | Whitelist built-in/MCP tools                                |
+| `disallowedTools` | Blacklist (applied on top of tools)                         |
+| `permissionMode`  | `default` / `ask` / `bypassPermissions`                     |
+| `mcpServers`      | Which MCP servers to start for this subagent                |
+| `hooks`           | Inline hooks only for this subagent                         |
+| `maxTurns`        | Limit on agent loop iterations                              |
+| `skills`          | Additional skills available to the subagent                 |
+| `memory`          | `none` / `read-only` / `read-write` (access to CLAUDE.md)   |
+| `effort`          | `low` / `medium` / `high`                                   |
+| `background`      | Run in background (without blocking main agent)             |
+| `isolation`       | `none` / `worktree` (create git worktree copy of repo)      |
+| `initialPrompt`   | Additional message that harness adds to the prompt          |
 
 ---
 
@@ -171,25 +171,25 @@ Markdown table per day + cost breakdown. No prose-style narratives.
 
 📘 Out of the box in Claude Code v2.1.89:
 
-|     |     |     |     |
-| --- | --- | --- | --- |
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
+| Subagent              | Model    | What it does                               | When to use                                                                   |
+| --------------------- | -------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| **Explore**           | Haiku    | Read-only search/analysis of codebase      | Browse-heavy tasks: "find all occurrences of X", "how is module Y structured" |
+| **Plan**              | inherits | Plan creation (read-only)                  | Before complex changes — plan the steps                                       |
+| **General-purpose**   | inherits | Universal, all tools                       | Long multi-step tasks that don't fit other categories                         |
+| **statusline-setup**  | Sonnet   | Configures statusline in CLI               | Only when user asks for statusline config                                     |
+| **Claude Code Guide** | Haiku    | Answers questions about Claude Code itself | When user asks "how to do X in Claude Code"                                   |
 
 📘 Example call from chat:
 
 "Use Explore to find all places where we send requests to Amadeus".
 
-The model will make `Agent(subagent_type="Explore", prompt="...")`.​
+The model will make `Agent(subagent_type="Explore", prompt="...")` .
 
 ---
 
 ## 9.6. Parallel subagents
 
-📘 From docs: «Subagents only report results back to the main agent and never talk to each other».
+📘 From docs: "Subagents only report results back to the main agent and never talk to each other".
 
 You can launch multiple subagents in one assistant turn:
 
@@ -212,7 +212,7 @@ You can launch multiple subagents in one assistant turn:
 
 They will execute in parallel. The main agent will receive **two** independent summaries.
 
-⚠️ They **do not communicate**. If the task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams.md)).
+⚠️ They **do not communicate**. If a task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams.md)).
 
 ---
 
@@ -232,7 +232,7 @@ flowchart LR
 
 ---
 
-## 9.8. Subagent economics
+## 9.8. Economics of subagents
 
 ⚠️ This is where beginners lose money.
 
@@ -243,9 +243,9 @@ flowchart LR
 - Its own tools (including MCP, if specified).
 - Its own agent loop = another prefix on each turn.
 
-📘 The claim "a subagent has no cached prefix from the main session — all base tokens are billed again" — **is essentially true**: the subagent starts with its own prefix, which on first run goes as a cache write. **But** within the subagent itself, caching works normally on subsequent turns.
+📘 The claim "a subagent doesn't have the cached prefix of the main session — all base tokens are billed again" — **is essentially true**: the subagent starts with its own prefix, which on first run goes as a cache write. **But** within the subagent itself, caching works normally on subsequent turns.
 
-**Calculation:** subagent on Haiku (Explore) with system_prompt of 3k tokens doing 5 turns:
+**Calculation:** subagent on Haiku (Explore) with system_prompt 3k tokens doing 5 turns:
 
 - Turn 1: 3k cache write + 2k input + N output → cache write at $1.25/M = $0.004.
 - Turn 2-5: 3k cache read + N input + N output → cheap.
@@ -260,7 +260,7 @@ flowchart LR
   expensive["5 subagents on Opus<br/>with full MCP"] --> expcost["~$5-10 per turn"]
 ```
 
-💡 Cost-saving rules:
+💡 Economy rules:
 
 - Browse tasks → **Explore** (Haiku) or **General-purpose** (Sonnet).
 - Architectural thinking → **Plan** (inherits) or subagent with `model: opus`.
@@ -323,12 +323,12 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ## 9.10. Commands for working with subagents
 
-|                       |     |
-| --------------------- | --- |
-| `/agents`             |     |
-| `/agents create`      |     |
-| `/agents list`        |     |
-| `/agents test <name>` |     |
+| Command               | What it does                |
+| --------------------- | --------------------------- |
+| `/agents`             | UI agent manager            |
+| `/agents create`      | Guide to creating a new one |
+| `/agents list`        | List with locations         |
+| `/agents test <name>` | Run agent on test prompt    |
 
 ---
 
@@ -336,13 +336,13 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ❌ **Subagent for every task.** If the task is short (5-10 turns) — this is overspending. Subagent is justified when browse volume is large.
 
-❌ **Give all tools to subagent.** Wastes context and money. Give only what's really needed.
+❌ **Give all tools to subagent.** Waste of context and money. Give only what's really needed.
 
 ❌ **Duplicating the main agent.** Making a `general-purpose` subagent with the same CLAUDE.md and MCP — that's just two instances of the same thing. Use only if you really need isolation.
 
 ❌ **Subagent with `permissionMode: bypassPermissions` on opus.** If it breaks something — no one will stop it.
 
-❌ **Ignoring `maxTurns`.** Without a limit, a subagent can get stuck in an infinite loop if confused.
+❌ **Ignoring `maxTurns`.** Without a limit, a subagent can get stuck in an infinite loop if it gets confused.
 
 ❌ **Using subagents where you need an agent team.** If the task requires exchange between executors — that's a team. See next chapter.
 

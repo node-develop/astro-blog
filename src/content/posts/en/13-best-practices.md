@@ -37,7 +37,7 @@ flowchart LR
 
 1. `git pull --rebase` — pull your colleagues' changes.
 2. Open Claude Code in the repo root. CLAUDE.md and MCP will be picked up automatically.
-3. `/cost` — see how much was spent yesterday. If there's a sharp spike — figure out why before starting new tasks.
+3. `/cost` — check how much was spent yesterday. If there's a sharp spike — figure out why before starting new tasks.
 4. `/usage` optionally — breakdown by models for the week.
 5. If there's a `TodoWrite` list from yesterday — go through it, cross out what's outdated.
 6. Formulate the first task of the day **completely**, not "let's start with X".
@@ -65,15 +65,15 @@ flowchart LR
 
 ## 13.2. Once a week: hygiene
 
-|     |                             |     |
-| --- | --------------------------- | --- |
-|     | `claude /memory`            |     |
-|     | `ls .claude/skills/`        |     |
-|     | `cat .claude/settings.json` |     |
-|     | `/usage`                    |     |
-|     | `/mcp`                      |     |
+| What               | Command                     | Why                                      |
+| ------------------ | --------------------------- | ---------------------------------------- |
+| Review CLAUDE.md   | `claude /memory`            | Has it grown? Does it contradict itself? |
+| Review skills      | `ls .claude/skills/`        | Are they all current? Do they duplicate? |
+| Review hooks       | `cat .claude/settings.json` | Is there a hook that's no longer needed? |
+| Spending by models | `/usage`                    | Did Opus unexpectedly consume a lot?     |
+| MCP servers        | `/mcp`                      | Are they all connected? Any error-state? |
 
-💡 Once a **month**: go through `.claude/agents/` and ask yourself — do you still need each subagent. "It might be useful" is bad reasoning.
+💡 Once a **month**: go through `.claude/agents/` and ask yourself — do you still need each subagent? "Just in case" is bad reasoning.
 
 ---
 
@@ -93,7 +93,7 @@ Treatment:
 2. Move long specific rules to `.claude/skills/<topic>/SKILL.md` — they'll load only when needed.
 3. Use @-imports for fragmentation.
 
-⚠️ For a new employee, CLAUDE.md over 200 lines is an anti-signal "everything here is tangled". Aim for 50-100 meaningful lines.
+⚠️ For a new employee, CLAUDE.md over 200 lines is an anti-signal "everything here is confusing". Aim for 50-100 meaningful lines.
 
 ---
 
@@ -117,7 +117,7 @@ flowchart TD
 
 1. **A runaway teammate that got stuck in a loop.** The `TeammateIdle` hook will help you notice this.
 2. **1M window "by default".** Each new iteration scales payment linearly with input.
-3. **Cache miss.** For example, if CLAUDE.md has `{{date}}` or other dynamics — every turn the cache is invalidated.
+3. **Cache misses.** For example, if CLAUDE.md has `{{date}}` or other dynamics — every turn the cache is invalidated.
 4. **`gh pr diff` at the start of each session.** PR grows — prefix grows. Don't put it in the cacheable part.
 
 ---
@@ -134,7 +134,7 @@ flowchart TD
 
 ❌ 30 skills, each "might be useful". The model spends tokens on their description with every request.
 
-✅ 5-10 targeted skills. Deleted is better than unused.
+✅ 5-10 targeted skills. Deleting is better than leaving unused.
 
 ### 13.5.3. Subagents for everything
 
@@ -150,23 +150,23 @@ flowchart TD
 
 ### 13.5.5. Hooks without logging
 
-❌ Hook fails silently, and you only see it when the model starts doing weird things.
+❌ Hook fails silently, and you only notice when the model starts doing weird things.
 
 ✅ Every hook logs its run (at least `echo "[hook:format] $(date)" >> .claude/hooks.log`).
 
 ### 13.5.6. One big prompt instead of iterative dialogue
 
-❌ "Add auth, implement RBAC, write tests, update docs, create PR" — in one line.
+❌ "Add auth, implement RBAC, write tests, update docs, create PR" — all in one line.
 
 ✅ Break it into 4 prompts. After each one, look at the diff. It's not slower because errors in the first step don't have time to bury the rest.
 
 ### 13.5.7. Ignoring `/cost`
 
-❌ You find out the bill amount at the end of the month.
+❌ Find out the bill amount at the end of the month.
 
 ✅ Check `/cost` at the end of each big task. Zero effort and builds a sense of proportion.
 
-### 13.5.8. Skills with `model: opus` for routine
+### 13.5.8. Skills with `model: opus` for routine work
 
 ❌ Skill `format-pr-description` with `model: opus`. Why? It's a copying task.
 
@@ -255,7 +255,7 @@ Sometimes it's worth closing Claude Code and working by hand. Signs:
 
 - Task is one line change in one file you know by heart.
 - You're trying to learn something and need to feel the material.
-- System operations (chmod, chown, system updates) — there's no cost to copying and full cost of error.
+- System operations (chmod, chown, system updates) — there's no copy cost and full cost of error.
 - Emotionally charged moment (panic after prod) — Claude doesn't calm you down, better to take a deep breath first.
 - You don't understand the task yourself. If you can't formulate it — you won't formulate it for Claude either.
 
@@ -265,7 +265,7 @@ Sometimes it's worth closing Claude Code and working by hand. Signs:
 
 ## 13.10. Practice: your personal "knowledge capsule"
 
-📘 Gradually collect your own patterns in `~/.claude/CLAUDE.md` (user-level). In 3-6 months you'll have:
+📘 Gradually build your own patterns in `~/.claude/CLAUDE.md` (user-level). In 3-6 months you'll have:
 
 - List of favorite prompt formulations.
 - 3-5 universal skills (for typical PRs, for refactoring, for testing).

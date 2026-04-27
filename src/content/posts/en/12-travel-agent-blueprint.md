@@ -154,7 +154,7 @@ travel-agent/
 ├── apps/web/ — React SPA
 ├── apps/api/ — Hono backend (entry in src/index.ts)
 ├── packages/mcp-\*/ — MCP servers
-├── packages/shared/ — shared types/zod-schemas (workspace: @travel/shared)
+├── packages/shared/ — shared types/zod schemas (workspace: @travel/shared)
 ├── infra/ — docker-compose, k8s
 └── docs/ — ADR, architecture, dev guides
 
@@ -312,7 +312,7 @@ travel-agent/
 
 ---
 
-## 12.5. .mcp.json (ready, both for CC and for prod-agent)
+## 12.5. .mcp.json (ready, both for CC and for prod agent)
 
 🔧 `./.mcp.json`:
 
@@ -358,7 +358,7 @@ travel-agent/
 
 ## 12.6. Minimal set of skills (with examples)
 
-Full list — in [04-skills.md](./04-skills.md). Here — a diagram of when each one triggers:
+Full list — in [04-skills.md](./04-skills.md). Here's a diagram of when each one triggers:
 
 ```mermaid
 flowchart LR

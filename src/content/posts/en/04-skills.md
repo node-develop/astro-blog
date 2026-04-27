@@ -14,17 +14,17 @@ manuallyEdited: false
 
 # 04. Skills: SKILL.md, scripts, references
 
-> Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a fixed playbook in a file that Claude himself chooses when the task matches the description.
+> Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a playbook fixed in a file that Claude himself chooses when the task matches the description.
 
 ---
 
 ## 4.1. What it is and how it differs from CLAUDE.md
 
-**CLAUDE.md** — a static prefix that goes into every request. "Context always".
+**CLAUDE.md** — a static prefix that gets injected into every request. "Context always".
 
-**Skill** — a modular playbook that **loads as needed**. When a task matches the skill description, Claude himself decides to "open" it (model-invoked) or you call it explicitly (user-invoked).
+**Skill** — a modular playbook that **loads on demand**. When a task matches the skill description, Claude himself decides to "open" it (model-invoked) or you call it explicitly (user-invoked).
 
-This is a fundamental token economy: you can have 50 skills in a project, and only their **brief descriptions** (`name + description` from frontmatter) go into the main context. The SKILL.md itself "unfolds" only when needed.
+This is a fundamental token economy: you might have 50 skills in a project, and only their **brief descriptions** (`name + description` from frontmatter) go into the main context. The SKILL.md itself "unfolds" only when needed.
 
 📘 Skills appeared as a feature of Claude Code and Anthropic API in **October 2025** (`skills-2025-10-02` beta). In **December 2025**, Anthropic published the specification as an open standard.
 
@@ -73,23 +73,23 @@ Brief PR-style summary: file list, route signature, test coverage.
 
 ### Key frontmatter fields
 
-|                            |     |     |
-| -------------------------- | --- | --- |
-| `name`                     |     |     |
-| `description`              |     |     |
-| `when_to_use`              |     |     |
-| `allowed-tools`            |     |     |
-| `disable-model-invocation` |     |     |
-| `user-invocable`           |     |     |
-| `argument-hint`            |     |     |
-| `arguments`                |     |     |
-| `model`                    |     |     |
-| `effort`                   |     |     |
-| `context`                  |     |     |
-| `agent`                    |     |     |
-| `hooks`                    |     |     |
-| `paths`                    |     |     |
-| `shell`                    |     |     |
+| Field                      | Required | What it means                                                                               |
+| -------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `name`                     | ✅       | Unique skill identifier (slug)                                                              |
+| `description`              | ✅       | **The most important field.** Claude decides whether to load the skill based on it          |
+| `when_to_use`              | —        | Clarification to description, when exactly the skill is appropriate                         |
+| `allowed-tools`            | —        | Whitelist of tools for the skill. If set, the skill can only call them                      |
+| `disable-model-invocation` | —        | If `true`, the skill is **only** user-invocable (must be called explicitly `/skill <name>`) |
+| `user-invocable`           | —        | Can it be called via `/skill name`                                                          |
+| `argument-hint`            | —        | Hint for `argument-hint`, displayed in slash-menu                                           |
+| `arguments`                | —        | Description of expected arguments (for CLI)                                                 |
+| `model`                    | —        | Always execute the skill on this model (`sonnet`, `opus`, `haiku`)                          |
+| `effort`                   | —        | `low` / `medium` / `high` — controls the amount of reasoning                                |
+| `context`                  | —        | `inherit` (default — in current context) or `fork` (subagent with clean context)            |
+| `agent`                    | —        | Run through a specific subagent                                                             |
+| `hooks`                    | —        | Inline hooks for the skill                                                                  |
+| `paths`                    | —        | Bind activation to specific directories                                                     |
+| `shell`                    | —        | Pass shell environment to the skill (env vars)                                              |
 
 ---
 
@@ -97,26 +97,24 @@ Brief PR-style summary: file list, route signature, test coverage.
 
 📘 From docs:
 
-|     |                                          |     |
-| --- | ---------------------------------------- | --- |
-|     |                                          |     |
-|     | `~/.claude/skills/<skill-name>/SKILL.md` |     |
-|     | `.claude/skills/<skill-name>/SKILL.md`   |     |
-|     | `<plugin>/skills/<skill-name>/SKILL.md`  |     |
+| Level      | Path                                     | When to use                           |
+| ---------- | ---------------------------------------- | ------------------------------------- |
+| Enterprise | Managed settings (OS-dependent)          | Corporate policies                    |
+| Personal   | `~/.claude/skills/<skill-name>/SKILL.md` | Your personal skills for all projects |
+| Project    | `.claude/skills/<skill-name>/SKILL.md`   | Skills for current repo (committed)   |
+| Plugin     | `<plugin>/skills/<skill-name>/SKILL.md`  | Skills bundled in a plugin            |
 
 **Priority on name collision:** enterprise > personal > project > plugin.
 
 Also: **subdirectory-skills** — `.claude/skills/<name>/SKILL.md` inside project subfolders are picked up automatically. That is, you can keep skills only for frontend in `apps/web/.claude/skills/`.
 
-## 4.4. Skill is a directory, not a file
-
 ---
+
+## 4.4. Skill is a directory, not a file
 
 ⚠️ **This is a critical correction to a popular myth.**
 
 "Skill is a markdown file" — a simplification that's misleading. Actually, a skill is a **directory** that must contain `SKILL.md`, and optionally can contain anything you need:
-
-📘 From docs: "Skills can bundle and run scripts in any language, giving Claude capabilities beyond what's possible in a single prompt".
 
 ```
 .claude/skills/release-deploy/
@@ -134,36 +132,29 @@ Also: **subdirectory-skills** — `.claude/skills/<name>/SKILL.md` inside projec
     └── changelog.md.template
 ```
 
+📘 From docs: "Skills can bundle and run scripts in any language, giving Claude capabilities beyond what's possible in a single prompt".
+
 **So the claim "skill is just a prompt template" ❌ is wrong.** A skill can:
 
 - Run arbitrary scripts via `Bash`.
 - Read its own references as context.
-- Use its own templates to generate files.
+- Use its own templates for file generation.
 - Have its own `allowed-tools` (for example, everything except `WebFetch`).
 - Run a subagent via `context: fork`.
 
-## 4.5. Model-invoked vs user-invoked
-
-**Model-invoked** (default). Claude sees **descriptions** of all available skills in the system prompt. When a task matches the description — he himself decides to "open" that skill (Read SKILL.md, return its content to himself, execute).
-**User-invoked** — explicit call:
-If `disable-model-invocation: true` in frontmatter — the skill becomes **only** user-invocable. Useful for destructive or rare operations ("release", "database migration" — don't let the model run them on its own).
-⚠️ **Skills are probabilistic, not deterministic.** Claude _may_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks.md)).
-
 ---
 
-## 4.6. How Claude chooses which skill to load
+## 4.5. Model-invoked vs user-invoked
 
-The decision is made in several steps:
+**Model-invoked** (default). Claude sees **descriptions** of all available skills in the system prompt. When a task matches a skill description — he decides to "open" that skill himself (Read SKILL.md, return its content to himself, execute).
 
-1. **Does the description match the request?** Words, patterns in `description` and `when_to_use` are compared with the user message.
-2. **Doesn't contradict other skills?** If multiple match — Claude picks the most specific one.
-3. **Not forbidden by `paths`?** If frontmatter specifies `paths: ["apps/api/**"]`, the skill activates only when the model works in those files.
+**User-invoked** — explicit call:
 
 ```bash
 /skill backend-add-route "POST /trips/:id/duplicate"
 ```
 
-💡 **That's why `description` is the most important part of a skill.** A good description:
+If frontmatter has `disable-model-invocation: true` — the skill becomes **only** user-invocable. Useful for destructive or rare operations ("release", "database migration" — don't let the model run them on its own).
 
 ```mermaid
 flowchart TD
@@ -175,39 +166,33 @@ flowchart TD
   user2[User: /skill name args] --> read
 ```
 
+⚠️ **Skills are probabilistic, not deterministic.** Claude _might_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks.md)).
+
+---
+
+## 4.6. How Claude chooses which skill to load
+
+The decision is made in several steps:
+
+1. **Does the description match the request?** Words, patterns in `description` and `when_to_use` are compared with the user message.
+2. **Doesn't contradict other skills?** If multiple match — Claude picks the most specific one.
+3. **Not forbidden by `paths`?** If frontmatter specifies `paths: ["apps/api/**"]`, the skill activates only when the model works in these files.
+
+💡 **That's why `description` is the most important part of a skill.** A good description:
+
 ✅ Starts with a verb or explicit "Use when...".
 ✅ Lists trigger words the user might say.
 ✅ Is concrete: "Add a Hono route to apps/api", not "Help with backend".
 ✅ Contains example requests.
 
----
-
 ❌ Vague: "Helps with code".
 ❌ Too general: "Use this when working on the backend".
+
+---
 
 ## 4.7. Full example chain for Travel Agent
 
 A minimal set of skills worth setting up right away:
-🔧 Example: **`prepare-pr`** — what to do before commit and PR.
-
-🔧 Example: **`debug-mcp-failure`** — debugging MCP server failures.
-
-## 4.8. `context: inherit` vs `context: fork`
-
-🧪 The `context` frontmatter field controls _where_ the skill executes:
-
-- **`context: inherit`** (default) — the skill executes in the current session context. Sees all history, adds results to the main context.
-- **`context: fork`** — the skill runs in a separate subagent. Doesn't inherit history, doesn't see it, the main context gets only the final result.
-
-💡 **When to use `fork`:**
-
----
-
-- The skill does heavy scanning (Read dozens of files, Grep across the whole repo) — results shouldn't bloat the main context.
-- Destructive operations you want to isolate.
-- Reasoning-heavy tasks — you can give them their own effort/model.
-
-**`debug-mcp-failure`** — a candidate for `fork`: it reads lots of logs, the main context shouldn't be filled with them.
 
 ```
 .claude/skills/
@@ -221,7 +206,7 @@ A minimal set of skills worth setting up right away:
 └── release-deploy/SKILL.md
 ```
 
-## 4.9. Commands for working with skills
+🔧 Example: **`prepare-pr`** — what to do before commit and PR.
 
 ```markdown
 ---
@@ -261,7 +246,7 @@ After running, confirm:
 - @scripts/check-staged-files.sh
 ```
 
-| Command
+🔧 Example: **`debug-mcp-failure`** — debugging MCP server crashes.
 
 ```markdown
 ---
@@ -301,12 +286,12 @@ Systematic diagnosis for MCP server failures.
 
 ---
 
-| What it does |
+## 4.8. `context: inherit` vs `context: fork`
 
-| Explicitly call a user-invocable skill |
+🧪 The frontmatter field `context` controls _where_ the skill executes:
 
-| List all available skills with descriptions |
-| `Skill` (internal tool)
+- **`context: inherit`** (default) — the skill executes in the current session context. Sees the entire history, adds results to the main context.
+- **`context: fork`** — the skill runs in a separate subagent. Doesn't inherit history, doesn't see it, the main context receives only the final result.
 
 ```mermaid
 flowchart LR
@@ -321,17 +306,13 @@ flowchart LR
   end
 ```
 
-| Used by the model itself, you don't call it directly |
+💡 **When to use `fork`:**
 
-💡 If you want to check how Claude sees your skill — look at `/skills`. If the description looks vague in that list — it will be vague for the model too.
+- The skill does heavy scanning (Read dozens of files, Grep across the entire repo) — results shouldn't bloat the main context.
+- Destructive operations you want to isolate.
+- Reasoning-heavy tasks — you can give them their own effort/model.
 
-## 4.10. When to write a skill vs CLAUDE.md
-
-**Simple rule:**
-
-- Fact about the project → CLAUDE.md
-- Procedure "user says X — do Y, Z, W" → Skill
-- "Always after X do Y" → Hook
+**`debug-mcp-failure`** — a candidate for `fork`: it reads many logs, the main context shouldn't be cluttered with them.
 
 ```yaml
 ---
@@ -343,19 +324,19 @@ agent: explore # запустить через built-in Explore subagent с Haik
 
 ---
 
-## 4.11. Antipatterns
+## 4.9. Commands for working with skills
 
-|                        |     |
-| ---------------------- | --- |
-| `/skill <name> [args]` |     |
-| `/skills`              |     |
-|                        |     |
+| Command                 | What it does                                         |
+| ----------------------- | ---------------------------------------------------- |
+| `/skill <name> [args]`  | Explicitly call a user-invocable skill               |
+| `/skills`               | List all available skills with descriptions          |
+| `Skill` (internal tool) | Used by the model itself, you don't call it directly |
 
-<!--T105-->
+💡 If you want to check how Claude sees your skill — look at `/skills`. If the description looks vague in that list — it will be vague for the model too.
 
 ---
 
-<!--T106-->
+## 4.10. When to write a skill vs CLAUDE.md
 
 ```mermaid
 flowchart TD
@@ -368,28 +349,28 @@ flowchart TD
   q3 -- yes --> hk["Hook<br/>(see next chapter)"]
 ```
 
-<!--T107-->
+**Simple rule:**
 
-<!--T108-->
-<!--T109-->
-<!--T110-->
-
----
-
-<!--T111-->
-
-<!--T112-->
-
-<!--T113-->
-
-<!--T114-->
-
-<!--T115-->
-
-<!--T116-->
-
-<!--T117-->
+- Project fact → CLAUDE.md
+- Procedure "user says X — do Y, Z, W" → Skill
+- "Always after X do Y" → Hook
 
 ---
 
-<!--T118-->
+## 4.11. Antipatterns
+
+❌ **Skill with vague description** (`"Use this for any work"`). → Never activates or activates in the wrong place.
+
+❌ **Skill duplicating CLAUDE.md.** If knowledge is needed always — it's CLAUDE.md.
+
+❌ **Skill without `allowed-tools` for destructive operations.** If a skill can delete data — restrict the set of tools.
+
+❌ **Huge SKILL.md with 2000 lines.** Break it into references and link via `@`.
+
+❌ **Ignoring `context: fork` for browse-heavy skills.** You're unnecessarily bloating the main context.
+
+❌ **Using skills for guarantees.** If you need "always run linter after Edit" — that's not a skill, that's a hook.
+
+---
+
+**Next →** [05. Hooks: 30+ events, exit codes, JSON protocol](./05-hooks.md)

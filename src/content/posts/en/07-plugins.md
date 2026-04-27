@@ -28,7 +28,7 @@ Without plugins, you write everything in `.claude/` of each project and copy-pas
 ✅ Versioning via semver.
 ✅ Installation via `/plugin install`.
 ✅ Marketplace (internal or public).
-✅ Update in one click.
+✅ One-click updates.
 
 ---
 
@@ -95,7 +95,7 @@ Minimal manifest:
 📘 Marketplaces — these are plugin catalog repositories. They come in:
 
 - **Anthropic Official** — `anthropics/claude-plugins-official` on GitHub.
-- **Community** — public repos with a list of community plugins.
+- **Community** — public repos with community plugin lists.
 - **Internal/private** — your corporate registry (for example, a GitHub Enterprise repo with a listing file).
 
 **Marketplace anatomy:**
@@ -156,7 +156,7 @@ Plugins are installed in `~/.claude/plugins/<name>/`.
 
 ---
 
-## 7.6. Features of plugin hooks
+## 7.6. Plugin hooks specifics
 
 Inside a plugin in `hooks/hooks.json`, use the `${CLAUDE_PLUGIN_ROOT}` variable:
 
@@ -222,14 +222,14 @@ Then a new project just does `/plugin install travel-stack-toolkit` and gets all
 
 ## 7.10. Commands for working with plugins
 
-|                            |     |
-| -------------------------- | --- |
-| `/plugin list`             |     |
-| `/plugin install <ref>`    |     |
-| `/plugin uninstall <name>` |     |
-| `/plugin update <name>`    |     |
-| `/plugin info <name>`      |     |
-| `/plugin search <query>`   |     |
+| Command                    | What it does                     |
+| -------------------------- | -------------------------------- |
+| `/plugin list`             | All installed plugins            |
+| `/plugin install <ref>`    | Install                          |
+| `/plugin uninstall <name>` | Remove                           |
+| `/plugin update <name>`    | Update to latest                 |
+| `/plugin info <name>`      | Details + list of contents       |
+| `/plugin search <query>`   | Search in connected marketplaces |
 
 ---
 
@@ -239,7 +239,7 @@ Then a new project just does `/plugin install travel-stack-toolkit` and gets all
 
 ❌ **One giant plugin for everything.** Better to have several narrow ones.
 
-❌ **Plugin without `engines`.** In six months the CLI will update, the plugin will break without diagnostics.
+❌ **Plugin without `engines`.** In half a year the CLI updates, the plugin breaks without diagnostics.
 
 ❌ **Plugin with MCP config that requires your private API.** You published it — no one but you can use it. Make such MCPs optional.
 

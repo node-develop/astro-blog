@@ -1,8 +1,8 @@
 ---
 title: "03. CLAUDE.md: levels, imports, auto-memory"
 description: >-
-  CLAUDE.md is a 'paste this every time' in a beautiful wrapper. A file that automatically gets inserted into the system
-  prompt of each session. Used correctly — saves tens of thousands of tokens and
+  CLAUDE.md is a "paste this every time" in a nice wrapper. A file that automatically gets inserted into the system
+  prompt of each session. Used correctly — saves tens of thousands of tokens and more
 pubDate: 2026-04-23
 tags:
   - claude-code
@@ -14,17 +14,17 @@ manuallyEdited: false
 
 # 03. CLAUDE.md: levels, imports, auto-memory
 
-> CLAUDE.md is "paste this every time" in a nice wrapper. A file that automatically gets pasted into the system prompt of every session. Used correctly — saves tens of thousands of tokens and makes the model suddenly smart about your project. Used incorrectly — bloats the context and contradicts itself.
+> CLAUDE.md is "paste this every time" in a nice wrapper. A file that automatically gets pasted into the system prompt of every session. Used correctly — it saves tens of thousands of tokens and makes the model suddenly smart about your project. Used incorrectly — it bloats the context and contradicts itself.
 
 ---
 
-## 3.1. What it is and why
+## 3.1. What it is and why you need it
 
 📘 From docs (`memory`): "CLAUDE.md files are markdown files that give Claude persistent instructions. Claude reads them at the start of every session".
 
 If your project has quirks ("we use Hono, not Express", "we use pnpm", "pg schema in `db/migrations/`") — without CLAUDE.md the model will keep re-reading files and guessing. With CLAUDE.md — it knows this from the start.
 
-⚠️ The claim "reduces file reads" is sound practice, but the docs don't state it directly. The documentation talks about "persistent instructions" and "context guidance". The effect — yes, fewer reads; but that's a consequence, not a quote.
+⚠️ The claim "reduces the number of file reads" is sound practice, but the docs don't state it directly. The documentation talks about "persistent instructions" and "context guidance". The effect — yes, fewer reads; but that's a consequence, not a quote.
 
 ---
 
@@ -48,7 +48,7 @@ flowchart TD
 
 📘 From docs: "More specific locations take precedence over broader ones, all discovered files are concatenated rather than overriding".
 
-That is, **more specific ones don't overwrite, they add on top**. If user CLAUDE.md says "always use TypeScript strict", and project says "we have strictNullChecks off" — the model will see both phrases, and the more local one (project) will be perceived as more authoritative just because of position and context.
+That is, **more specific ones don't overwrite, they get added on top**. If user CLAUDE.md says "always use TypeScript strict", and project says "we have strictNullChecks disabled" — the model will see both phrases, and the more local one (project) will be perceived as more authoritative just because of its position and context.
 
 ---
 
@@ -59,7 +59,7 @@ When a session starts in directory `cwd`, the harness looks for:
 1. `./CLAUDE.md`
 2. `./.claude/CLAUDE.md`
 3. `./CLAUDE.local.md` (if it exists)
-4. Through all parent directories up to the filesystem root — all found files are also picked up.
+4. All parent directories up to the filesystem root — all found files are also picked up.
 
 **Subdirectory CLAUDE.md** is loaded **on demand** — when the model starts working in that folder (reads files from it, runs Bash in its root). This lets you have a huge monorepo with local "notes" in each package without bloating the base context.
 
@@ -110,21 +110,21 @@ Inside CLAUDE.md you can pull in other files:
 @docs/conventions/git-commits.md
 ```
 
-When Claude reads this CLAUDE.md, it automatically inlines the contents of all imports (recursively, up to 5 levels deep). For the model, all of this looks like one big document.
+When Claude reads this CLAUDE.md, it automatically inlines the contents of all imports (recursively, up to 5 levels of nesting). For the model, all of this looks like one big document.
 
 💡 **Why do it this way:**
 
 1. Decompose a large CLAUDE.md into thematic chunks.
-2. Reuse the same documents across multiple CLAUDE.md files.
+2. Reuse the same documents in multiple CLAUDE.md files.
 3. You can keep "real" documents (`docs/architecture/...`) for people and just reference them from CLAUDE.md.
 
-⚠️ The 5 hop limit: if you have A → B → C → D → E → F, then F won't be picked up. And the model won't warn you about it.
+⚠️ The 5 hops limit: if you have A → B → C → D → E → F, then F won't be picked up. And the model won't warn you about it.
 
 ---
 
 ## 3.5. What to put in CLAUDE.md (and what not to)
 
-**Put in:**
+**Do put:**
 
 ✅ Stack (Hono, not Express. Vite, not Webpack. pnpm, not npm.)
 ✅ Repo structure in one diagram (mermaid or ASCII).
@@ -133,15 +133,15 @@ When Claude reads this CLAUDE.md, it automatically inlines the contents of all i
 ✅ Prohibitions ("don't touch files in `legacy/`", "don't use `console.log`, we have pino").
 ✅ Tips for frequent tasks ("before changing the API — update `packages/shared/types`").
 
-**Don't put in:**
+**Don't put:**
 
 ❌ README. If you need context — link via `@README.md`.
 ❌ License.
-❌ Long ADRs in full. Better: "we chose Postgres, rationale in @docs/adr/0003-postgres.md" — the model will read it if needed.
+❌ Full ADRs. Better: "we chose Postgres, rationale in @docs/adr/0003-postgres.md" — the model will read it if needed.
 ❌ Full dependency list with versions. It changes often, and `package.json` is there anyway.
-❌ Histories of "why it was like this and became like that". Just adds noise.
+❌ Histories of "why it was like this and became like that". It adds noise.
 
-💡 **Size heuristic:** one CLAUDE.md per level — no more than **300 lines** or **5000 tokens** (`/context` will show). Larger — move to imports or subdirectory CLAUDE.md.
+💡 **Size heuristic:** one CLAUDE.md per level — no more than **300 lines** or **5000 tokens** (`/context` will show you). Larger — move to imports or subdirectory CLAUDE.md.
 
 ---
 
@@ -279,7 +279,7 @@ What can be there:
 - При работе с mcp-flights: тестовый ключ Amadeus в `.env.local`, прод-ключ — только в Vault.
 ```
 
-This is the very "4th edition" — it exists only for you. Very handy so Claude knows your current context without you having to tell it every time.
+This is the "4th edition" — it exists only for you. Very handy so Claude knows your current context without you having to tell it every time.
 
 ---
 
@@ -287,7 +287,7 @@ This is the very "4th edition" — it exists only for you. Very handy so Claude 
 
 📘 From docs: "Claude also creates auto memory as it works, persisting knowledge … across sessions".
 
-Besides CLAUDE.md, the harness can **itself** add notes to a special memory file. This is needed, for example, to remember "I already checked a specific edge case for this user". These notes also go into the system prefix.
+Besides CLAUDE.md, the harness can **itself** add notes to a special memory file. This is needed, for example, to remember "I already checked a specific edge case for the user". These notes also go into the system prefix.
 
 ⚠️ Auto-memory is a relatively young feature, behavior may change from version to version. If deterministic context matters to you — disable it in settings or explicitly review it.
 
@@ -295,27 +295,27 @@ Besides CLAUDE.md, the harness can **itself** add notes to a special memory file
 
 ## 3.9. Commands for working with CLAUDE.md
 
-|            |     |
-| ---------- | --- |
-| `/init`    |     |
-| `/memory`  |     |
-| `/context` |     |
+| Command    | What it does                                                              |
+| ---------- | ------------------------------------------------------------------------- |
+| `/init`    | Create a starter CLAUDE.md in the current directory by analyzing the repo |
+| `/memory`  | Open CLAUDE.md in an editor for editing                                   |
+| `/context` | See how many tokens CLAUDE.md and its imports take up                     |
 
 💡 `/init` — really a good starting point for a new project. Run it, see what Claude suggests, edit to your reality.
 
 ---
 
-## 3.10. Antipatterns that come up most often
+## 3.10. Antipatterns you see most often
 
-❌ **"CLAUDE.md as README"** — people copy README with all promotional sections and changelog. → Bloats the prefix, model sees extra noise.
+❌ **"CLAUDE.md as README"** — people copy README with all promotional sections and changelog. → Bloats the prefix, the model sees extra noise.
 
 ❌ **"CLAUDE.md as ADR repository"** — all architectural decisions with rationales dumped in. → Better: briefly "chose Postgres because of X, details in @docs/adr/..." and a link.
 
 ❌ **Contradictions between levels** — user CLAUDE.md says "use tabs", project says "use spaces", subdirectory says "we have mixed". → Model gets confused. Unify, keep project as the single source of truth for the project.
 
-❌ **Missing subdirectory CLAUDE.md in monorepo** — one huge root CLAUDE.md at 800 lines. → Move package specifics to `apps/*/CLAUDE.md` and `packages/*/CLAUDE.md`.
+❌ **Missing subdirectory CLAUDE.md in monorepo** — one huge root CLAUDE.md with 800 lines. → Move package specifics to `apps/*/CLAUDE.md` and `packages/*/CLAUDE.md`.
 
-❌ **Ignoring `/context`** — never check how heavy your memory is. Overlook it until you hit a cache problem.
+❌ **Ignoring `/context`** — never check how heavy your memory is. You'll miss it until you hit a cache problem.
 
 ---
 
