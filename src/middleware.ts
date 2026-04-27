@@ -27,4 +27,4 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-export const onRequest = sequence(authContext, adminGuard, i18nRootRedirect);
+export const onRequest = sequence(i18nRootRedirect, authContext, adminGuard);
