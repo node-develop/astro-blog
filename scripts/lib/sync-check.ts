@@ -1,0 +1,32 @@
+export interface FileState {
+  readonly slug: string;
+  readonly ruHash: string;
+  readonly enHash: string | null;
+  readonly enExists: boolean;
+  readonly enManual: boolean;
+  readonly ruDraft: boolean;
+}
+
+export interface DriftReport {
+  readonly missing: readonly string[];
+  readonly drift: readonly string[];
+  readonly warnings: readonly string[];
+}
+
+export const detectDrift = (files: readonly FileState[]): DriftReport => {
+  const missing: string[] = [];
+  const drift: string[] = [];
+  const warnings: string[] = [];
+  for (const f of files) {
+    if (f.ruDraft) continue;
+    if (!f.enExists) {
+      missing.push(f.slug);
+      continue;
+    }
+    if (f.ruHash !== f.enHash) {
+      if (f.enManual) warnings.push(f.slug);
+      else drift.push(f.slug);
+    }
+  }
+  return { missing, drift, warnings };
+};
