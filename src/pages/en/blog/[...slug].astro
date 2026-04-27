@@ -1,0 +1,26 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import PostLayout from "~/layouts/PostLayout.astro";
+import { getOrderedPosts } from "~/lib/content/loader";
+
+type Post = CollectionEntry<"posts">;
+
+export async function getStaticPaths() {
+  const posts = await getOrderedPosts({ locale: "en" });
+  return posts.map((p) => ({
+    params: { slug: p.entry.id.replace(/^en\//, "") },
+    props: { post: p.entry },
+  }));
+}
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+---
+
+<PostLayout post={post} headings={headings}>
+  <Content />
+</PostLayout>

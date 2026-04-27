@@ -1,0 +1,122 @@
+---
+export const prerender = false;
+
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { searchNode } from "~/lib/search/pagefind-node";
+
+const url = new URL(Astro.request.url);
+const query = url.searchParams.get("q")?.trim() ?? "";
+const hits = query ? await searchNode(query) : [];
+---
+
+<BaseLayout
+  title={query ? `Поиск: ${query}` : "Поиск"}
+  description="Поиск по блогу"
+  fullWidth={true}
+>
+  <section class="search-page">
+    <h1>Поиск</h1>
+    <form method="get" action="/search" role="search">
+      <input
+        type="search"
+        name="q"
+        value={query}
+        placeholder="Запрос…"
+        aria-label="Поисковый запрос"
+        autofocus
+      />
+      <button type="submit">Найти</button>
+    </form>
+
+    {
+      query && hits.length === 0 && (
+        <p class="search-page__empty">По запросу «{query}» ничего не найдено.</p>
+      )
+    }
+
+    {
+      hits.length > 0 && (
+        <ul class="search-page__results">
+          {hits.map((h) => (
+            <li>
+              <a href={h.url}>
+                <h2 set:html={h.title} />
+                <p set:html={h.excerpt} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      !query && (
+        <p class="search-page__hint">
+          Введите запрос или нажмите <kbd>⌘K</kbd> где угодно на сайте.
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .search-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 16px;
+  }
+  .search-page form {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0 24px;
+  }
+  .search-page input[type="search"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-elevated);
+    color: var(--color-fg);
+    font: 14px / 1.4 var(--font-sans);
+  }
+  .search-page button {
+    padding: 8px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .search-page__results {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+  }
+  .search-page__results li a {
+    display: block;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    color: inherit;
+    text-decoration: none;
+  }
+  .search-page__results li a:hover {
+    background: var(--color-bg-elevated);
+  }
+  .search-page__results h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+  .search-page__results p {
+    margin: 0;
+    color: var(--color-fg-subtle);
+    font-size: 14px;
+  }
+  .search-page__empty,
+  .search-page__hint {
+    color: var(--color-fg-subtle);
+    font-style: italic;
+  }
+</style>

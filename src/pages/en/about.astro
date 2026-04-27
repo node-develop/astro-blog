@@ -1,0 +1,24 @@
+---
+export const prerender = false;
+
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getEntry, render } from "astro:content";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const slug = locale === "en" ? "en/about" : "about";
+const entry = await getEntry("site", slug);
+if (!entry) {
+  return new Response(null, { status: 404 });
+}
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={entry.data.title} description={t(locale, "nav.about")} fullWidth={true}>
+  <SiteSidebar slot="sidebar" />
+  <article class="prose">
+    <Content />
+  </article>
+</BaseLayout>
