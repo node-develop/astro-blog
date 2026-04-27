@@ -40,7 +40,7 @@ describe("translateProse", () => {
     expect(createMock).toHaveBeenCalledOnce();
 
     const call = createMock.mock.calls[0]![0]!;
-    expect(call.model).toBe("claude-sonnet-4-6");
+    expect(call.model).toBe("claude-haiku-4-5-20251001");
     expect(call.temperature).toBe(0);
     // System prompt should be an array with cache_control
     expect(Array.isArray(call.system)).toBe(true);
