@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 4409015c8be42168b4186b57c2c6caee2644d423348961ea6bbe308bada0ffcf
+sourceHash: f26dfaaed192fe85bced4b88d1095ac1a23218a6e0b32636a8a674e08223759a
 manuallyEdited: false
 ---
 
@@ -27,7 +27,7 @@ manuallyEdited: false
 1. Receives a user request.
 2. Decides which **tool** to call (Read a file, Bash command, code search).
 3. Gets the tool result back.
-4. Decides: either call another tool or answer the user.
+4. Decides: either call another tool or respond to the user.
 
 This cycle is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
 
@@ -89,7 +89,7 @@ flowchart LR
   cli <--> mcp
 ```
 
-⚠️ This is important to understand: when we say "the model read a file" — it's shorthand for "the model made a tool_use Read, harness read the file, returned the contents in tool_result, the model saw it in the next step". The model has no direct disk access.
+⚠️ This is important to understand: when we say "the model read a file" — it's shorthand for "the model made a tool_use Read call, the harness read the file, returned the contents in tool_result, the model saw this in the next step". The model has no direct disk access.
 
 ---
 
@@ -179,19 +179,19 @@ In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint.md) the final repo
 
 ---
 
-## 1.6. Quick reference of CLI commands mentioned in the guide
+## 1.6. Quick reference of CLI commands used in the guide
 
-| Command                 | What it does                              | Chapter                                                           |
-| ----------------------- | ----------------------------------------- | ----------------------------------------------------------------- |
-| `/context`              | Visualizes current window fill            | [02](./02-context-and-cache.md)                                   |
-| `/compact [hint]`       | Compresses history, frees space           | [02](./02-context-and-cache.md)                                   |
-| `/clear`                | Full session reset (restarts, cache lost) | [02](./02-context-and-cache.md)                                   |
-| `/model [name]`         | Switch model in current session           | [02](./02-context-and-cache.md), [10](./11-models-and-pricing.md) |
-| `/agents`               | Subagent manager                          | [09](./09-subagents.md)                                           |
-| `/plugin install <ref>` | Install plugin from marketplace           | [07](./07-plugins.md)                                             |
-| `/mcp`                  | List connected MCP servers                | [06](./06-mcp.md)                                                 |
-| `/permissions`          | Current allow/deny rules                  | [05](./05-hooks.md)                                               |
-| `/release-notes`        | Changes in version                        | —                                                                 |
+| Command                 | What it does                               | Chapter                                                           |
+| ----------------------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| `/context`              | Visualizes current window fill             | [02](./02-context-and-cache.md)                                   |
+| `/compact [hint]`       | Compresses history, frees space            | [02](./02-context-and-cache.md)                                   |
+| `/clear`                | Full session reset (restarts, loses cache) | [02](./02-context-and-cache.md)                                   |
+| `/model [name]`         | Switch model in current session            | [02](./02-context-and-cache.md), [10](./11-models-and-pricing.md) |
+| `/agents`               | Subagent manager                           | [09](./09-subagents.md)                                           |
+| `/plugin install <ref>` | Install plugin from marketplace            | [07](./07-plugins.md)                                             |
+| `/mcp`                  | List connected MCP servers                 | [06](./06-mcp.md)                                                 |
+| `/permissions`          | Current allow/deny rules                   | [05](./05-hooks.md)                                               |
+| `/release-notes`        | Changes in version                         | —                                                                 |
 
 ---
 
