@@ -10,7 +10,7 @@ interface Props {
 
 const { activeSlug } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
-const posts = await getOrderedPosts();
+const posts = await getOrderedPosts({ locale });
 
 // Split into "guide series" (numeric slugs) and "other" so the sidebar can
 // group them visually — matches the structure of the existing content.

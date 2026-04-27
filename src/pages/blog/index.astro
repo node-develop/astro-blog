@@ -4,8 +4,10 @@ export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
-const posts = await getOrderedPosts();
+const locale = getLocaleFromPath(Astro.url.pathname);
+const posts = await getOrderedPosts({ locale });
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 ---
 
@@ -38,7 +40,7 @@ const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.da
                 <h2 class="list__post-title">{p.entry.data.title}</h2>
                 <p class="list__post-desc">{p.entry.data.description}</p>
                 <time datetime={p.entry.data.pubDate.toISOString()} class="list__post-date">
-                  {p.entry.data.pubDate.toLocaleDateString("ru-RU", {
+                  {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
