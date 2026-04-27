@@ -82,7 +82,6 @@ export default defineConfig({
       prefixDefaultLocale: false,
       redirectToDefaultLocale: false,
     },
-    fallback: { en: "ru" },
   },
   integrations: [
     mdx({
