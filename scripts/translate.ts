@@ -37,9 +37,16 @@ const serializeWithExtras = (
   extras: Record<string, unknown>,
   body: string,
 ): string => {
+  // Astro content schema enforces max 200 chars on description; truncate at word boundary.
+  const truncateDesc = (s: string): string => {
+    if (s.length <= 200) return s;
+    const cut = s.slice(0, 200).lastIndexOf(" ");
+    return s.slice(0, cut > 100 ? cut : 200);
+  };
+
   const obj: Record<string, unknown> = {
     title: base.title,
-    description: base.description,
+    description: truncateDesc(base.description),
     pubDate: base.pubDate.toISOString().slice(0, 10),
     ...(base.updatedDate ? { updatedDate: base.updatedDate.toISOString().slice(0, 10) } : {}),
     tags: base.tags,
@@ -195,6 +202,78 @@ const translateAllPosts = async (): Promise<readonly FileResult[]> => {
   return results;
 };
 
+/** Translate a site content file (about, etc.) that has only a `title` in frontmatter. */
+const translateSiteFile = async (
+  inputPath: string,
+  outputPath: string,
+  slug: string,
+): Promise<FileResult> => {
+  const source = await readFile(inputPath, "utf8");
+  const ruHash = sha256(source);
+  const existingEn = await readExistingEnState(outputPath);
+  const force = FORCE_ALL || (FORCE_SLUG !== null && FORCE_SLUG === slug);
+
+  const decision = decideAction({ ruHash, existingEn, force });
+  if (decision.action === "skip")
+    return {
+      slug,
+      status: "skipped",
+      ...(decision.reason !== undefined ? { note: decision.reason } : {}),
+    };
+  if (decision.action === "warn")
+    return {
+      slug,
+      status: "warned",
+      note: `RU source changed since manual edit; EN may be stale. Run \`pnpm translate -- --force ${slug}\` to re-baseline.`,
+    };
+
+  // Parse raw frontmatter without requiring pubDate
+  const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+  const fenceMatch = FENCE.exec(source);
+  if (!fenceMatch || fenceMatch[1] === undefined) throw new Error("No frontmatter block found");
+  const rawData = yaml.load(fenceMatch[1]) as Record<string, unknown>;
+  const body = source.slice(fenceMatch[0].length).replace(/^\s*\n/, "");
+
+  // Translate the title (and any other string fields present)
+  const fmStrings: Record<string, string> = {};
+  if (typeof rawData["title"] === "string") fmStrings["title"] = rawData["title"];
+  if (typeof rawData["description"] === "string") fmStrings["description"] = rawData["description"];
+
+  const fmTranslated =
+    Object.keys(fmStrings).length > 0
+      ? await translateStrings({
+          apiKey: apiKey!,
+          sourceLocale: "ru",
+          targetLocale: "en",
+          strings: fmStrings,
+        })
+      : {};
+
+  // Translate body
+  const { placeholders, skeleton } = extractProse(body, { rewriteInternalLink: () => undefined });
+  const translated = await translateProse({
+    apiKey: apiKey!,
+    sourceLocale: "ru",
+    targetLocale: "en",
+    placeholders,
+  });
+  const enBody = reassemble(skeleton, translated);
+
+  // Rebuild frontmatter: merge translated fields + sourceHash/manuallyEdited
+  const enData: Record<string, unknown> = {
+    ...rawData,
+    ...fmTranslated,
+    sourceHash: ruHash,
+    manuallyEdited: false,
+  };
+  const rawYml = yaml.dump(enData, { lineWidth: 120 });
+  const enFile = `---\n${rawYml}---\n\n${enBody}`;
+
+  await mkdir(join(outputPath, ".."), { recursive: true });
+  await writeFile(outputPath, enFile, "utf8");
+  return { slug, status: "translated" };
+};
+
 const translateAllSite = async (): Promise<readonly FileResult[]> => {
   if (!existsSync(PATHS.siteDir)) return [];
   const files = (await readdir(PATHS.siteDir)).filter((f) => /\.md$/.test(f) && !f.startsWith("."));
@@ -204,7 +283,7 @@ const translateAllSite = async (): Promise<readonly FileResult[]> => {
     const inputPath = join(PATHS.siteDir, file);
     const outputPath = join(PATHS.siteEnDir, file);
     try {
-      const r = await translateFile(inputPath, outputPath, slug, new Set());
+      const r = await translateSiteFile(inputPath, outputPath, slug);
       results.push(r);
       console.warn(`[site] ${slug}: ${r.status}${r.note ? " (" + r.note + ")" : ""}`);
     } catch (err) {

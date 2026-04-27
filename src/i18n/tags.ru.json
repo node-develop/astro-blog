@@ -1,1 +1,4 @@
-{ "claude-code": "Claude Code", "guide": "Гайд" }
+{
+  "claude-code": "Claude Code",
+  "guide": "Гайд"
+}

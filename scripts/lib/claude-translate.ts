@@ -27,6 +27,21 @@ Rules:
 
 const localeName = (l: string): string => (l === "ru" ? "Russian" : "English");
 
+/**
+ * Strip optional ```json ... ``` fences that the model sometimes wraps around JSON output.
+ * Also handles truncated responses where the closing fence is missing.
+ */
+const stripJsonFences = (text: string): string => {
+  const trimmed = text.trim();
+  // Complete fence: ```[json]\n...\n```
+  const complete = /^```(?:json)?\r?\n([\s\S]*?)\r?\n```\s*$/.exec(trimmed);
+  if (complete) return (complete[1] ?? trimmed).trim();
+  // Truncated fence: ```[json]\n... (no closing ```)
+  const truncated = /^```(?:json)?\r?\n([\s\S]*)$/.exec(trimmed);
+  if (truncated) return (truncated[1] ?? trimmed).trim();
+  return trimmed;
+};
+
 const buildSystem = (template: string, source: string, target: string): string =>
   template.replace("{{SOURCE}}", localeName(source)).replace("{{TARGET}}", localeName(target));
 
@@ -53,14 +68,15 @@ export const translateProse = async (
     try {
       const res = await client.messages.create({
         model: MODEL,
-        max_tokens: 8192,
+        max_tokens: 16384,
         temperature: 0,
         system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userMsg }],
       });
       const block = res.content.find((c: { type: string }) => c.type === "text");
       if (!block || block.type !== "text") throw new Error("no text block in response");
-      const parsed = JSON.parse((block as { text: string }).text) as {
+      const rawText = stripJsonFences((block as { text: string }).text);
+      const parsed = JSON.parse(rawText) as {
         id: number;
         text: string;
       }[];
@@ -100,7 +116,10 @@ export const translateStrings = async (
       });
       const block = res.content.find((c: { type: string }) => c.type === "text");
       if (!block || block.type !== "text") throw new Error("no text block in response");
-      return JSON.parse((block as { text: string }).text) as Record<string, string>;
+      return JSON.parse(stripJsonFences((block as { text: string }).text)) as Record<
+        string,
+        string
+      >;
     } catch (err) {
       lastErr = err;
       if (attempt < MAX_RETRIES) await sleep(1000 * attempt);
