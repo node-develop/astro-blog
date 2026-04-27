@@ -5,6 +5,8 @@ import Header from "~/components/Header.astro";
 import MobileDrawer from "~/components/MobileDrawer.astro";
 import SkipLink from "~/components/SkipLink.astro";
 import CommandPalette from "~/components/search/CommandPalette";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 interface Props {
   title: string;
@@ -15,6 +17,7 @@ interface Props {
 }
 
 const { title, description = "Personal blog", ogImage, fullWidth = false } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 ---
 
@@ -60,7 +63,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString(
       </div>
     </footer>
 
-    <CommandPalette client:idle />
+    <CommandPalette client:idle placeholder={t(locale, "search.placeholder")} />
 
     <style>
       .layout {

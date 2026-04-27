@@ -10,7 +10,13 @@ interface Hit {
   readonly excerpt: string;
 }
 
-export default function CommandPalette(): React.JSX.Element {
+interface CommandPaletteProps {
+  placeholder?: string;
+}
+
+export default function CommandPalette({
+  placeholder = "Search…",
+}: CommandPaletteProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<readonly Hit[]>([]);
@@ -82,10 +88,10 @@ export default function CommandPalette(): React.JSX.Element {
     <Command.Dialog
       open={open}
       onOpenChange={setOpen}
-      label="Поиск по сайту"
+      label={placeholder}
       className="command-palette"
     >
-      <Command.Input value={query} onValueChange={setQuery} placeholder="Найти статью…" autoFocus />
+      <Command.Input value={query} onValueChange={setQuery} placeholder={placeholder} autoFocus />
       <Command.List>
         {loading && <Command.Loading>Идёт поиск…</Command.Loading>}
         {!loading && query && hits.length === 0 && (

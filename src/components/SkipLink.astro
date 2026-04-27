@@ -3,9 +3,13 @@
  * Accessible skip-link. Visually hidden until focused, then pinned to
  * top-left so keyboard users can jump past the sidebar/header.
  */
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
 ---
 
-<a href="#main" class="skip-link">Перейти к содержимому</a>
+<a href="#main" class="skip-link">{t(locale, "skip.toContent")}</a>
 
 <style>
   .skip-link {
