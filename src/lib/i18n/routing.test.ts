@@ -1,5 +1,21 @@
-import { describe, it, expect } from "vitest";
-import { getCounterpart, getLocaleFromPath, stripLocalePrefix } from "./routing";
+import { describe, it, expect, vi } from "vitest";
+import {
+  getCounterpart,
+  getLocaleFromPath,
+  stripLocalePrefix,
+  checkCounterpartExists,
+} from "./routing";
+
+vi.mock("astro:content", () => ({
+  getCollection: vi.fn(async (_name: string, filter?: (e: { id: string }) => boolean) => {
+    const all = [
+      { id: "01-introduction" },
+      { id: "02-context-and-cache" },
+      { id: "en/01-introduction" },
+    ];
+    return filter ? all.filter(filter) : all;
+  }),
+}));
 
 describe("getLocaleFromPath", () => {
   it("returns 'en' for /en/* paths", () => {
@@ -50,5 +66,22 @@ describe("getCounterpart", () => {
   });
   it("preserves trailing slash", () => {
     expect(getCounterpart("/blog/", "ru")).toBe("/en/blog/");
+  });
+});
+
+describe("checkCounterpartExists", () => {
+  it("returns true when EN twin exists for RU article", async () => {
+    expect(await checkCounterpartExists("/blog/01-introduction", "ru")).toBe(true);
+  });
+  it("returns false when EN twin missing for RU article", async () => {
+    expect(await checkCounterpartExists("/blog/02-context-and-cache", "ru")).toBe(false);
+  });
+  it("returns true for chrome routes (/, /about, /search)", async () => {
+    expect(await checkCounterpartExists("/", "ru")).toBe(true);
+    expect(await checkCounterpartExists("/about", "ru")).toBe(true);
+    expect(await checkCounterpartExists("/search", "ru")).toBe(true);
+  });
+  it("returns true for EN article when RU source exists", async () => {
+    expect(await checkCounterpartExists("/en/blog/01-introduction", "en")).toBe(true);
   });
 });
