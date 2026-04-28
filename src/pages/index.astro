@@ -5,34 +5,36 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const latest = posts.slice(0, 3);
+const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const bareSlug = (id: string): string => id.replace(/^en\//, "");
 ---
 
 <BaseLayout title="artka.dev" description="Персональный блог" fullWidth={true}>
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">
-    <p class="hero__eyebrow">Personal blog · on writing code with AI</p>
+    <p class="hero__eyebrow">{t(locale, "home.eyebrow")}</p>
     <h1 class="hero__title">
-      Конкретные записи про Claude Code, AI-агентов и разработку на Astro.
+      {t(locale, "home.heroTitle")}
     </h1>
     <p class="hero__lede">
-      Серия из четырнадцати частей про то, как устроен Claude Code изнутри — context, skills, hooks,
-      MCP, subagents, модели и антипаттерны.
+      {t(locale, "home.heroLede")}
     </p>
-    <a href="/blog" class="hero__cta">Все статьи →</a>
+    <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
   </section>
 
   <section class="latest">
-    <h2 class="latest__label">Последние публикации</h2>
+    <h2 class="latest__label">{t(locale, "home.latestLabel")}</h2>
     <ul class="latest__list">
       {
         latest.map((p) => (
           <li>
-            <a href={`/blog/${p.entry.id}`} class="latest__link">
+            <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="latest__link">
               <span class="latest__title">{p.entry.data.title}</span>
               <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
                 {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
