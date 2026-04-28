@@ -123,7 +123,12 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id))
     color: var(--color-accent);
   }
   .sidebar__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
 </style>
