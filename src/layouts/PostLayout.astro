@@ -3,6 +3,8 @@ import BaseLayout from "./BaseLayout.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import { renderInlineCode } from "~/lib/inline-md";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
 import type { CollectionEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
 
@@ -13,6 +15,7 @@ interface Props {
 
 const { post, headings } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt } = post.data;
+const locale = getLocaleFromPath(Astro.url.pathname);
 
 // Cover is stored as a path relative to /uploads/ (e.g. "2026/04/file.png").
 // Accept both bare relatives and pre-prefixed absolutes for forward compatibility.
@@ -54,10 +57,10 @@ function estimateReadingTimeMinutes(body: string): number {
       {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
       {
         tags.length > 0 && (
-          <ul class="post__tags" aria-label="Теги">
+          <ul class="post__tags" aria-label={t(locale, "post.tags")}>
             {tags.map((tag: string) => (
               <li>
-                <a href={`/blog/tags/${tag}`}>#{tag}</a>
+                <span class="post__tag-chip">#{tag}</span>
               </li>
             ))}
           </ul>
@@ -128,19 +131,13 @@ function estimateReadingTimeMinutes(body: string): number {
       flex-wrap: wrap;
       gap: var(--space-2);
     }
-    .post__tags a {
+    .post__tag-chip {
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
       color: var(--color-fg-muted);
-      text-decoration: none;
       padding: 2px 8px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-pill);
-      transition: all var(--dur-fast) var(--ease-out);
-    }
-    .post__tags a:hover {
-      color: var(--color-fg);
-      border-color: var(--color-accent);
     }
     .post__cover {
       margin: 0 0 var(--space-7) 0;
