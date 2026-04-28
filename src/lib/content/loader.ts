@@ -13,6 +13,11 @@ export interface PostQueryOptions {
   readonly locale?: Locale;
 }
 
+/**
+ * Meta for a slug that doesn't have a `posts_meta` row yet.
+ * Used at runtime when the DB IS reachable but a backfill hasn't happened —
+ * the post should stay hidden until an admin adds it to the curated list.
+ */
 export const defaultMetaFor = (slug: string): PostMeta => ({
   slug,
   order: Number.MAX_SAFE_INTEGER,
@@ -21,6 +26,28 @@ export const defaultMetaFor = (slug: string): PostMeta => ({
   searchVector: null,
   updatedAt: new Date(0),
 });
+
+/**
+ * Meta for a slug when the DB is UNREACHABLE (e.g. during `docker build`,
+ * which prerenders pages without a Postgres service available). Falls back
+ * to the slug's natural numeric prefix (`01-foo` → 1) so the build output
+ * still ships with sensible ordering and ALL non-draft posts are visible.
+ *
+ * Slugs without a `NN-` prefix sort last (alphabetically would also be
+ * fine, but consistent with `defaultMetaFor`).
+ */
+const fallbackMetaForBuild = (slug: string): PostMeta => {
+  const m = slug.match(/^(\d{2})[-_]/);
+  const order = m ? parseInt(m[1] as string, 10) : Number.MAX_SAFE_INTEGER;
+  return {
+    slug,
+    order,
+    pinned: false,
+    hiddenFromList: false,
+    searchVector: null,
+    updatedAt: new Date(0),
+  };
+};
 
 export const sortWithMeta = (posts: readonly PostWithMeta[]): readonly PostWithMeta[] =>
   [...posts].sort((a, b) => {
@@ -31,20 +58,35 @@ export const sortWithMeta = (posts: readonly PostWithMeta[]): readonly PostWithM
 const matchesLocale = (id: string, locale: Locale): boolean =>
   locale === "en" ? id.startsWith("en/") : !id.startsWith("en/");
 
+const isDbReachable = (): boolean => Boolean(process.env.DATABASE_URL);
+
+/**
+ * Loads `posts_meta` rows from the DB. Returns null if the DB is unreachable
+ * (e.g. during docker build prerendering). Callers fall back to
+ * `fallbackMetaForBuild` when null.
+ */
+const tryLoadMeta = async (): Promise<Map<string, PostMeta> | null> => {
+  if (!isDbReachable()) return null;
+  try {
+    const rows = await db.select().from(postsMeta);
+    return new Map(rows.map((m) => [m.slug, m]));
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Reads Astro's content collection, loads all posts_meta rows, merges them,
  * filters out drafts + hidden posts, and returns a sorted immutable list.
  *
  * Pass `{ locale: "en" }` to get only EN posts (those whose collection id
- * starts with "en/"). Defaults to "ru" for back-compat with call sites that
- * pass no argument.
+ * starts with "en/"). Defaults to "ru" for back-compat.
  *
- * Posts without a posts_meta row appear as hidden-by-default (defaultMetaFor)
- * to keep their behavior predictable — the backfill script should be run
- * whenever new files appear in src/content/posts/.
- *
- * EN entries share the same posts_meta row as their RU counterpart: the
- * "en/" prefix is stripped from the id before the meta lookup.
+ * Two failure modes for meta lookup:
+ * - DB unreachable (no DATABASE_URL or connection error) → every post gets
+ *   `fallbackMetaForBuild` so the build still produces a usable site.
+ * - DB reachable but slug has no row → `defaultMetaFor` (hidden by default;
+ *   admin must add the post via /admin/posts to publish it).
  */
 export const getOrderedPosts = async (
   options: PostQueryOptions = {},
@@ -56,8 +98,7 @@ export const getOrderedPosts = async (
     (entry: CollectionEntry<"posts">) => !entry.data.draft && matchesLocale(entry.id, locale),
   );
 
-  const metaRows = await db.select().from(postsMeta);
-  const metaBySlug = new Map(metaRows.map((m) => [m.slug, m]));
+  const metaBySlug = await tryLoadMeta();
 
   const merged: PostWithMeta[] = entries.map((entry: CollectionEntry<"posts">) => {
     // Strip "en/" prefix so EN entries resolve to the same meta row as their
@@ -65,10 +106,11 @@ export const getOrderedPosts = async (
     // INVARIANT: EN posts live under exactly src/content/posts/en/<slug>.md (single-level).
     // If we ever nest EN posts deeper, this strip pattern will produce wrong meta keys silently.
     const metaKey = entry.id.replace(/^en\//, "");
-    return {
-      entry,
-      meta: metaBySlug.get(metaKey) ?? defaultMetaFor(metaKey),
-    };
+    const meta =
+      metaBySlug === null
+        ? fallbackMetaForBuild(metaKey)
+        : (metaBySlug.get(metaKey) ?? defaultMetaFor(metaKey));
+    return { entry, meta };
   });
 
   return sortWithMeta(merged.filter((p) => !p.meta.hiddenFromList));
@@ -79,6 +121,8 @@ export const getOrderedPosts = async (
  *
  * `slug` is always the RU (un-prefixed) slug. Pass `{ locale: "en" }` to
  * resolve the EN variant (`en/<slug>`).
+ *
+ * Same DB-fallback semantics as `getOrderedPosts`.
  */
 export const getPostWithMeta = async (
   slug: string,
@@ -94,7 +138,15 @@ export const getPostWithMeta = async (
   const entry = entries[0];
   if (!entry) return null;
 
-  const rows = await db.select().from(postsMeta).where(eq(postsMeta.slug, slug));
-  const meta = rows[0] ?? defaultMetaFor(slug);
-  return { entry, meta };
+  if (!isDbReachable()) {
+    return { entry, meta: fallbackMetaForBuild(slug) };
+  }
+
+  try {
+    const rows = await db.select().from(postsMeta).where(eq(postsMeta.slug, slug));
+    const meta = rows[0] ?? defaultMetaFor(slug);
+    return { entry, meta };
+  } catch {
+    return { entry, meta: fallbackMetaForBuild(slug) };
+  }
 };
