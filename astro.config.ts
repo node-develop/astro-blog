@@ -6,6 +6,7 @@ import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import remarkMath from "remark-math";
 import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter-duplicates";
+import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
 import { createReadStream, existsSync, statSync } from "node:fs";
@@ -85,7 +86,7 @@ export default defineConfig({
   },
   integrations: [
     mdx({
-      remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath],
+      remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
       rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: "img-svg", dark: true }]],
     }),
     sitemap({
@@ -105,7 +106,7 @@ export default defineConfig({
       themes: { light: "github-light", dark: "github-dark" },
       wrap: true,
     },
-    remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath],
+    remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
     rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: "img-svg", dark: true }]],
   },
   vite: {
