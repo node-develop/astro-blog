@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: e5c0b495c4febf275c4237869d0bab7ad3b0b743b11a5b4f9612450c46ab427b
+sourceHash: 94b74722a27e5285b973ec9fe41ef569861ce17e3648e7a16547a6355b7b3b64
 manuallyEdited: false
 ---
 
@@ -470,7 +470,7 @@ effort: medium
 
 ## 12.7. Полный agents/ набор
 
-Полные frontmatter в [09-subagents.md](./09-subagents.md). Карта по ролям:
+Полные frontmatter в [09-subagents](./09-subagents). Карта по ролям:
 
 | Агент | Модель | Tools | Когда зовут |
 |-------|--------|-------|-------------|
@@ -737,7 +737,7 @@ claude                            # стартует CC, подхватывае�
 
 ## 12.12. Optional step: package everything as a plugin
 
-If your company is going to build **multiple** travel projects on this stack, it makes sense to extract `.claude/` + `.mcp.json` into a plugin `travel-stack-toolkit` (see [07-plugins.md](./07-plugins.md)).
+If your company is going to build **multiple** travel projects on this stack, it makes sense to extract `.claude/` + `.mcp.json` into a plugin `travel-stack-toolkit` (see [07-plugins](./07-plugins)).
 
 Then in a new project:
 
@@ -749,4 +749,4 @@ And all the infrastructure (skills, agents, hooks, default MCP config) appears w
 
 ---
 
-**Next →** [13. Best practices: daily routine and antipatterns](./13-best-practices.md)
+**Next →** [13. Best practices: daily routine and antipatterns](./13-best-practices)

@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 0f82fbf72e352acd56b8a26a26c9b77609143b3ec5d60b866e5049e7fbb0e034
+sourceHash: f687ea9f8f64e56b921f396d1d1ab823ad83e7da848f63acbac69e9089d50be3
 manuallyEdited: false
 ---
 
@@ -238,4 +238,4 @@ This guide is a snapshot of the state as of **April 23, 2026, Claude Code v2.1.8
 
 🚀 Good luck with Claude Code. If this guide helped you avoid even one mistake — it paid for itself.
 
-**Back →** [README (table of contents)](./README)
+**Back →** [Blog index](/en/blog)
