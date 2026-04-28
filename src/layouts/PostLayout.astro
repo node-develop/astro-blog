@@ -40,15 +40,24 @@ function estimateReadingTimeMinutes(body: string): number {
     <header class="post__header">
       <p class="post__eyebrow">
         <time datetime={pubDate.toISOString()}>
-          {pubDate.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" })}
+          {
+            pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          }
         </time>
         <span aria-hidden="true">·</span>
-        <span>{readingTime} мин</span>
+        <span>{readingTime} {t(locale, "post.minutes")}</span>
         {
           updatedDate && (
             <>
               <span aria-hidden="true">·</span>
-              <span>обновлено {updatedDate.toLocaleDateString("ru-RU")}</span>
+              <span>
+                {t(locale, "post.updated").toLowerCase()}{" "}
+                {updatedDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US")}
+              </span>
             </>
           )
         }
