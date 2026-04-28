@@ -1,19 +1,22 @@
 ---
 import type { MarkdownHeading } from "astro";
 import { buildTocTree, type TocNode } from "~/lib/posts/toc";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 interface Props {
   headings: readonly MarkdownHeading[];
 }
 
 const { headings } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
 const tree = buildTocTree(headings);
 ---
 
 {
   tree.length > 0 && (
-    <nav class="toc" aria-label="Оглавление статьи">
-      <p class="toc__label">На этой странице</p>
+    <nav class="toc" aria-label={t(locale, "post.tocAria")}>
+      <p class="toc__label">{t(locale, "post.toc")}</p>
       <ol class="toc__list">
         {tree.map((node: TocNode) => (
           <li>

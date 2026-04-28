@@ -4,7 +4,12 @@ import type { UserConfig } from "vitest/config";
 const testConfig: UserConfig["test"] = {
   globals: true,
   environment: "node",
-  include: ["tests/unit/**/*.test.ts", "src/**/*.test.ts", "tests/integration/**/*.test.ts"],
+  include: [
+    "tests/unit/**/*.test.ts",
+    "src/**/*.test.ts",
+    "tests/integration/**/*.test.ts",
+    "scripts/**/*.test.ts",
+  ],
   testTimeout: 60_000,
   hookTimeout: 180_000,
   coverage: {

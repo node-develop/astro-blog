@@ -4,13 +4,22 @@
  * Toggled by `[data-drawer-trigger]` buttons (e.g. in Header.astro).
  * Uses the native <dialog> element for free focus-trap and Esc-to-close.
  */
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
 ---
 
-<dialog id="site-drawer" class="drawer" aria-label="Статьи блога">
+<dialog id="site-drawer" class="drawer" aria-label={t(locale, "sidebar.aria")}>
   <div class="drawer__panel">
     <div class="drawer__head">
-      <p class="drawer__title">Статьи</p>
-      <button type="button" class="drawer__close" aria-label="Закрыть" data-drawer-close>
+      <p class="drawer__title">{t(locale, "nav.posts")}</p>
+      <button
+        type="button"
+        class="drawer__close"
+        aria-label={t(locale, "drawer.closeAria")}
+        data-drawer-close
+      >
         ✕
       </button>
     </div>

@@ -1,5 +1,6 @@
 import { defineMiddleware, sequence } from "astro:middleware";
 import { auth } from "~/lib/auth";
+import { i18nRootRedirect } from "~/lib/i18n/middleware";
 
 const authContext = defineMiddleware(async (context, next) => {
   context.locals.user = null;
@@ -26,4 +27,4 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-export const onRequest = sequence(authContext, adminGuard);
+export const onRequest = sequence(i18nRootRedirect, authContext, adminGuard);

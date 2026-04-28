@@ -10,7 +10,19 @@ interface Hit {
   readonly excerpt: string;
 }
 
-export default function CommandPalette(): React.JSX.Element {
+interface CommandPaletteProps {
+  placeholder?: string;
+  searchingLabel?: string;
+  noResultsLabel?: string;
+  shortcutHint?: string;
+}
+
+export default function CommandPalette({
+  placeholder = "Search…",
+  searchingLabel = "Searching…",
+  noResultsLabel = "No results.",
+  shortcutHint = "↑↓ navigate · ⏎ open · Esc close",
+}: CommandPaletteProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<readonly Hit[]>([]);
@@ -19,10 +31,10 @@ export default function CommandPalette(): React.JSX.Element {
   // ⌘K / Ctrl+K toggle, Escape closes, plus a custom event hook so non-React
   // triggers (e.g. the header button) can open the palette without coupling.
   useEffect(() => {
-    function openHandler(): void {
+    const openHandler = (): void => {
       setOpen(true);
-    }
-    function onKey(e: KeyboardEvent): void {
+    };
+    const onKey = (e: KeyboardEvent): void => {
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
@@ -30,7 +42,7 @@ export default function CommandPalette(): React.JSX.Element {
         setOpen((v) => !v);
       }
       if (e.key === "Escape") setOpen(false);
-    }
+    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("astro-open-search", openHandler);
     return () => {
@@ -50,7 +62,8 @@ export default function CommandPalette(): React.JSX.Element {
     const handle = window.setTimeout(async () => {
       try {
         const pagefind = await loadPagefind();
-        const { results } = await pagefind.search(query);
+        const lang = (document.documentElement.lang || "ru") as "ru" | "en";
+        const { results } = await pagefind.search(query, { language: lang });
         const limited = results.slice(0, 8);
         const enriched: Hit[] = await Promise.all(
           limited.map(async (r) => {
@@ -82,15 +95,13 @@ export default function CommandPalette(): React.JSX.Element {
     <Command.Dialog
       open={open}
       onOpenChange={setOpen}
-      label="Поиск по сайту"
+      label={placeholder}
       className="command-palette"
     >
-      <Command.Input value={query} onValueChange={setQuery} placeholder="Найти статью…" autoFocus />
+      <Command.Input value={query} onValueChange={setQuery} placeholder={placeholder} autoFocus />
       <Command.List>
-        {loading && <Command.Loading>Идёт поиск…</Command.Loading>}
-        {!loading && query && hits.length === 0 && (
-          <Command.Empty>Ничего не найдено.</Command.Empty>
-        )}
+        {loading && <Command.Loading>{searchingLabel}</Command.Loading>}
+        {!loading && query && hits.length === 0 && <Command.Empty>{noResultsLabel}</Command.Empty>}
         {hits.map((h) => (
           <Command.Item
             key={h.id}
@@ -112,10 +123,7 @@ export default function CommandPalette(): React.JSX.Element {
           </Command.Item>
         ))}
       </Command.List>
-      <div className="command-palette__hint">
-        <kbd>↑</kbd>
-        <kbd>↓</kbd> навигация · <kbd>Enter</kbd> открыть · <kbd>Esc</kbd> закрыть
-      </div>
+      <div className="command-palette__hint" dangerouslySetInnerHTML={{ __html: shortcutHint }} />
     </Command.Dialog>
   );
 }

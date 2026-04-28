@@ -1,5 +1,7 @@
 ---
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 interface Props {
   /** Slug of the currently-displayed post, if any — used for active highlight. */
@@ -7,7 +9,8 @@ interface Props {
 }
 
 const { activeSlug } = Astro.props;
-const posts = await getOrderedPosts();
+const locale = getLocaleFromPath(Astro.url.pathname);
+const posts = await getOrderedPosts({ locale });
 
 // Split into "guide series" (numeric slugs) and "other" so the sidebar can
 // group them visually — matches the structure of the existing content.
@@ -16,11 +19,11 @@ const series = posts.filter((p: PostWithMeta) => NUMERIC_SLUG.test(p.entry.id));
 const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id));
 ---
 
-<nav class="sidebar">
+<nav class="sidebar" aria-label={t(locale, "sidebar.aria")}>
   {
     series.length > 0 && (
       <section class="sidebar__section">
-        <h2 class="sidebar__label">Claude Code Guide</h2>
+        <h2 class="sidebar__label">{t(locale, "sidebar.guide")}</h2>
         <ol class="sidebar__list" reversed={false}>
           {series.map((p: PostWithMeta) => {
             const isActive = p.entry.id === activeSlug;
@@ -44,7 +47,7 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id))
   {
     extras.length > 0 && (
       <section class="sidebar__section">
-        <h2 class="sidebar__label">Другие статьи</h2>
+        <h2 class="sidebar__label">{t(locale, "sidebar.other")}</h2>
         <ul class="sidebar__list">
           {extras.map((p: PostWithMeta) => (
             <li>

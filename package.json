@@ -27,6 +27,8 @@
     "db:studio": "drizzle-kit studio",
     "db:backfill": "tsx scripts/backfill-posts-meta.ts",
     "db:backfill-search": "tsx scripts/backfill-search-vector.ts",
+    "translate": "tsx scripts/translate.ts",
+    "translate:check": "tsx scripts/translate-check.ts",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -39,6 +41,7 @@
     ]
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "@astrojs/mdx": "^4.3.0",
     "@astrojs/node": "^9.2.0",
     "@astrojs/react": "^4.2.0",
@@ -113,11 +116,13 @@
     "prettier": "^3.5.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "remark-frontmatter": "^5.0.0",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "testcontainers": "^10.28.0",
     "typescript": "^5.9.3",
     "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
     "vfile": "^6.0.3",
     "vitest": "^3.2.0"
   }

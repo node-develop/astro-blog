@@ -13,7 +13,18 @@ const posts = defineCollection({
     // Cover stores a relative path under /uploads/ (public URL, not a local asset).
     cover: z.string().optional(),
     coverAlt: z.string().optional(),
+    sourceHash: z.string().optional(),
+    manuallyEdited: z.boolean().default(false),
   }),
 });
 
-export const collections = { posts };
+const site = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/site" }),
+  schema: z.object({
+    title: z.string(),
+    sourceHash: z.string().optional(),
+    manuallyEdited: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts, site };

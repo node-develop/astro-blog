@@ -4,8 +4,10 @@ export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
-const posts = await getOrderedPosts();
+const locale = getLocaleFromPath(Astro.url.pathname);
+const posts = await getOrderedPosts({ locale });
 const latest = posts.slice(0, 3);
 ---
 
@@ -33,7 +35,7 @@ const latest = posts.slice(0, 3);
             <a href={`/blog/${p.entry.id}`} class="latest__link">
               <span class="latest__title">{p.entry.data.title}</span>
               <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
-                {p.entry.data.pubDate.toLocaleDateString("ru-RU", {
+                {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
                   month: "short",
                   day: "numeric",
                 })}

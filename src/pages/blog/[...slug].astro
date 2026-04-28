@@ -5,7 +5,10 @@ import PostLayout from "~/layouts/PostLayout.astro";
 type Post = CollectionEntry<"posts">;
 
 export async function getStaticPaths() {
-  const posts: Post[] = await getCollection("posts", (entry: Post) => !entry.data.draft);
+  const posts: Post[] = await getCollection(
+    "posts",
+    (entry: Post) => !entry.data.draft && !entry.id.startsWith("en/"),
+  );
   return posts.map((post: Post) => ({
     params: { slug: post.id },
     props: { post },
