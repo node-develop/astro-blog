@@ -61,7 +61,23 @@ const remarkStripFrontmatterDuplicates: Plugin<[], Root> = () => (tree, file) =>
 
   const candidate = tree.children[blockquoteIndex];
   if (description !== undefined && candidate !== undefined && isBlockquote(candidate)) {
-    if (normalize(toString(candidate)) === normalize(description)) {
+    const candNorm = normalize(toString(candidate));
+    const descNorm = normalize(description);
+
+    // (a) Exact match — works for short, untruncated descriptions.
+    let shouldStrip = candNorm === descNorm;
+
+    // (b) Prefix match — handles descriptions truncated mid-word by Zod max(200).
+    // Drop the (possibly partial) trailing word, then check candidate starts with that prefix.
+    if (!shouldStrip) {
+      const lastSpace = descNorm.lastIndexOf(" ");
+      const descPrefix = lastSpace > 30 ? descNorm.slice(0, lastSpace) : descNorm;
+      if (descPrefix.length >= 30 && candNorm.startsWith(descPrefix)) {
+        shouldStrip = true;
+      }
+    }
+
+    if (shouldStrip) {
       tree.children.splice(blockquoteIndex, 1);
       removedAny = true;
     }

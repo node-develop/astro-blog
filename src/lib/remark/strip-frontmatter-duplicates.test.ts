@@ -112,6 +112,30 @@ describe("remarkStripFrontmatterDuplicates", () => {
     expect(out).toContain("Body text.");
   });
 
+  it("strips blockquote when description is a truncated prefix (200-char limit)", async () => {
+    // Frontmatter description was truncated mid-word by Zod's max(200)
+    const description =
+      "Все предыдущие главы — про механику. Эта — про дисциплину. Без неё даже идеальная конфигурация со временем превращается в свалку: кэш мимо, скиллы протухли, hooks падают молча, а вы не поним";
+    const blockquoteFull =
+      "> Все предыдущие главы — про механику. Эта — про дисциплину. Без неё даже идеальная конфигурация со временем превращается в свалку: кэш мимо, скиллы протухли, hooks падают молча, а вы не понимаете почему счёт за месяц вырос вдвое.";
+    const md = `# My Title\n\n${blockquoteFull}\n\nBody text.`;
+    const out = await process(md, { title: "My Title", description });
+    expect(out).not.toMatch(/^#\s/m);
+    expect(out).not.toMatch(/^>/m);
+    expect(out).toContain("Body text.");
+  });
+
+  it("does not strip a blockquote that only superficially overlaps with description", async () => {
+    // First few words match, but the rest diverges → must NOT be stripped
+    const md = `# Title\n\n> Это совсем другой текст про что-то совсем иное.\n\nBody.`;
+    const out = await process(md, {
+      title: "Title",
+      description: "Это совсем другой пост про разработку и инструменты которые мы используем",
+    });
+    expect(out).toMatch(/^>/m);
+    expect(out).toContain("Body.");
+  });
+
   it("preserves thematic break when nothing was stripped", async () => {
     const md = `Body text.\n\n---\n\nMore body.`;
     const out = await process(md, { title: "My Title", description: "My description" });
