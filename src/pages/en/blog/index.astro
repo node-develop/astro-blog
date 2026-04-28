@@ -1,26 +1,35 @@
 ---
+export const prerender = false;
+
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
+const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const bareSlug = (id: string): string => id.replace(/^en\//, "");
 ---
 
-<BaseLayout title="Статьи" description="Все публикации блога" fullWidth={true}>
+<BaseLayout
+  title={t(locale, "blog.title")}
+  description={t(locale, "blog.description")}
+  fullWidth={true}
+>
   <SiteSidebar slot="sidebar" />
 
   <section class="list">
     <header class="list__header">
-      <p class="list__eyebrow">Архив</p>
-      <h1 class="list__title">Статьи</h1>
+      <p class="list__eyebrow">{t(locale, "blog.eyebrow")}</p>
+      <h1 class="list__title">{t(locale, "blog.title")}</h1>
     </header>
 
     {
       allTags.length > 0 && (
-        <nav class="list__tags" aria-label="Теги">
+        <nav class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
           {allTags.map((tag: string) => (
             <a href={`/blog/tags/${tag}`}>#{tag}</a>
           ))}
@@ -32,7 +41,7 @@ const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.da
       {
         posts.map((p: PostWithMeta) => (
           <li class="list__item">
-            <a href={`/blog/${p.entry.id}`} class="list__link">
+            <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="list__link">
               <span class="list__num">{String(p.meta.order).padStart(2, "0")}</span>
               <span class="list__body">
                 <h2 class="list__post-title">{p.entry.data.title}</h2>
