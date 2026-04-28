@@ -1,6 +1,7 @@
 import { resolve, sep } from "node:path";
 
 export const POSTS_DIR = resolve(process.cwd(), "src/content/posts");
+export const SITE_DIR = resolve(process.cwd(), "src/content/site");
 export const UPLOADS_DIR = resolve(process.cwd(), "public/uploads");
 
 /**

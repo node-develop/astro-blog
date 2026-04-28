@@ -1,0 +1,105 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import { listSiteFiles } from "~/lib/content/site-io";
+import { SITE_DIR } from "~/lib/fs/paths";
+
+const pages = await listSiteFiles(SITE_DIR);
+const sorted = [...pages].sort((a, b) => a.slug.localeCompare(b.slug));
+
+const fmt = new Intl.DateTimeFormat("ru-RU", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+---
+
+<AdminLayout title="Страницы">
+  <header class="admin-page-header">
+    <h1>Страницы</h1>
+  </header>
+
+  {
+    sorted.length === 0 ? (
+      <p class="site-list__empty">Нет страниц в src/content/site/</p>
+    ) : (
+      <table class="site-table">
+        <thead>
+          <tr>
+            <th>Slug</th>
+            <th>Заголовок</th>
+            <th>Обновлено</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((page) => (
+            <tr>
+              <td>
+                <code>{page.slug}</code>
+              </td>
+              <td>{page.title}</td>
+              <td class="site-table__date">{fmt.format(page.mtime)}</td>
+              <td>
+                <a href={`/admin/site/${encodeURIComponent(page.slug)}`} class="site-table__edit">
+                  Редактировать
+                </a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-6);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .site-list__empty {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+  .site-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .site-table th {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: var(--fs-xs);
+    letter-spacing: var(--tracking-wide);
+  }
+  .site-table td {
+    padding: var(--space-3) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+  }
+  .site-table__date {
+    color: var(--color-fg-muted);
+  }
+  .site-table__edit {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .site-table__edit:hover {
+    text-decoration: underline;
+  }
+</style>

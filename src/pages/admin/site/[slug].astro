@@ -1,0 +1,56 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import SiteEditor from "~/components/admin/SiteEditor";
+import { readSiteFromDisk } from "~/lib/content/site-io";
+import { SITE_DIR } from "~/lib/fs/paths";
+
+const { slug } = Astro.params as { slug: string };
+const page = await readSiteFromDisk(SITE_DIR, slug);
+if (!page) return new Response("Page not found", { status: 404 });
+
+const initial = {
+  title: page.title,
+  body: page.body,
+};
+---
+
+<AdminLayout title={`Страница · ${slug}`}>
+  <header class="admin-page-header">
+    <h1>Редактирование страницы</h1>
+    <div class="admin-page-header__meta">
+      <code>{slug}</code>
+      <a href="/admin/site">← Все страницы</a>
+    </div>
+  </header>
+  <SiteEditor client:load slug={slug} initial={initial} />
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-5);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .admin-page-header__meta {
+    display: flex;
+    gap: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+  .admin-page-header__meta a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .admin-page-header__meta a:hover {
+    text-decoration: underline;
+  }
+</style>
