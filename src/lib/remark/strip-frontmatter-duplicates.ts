@@ -2,13 +2,14 @@ import { toString } from "mdast-util-to-string";
 import type { Plugin } from "unified";
 import type { Root, RootContent, Heading, Blockquote } from "mdast";
 
-/** Strip markdown inline-code backtick pairs, then collapse whitespace and lowercase. */
+/** Strip markdown inline-code backtick pairs, punctuation/symbols, then collapse whitespace and lowercase. */
 const normalize = (s: string): string =>
   s
     .replace(/`([^`]*)`/g, "$1")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ") // strip punctuation/symbols, keep letters/digits/space
     .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
+    .replace(/\s+/g, " ");
 
 type MaybeFrontmatter = { title?: string | undefined; description?: string | undefined };
 

@@ -104,6 +104,14 @@ describe("remarkStripFrontmatterDuplicates", () => {
     expect(out).toContain("Body text.");
   });
 
+  it("normalizes punctuation differences (Oxford comma, em-dashes, quotes)", async () => {
+    // Frontmatter title lacks Oxford comma; body H1 has one — should still be stripped
+    const md = `# Harness, agent loop, and your place\n\nBody text.`;
+    const out = await process(md, { title: "Harness, agent loop and your place" });
+    expect(out).not.toMatch(/^#\s/m);
+    expect(out).toContain("Body text.");
+  });
+
   it("preserves thematic break when nothing was stripped", async () => {
     const md = `Body text.\n\n---\n\nMore body.`;
     const out = await process(md, { title: "My Title", description: "My description" });
