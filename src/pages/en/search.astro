@@ -3,10 +3,12 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { searchNode } from "~/lib/search/pagefind-node";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
 
+const locale = getLocaleFromPath(Astro.url.pathname);
 const url = new URL(Astro.request.url);
 const query = url.searchParams.get("q")?.trim() ?? "";
-const hits = query ? await searchNode(query) : [];
+const hits = query ? await searchNode(query, locale) : [];
 ---
 
 <BaseLayout
