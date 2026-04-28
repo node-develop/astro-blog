@@ -12,11 +12,16 @@ const { activeSlug } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 
+// Strip the "en/" collection-id prefix so the URL slug is bare on both sides;
+// the route prefix is added by `blogPrefix` below.
+const bareSlug = (id: string): string => id.replace(/^en\//, "");
+const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+
 // Split into "guide series" (numeric slugs) and "other" so the sidebar can
 // group them visually — matches the structure of the existing content.
 const NUMERIC_SLUG = /^\d{2}[-_]/;
-const series = posts.filter((p: PostWithMeta) => NUMERIC_SLUG.test(p.entry.id));
-const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id));
+const series = posts.filter((p: PostWithMeta) => NUMERIC_SLUG.test(bareSlug(p.entry.id)));
+const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.entry.id)));
 ---
 
 <nav class="sidebar" aria-label={t(locale, "sidebar.aria")}>
@@ -26,11 +31,12 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id))
         <h2 class="sidebar__label">{t(locale, "sidebar.guide")}</h2>
         <ol class="sidebar__list" reversed={false}>
           {series.map((p: PostWithMeta) => {
-            const isActive = p.entry.id === activeSlug;
+            const slug = bareSlug(p.entry.id);
+            const isActive = slug === activeSlug;
             return (
               <li>
                 <a
-                  href={`/blog/${p.entry.id}`}
+                  href={`${blogPrefix}/${slug}`}
                   class="sidebar__link"
                   aria-current={isActive ? "page" : undefined}
                 >
@@ -49,17 +55,20 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(p.entry.id))
       <section class="sidebar__section">
         <h2 class="sidebar__label">{t(locale, "sidebar.other")}</h2>
         <ul class="sidebar__list">
-          {extras.map((p: PostWithMeta) => (
-            <li>
-              <a
-                href={`/blog/${p.entry.id}`}
-                class="sidebar__link"
-                aria-current={p.entry.id === activeSlug ? "page" : undefined}
-              >
-                <span class="sidebar__title">{p.entry.data.title}</span>
-              </a>
-            </li>
-          ))}
+          {extras.map((p: PostWithMeta) => {
+            const slug = bareSlug(p.entry.id);
+            return (
+              <li>
+                <a
+                  href={`${blogPrefix}/${slug}`}
+                  class="sidebar__link"
+                  aria-current={slug === activeSlug ? "page" : undefined}
+                >
+                  <span class="sidebar__title">{p.entry.data.title}</span>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </section>
     )
