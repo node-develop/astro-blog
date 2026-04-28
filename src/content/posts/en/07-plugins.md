@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: bccfae97deffd32c6d3b2bc37d91e34973f2bcd183547d6c8c680ed54ff7eff1
+sourceHash: f96b4444e9daa51661feb05cd96fa863774d7e7d47a9126f1f7c27103961e3c0
 manuallyEdited: false
 ---
 
@@ -247,4 +247,4 @@ Then a new project just does `/plugin install travel-stack-toolkit` and gets all
 
 ---
 
-**Next →** [08. Tool calls and agent loop under the hood](./08-tool-calls-and-loop.md)
+**Next →** [08. Tool calls and agent loop under the hood](./08-tool-calls-and-loop)

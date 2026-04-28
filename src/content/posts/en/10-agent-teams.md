@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 0fb236e6da44e2d39f9317a24c4c45bfa73ccdcedafdc594eb48c529fe84c19b
+sourceHash: 880a38ed7d8c5879909af594bc692a6d0c4ed1be9fc6ce29af8b5888277a1404
 manuallyEdited: false
 ---
 
@@ -276,4 +276,4 @@ Lead monitors, gives small follow-up tasks when idle (`TeammateIdle`). Once Task
 
 ---
 
-**Next →** [11. Models and pricing](./11-models-and-pricing.md)
+**Next →** [11. Models and pricing](./11-models-and-pricing)

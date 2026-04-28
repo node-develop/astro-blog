@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: f26dfaaed192fe85bced4b88d1095ac1a23218a6e0b32636a8a674e08223759a
+sourceHash: b5cb524b6549c8e4dc97f13c7e46d3a9049aa0ac42eda65ed8a87236963012ad
 manuallyEdited: false
 ---
 
@@ -119,7 +119,7 @@ messages.create(
 
 This is all — one long document for the model. The size of this document is measured in **tokens** and limited by the **context window** (200k for Haiku, 1M for Sonnet/Opus with beta flag).
 
-See details in [02-context-and-cache.md](./02-context-and-cache.md).
+See details in [02-context-and-cache.md](./02-context-and-cache).
 
 ---
 
@@ -134,7 +134,7 @@ As of 04.23.2026, current are:
   - `haiku` → Haiku 4.5
 - **On Bedrock/Vertex/Foundry** defaults are shifted: `opus`→4.6, `sonnet`→4.5 (new models arrive later).
 
-🧪 **Agent Teams** — experimental feature, requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. See [10-agent-teams.md](./10-agent-teams.md).
+🧪 **Agent Teams** — experimental feature, requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. See [10-agent-teams.md](./10-agent-teams).
 
 ⚠️ **Opus 4.7** has a new tokenizer — on the same texts it consumes up to 35% more tokens than Opus 4.6. If you're upgrading from 4.6 — recalculate your limit estimates.
 
@@ -175,23 +175,23 @@ flowchart TB
 
 In each chapter we'll answer the question: **"How do I apply this to Travel Agent?"** — with a concrete config snippet, code, or CLAUDE.md.
 
-In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint.md) the final repository structure with all artifacts comes together.
+In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint) the final repository structure with all artifacts comes together.
 
 ---
 
 ## 1.6. Quick reference of CLI commands used in the guide
 
-| Command                 | What it does                               | Chapter                                                           |
-| ----------------------- | ------------------------------------------ | ----------------------------------------------------------------- |
-| `/context`              | Visualizes current window fill             | [02](./02-context-and-cache.md)                                   |
-| `/compact [hint]`       | Compresses history, frees space            | [02](./02-context-and-cache.md)                                   |
-| `/clear`                | Full session reset (restarts, loses cache) | [02](./02-context-and-cache.md)                                   |
-| `/model [name]`         | Switch model in current session            | [02](./02-context-and-cache.md), [10](./11-models-and-pricing.md) |
-| `/agents`               | Subagent manager                           | [09](./09-subagents.md)                                           |
-| `/plugin install <ref>` | Install plugin from marketplace            | [07](./07-plugins.md)                                             |
-| `/mcp`                  | List connected MCP servers                 | [06](./06-mcp.md)                                                 |
-| `/permissions`          | Current allow/deny rules                   | [05](./05-hooks.md)                                               |
-| `/release-notes`        | Changes in version                         | —                                                                 |
+| Command                 | What it does                               | Chapter                                                     |
+| ----------------------- | ------------------------------------------ | ----------------------------------------------------------- |
+| `/context`              | Visualizes current window fill             | [02](./02-context-and-cache)                                |
+| `/compact [hint]`       | Compresses history, frees space            | [02](./02-context-and-cache)                                |
+| `/clear`                | Full session reset (restarts, loses cache) | [02](./02-context-and-cache)                                |
+| `/model [name]`         | Switch model in current session            | [02](./02-context-and-cache), [10](./11-models-and-pricing) |
+| `/agents`               | Subagent manager                           | [09](./09-subagents)                                        |
+| `/plugin install <ref>` | Install plugin from marketplace            | [07](./07-plugins)                                          |
+| `/mcp`                  | List connected MCP servers                 | [06](./06-mcp)                                              |
+| `/permissions`          | Current allow/deny rules                   | [05](./05-hooks)                                            |
+| `/release-notes`        | Changes in version                         | —                                                           |
 
 ---
 

@@ -206,7 +206,7 @@ Markdown table per day + cost breakdown. No prose-style narratives.
 
 Они исполнятся параллельно. Основной агент получит **два** независимых summary.
 
-⚠️ Они **не общаются**. Если задача требует обмена информацией — это уже **agent team** (см. [10-agent-teams.md](./10-agent-teams.md)).
+⚠️ Они **не общаются**. Если задача требует обмена информацией — это уже **agent team** (см. [10-agent-teams.md](./10-agent-teams)).
 
 ---
 
@@ -342,4 +342,4 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ---
 
-**Дальше →** [10. Agent Teams: координация нескольких агентов](./10-agent-teams.md)
+**Дальше →** [10. Agent Teams: координация нескольких агентов](./10-agent-teams)

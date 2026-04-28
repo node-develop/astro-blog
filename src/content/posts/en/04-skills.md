@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: d53fc7367151f30fdc3b41e9d3a54af5467375332af6cfc1e006af17c0b850e1
+sourceHash: 1f5a8349043e23707ea011bf4be35ab3c30d1a03175e22adbb83c0bfaa3fa468
 manuallyEdited: false
 ---
 
@@ -166,7 +166,7 @@ flowchart TD
   user2[User: /skill name args] --> read
 ```
 
-⚠️ **Skills are probabilistic, not deterministic.** Claude _might_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks.md)).
+⚠️ **Skills are probabilistic, not deterministic.** Claude _might_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks)).
 
 ---
 
@@ -373,4 +373,4 @@ flowchart TD
 
 ---
 
-**Next →** [05. Hooks: 30+ events, exit codes, JSON protocol](./05-hooks.md)
+**Next →** [05. Hooks: 30+ events, exit codes, JSON protocol](./05-hooks)

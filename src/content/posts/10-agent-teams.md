@@ -270,4 +270,4 @@ Lead мониторит, при простое (`TeammateIdle`) даёт мел�
 
 ---
 
-**Дальше →** [11. Модели и pricing](./11-models-and-pricing.md)
+**Дальше →** [11. Модели и pricing](./11-models-and-pricing)

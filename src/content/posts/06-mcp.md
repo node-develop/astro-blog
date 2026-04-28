@@ -434,4 +434,4 @@ server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
 
 ---
 
-**Дальше →** [07. Plugins: упаковка skills + hooks + agents + MCP](./07-plugins.md)
+**Дальше →** [07. Plugins: упаковка skills + hooks + agents + MCP](./07-plugins)

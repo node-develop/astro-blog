@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 774310236d1c41248ebbb5df4b85b2660630a505697f344d3a1eabb33104568a
+sourceHash: 71a30d2a59e767a2003f2164e2ddd168199adddbbc2cfedc0653da7c600e9df6
 manuallyEdited: false
 ---
 
@@ -288,4 +288,4 @@ After everything above, an important practical takeaway:
 
 ---
 
-**Next →** [09. Subagents: isolation and economics](./09-subagents.md)
+**Next →** [09. Subagents: isolation and economics](./09-subagents)

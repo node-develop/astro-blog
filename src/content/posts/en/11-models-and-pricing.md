@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 7feb0fa8b6e8af777ec69f5c60fc552d6e96c14d2b23edca112dace3d0c77c56
+sourceHash: 12f9c690876ab758bd55f9cd347848c747b80e214cb3cd0090b52c10751acbb6
 manuallyEdited: false
 ---
 
@@ -219,4 +219,4 @@ flowchart LR
 
 ---
 
-**Next →** [12. Travel Agent from scratch: blueprint](./12-travel-agent-blueprint.md)
+**Next →** [12. Travel Agent from scratch: blueprint](./12-travel-agent-blueprint)

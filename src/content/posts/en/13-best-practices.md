@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 39aa4889e0d850061cec80f671c5bba9e3cd669fcd495041dbb4db05fcb30ee5
+sourceHash: b78cfbdc44ceafa913b4277d68a70fb1027dcc3bc786e7b91d3ed7a224d34d79
 manuallyEdited: false
 ---
 
@@ -276,4 +276,4 @@ It transfers between all projects. This is your personal "leveling up" of the to
 
 ---
 
-**Next →** [14. Verification of claims from the original thread](./14-claims-verification.md)
+**Next →** [14. Verification of claims from the original thread](./14-claims-verification)

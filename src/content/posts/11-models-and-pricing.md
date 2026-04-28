@@ -213,4 +213,4 @@ flowchart LR
 
 ---
 
-**Дальше →** [12. Travel Agent с нуля: blueprint](./12-travel-agent-blueprint.md)
+**Дальше →** [12. Travel Agent с нуля: blueprint](./12-travel-agent-blueprint)

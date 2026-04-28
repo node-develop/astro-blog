@@ -433,7 +433,7 @@ travel-agent-plugin/
 }
 ```
 
-См. главу [07-plugins.md](./07-plugins.md) для полной структуры плагина.
+См. главу [07-plugins.md](./07-plugins) для полной структуры плагина.
 
 ---
 
@@ -488,4 +488,4 @@ echo "$input" >> /tmp/claude-hook-input.jsonl
 
 ---
 
-**Дальше →** [06. MCP-серверы: stdio/SSE/HTTP, scope](./06-mcp.md)
+**Дальше →** [06. MCP-серверы: stdio/SSE/HTTP, scope](./06-mcp)

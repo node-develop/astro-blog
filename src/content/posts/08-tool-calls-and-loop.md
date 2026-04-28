@@ -282,4 +282,4 @@ const final = await stream.finalMessage();
 
 ---
 
-**Дальше →** [09. Subagents: изоляция и экономика](./09-subagents.md)
+**Дальше →** [09. Subagents: изоляция и экономика](./09-subagents)

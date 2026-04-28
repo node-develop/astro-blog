@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 0b9b6eb11c22e56aff681a945ece00e570f30f2a1361de8c61e836a18982074a
+sourceHash: a507dfc9fb4d25674db19593abd62c2436c60c9bcf878b09fa31759350646984
 manuallyEdited: false
 ---
 
@@ -439,7 +439,7 @@ In hooks.json inside the plugin, use `${CLAUDE_PLUGIN_ROOT}` — this variable p
 }
 ```
 
-See chapter [07-plugins.md](./07-plugins.md) for full plugin structure.
+See chapter [07-plugins.md](./07-plugins) for full plugin structure.
 
 ---
 
@@ -494,4 +494,4 @@ echo "$input" >> /tmp/claude-hook-input.jsonl
 
 ---
 
-**Next →** [06. MCP servers: stdio/SSE/HTTP, scope](./06-mcp.md)
+**Next →** [06. MCP servers: stdio/SSE/HTTP, scope](./06-mcp)

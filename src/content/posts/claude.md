@@ -31,22 +31,22 @@ draft: true
 
 ## Оглавление
 
-| №   | Файл                                                           | О чём                                                                                     |
-| --- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 00  | [01-introduction.md](./01-introduction.md)                     | Что такое Claude Code: harness, agent loop, отличие от чат-бота                           |
-| 01  | [02-context-and-cache.md](./02-context-and-cache.md)           | Контекстное окно, `/context`, prompt cache (TTL, инвалидация), `/compact`, env-переменные |
-| 02  | [03-claude-md.md](./03-claude-md.md)                           | `CLAUDE.md`: уровни (managed/project/user/local), импорты `@`, авто-память                |
-| 03  | [04-skills.md](./04-skills.md)                                 | Skills: SKILL.md frontmatter, scripts, references, model-invoked vs user-invoked          |
-| 04  | [05-hooks.md](./05-hooks.md)                                   | Hooks: 30+ событий, exit codes, JSON-протокол, блокировка действий                        |
-| 05  | [06-mcp.md](./06-mcp.md)                                       | MCP-серверы: stdio/SSE/HTTP, scope, для Travel Agent                                      |
-| 06  | [07-plugins.md](./07-plugins.md)                               | Plugins: `plugin.json`, marketplaces, что упаковывать                                     |
-| 07  | [08-tool-calls-and-loop.md](./08-tool-calls-and-loop.md)       | Tool call как механика agent loop, harness internals                                      |
-| 08  | [09-subagents.md](./09-subagents.md)                           | Subagents: `.claude/agents/`, изоляция контекста, экономика                               |
-| 09  | [10-agent-teams.md](./10-agent-teams.md)                       | Agent Teams (экспериментально): team lead, teammates, mailbox                             |
-| 10  | [11-models-and-pricing.md](./11-models-and-pricing.md)         | Opus 4.7 / Sonnet 4.6 / Haiku 4.5: цены, окна, `opusplan`                                 |
-| 11  | [12-travel-agent-blueprint.md](./12-travel-agent-blueprint.md) | **Travel Agent с нуля**: репо, CLAUDE.md, skills, agents, MCP, plugin                     |
-| 12  | [13-best-practices.md](./13-best-practices.md)                 | Ежедневная рутина, антипаттерны, чек-листы                                                |
-| 13  | [14-claims-verification.md](./14-claims-verification.md)       | Таблица проверки всех тезисов из исходного треда                                          |
+| №   | Файл                                                        | О чём                                                                                     |
+| --- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 00  | [01-introduction.md](./01-introduction)                     | Что такое Claude Code: harness, agent loop, отличие от чат-бота                           |
+| 01  | [02-context-and-cache.md](./02-context-and-cache)           | Контекстное окно, `/context`, prompt cache (TTL, инвалидация), `/compact`, env-переменные |
+| 02  | [03-claude-md.md](./03-claude-md)                           | `CLAUDE.md`: уровни (managed/project/user/local), импорты `@`, авто-память                |
+| 03  | [04-skills.md](./04-skills)                                 | Skills: SKILL.md frontmatter, scripts, references, model-invoked vs user-invoked          |
+| 04  | [05-hooks.md](./05-hooks)                                   | Hooks: 30+ событий, exit codes, JSON-протокол, блокировка действий                        |
+| 05  | [06-mcp.md](./06-mcp)                                       | MCP-серверы: stdio/SSE/HTTP, scope, для Travel Agent                                      |
+| 06  | [07-plugins.md](./07-plugins)                               | Plugins: `plugin.json`, marketplaces, что упаковывать                                     |
+| 07  | [08-tool-calls-and-loop.md](./08-tool-calls-and-loop)       | Tool call как механика agent loop, harness internals                                      |
+| 08  | [09-subagents.md](./09-subagents)                           | Subagents: `.claude/agents/`, изоляция контекста, экономика                               |
+| 09  | [10-agent-teams.md](./10-agent-teams)                       | Agent Teams (экспериментально): team lead, teammates, mailbox                             |
+| 10  | [11-models-and-pricing.md](./11-models-and-pricing)         | Opus 4.7 / Sonnet 4.6 / Haiku 4.5: цены, окна, `opusplan`                                 |
+| 11  | [12-travel-agent-blueprint.md](./12-travel-agent-blueprint) | **Travel Agent с нуля**: репо, CLAUDE.md, skills, agents, MCP, plugin                     |
+| 12  | [13-best-practices.md](./13-best-practices)                 | Ежедневная рутина, антипаттерны, чек-листы                                                |
+| 13  | [14-claims-verification.md](./14-claims-verification)       | Таблица проверки всех тезисов из исходного треда                                          |
 
 ---
 
@@ -122,4 +122,4 @@ flowchart TB
 
 Гайд написан 23 апреля 2026 для Claude Code **v2.1.89**, под модели **Opus 4.7 / Sonnet 4.6 / Haiku 4.5**.
 
-Если вы читаете это спустя 6+ месяцев — проверьте релиз-ноты Claude Code (`/release-notes` в CLI) и заново сверьтесь с [14-claims-verification.md](./14-claims-verification.md).
+Если вы читаете это спустя 6+ месяцев — проверьте релиз-ноты Claude Code (`/release-notes` в CLI) и заново сверьтесь с [14-claims-verification.md](./14-claims-verification).

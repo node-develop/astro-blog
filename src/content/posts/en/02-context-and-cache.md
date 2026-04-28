@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: c32063ed75430858cd48b4b1840937fde29d67c50452e3c13190f419d7ee5abd
+sourceHash: b20cbc4348f6db31fd595e937e2aa9f22a8f73e13cfd56e34ff4e02328ac808a
 manuallyEdited: false
 ---
 
@@ -225,7 +225,7 @@ flowchart TD
 ## 2.8. Checklist: "how not to burn the window and cache"
 
 ✅ Before a long task, run `/context` — assess starting fill.
-✅ Keep CLAUDE.md ≤ 5k tokens. Larger — split into subdirectory CLAUDE.md (see [03](./03-claude-md.md)).
+✅ Keep CLAUDE.md ≤ 5k tokens. Larger — split into subdirectory CLAUDE.md (see [03](./03-claude-md)).
 ✅ Connect MCP servers before starting work, not in the middle.
 ✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (setting flag or passing `cache_control.ttl="1h"` via SDK).
 ✅ Don't `Read` entire huge files (50k-line logs) — use `Grep` or offset/limit.

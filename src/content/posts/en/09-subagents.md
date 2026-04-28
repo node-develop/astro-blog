@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: ef54ac967b3af781f1a713245b3e7609ce8825b90ab645279e77d147ec9c6dc7
+sourceHash: 9d48bd5eea7dbc40dad64dd906d44c90f7397a5027d7a73ce6b708e642c9dc9f
 manuallyEdited: false
 ---
 
@@ -212,7 +212,7 @@ You can launch multiple subagents in one assistant turn:
 
 They will execute in parallel. The main agent will receive **two** independent summaries.
 
-⚠️ They **do not communicate**. If a task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams.md)).
+⚠️ They **do not communicate**. If a task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams)).
 
 ---
 
@@ -348,4 +348,4 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ---
 
-**Next →** [10. Agent Teams: coordinating multiple agents](./10-agent-teams.md)
+**Next →** [10. Agent Teams: coordinating multiple agents](./10-agent-teams)

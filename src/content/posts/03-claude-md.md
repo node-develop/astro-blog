@@ -313,4 +313,4 @@ shadcn/ui компоненты копируем через CLI, лежат в `s
 
 ---
 
-**Дальше →** [04. Skills: SKILL.md, scripts, references](./04-skills.md)
+**Дальше →** [04. Skills: SKILL.md, scripts, references](./04-skills)

@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: e376cc1b80e328f715f0d2b5678239a628731d0ac7ccbb3880cfd41633b2342e
+sourceHash: e5c0b495c4febf275c4237869d0bab7ad3b0b743b11a5b4f9612450c46ab427b
 manuallyEdited: false
 ---
 
@@ -358,7 +358,7 @@ travel-agent/
 
 ## 12.6. Minimal set of skills (with examples)
 
-Full list — in [04-skills.md](./04-skills.md). Here's a diagram of when each one triggers:
+Full list — in [04-skills.md](./04-skills). Here's a diagram of when each one triggers:
 
 ```mermaid
 flowchart LR

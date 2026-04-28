@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 0af1407c68047c91f2b4606d23b7ad58d4653334aaba6ef1638f10f4dfa3c236
+sourceHash: 82f88d5ab6b7dc712f4dd87344490b9efddb56d22dc0cdc29069687b1edc8d03
 manuallyEdited: false
 ---
 
@@ -319,4 +319,4 @@ Besides CLAUDE.md, the harness can **itself** add notes to a special memory file
 
 ---
 
-**Next →** [04. Skills: SKILL.md, scripts, references](./04-skills.md)
+**Next →** [04. Skills: SKILL.md, scripts, references](./04-skills)

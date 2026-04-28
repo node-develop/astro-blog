@@ -241,4 +241,4 @@ flowchart TD
 
 ---
 
-**Дальше →** [08. Tool calls и agent loop под капотом](./08-tool-calls-and-loop.md)
+**Дальше →** [08. Tool calls и agent loop под капотом](./08-tool-calls-and-loop)

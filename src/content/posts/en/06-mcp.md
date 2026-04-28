@@ -8,7 +8,7 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: fb890b0db48b0438136bc5c744c84c633c8571bce8bfe70ce455c528fbb5cdfa
+sourceHash: e0961257995b3b8b27432ef9719ecf30bc30fe80a200610b178d488728c92584
 manuallyEdited: false
 ---
 
@@ -440,4 +440,4 @@ Full registry: <https://github.com/modelcontextprotocol/servers> and community m
 
 ---
 
-**Next →** [07. Plugins: packaging skills + hooks + agents + MCP](./07-plugins.md)
+**Next →** [07. Plugins: packaging skills + hooks + agents + MCP](./07-plugins)
