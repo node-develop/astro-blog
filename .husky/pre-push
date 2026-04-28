@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
-# pre-push: полные тесты + build. Защищает удалённый main от заведомо сломанного кода.
+# pre-push: полная проверка перед отправкой в remote.
+# CI выполняет только Docker build/push — все тесты и валидация здесь.
 set -e
+
+echo "▶ typecheck (astro check + tsc)"
+pnpm typecheck
+
+echo "▶ translate:check (RU/EN sync)"
+pnpm translate:check
 
 echo "▶ vitest"
 pnpm test
