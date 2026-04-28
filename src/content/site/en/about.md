@@ -1,19 +1,21 @@
 ---
-title: About Me
-sourceHash: 48f997558c135ab9b5bc11857bc919f62b5a616bd0a90bbb417ede75c9804a92
+title: About me
+sourceHash: 6897ed7319a14b1c07a4f97d43ac4a769e22029932ea1f4fc604c700389f40ae
 manuallyEdited: false
 ---
 
 # About Me
 
-Hi! My name is **Name Surname**. I work on development and write about what I've learned along the way.
+Hi!
+I work on development and write about what I learn along the way.
 
 ## What I Do
 
+- AI automations
 - Backend with Node.js / TypeScript
 - Distributed systems architecture
 - DevOps and infrastructure
 
 ## Contacts
 
-[hi@example.com](mailto:hi@example.com)
+[a@artka.dev](mailto:a@artka.dev)

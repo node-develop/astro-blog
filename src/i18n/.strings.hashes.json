@@ -28,5 +28,10 @@
   "search.searching": "c7c5da95cb49e6ec93b91c8e0e4925de918f7ecbbdbc8eea72247c29173ccb98",
   "search.noResults": "6bd686a245261e16d0670a35d0c8546e9aa9e149fd1222a64c42d3496e01e500",
   "search.shortcutHint": "61a6b41fdef7606b7b52e3782539b776681fe38d29e6f5a99066b69044f933bb",
-  "footer.meta": "b2e5dbbda33205a43845141a7526876bd4c676241ef5129f5606f3bc0b5b5fda"
+  "footer.meta": "b2e5dbbda33205a43845141a7526876bd4c676241ef5129f5606f3bc0b5b5fda",
+  "blog.title": "279e6b2bd1dcb491233629e634a46751a8c751312e50ca8ca4436ea902a6c40a",
+  "blog.description": "9cc70c9fdbc1bcffbbe92d54a755ee93fb81dc03855e592dfdd7b3080582fae1",
+  "blog.eyebrow": "3c54b5e783ef6052cc4b7a7528c0a757be3a6e3a539d4be6e0f37a5a4d10b1d1",
+  "blog.tagsAria": "a2800083983fe0f7e2d41150cfc98d1fc3e722305288bff84e5895e9d62aa60b",
+  "post.minutes": "62dcfe2d4dee3196ee4a04c3191fd1d57df7c80070c9a717115fcb03f209bb94"
 }
