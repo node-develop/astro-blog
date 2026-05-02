@@ -6,6 +6,7 @@ import {
   buildBlogNode,
   graphIds,
 } from "~/lib/seo/nodes-global";
+import { person } from "~/lib/seo/person";
 
 describe("graphIds", () => {
   it("are stable canonical IDs", () => {
@@ -51,6 +52,29 @@ describe("buildWebSiteNode", () => {
 
   it("switches inLanguage for en", () => {
     expect(buildWebSiteNode("en").inLanguage).toBe("en-US");
+  });
+});
+
+describe("buildPersonNode — Plan 2 additions", () => {
+  it("appends expertiseAreas to knowsAbout (deduped)", () => {
+    const node = buildPersonNode();
+    for (const area of person.expertiseAreas) {
+      expect(node.knowsAbout).toContain(area);
+    }
+    expect(new Set(node.knowsAbout).size).toBe(node.knowsAbout.length);
+  });
+
+  it("emits subjectOf[] mirroring person.notableWork", () => {
+    const node = buildPersonNode();
+    expect(node.subjectOf).toHaveLength(person.notableWork.length);
+    for (let i = 0; i < person.notableWork.length; i++) {
+      const w = person.notableWork[i]!;
+      const out = node.subjectOf[i]!;
+      expect(out["@type"]).toBe("CreativeWork");
+      expect(out.name).toBe(w.title);
+      expect(out.url).toBe(w.url);
+      expect(out.description).toBe(w.description);
+    }
   });
 });
 

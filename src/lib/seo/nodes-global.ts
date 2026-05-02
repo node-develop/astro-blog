@@ -14,18 +14,27 @@ export const graphIds = {
 
 const inLang = (locale: Locale): "ru-RU" | "en-US" => (locale === "ru" ? "ru-RU" : "en-US");
 
-export const buildPersonNode = () => ({
-  "@type": "Person",
-  "@id": graphIds.person,
-  name: person.name,
-  url: person.url,
-  image: person.image,
-  jobTitle: person.jobTitle,
-  description: person.description,
-  knowsAbout: [...person.knowsAbout],
-  sameAs: [...person.sameAs],
-  email: person.email,
-});
+export const buildPersonNode = () => {
+  const merged = Array.from(new Set<string>([...person.knowsAbout, ...person.expertiseAreas]));
+  return {
+    "@type": "Person",
+    "@id": graphIds.person,
+    name: person.name,
+    url: person.url,
+    image: person.image,
+    jobTitle: person.jobTitle,
+    description: person.description,
+    knowsAbout: merged,
+    sameAs: [...person.sameAs],
+    email: person.email,
+    subjectOf: person.notableWork.map((w) => ({
+      "@type": "CreativeWork",
+      name: w.title,
+      url: w.url,
+      description: w.description,
+    })),
+  };
+};
 
 export const buildOrganizationNode = () => ({
   "@type": "Organization",
