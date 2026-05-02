@@ -7,6 +7,8 @@ import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildBlogNode } from "~/lib/seo/schema";
+import { resolveTagLabel } from "~/lib/content/tags";
+import tagsRu from "~/i18n/tags.ru.json";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
@@ -14,6 +16,8 @@ const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.da
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogNode = buildBlogNode(locale);
+const tagsHrefBase = locale === "en" ? "/en/tags" : "/tags";
+const dict = tagsRu as Record<string, string>;
 ---
 
 <BaseLayout
@@ -34,7 +38,9 @@ const blogNode = buildBlogNode(locale);
       allTags.length > 0 && (
         <div class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
           {allTags.map((tag: string) => (
-            <span class="list__tag-chip">#{tag}</span>
+            <a class="list__tag-chip" href={`/tags/${tag}`}>
+              #{resolveTagLabel(tag, locale, dict)}
+            </a>
           ))}
         </div>
       )
@@ -102,6 +108,14 @@ const blogNode = buildBlogNode(locale);
       padding: 2px 8px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-pill);
+      text-decoration: none;
+      transition:
+        border-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out);
+    }
+    .list__tag-chip:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-hover);
     }
     .list__posts {
       list-style: none;
