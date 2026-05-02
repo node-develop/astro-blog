@@ -270,9 +270,9 @@ git commit -m "fix(layout): tighten outer padding on viewports under 768px"
 **Subagent:** `frontender`
 **Files:** Modify `src/layouts/PostLayout.astro`
 
-- [ ] **Step 1.** In `PostLayout.astro` scoped `<style>`, find `.post__title` and `.post__lede`.
+- [x] **Step 1.** In `PostLayout.astro` scoped `<style>`, find `.post__title` and `.post__lede`.
 
-- [ ] **Step 2.** Append mobile overrides:
+- [x] **Step 2.** Append mobile overrides:
 
 ```astro
 @media (max-width: 600px) {
@@ -295,9 +295,9 @@ git commit -m "fix(layout): tighten outer padding on viewports under 768px"
 }
 ```
 
-- [ ] **Step 3.** Visual check: load the longest title (`/blog/mermaid-svg-playwright-build-time` — title is ~80 chars) at 320px. Should fit on 3 lines, not overflow.
+- [x] **Step 3.** Visual check: load the longest title (`/blog/mermaid-svg-playwright-build-time` — title is ~80 chars) at 320px. Should fit on 3 lines, not overflow.
 
-- [ ] **Step 4.** Commit.
+- [x] **Step 4.** Commit.
 
 ```bash
 git add src/layouts/PostLayout.astro
@@ -311,9 +311,9 @@ git commit -m "fix(layout): scale post title and lede typography on mobile"
 **Subagent:** `frontender`
 **Files:** Modify `src/components/AuthorCard.astro`, `src/components/mdx/Tldr.astro`, `src/components/mdx/Faq.astro`, `src/components/mdx/KeyTakeaways.astro`
 
-- [ ] **Step 1.** Open each file and inspect its scoped style. Look for fixed `padding`, `margin-inline`, or grid-template that doesn't shrink.
+- [x] **Step 1.** Open each file and inspect its scoped style. Look for fixed `padding`, `margin-inline`, or grid-template that doesn't shrink.
 
-- [ ] **Step 2.** For each component, append a `@media (max-width: 600px)` override that:
+- [x] **Step 2.** For each component, append a `@media (max-width: 600px)` override that:
   - Reduces `padding` from `var(--space-5)` to `var(--space-3)` or `var(--space-4)`.
   - Reduces `margin-inline` to 0 if it has any.
   - Stacks any flex `row` to `column` if children would crowd.
@@ -335,9 +335,9 @@ Example for `AuthorCard.astro` (concrete pattern; adapt other files similarly):
 }
 ```
 
-- [ ] **Step 3.** Visual check on `/blog/01-introduction` (any post) at 320px. AuthorCard should not overflow; FAQ details should not have edge-clipping.
+- [x] **Step 3.** Visual check on `/blog/01-introduction` (any post) at 320px. AuthorCard should not overflow; FAQ details should not have edge-clipping.
 
-- [ ] **Step 4.** Commit (one commit covering all four components).
+- [x] **Step 4.** Commit (one commit covering all four components).
 
 ```bash
 git add src/components/AuthorCard.astro src/components/mdx/Tldr.astro src/components/mdx/Faq.astro src/components/mdx/KeyTakeaways.astro
