@@ -1,0 +1,99 @@
+---
+import { person } from "~/lib/seo/person";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const aboutHref = locale === "en" ? "/en/about" : "/about";
+const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+---
+
+<aside class="author-card" aria-label={t(locale, "authorCard.aboutLabel")}>
+  <a href={`${aboutHref}#me`} class="author-card__avatar-link" aria-hidden="true" tabindex="-1">
+    <img
+      src={person.image}
+      alt=""
+      width="56"
+      height="56"
+      class="author-card__avatar"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <div class="author-card__body">
+    <p class="author-card__label">{t(locale, "authorCard.aboutLabel")}</p>
+    <p class="author-card__name"><a href={aboutHref}>{person.name}</a></p>
+    <p class="author-card__role">{t(locale, "authorCard.role")}</p>
+    <ul class="author-card__links">
+      <li><a href={aboutHref}>{t(locale, "authorCard.viewProfile")}</a></li>
+      <li><a href={projectsHref}>{t(locale, "authorCard.viewProjects")}</a></li>
+    </ul>
+  </div>
+</aside>
+
+<style>
+  .author-card {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding: var(--space-5);
+    margin: var(--space-7) 0 0 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+  .author-card__avatar-link {
+    line-height: 0;
+  }
+  .author-card__avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    object-fit: cover;
+  }
+  .author-card__body {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .author-card__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0;
+  }
+  .author-card__name {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    margin: 0;
+  }
+  .author-card__name a {
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+  .author-card__name a:hover {
+    color: var(--color-accent);
+  }
+  .author-card__role {
+    color: var(--color-fg-muted);
+    font-size: var(--fs-sm);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .author-card__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-size: var(--fs-sm);
+  }
+  .author-card__links a {
+    color: var(--color-accent);
+  }
+</style>
