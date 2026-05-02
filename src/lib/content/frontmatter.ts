@@ -9,6 +9,10 @@ export interface Frontmatter {
   readonly draft: boolean;
   readonly cover?: string;
   readonly coverAlt?: string;
+  readonly summary?: string;
+  readonly keywords?: ReadonlyArray<string>;
+  readonly faq?: ReadonlyArray<{ readonly question: string; readonly answer: string }>;
+  readonly lang?: "ru" | "en";
 }
 
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
@@ -33,6 +37,19 @@ export function parseFrontmatter(raw: string): { frontmatter: Frontmatter; body:
       : {}),
     ...(typeof parsed["cover"] === "string" ? { cover: parsed["cover"] } : {}),
     ...(typeof parsed["coverAlt"] === "string" ? { coverAlt: parsed["coverAlt"] } : {}),
+    ...(typeof parsed["summary"] === "string" ? { summary: parsed["summary"] } : {}),
+    ...(Array.isArray(parsed["keywords"])
+      ? { keywords: (parsed["keywords"] as unknown[]).map(String) }
+      : {}),
+    ...(Array.isArray(parsed["faq"])
+      ? {
+          faq: (parsed["faq"] as Array<Record<string, unknown>>).map((it) => ({
+            question: String(it["question"] ?? ""),
+            answer: String(it["answer"] ?? ""),
+          })),
+        }
+      : {}),
+    ...(parsed["lang"] === "ru" || parsed["lang"] === "en" ? { lang: parsed["lang"] } : {}),
   };
   return { frontmatter: result, body };
 }
@@ -48,6 +65,10 @@ export function serializeFrontmatter(fm: Frontmatter, body: string): string {
       draft: fm.draft,
       ...(fm.cover ? { cover: fm.cover } : {}),
       ...(fm.coverAlt ? { coverAlt: fm.coverAlt } : {}),
+      ...(fm.summary ? { summary: fm.summary } : {}),
+      ...(fm.keywords && fm.keywords.length > 0 ? { keywords: [...fm.keywords] } : {}),
+      ...(fm.faq && fm.faq.length > 0 ? { faq: fm.faq.map((it) => ({ ...it })) } : {}),
+      ...(fm.lang ? { lang: fm.lang } : {}),
     },
     { lineWidth: 120 },
   );

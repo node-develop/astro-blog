@@ -53,5 +53,6 @@
   "authorCard.aboutLabel": "About the author",
   "authorCard.viewProfile": "Author profile →",
   "authorCard.viewProjects": "Projects →",
-  "authorCard.role": "Backend & AI agent engineer"
+  "authorCard.role": "Backend & AI agent engineer",
+  "post.related": "Related posts"
 }

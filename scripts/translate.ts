@@ -1,3 +1,8 @@
+// scripts/translate.ts — RU → EN translator for posts and site content.
+// Translates: title, description, coverAlt, summary, faq[].question/answer (prose).
+// Passes through verbatim: keywords (slug-like), tags, cover, pubDate, updatedDate.
+// Always sets lang: "en" on EN twins. Skips drafts. Per-key hash tracking for the
+// i18n string catalog avoids re-translating unchanged values.
 import { readFile, writeFile, readdir, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
@@ -54,6 +59,10 @@ const serializeWithExtras = (
     draft: base.draft,
     ...(base.cover ? { cover: base.cover } : {}),
     ...(base.coverAlt ? { coverAlt: base.coverAlt } : {}),
+    ...(base.summary ? { summary: base.summary } : {}),
+    ...(base.keywords && base.keywords.length > 0 ? { keywords: [...base.keywords] } : {}),
+    ...(base.faq && base.faq.length > 0 ? { faq: base.faq.map((it) => ({ ...it })) } : {}),
+    ...(base.lang ? { lang: base.lang } : {}),
     ...extras,
   };
   const rawYml = yaml.dump(obj, { lineWidth: 120 });
@@ -119,11 +128,12 @@ const translateFile = async (
   // Skip drafts entirely
   if (ruMeta.draft === true) return { slug, status: "skipped", note: "draft" };
 
-  // Translate frontmatter strings (title, description, coverAlt)
+  // Translate frontmatter strings (title, description, coverAlt, summary)
   const fmStrings: Record<string, string> = {
     title: ruMeta.title,
     description: ruMeta.description,
     ...(ruMeta.coverAlt ? { coverAlt: ruMeta.coverAlt } : {}),
+    ...(ruMeta.summary ? { summary: ruMeta.summary } : {}),
   };
 
   const fmTranslated =
@@ -135,6 +145,28 @@ const translateFile = async (
           strings: fmStrings,
         })
       : {};
+
+  // Translate FAQ items (question + answer prose) if present
+  const faqTranslated: ReadonlyArray<{ question: string; answer: string }> | null =
+    ruMeta.faq && ruMeta.faq.length > 0
+      ? await (async () => {
+          const flat: Record<string, string> = {};
+          ruMeta.faq!.forEach((it, i) => {
+            flat[`q${i}`] = it.question;
+            flat[`a${i}`] = it.answer;
+          });
+          const t = await translateStrings({
+            apiKey: apiKey!,
+            sourceLocale: "ru",
+            targetLocale: "en",
+            strings: flat,
+          });
+          return ruMeta.faq!.map((_, i) => ({
+            question: t[`q${i}`] ?? ruMeta.faq![i]!.question,
+            answer: t[`a${i}`] ?? ruMeta.faq![i]!.answer,
+          }));
+        })()
+      : null;
 
   // Translate body via prose extractor
   const { placeholders, skeleton } = extractProse(ruBody, {
@@ -154,6 +186,10 @@ const translateFile = async (
     title: fmTranslated["title"] ?? ruMeta.title,
     description: fmTranslated["description"] ?? ruMeta.description,
     ...(fmTranslated["coverAlt"] ? { coverAlt: fmTranslated["coverAlt"] } : {}),
+    ...(fmTranslated["summary"] ? { summary: fmTranslated["summary"] } : {}),
+    ...(ruMeta.keywords ? { keywords: ruMeta.keywords } : {}),
+    ...(faqTranslated ? { faq: faqTranslated } : {}),
+    lang: "en",
   };
 
   const extras: Record<string, unknown> = {
