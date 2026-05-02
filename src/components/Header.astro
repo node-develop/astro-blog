@@ -169,18 +169,22 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
     border: 0;
   }
 
+  /* Tablet / landscape mobile (768-1023px): keep the inline nav with tighter
+     gaps; show the drawer button as a redundant alternative. */
   @media (max-width: 1023px) {
     .site-header__drawer-btn {
       display: inline-flex;
     }
     .site-header__nav {
-      /* Drawer takes over below 1024px — hide the inline nav so the
-         brand + search + lang-toggle + drawer-btn don't overflow on
-         narrow viewports (the drawer-btn opens a <dialog> with the same links). */
-      display: none;
+      margin-left: auto;
+      gap: var(--space-3);
+      font-size: var(--fs-xs);
     }
   }
-  @media (max-width: 768px) {
+  /* Narrow mobile (≤767px): nav doesn't fit alongside brand + search +
+     lang-toggle + drawer-btn — hide it; the drawer dialog contains the
+     same 5 links so users still have access via the hamburger. */
+  @media (max-width: 767px) {
     .site-header__inner {
       padding: var(--space-3) var(--space-4);
       gap: var(--space-2);
@@ -189,13 +193,13 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
       font-size: var(--fs-base);
       gap: var(--space-1);
     }
+    .site-header__nav {
+      display: none;
+    }
   }
   @media (max-width: 480px) {
     .site-header__dot,
     .site-header__author {
-      display: none;
-    }
-    .site-header__search [aria-hidden="true"] {
       display: none;
     }
   }
