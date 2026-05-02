@@ -353,7 +353,7 @@ git commit -m "fix(ui): tighten AuthorCard and MDX cards on mobile viewports"
 **Subagent:** `backender`
 **Files:** Create `tests/e2e/mobile-overflow.spec.ts`
 
-- [ ] **Step 1.** Confirm Playwright config supports a mobile viewport. `playwright.config.ts` at the repo root — check `projects` for an iPhone-style entry; add one if missing:
+- [x] **Step 1.** Confirm Playwright config supports a mobile viewport. `playwright.config.ts` at the repo root — check `projects` for an iPhone-style entry; add one if missing:
 
 ```ts
 // playwright.config.ts (only add the iPhone project; keep existing entries)
@@ -363,7 +363,7 @@ projects: [
 ],
 ```
 
-- [ ] **Step 2.** Create `tests/e2e/mobile-overflow.spec.ts`:
+- [x] **Step 2.** Create `tests/e2e/mobile-overflow.spec.ts`:
 
 ```ts
 import { test, expect } from "@playwright/test";
@@ -414,7 +414,7 @@ test.describe("iphone-se (320px)", () => {
 });
 ```
 
-- [ ] **Step 3.** Run the test:
+- [x] **Step 3.** Run the test:
 
 ```bash
 pnpm build
@@ -423,7 +423,7 @@ pnpm test:e2e -- tests/e2e/mobile-overflow.spec.ts
 
 Expected: all 15 assertions PASS. If any fail, identify which page overflows and patch the responsible component before continuing.
 
-- [ ] **Step 4.** Commit.
+- [x] **Step 4.** Commit.
 
 ```bash
 git add tests/e2e/mobile-overflow.spec.ts playwright.config.ts
@@ -436,7 +436,7 @@ git commit -m "test(e2e): assert no horizontal overflow on mobile viewports"
 
 ### Task 9: Full check + PR
 
-- [ ] **Step 1.** Run all gates:
+- [x] **Step 1.** Run all gates:
 
 ```bash
 pnpm typecheck && pnpm test && pnpm build
@@ -446,13 +446,13 @@ pnpm translate:check
 
 All green required.
 
-- [ ] **Step 2.** Manual final pass in Chrome DevTools mobile mode:
+- [x] **Step 2.** Manual final pass in Chrome DevTools mobile mode:
   - 320px iPhone SE: home, blog index, robots-txt-ai-crawlers-2026, /uses, /tags
   - 375px iPhone: same set
   - 414px iPhone Pro Max: same set
   - 768px iPad portrait: same set
 
-- [ ] **Step 3.** Push and open PR.
+- [x] **Step 3.** Push and open PR.
 
 ```bash
 git push -u origin feat/mobile-responsive-fixes
