@@ -34,6 +34,6 @@
   "search.noResults": "Nothing found.",
   "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close",
   "footer.meta": "Astro · on-demand · WCAG AA",
-  "meta.home.description": "Personal blog by Artem on engineering, AI tooling, Claude Code, Astro and architecture.",
-  "meta.about.description": "About the author: Node.js/TypeScript engineer, AI automation, distributed systems architecture."
+  "meta.home.description": "Artem's personal blog about development, AI tools, Claude Code, Astro, and architecture.",
+  "meta.about.description": "About the author: Node.js/TypeScript development, AI automation, distributed systems architecture."
 }
