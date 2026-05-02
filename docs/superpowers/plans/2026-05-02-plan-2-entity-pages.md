@@ -334,7 +334,7 @@ git commit -m "feat(seo): surface notableWork (subjectOf) and expertiseAreas in 
 **Subagent:** `frontender`.
 **Files:** modify `src/content/site/about.md`; create `tests/unit/entity/about-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/about-content.test.ts`:
 
@@ -376,9 +376,9 @@ describe("src/content/site/about.md — expert profile", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/content/site/about.md`** with:
+- [x] **Step 3: Replace `src/content/site/about.md`** with:
 
 ```markdown
 ---
@@ -424,20 +424,20 @@ description: "Артём Кашута — backend и AI agent engineer. 10+ ле
 LinkedIn / GitHub / X появятся, когда будет, что туда вешать (spec open-question #2).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Typecheck** (content schema only requires `title` + optional `description`).
+- [x] **Step 5: Typecheck** (content schema only requires `title` + optional `description`).
 
-- [ ] **Step 6: Regenerate EN twin**
+- [x] **Step 6: Regenerate EN twin**
 
 ```bash
 pnpm translate -- --force about
 ```
 Expected: `[site] about: translated`. Writes `src/content/site/en/about.md`.
 
-- [ ] **Step 7: Quick read** (`head -30 src/content/site/en/about.md`) — title in English, section headers translated.
+- [x] **Step 7: Quick read** (`head -30 src/content/site/en/about.md`) — title in English, section headers translated.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/content/site/about.md src/content/site/en/about.md tests/unit/entity/about-content.test.ts
@@ -451,7 +451,7 @@ git commit -m "feat(content): expand /about into expert profile (RU + EN twin)"
 **Subagent:** `frontender`.
 **Files:** modify `src/pages/about.astro` and `src/pages/en/about.astro`; create `tests/unit/entity/about-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/about-page.test.ts`:
 
@@ -477,9 +477,9 @@ describe.each([["ru", ru], ["en", en]])("/%s/about page wires WebPage JSON-LD", 
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/pages/about.astro`** with:
+- [x] **Step 3: Replace `src/pages/about.astro`** with:
 
 ```astro
 ---
@@ -518,11 +518,11 @@ const webPageNode: GraphNode = buildWebPageNode({
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Replace `src/pages/en/about.astro`** with the **same content** (locale is read from `Astro.url.pathname`, both files identical by design).
+- [x] **Step 4: Replace `src/pages/en/about.astro`** with the **same content** (locale is read from `Astro.url.pathname`, both files identical by design).
 
-- [ ] **Step 5: Run — expect PASS** (6 assertions).
+- [x] **Step 5: Run — expect PASS** (6 assertions).
 
-- [ ] **Step 6: Typecheck + smoke**
+- [x] **Step 6: Typecheck + smoke**
 
 ```bash
 pnpm typecheck
@@ -536,7 +536,7 @@ curl -s http://localhost:4321/about | python3 -c "import sys, re, json; m = re.s
 ```
 Expected: list contains `Person`, `Organization`, `WebSite`, `WebPage`. Stop dev server.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/about.astro src/pages/en/about.astro tests/unit/entity/about-page.test.ts
@@ -552,7 +552,7 @@ git commit -m "feat(seo): emit WebPage JSON-LD on /about and /en/about referenci
 **Subagent:** `frontender`.
 **Files:** create `src/content/site/now.md`; create `tests/unit/entity/now-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/now-content.test.ts`:
 
@@ -583,9 +583,9 @@ describe("src/content/site/now.md", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/site/now.md`**:
+- [x] **Step 3: Create `src/content/site/now.md`**:
 
 ```markdown
 ---
@@ -620,18 +620,18 @@ description: "Что я делаю прямо сейчас в работе и п
 Если хочется обсудить — пишите на [a@artka.dev](mailto:a@artka.dev).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Generate EN twin**
+- [x] **Step 5: Generate EN twin**
 
 ```bash
 pnpm translate -- --force now
 ```
 Expected: `[site] now: translated`.
 
-- [ ] **Step 6: Verify** (`head -20 src/content/site/en/now.md`) — English title, translated headers, `2026-05-02` preserved verbatim.
+- [x] **Step 6: Verify** (`head -20 src/content/site/en/now.md`) — English title, translated headers, `2026-05-02` preserved verbatim.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content/site/now.md src/content/site/en/now.md tests/unit/entity/now-content.test.ts
@@ -645,7 +645,7 @@ git commit -m "feat(content): add /now page (RU + EN twin) — current focus, mo
 **Subagent:** `frontender`.
 **Files:** create `src/pages/now.astro` + `src/pages/en/now.astro`; create `tests/unit/entity/now-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/now-page.test.ts`:
 
@@ -671,9 +671,9 @@ describe.each([["ru", ruP], ["en", enP]])("/%s/now page", (_l, p) => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/pages/now.astro`**:
+- [x] **Step 3: Create `src/pages/now.astro`**:
 
 ```astro
 ---
@@ -709,11 +709,11 @@ const webPageNode: GraphNode = buildWebPageNode({
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Create `src/pages/en/now.astro`** identical to Step 3 (copy verbatim).
+- [x] **Step 4: Create `src/pages/en/now.astro`** identical to Step 3 (copy verbatim).
 
-- [ ] **Step 5: Run — expect PASS** (8 assertions).
+- [x] **Step 5: Run — expect PASS** (8 assertions).
 
-- [ ] **Step 6: Smoke**
+- [x] **Step 6: Smoke**
 
 ```bash
 pnpm typecheck && pnpm dev
@@ -725,7 +725,7 @@ curl -sI http://localhost:4321/en/now | head -3
 ```
 Expected: both 200. Stop dev.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/now.astro src/pages/en/now.astro tests/unit/entity/now-page.test.ts
@@ -741,7 +741,7 @@ git commit -m "feat(pages): add /now and /en/now routes with WebPage JSON-LD"
 **Subagent:** `frontender`.
 **Files:** create `src/content/site/uses.md`; create `tests/unit/entity/uses-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/uses-content.test.ts`:
 
@@ -773,9 +773,9 @@ describe("src/content/site/uses.md", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/site/uses.md`**:
+- [x] **Step 3: Create `src/content/site/uses.md`**:
 
 ```markdown
 ---
@@ -825,13 +825,13 @@ description: "Публичный toolkit: редактор, бэкенд-сте�
 Если что-то отсюда интересно — пишите на [a@artka.dev](mailto:a@artka.dev).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Generate EN twin** (`pnpm translate -- --force uses`).
+- [x] **Step 5: Generate EN twin** (`pnpm translate -- --force uses`).
 
-- [ ] **Step 6: Quick read** (`head -20 src/content/site/en/uses.md`) — English title, version numbers preserved.
+- [x] **Step 6: Quick read** (`head -20 src/content/site/en/uses.md`) — English title, version numbers preserved.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content/site/uses.md src/content/site/en/uses.md tests/unit/entity/uses-content.test.ts
@@ -845,7 +845,7 @@ git commit -m "feat(content): add /uses page (RU + EN twin) — public toolkit w
 **Subagent:** `frontender`.
 **Files:** create `src/pages/uses.astro` + `src/pages/en/uses.astro`; create `tests/unit/entity/uses-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/uses-page.test.ts`:
 
@@ -870,17 +870,17 @@ describe.each([["ru", ruP], ["en", enP]])("/%s/uses page", (_l, p) => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/pages/uses.astro`** — same shape as `now.astro`, with `slug = locale === "en" ? "en/uses" : "uses"` and `description` fallback `"Public toolkit: editor, backend, infra, observability, AI tooling."`. Mirror Task 5b Step 3 verbatim, swapping the slug.
+- [x] **Step 3: Create `src/pages/uses.astro`** — same shape as `now.astro`, with `slug = locale === "en" ? "en/uses" : "uses"` and `description` fallback `"Public toolkit: editor, backend, infra, observability, AI tooling."`. Mirror Task 5b Step 3 verbatim, swapping the slug.
 
-- [ ] **Step 4: Create `src/pages/en/uses.astro`** identical to Step 3.
+- [x] **Step 4: Create `src/pages/en/uses.astro`** identical to Step 3.
 
-- [ ] **Step 5: Run — expect PASS**.
+- [x] **Step 5: Run — expect PASS**.
 
-- [ ] **Step 6: Smoke** (`pnpm typecheck`, `pnpm dev`, `curl -sI http://localhost:4321/uses` and `/en/uses` → 200 each).
+- [x] **Step 6: Smoke** (`pnpm typecheck`, `pnpm dev`, `curl -sI http://localhost:4321/uses` and `/en/uses` → 200 each).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/uses.astro src/pages/en/uses.astro tests/unit/entity/uses-page.test.ts
@@ -898,7 +898,7 @@ git commit -m "feat(pages): add /uses and /en/uses routes with WebPage JSON-LD"
 **Subagent:** `backender`.
 **Files:** modify `src/content.config.ts`; create `tests/unit/entity/projects-schema.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/projects-schema.test.ts`:
 
@@ -937,9 +937,9 @@ describe("projects content collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/content.config.ts`** with:
+- [x] **Step 3: Replace `src/content.config.ts`** with:
 
 ```ts
 import { defineCollection, z } from "astro:content";
@@ -997,13 +997,13 @@ const projects = defineCollection({
 export const collections = { posts, site, projects };
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: `pnpm astro sync`** — regenerates `.astro/types.d.ts` so `CollectionEntry<"projects">` is valid.
+- [x] **Step 5: `pnpm astro sync`** — regenerates `.astro/types.d.ts` so `CollectionEntry<"projects">` is valid.
 
-- [ ] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content.config.ts tests/unit/entity/projects-schema.test.ts
@@ -1017,7 +1017,7 @@ git commit -m "feat(content): add projects collection schema (role, status, stac
 **Subagent:** `frontender`.
 **Files:** create `src/content/projects/{astro-blog,claude-code-guide}.md`; create `tests/unit/entity/projects-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/projects-content.test.ts`:
 
@@ -1044,9 +1044,9 @@ describe("projects collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/projects/astro-blog.md`**:
+- [x] **Step 3: Create `src/content/projects/astro-blog.md`**:
 
 ```markdown
 ---
@@ -1105,7 +1105,7 @@ links:
 Spec на v2: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`. Превращаю блог в LLM-citable knowledge node — entity-страницы (то, что вы читаете), retrieval frontmatter, MDX-компоненты.
 ```
 
-- [ ] **Step 4: Create `src/content/projects/claude-code-guide.md`**:
+- [x] **Step 4: Create `src/content/projects/claude-code-guide.md`**:
 
 ```markdown
 ---
@@ -1151,11 +1151,11 @@ links:
 EPIC C parent-spec'а: добавить `summary`/`faq` frontmatter и MDX-компоненты в существующие 14 частей.
 ```
 
-- [ ] **Step 5: Run — expect PASS** (3 assertions).
+- [x] **Step 5: Run — expect PASS** (3 assertions).
 
-- [ ] **Step 6: Typecheck** (zod schema validates each markdown file) — 0 errors. If a file fails validation, fix the frontmatter, **don't** loosen the schema.
+- [x] **Step 6: Typecheck** (zod schema validates each markdown file) — 0 errors. If a file fails validation, fix the frontmatter, **don't** loosen the schema.
 
-- [ ] **Step 7: Commit (RU only — EN twins land in Task 9)**
+- [x] **Step 7: Commit (RU only — EN twins land in Task 9)**
 
 ```bash
 git add src/content/projects/astro-blog.md src/content/projects/claude-code-guide.md tests/unit/entity/projects-content.test.ts
@@ -1169,7 +1169,7 @@ git commit -m "feat(content): seed projects collection with astro-blog and claud
 **Subagent:** `backender`.
 **Files:** modify `scripts/lib/site-config.ts` and `scripts/translate.ts`; create `tests/unit/entity/translate-projects.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/translate-projects.test.ts`:
 
@@ -1200,9 +1200,9 @@ describe("translate pipeline supports projects collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `scripts/lib/site-config.ts`** with:
+- [x] **Step 3: Replace `scripts/lib/site-config.ts`** with:
 
 ```ts
 import { join } from "node:path";
@@ -1220,7 +1220,7 @@ export const PATHS = {
 } as const;
 ```
 
-- [ ] **Step 4: Add `translateProjectFile` + `translateAllProjects` to `scripts/translate.ts`**
+- [x] **Step 4: Add `translateProjectFile` + `translateAllProjects` to `scripts/translate.ts`**
 
 After the existing `translateAllSite` function, insert:
 
@@ -1340,7 +1340,7 @@ const translateAllProjects = async (): Promise<readonly FileResult[]> => {
 };
 ```
 
-- [ ] **Step 5: Wire it into `main()`**
+- [x] **Step 5: Wire it into `main()`**
 
 In `scripts/translate.ts`, replace the existing `main()` with:
 
@@ -1372,11 +1372,11 @@ const main = async (): Promise<void> => {
 };
 ```
 
-- [ ] **Step 6: Run unit test — expect PASS** (4 assertions).
+- [x] **Step 6: Run unit test — expect PASS** (4 assertions).
 
-- [ ] **Step 7: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 7: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 8: Run translate**
+- [x] **Step 8: Run translate**
 
 ```bash
 pnpm translate
@@ -1388,7 +1388,7 @@ Expected:
 
 If `ANTHROPIC_API_KEY` missing, the script exits at the top — set it in `.env` first.
 
-- [ ] **Step 9: Inspect EN files**
+- [x] **Step 9: Inspect EN files**
 
 ```bash
 ls src/content/projects/en/
@@ -1396,9 +1396,9 @@ head -30 src/content/projects/en/astro-blog.md
 ```
 Expected: both `.md` files present, English title, translated outcomes, `links[].url` preserved verbatim.
 
-- [ ] **Step 10: Run translate:check** (`pnpm translate:check`) — clean output.
+- [x] **Step 10: Run translate:check** (`pnpm translate:check`) — clean output.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add scripts/lib/site-config.ts scripts/translate.ts src/content/projects/en/ tests/unit/entity/translate-projects.test.ts
@@ -1412,7 +1412,7 @@ git commit -m "feat(content): translate pipeline supports projects collection (R
 **Subagent:** `frontender` (page) + `backender` (schema builder).
 **Files:** create `src/lib/seo/nodes-projects.ts`, `tests/unit/seo/nodes-projects.test.ts`, `src/pages/projects/index.astro`, `src/pages/en/projects/index.astro`. Modify `src/lib/seo/schema.ts`, `src/i18n/strings.ru.json`.
 
-- [ ] **Step 1: Write failing schema-builder test**
+- [x] **Step 1: Write failing schema-builder test**
 
 Create `tests/unit/seo/nodes-projects.test.ts`:
 
@@ -1475,9 +1475,9 @@ describe("buildCreativeWorkNode", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Implement `src/lib/seo/nodes-projects.ts`**:
+- [x] **Step 3: Implement `src/lib/seo/nodes-projects.ts`**:
 
 ```ts
 import { graphIds, type Locale } from "./nodes-global";
@@ -1535,15 +1535,15 @@ export const buildCreativeWorkNode = (input: CreativeWorkInput) => {
 };
 ```
 
-- [ ] **Step 4: Re-export from `src/lib/seo/schema.ts`** — append (do not remove Plan 1 exports):
+- [x] **Step 4: Re-export from `src/lib/seo/schema.ts`** — append (do not remove Plan 1 exports):
 
 ```ts
 export { buildCollectionPageNode, buildCreativeWorkNode } from "./nodes-projects";
 ```
 
-- [ ] **Step 5: Run schema-builder test — expect PASS**.
+- [x] **Step 5: Run schema-builder test — expect PASS**.
 
-- [ ] **Step 6: Add i18n keys to `src/i18n/strings.ru.json`** (near `meta.about.description`):
+- [x] **Step 6: Add i18n keys to `src/i18n/strings.ru.json`** (near `meta.about.description`):
 
 ```json
   "meta.projects.description": "Портфолио: проекты с ролью, архитектурой, стеком и результатами.",
@@ -1559,9 +1559,9 @@ export { buildCollectionPageNode, buildCreativeWorkNode } from "./nodes-projects
   "projects.status.archived": "Архив",
 ```
 
-- [ ] **Step 7: Translate** (`pnpm translate`) — `[strings] translating 11 key(s)`. Updates `strings.en.json` and `.strings.hashes.json`.
+- [x] **Step 7: Translate** (`pnpm translate`) — `[strings] translating 11 key(s)`. Updates `strings.en.json` and `.strings.hashes.json`.
 
-- [ ] **Step 8: Create `src/pages/projects/index.astro`**:
+- [x] **Step 8: Create `src/pages/projects/index.astro`**:
 
 ```astro
 ---
@@ -1660,11 +1660,11 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
 </BaseLayout>
 ```
 
-- [ ] **Step 9: Create `src/pages/en/projects/index.astro`** — copy verbatim from Step 8.
+- [x] **Step 9: Create `src/pages/en/projects/index.astro`** — copy verbatim from Step 8.
 
-- [ ] **Step 10: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 10: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 11: Smoke**
+- [x] **Step 11: Smoke**
 
 ```bash
 pnpm dev
@@ -1680,7 +1680,7 @@ curl -s http://localhost:4321/projects | python3 -c "import sys, re, json; m = r
 ```
 Expected: list contains `CollectionPage`. Stop dev.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add src/lib/seo/nodes-projects.ts src/lib/seo/schema.ts tests/unit/seo/nodes-projects.test.ts \
@@ -1696,7 +1696,7 @@ git commit -m "feat(pages): /projects index with CollectionPage JSON-LD (RU + EN
 **Subagent:** `frontender`.
 **Files:** create `src/pages/projects/[slug].astro` + EN sibling; create `tests/unit/entity/project-detail-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/project-detail-page.test.ts`:
 
@@ -1727,9 +1727,9 @@ describe.each([["ru", ru], ["en", en]])("/%s/projects/[slug]", (_l, p) => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/pages/projects/[slug].astro`**:
+- [x] **Step 3: Create `src/pages/projects/[slug].astro`**:
 
 ```astro
 ---
@@ -1855,7 +1855,7 @@ const statusLabel = t(locale, `projects.status.${entry.data.status}` as Paramete
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Create `src/pages/en/projects/[slug].astro`** — same as Step 3, but `getStaticPaths` becomes:
+- [x] **Step 4: Create `src/pages/en/projects/[slug].astro`** — same as Step 3, but `getStaticPaths` becomes:
 
 ```ts
 export async function getStaticPaths() {
@@ -1869,11 +1869,11 @@ export async function getStaticPaths() {
 
 Everything else identical.
 
-- [ ] **Step 5: Run — expect PASS**.
+- [x] **Step 5: Run — expect PASS**.
 
-- [ ] **Step 6: Typecheck** (`pnpm typecheck`).
+- [x] **Step 6: Typecheck** (`pnpm typecheck`).
 
-- [ ] **Step 7: Smoke**
+- [x] **Step 7: Smoke**
 
 ```bash
 pnpm dev
@@ -1889,7 +1889,7 @@ curl -sI http://localhost:4321/en/projects/astro-blog | head -3
 ```
 Expected: 200. Stop dev.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/pages/projects/[slug].astro src/pages/en/projects/[slug].astro tests/unit/entity/project-detail-page.test.ts
@@ -1905,7 +1905,7 @@ git commit -m "feat(pages): /projects/[slug] detail with CreativeWork JSON-LD (R
 **Subagent:** `backender`.
 **Files:** modify `src/i18n/strings.ru.json` (and verify `strings.en.json` after translate).
 
-- [ ] **Step 1: Add to `src/i18n/strings.ru.json`** (near other `meta.*` keys):
+- [x] **Step 1: Add to `src/i18n/strings.ru.json`** (near other `meta.*` keys):
 
 ```json
   "authorCard.aboutLabel": "Об авторе",
@@ -1914,18 +1914,18 @@ git commit -m "feat(pages): /projects/[slug] detail with CreativeWork JSON-LD (R
   "authorCard.role": "Backend & AI agent engineer"
 ```
 
-- [ ] **Step 2: Translate** (`pnpm translate` → `[strings] translating 4 key(s)`).
+- [x] **Step 2: Translate** (`pnpm translate` → `[strings] translating 4 key(s)`).
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 grep -E '"authorCard\.(aboutLabel|viewProfile|viewProjects|role)"' src/i18n/strings.en.json
 ```
 Expected: 4 matching lines.
 
-- [ ] **Step 4: Typecheck** (`pnpm typecheck` — `StringKey` updates automatically).
+- [x] **Step 4: Typecheck** (`pnpm typecheck` — `StringKey` updates automatically).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/i18n/strings.ru.json src/i18n/strings.en.json src/i18n/.strings.hashes.json
@@ -1941,7 +1941,7 @@ git commit -m "feat(i18n): add AuthorCard strings (about/profile/projects/role)"
 
 The component reads from `~/lib/seo/person.ts` and accepts no overrides — that would defeat "single coherent author entity".
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/author-card.test.ts`:
 
@@ -1977,9 +1977,9 @@ describe("src/components/AuthorCard.astro", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/components/AuthorCard.astro`**:
+- [x] **Step 3: Create `src/components/AuthorCard.astro`**:
 
 ```astro
 ---
@@ -2030,11 +2030,11 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
 </style>
 ```
 
-- [ ] **Step 4: Run — expect PASS** (6 assertions).
+- [x] **Step 4: Run — expect PASS** (6 assertions).
 
-- [ ] **Step 5: Typecheck** (`pnpm typecheck`).
+- [x] **Step 5: Typecheck** (`pnpm typecheck`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/AuthorCard.astro tests/unit/entity/author-card.test.ts
@@ -2048,14 +2048,14 @@ git commit -m "feat(ui): add AuthorCard component (avatar + name + links to /abo
 **Subagent:** `frontender`.
 **Files:** modify `src/layouts/PostLayout.astro`; create `tests/unit/entity/post-layout-author-card.test.ts`.
 
-- [ ] **Step 1: Re-run impact analysis (Plan 1 already touched this file)**
+- [x] **Step 1: Re-run impact analysis (Plan 1 already touched this file)**
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: MEDIUM (used by `src/pages/blog/[...slug].astro` and EN sibling). Confirm before proceeding.
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 Create `tests/unit/entity/post-layout-author-card.test.ts`:
 
@@ -2081,9 +2081,9 @@ describe("PostLayout — AuthorCard wiring", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect FAIL**.
+- [x] **Step 3: Run — expect FAIL**.
 
-- [ ] **Step 4: Modify `src/layouts/PostLayout.astro`**
+- [x] **Step 4: Modify `src/layouts/PostLayout.astro`**
 
 In the frontmatter `import` block (near other component imports), add:
 
@@ -2107,16 +2107,16 @@ So the relevant section reads:
   </article>
 ```
 
-- [ ] **Step 5: Run — expect PASS** (2 assertions).
+- [x] **Step 5: Run — expect PASS** (2 assertions).
 
-- [ ] **Step 6: Typecheck + run all tests**
+- [x] **Step 6: Typecheck + run all tests**
 
 ```bash
 pnpm typecheck && pnpm test
 ```
 Expected: all pass (Plan 1 SEO + Plan 2 entity + existing).
 
-- [ ] **Step 7: Smoke**
+- [x] **Step 7: Smoke**
 
 ```bash
 pnpm dev
@@ -2128,14 +2128,14 @@ curl -s http://localhost:4321/en/blog/01-introduction | grep -c 'class="author-c
 ```
 Expected: `1` and `1`. Stop dev.
 
-- [ ] **Step 8: detect_changes**
+- [x] **Step 8: detect_changes**
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: only `PostLayout.astro` and the new test file.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/layouts/PostLayout.astro tests/unit/entity/post-layout-author-card.test.ts
@@ -2151,14 +2151,14 @@ git commit -m "feat(layout): render AuthorCard at the bottom of every post"
 **Subagent:** `frontender`.
 **Files:** modify `src/components/Header.astro`, `src/i18n/strings.ru.json`.
 
-- [ ] **Step 1: Read current Header**
+- [x] **Step 1: Read current Header**
 
 ```bash
 cat src/components/Header.astro
 ```
 Note the link list pattern (array of `{label, href}` or inline JSX `<a>` tags).
 
-- [ ] **Step 2: Add 3 i18n keys to `src/i18n/strings.ru.json`** (near existing `nav.*`):
+- [x] **Step 2: Add 3 i18n keys to `src/i18n/strings.ru.json`** (near existing `nav.*`):
 
 ```json
   "nav.now": "Сейчас",
@@ -2166,18 +2166,18 @@ Note the link list pattern (array of `{label, href}` or inline JSX `<a>` tags).
   "nav.projects": "Проекты"
 ```
 
-- [ ] **Step 3: Translate** (`pnpm translate` → `[strings] translating 3 key(s)`).
+- [x] **Step 3: Translate** (`pnpm translate` → `[strings] translating 3 key(s)`).
 
-- [ ] **Step 4: Modify `src/components/Header.astro`** — add three locale-aware nav items between `nav.about` and `nav.search`:
+- [x] **Step 4: Modify `src/components/Header.astro`** — add three locale-aware nav items between `nav.about` and `nav.search`:
 - `locale === "en" ? "/en/now" : "/now"` with label `t(locale, "nav.now")`
 - `locale === "en" ? "/en/uses" : "/uses"` with label `t(locale, "nav.uses")`
 - `locale === "en" ? "/en/projects" : "/projects"` with label `t(locale, "nav.projects")`
 
 Mirror Header's existing pattern exactly — if it uses an array `links`, extend the array; if inline `<a>` tags, add three more inline.
 
-- [ ] **Step 5: Run typecheck and tests** (`pnpm typecheck && pnpm test`).
+- [x] **Step 5: Run typecheck and tests** (`pnpm typecheck && pnpm test`).
 
-- [ ] **Step 6: Smoke**
+- [x] **Step 6: Smoke**
 
 ```bash
 pnpm dev
@@ -2189,7 +2189,7 @@ curl -s http://localhost:4321/en/ | grep -oE 'href="/en/(now|uses|projects)"' | 
 ```
 Expected: 3 + 3 unique lines. Stop dev.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/Header.astro src/i18n/strings.ru.json src/i18n/strings.en.json src/i18n/.strings.hashes.json
@@ -2204,14 +2204,14 @@ git commit -m "feat(nav): expose /now /uses /projects in header navigation"
 
 Plan 1 pre-emptively listed `/about`, `/now`, `/uses`, `/projects` in `public/llms.txt`. This task confirms all four URLs now resolve.
 
-- [ ] **Step 1: Build**
+- [x] **Step 1: Build**
 
 ```bash
 pnpm build
 ```
 Expected: 0 errors.
 
-- [ ] **Step 2: Verify each entity page in `dist/`**
+- [x] **Step 2: Verify each entity page in `dist/`**
 
 ```bash
 for path in about now uses projects; do
@@ -2221,7 +2221,7 @@ done
 ```
 Expected: 8 lines, all `OK:`.
 
-- [ ] **Step 3: Verify project detail pages**
+- [x] **Step 3: Verify project detail pages**
 
 ```bash
 test -f dist/client/projects/astro-blog/index.html && echo OK_RU_AB || echo FAIL
@@ -2231,7 +2231,7 @@ test -f dist/client/en/projects/claude-code-guide/index.html && echo OK_EN_CCG |
 ```
 Expected: 4 `OK_*` lines.
 
-- [ ] **Step 4:** No commit — verification only.
+- [x] **Step 4:** No commit — verification only.
 
 ---
 
@@ -2242,9 +2242,9 @@ Expected: 4 `OK_*` lines.
 **Subagent:** `critic`.
 **Files:** optional `CLAUDE.md` edit.
 
-- [ ] **Step 1: Full build** (`pnpm build` → 0 errors).
+- [x] **Step 1: Full build** (`pnpm build` → 0 errors).
 
-- [ ] **Step 2: Validate `/about` graph**
+- [x] **Step 2: Validate `/about` graph**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/about/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const types=g['@graph'].map(n=>n['@type']); console.log('types:',types); const wp=g['@graph'].find(n=>n['@type']==='WebPage'); console.log('WebPage.about:',wp.about); const person=g['@graph'].find(n=>n['@type']==='Person'); console.log('Person.subjectOf.length:',person.subjectOf.length);"
@@ -2254,14 +2254,14 @@ Expected:
 - `WebPage.about: { '@id': 'https://artka.dev/#person' }`
 - `Person.subjectOf.length: 3`
 
-- [ ] **Step 3: Validate `/projects` CollectionPage**
+- [x] **Step 3: Validate `/projects` CollectionPage**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/projects/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const cp=g['@graph'].find(n=>n['@type']==='CollectionPage'); console.log('CollectionPage.hasPart:',JSON.stringify(cp.hasPart,null,2));"
 ```
 Expected: array of 2 `{@id: ...#creativework}` objects.
 
-- [ ] **Step 4: Validate `/projects/astro-blog` CreativeWork**
+- [x] **Step 4: Validate `/projects/astro-blog` CreativeWork**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/projects/astro-blog/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const cw=g['@graph'].find(n=>n['@type']==='CreativeWork'); console.log('author:',cw.author); console.log('creator:',cw.creator); console.log('keywords:',cw.keywords);"
@@ -2271,7 +2271,7 @@ Expected:
 - `creator: { '@id': 'https://artka.dev/#person' }`
 - `keywords:` non-empty comma-separated string.
 
-- [ ] **Step 5: Confirm exactly one JSON-LD per entity page**
+- [x] **Step 5: Confirm exactly one JSON-LD per entity page**
 
 ```bash
 for f in dist/client/about/index.html dist/client/now/index.html dist/client/uses/index.html dist/client/projects/index.html dist/client/projects/astro-blog/index.html; do
@@ -2282,7 +2282,7 @@ done
 ```
 Expected: each line ends with `1`.
 
-- [ ] **Step 6: Confirm AuthorCard on a representative post**
+- [x] **Step 6: Confirm AuthorCard on a representative post**
 
 ```bash
 grep -c 'class="author-card"' dist/client/blog/01-introduction/index.html
@@ -2290,20 +2290,20 @@ grep -c 'class="author-card"' dist/client/en/blog/01-introduction/index.html
 ```
 Expected: `1` and `1`.
 
-- [ ] **Step 7: Run all gates**
+- [x] **Step 7: Run all gates**
 
 ```bash
 pnpm test && pnpm lint && pnpm typecheck && pnpm translate:check
 ```
 Expected: all green.
 
-- [ ] **Step 8: (Optional) Update `CLAUDE.md`** — under `## Структура` add a one-liner:
+- [x] **Step 8: (Optional) Update `CLAUDE.md`** — under `## Структура` add a one-liner:
 
 ```markdown
 - Entity pages: `/about`, `/now`, `/uses`, `/projects` (collection). RU markdown in `src/content/site/` and `src/content/projects/`; EN twins generated by `pnpm translate`.
 ```
 
-- [ ] **Step 9: detect_changes (full scope)**
+- [x] **Step 9: detect_changes (full scope)**
 
 ```
 mcp__gitnexus__detect_changes({ scope: "all", repo: "astro-blog" })
@@ -2324,14 +2324,14 @@ Expected scope (vs `main`):
 
 Flag anything outside this list before pushing.
 
-- [ ] **Step 10: Commit Step-8 leftovers** (skip if `CLAUDE.md` untouched)
+- [x] **Step 10: Commit Step-8 leftovers** (skip if `CLAUDE.md` untouched)
 
 ```bash
 git add CLAUDE.md
 git commit -m "docs: note entity-page surface in CLAUDE.md"
 ```
 
-- [ ] **Step 11: Push and open PR**
+- [x] **Step 11: Push and open PR**
 
 ```bash
 git push -u origin feat/entity-pages
@@ -2349,13 +2349,13 @@ Plan: docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md
 Depends on: PR for Plan 1 (LLM-citable foundation) — merge first.
 
 ## Test plan
-- [ ] pnpm typecheck passes
-- [ ] pnpm test passes (new tests under tests/unit/entity/ and tests/unit/seo/nodes-projects.test.ts)
-- [ ] pnpm translate:check passes (no EN drift)
-- [ ] pnpm build emits dist/client/{about,now,uses,projects,projects/astro-blog,projects/claude-code-guide}/index.html (and /en/ siblings)
-- [ ] curl /about shows WebPage.about → Person#me
-- [ ] curl /projects/astro-blog shows CreativeWork.author → Person#me
-- [ ] AuthorCard rendered on a sample blog post (RU + EN)
+- [x] pnpm typecheck passes
+- [x] pnpm test passes (new tests under tests/unit/entity/ and tests/unit/seo/nodes-projects.test.ts)
+- [x] pnpm translate:check passes (no EN drift)
+- [x] pnpm build emits dist/client/{about,now,uses,projects,projects/astro-blog,projects/claude-code-guide}/index.html (and /en/ siblings)
+- [x] curl /about shows WebPage.about → Person#me
+- [x] curl /projects/astro-blog shows CreativeWork.author → Person#me
+- [x] AuthorCard rendered on a sample blog post (RU + EN)
 
 ## Owner-pending defaults left in place
 - Person.sameAs[] still empty (spec open-question #2)

@@ -1,6 +1,9 @@
 {
   "nav.posts": "Статьи",
   "nav.about": "Обо мне",
+  "nav.now": "Сейчас",
+  "nav.uses": "Использую",
+  "nav.projects": "Проекты",
   "nav.search": "Поиск",
   "home.eyebrow": "Personal blog · on writing code with AI",
   "home.cta": "Все статьи →",
@@ -35,5 +38,20 @@
   "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> навигация · <kbd>Enter</kbd> открыть · <kbd>Esc</kbd> закрыть",
   "footer.meta": "Astro · on-demand · WCAG AA",
   "meta.home.description": "Личный блог Артёма про разработку, AI-инструменты, Claude Code, Astro и архитектуру.",
-  "meta.about.description": "Об авторе: Node.js/TypeScript разработка, AI-автоматизации, архитектура распределённых систем."
+  "meta.about.description": "Об авторе: Node.js/TypeScript разработка, AI-автоматизации, архитектура распределённых систем.",
+  "meta.projects.description": "Портфолио: проекты с ролью, архитектурой, стеком и результатами.",
+  "projects.title": "Проекты",
+  "projects.eyebrow": "Портфолио",
+  "projects.empty": "Пока ничего не опубликовано.",
+  "projects.role": "Роль",
+  "projects.stack": "Стек",
+  "projects.outcomes": "Результаты",
+  "projects.links": "Ссылки",
+  "projects.status.active": "В активной разработке",
+  "projects.status.maintained": "Поддерживается",
+  "projects.status.archived": "Архив",
+  "authorCard.aboutLabel": "Об авторе",
+  "authorCard.viewProfile": "Профиль автора →",
+  "authorCard.viewProjects": "Проекты →",
+  "authorCard.role": "Backend & AI agent engineer"
 }

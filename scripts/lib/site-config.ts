@@ -7,5 +7,7 @@ export const PATHS = {
   postsEnDir: join(ROOT, "src/content/posts/en"),
   siteDir: join(ROOT, "src/content/site"),
   siteEnDir: join(ROOT, "src/content/site/en"),
+  projectsDir: join(ROOT, "src/content/projects"),
+  projectsEnDir: join(ROOT, "src/content/projects/en"),
   i18nDir: join(ROOT, "src/i18n"),
 } as const;

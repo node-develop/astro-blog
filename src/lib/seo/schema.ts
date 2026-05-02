@@ -41,3 +41,4 @@ export {
 } from "./nodes-page";
 export { buildBlogNode } from "./nodes-global";
 export { extractArticleBody, countWords } from "./article-body";
+export { buildCollectionPageNode, buildCreativeWorkNode } from "./nodes-projects";

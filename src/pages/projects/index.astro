@@ -1,0 +1,198 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t, type Locale } from "~/i18n";
+import { buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
+
+const locale: Locale = getLocaleFromPath(Astro.url.pathname);
+const allProjects = await getCollection("projects", (e: CollectionEntry<"projects">) =>
+  locale === "en" ? e.id.startsWith("en/") : !e.id.startsWith("en/"),
+);
+const projects = [...allProjects].sort((a, b) => {
+  if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+  return b.data.pubDate.getTime() - a.data.pubDate.getTime();
+});
+
+const bareSlug = (id: string): string => id.replace(/^en\//, "").replace(/\.md$/, "");
+const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+const siteBase = Astro.site?.toString() ?? "https://artka.dev";
+const itemUrls = projects.map((p) =>
+  new URL(`${projectsHref}/${bareSlug(p.id)}`, siteBase).toString(),
+);
+const canonical = new URL(Astro.url.pathname, siteBase).toString();
+
+const collectionNode: GraphNode = buildCollectionPageNode({
+  locale,
+  canonical,
+  name: t(locale, "projects.title"),
+  description: t(locale, "meta.projects.description"),
+  itemUrls,
+});
+
+const statusLabel = (s: "active" | "maintained" | "archived"): string =>
+  t(locale, `projects.status.${s}` as Parameters<typeof t>[1]);
+---
+
+<BaseLayout
+  title={t(locale, "projects.title")}
+  description={t(locale, "meta.projects.description")}
+  fullWidth={true}
+  extraSchemaNodes={[collectionNode]}
+>
+  <SiteSidebar slot="sidebar" />
+
+  <section class="projects">
+    <header class="projects__header">
+      <p class="projects__eyebrow">{t(locale, "projects.eyebrow")}</p>
+      <h1 class="projects__title">{t(locale, "projects.title")}</h1>
+    </header>
+
+    {
+      projects.length === 0 ? (
+        <p class="projects__empty">{t(locale, "projects.empty")}</p>
+      ) : (
+        <ul class="projects__list">
+          {projects.map((p) => (
+            <li class="projects__item">
+              <a href={`${projectsHref}/${bareSlug(p.id)}`} class="projects__link">
+                <header class="projects__card-header">
+                  <h2 class="projects__card-title">{p.data.title}</h2>
+                  <span class={`projects__status projects__status--${p.data.status}`}>
+                    {statusLabel(p.data.status)}
+                  </span>
+                </header>
+                <p class="projects__card-desc">{p.data.description}</p>
+                <p class="projects__card-role">
+                  <span class="projects__card-role-label">{t(locale, "projects.role")}:</span>{" "}
+                  {p.data.role}
+                </p>
+                {p.data.stack.length > 0 && (
+                  <ul class="projects__chips" aria-label={t(locale, "projects.stack")}>
+                    {p.data.stack.slice(0, 6).map((tech: string) => (
+                      <li class="projects__chip">{tech}</li>
+                    ))}
+                  </ul>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <style>
+    .projects {
+      max-width: 720px;
+    }
+    .projects__header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .projects__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .projects__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-3xl);
+      font-weight: 500;
+      margin: 0;
+      color: var(--color-fg);
+    }
+    .projects__empty {
+      color: var(--color-fg-muted);
+      font-style: italic;
+    }
+    .projects__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: var(--space-5);
+    }
+    .projects__item {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--dur-fast) var(--ease-out);
+    }
+    .projects__item:hover {
+      border-color: var(--color-accent);
+    }
+    .projects__link {
+      display: block;
+      padding: var(--space-5);
+      color: inherit;
+      text-decoration: none;
+    }
+    .projects__card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+    .projects__card-title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-xl);
+      font-weight: 500;
+      margin: 0;
+      color: var(--color-fg);
+    }
+    .projects__status {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--color-border);
+      color: var(--color-fg-muted);
+      flex-shrink: 0;
+    }
+    .projects__status--active {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+    .projects__card-desc {
+      margin: 0 0 var(--space-3) 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+    }
+    .projects__card-role {
+      font-size: var(--fs-sm);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-3) 0;
+    }
+    .projects__card-role-label {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+    }
+    .projects__chips {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .projects__chip {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-muted);
+      padding: 2px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+    }
+  </style>
+</BaseLayout>

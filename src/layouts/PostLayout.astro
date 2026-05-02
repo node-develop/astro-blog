@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import AuthorCard from "~/components/AuthorCard.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
@@ -134,6 +135,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
     <div class="post__body prose">
       <slot />
     </div>
+    <AuthorCard />
   </article>
 
   <script>

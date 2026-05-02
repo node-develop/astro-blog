@@ -19,6 +19,9 @@ const isActive = (prefix: string): boolean =>
 const homeHref = locale === "en" ? "/en/" : "/";
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const aboutHref = locale === "en" ? "/en/about" : "/about";
+const nowHref = locale === "en" ? "/en/now" : "/now";
+const usesHref = locale === "en" ? "/en/uses" : "/uses";
+const projectsHref = locale === "en" ? "/en/projects" : "/projects";
 ---
 
 <header class="site-header" role="banner">
@@ -35,6 +38,15 @@ const aboutHref = locale === "en" ? "/en/about" : "/about";
       >
       <a href={aboutHref} aria-current={isActive("/about") ? "page" : undefined}
         >{t(locale, "nav.about")}</a
+      >
+      <a href={nowHref} aria-current={isActive("/now") ? "page" : undefined}
+        >{t(locale, "nav.now")}</a
+      >
+      <a href={usesHref} aria-current={isActive("/uses") ? "page" : undefined}
+        >{t(locale, "nav.uses")}</a
+      >
+      <a href={projectsHref} aria-current={isActive("/projects") ? "page" : undefined}
+        >{t(locale, "nav.projects")}</a
       >
     </nav>
 
