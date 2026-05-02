@@ -890,7 +890,7 @@ git commit -m "feat(mdx): add <Faq> with auto-render and FAQPage JSON-LD merged 
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/compare.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/compare.test.ts`:
 
@@ -952,14 +952,14 @@ describe("<Compare>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/compare.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3:** Implement `src/components/mdx/Compare.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/Compare.astro`.
 
 ```astro
 ---
@@ -1075,7 +1075,7 @@ for (const row of rows) {
 
 (Note: `<caption>` is duplicated as `<figcaption>` because LLMs latch onto either; visual chrome shows only `<figcaption>` since `<caption>` is styled `caption-side: top` and is the same text. Acceptable redundancy for retrieval.)
 
-- [ ] **Step 4:** Re-export from the index.
+- [x] **Step 4:** Re-export from the index.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1093,14 +1093,14 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx/compare.test.ts && pnpm typecheck
 ```
 Expected: PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add src/components/mdx/Compare.astro src/components/mdx/index.ts tests/unit/mdx/compare.test.ts
@@ -1118,7 +1118,7 @@ git commit -m "feat(mdx): add <Compare> table with verdict line and a11y row sco
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/definition.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/definition.test.ts`:
 
@@ -1160,14 +1160,14 @@ describe("<Definition>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/definition.test.ts
 ```
 Expected: FAIL.
 
-- [ ] **Step 3:** Implement `src/components/mdx/Definition.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/Definition.astro`.
 
 ```astro
 ---
@@ -1226,7 +1226,7 @@ const hasTerm = typeof term === "string" && term.length > 0;
 </style>
 ```
 
-- [ ] **Step 4:** Re-export.
+- [x] **Step 4:** Re-export.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1246,14 +1246,14 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx/definition.test.ts && pnpm typecheck
 ```
 Expected: PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add src/components/mdx/Definition.astro src/components/mdx/index.ts tests/unit/mdx/definition.test.ts
@@ -1271,7 +1271,7 @@ git commit -m "feat(mdx): add <Definition> component with <dl><dt><dd> markup"
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/key-takeaways.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/key-takeaways.test.ts`:
 
@@ -1325,14 +1325,14 @@ describe("<KeyTakeaways>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/key-takeaways.test.ts
 ```
 Expected: FAIL.
 
-- [ ] **Step 3:** Implement `src/components/mdx/KeyTakeaways.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/KeyTakeaways.astro`.
 
 ```astro
 ---
@@ -1398,7 +1398,7 @@ if (items.length < 3 || items.length > 5) {
 </style>
 ```
 
-- [ ] **Step 4:** Re-export.
+- [x] **Step 4:** Re-export.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1420,7 +1420,7 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx && pnpm typecheck
@@ -1439,7 +1439,7 @@ Expected feedback dimensions: a11y (aria labels, scopes), CSS token reuse vs har
 
 Address any blocking findings before continuing. Non-blocking nits go to `notes/critic-deferred.md`.
 
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add src/components/mdx/KeyTakeaways.astro src/components/mdx/index.ts tests/unit/mdx/key-takeaways.test.ts
