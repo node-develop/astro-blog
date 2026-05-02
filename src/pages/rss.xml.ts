@@ -1,6 +1,9 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
+import MarkdownIt from "markdown-it";
 import { getOrderedPosts } from "~/lib/content/loader";
+
+const parser = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
 export async function GET(context: APIContext) {
   const posts = await getOrderedPosts({ locale: "ru" });
@@ -18,6 +21,7 @@ export async function GET(context: APIContext) {
         link: `/blog/${p.entry.id.replace(/^en\//, "")}`,
         author: `a@artka.dev (${p.entry.data.author})`,
         categories: p.entry.data.tags,
+        content: p.entry.body ? parser.render(p.entry.body) : undefined,
       })),
   });
 }
