@@ -26,6 +26,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:backfill": "tsx scripts/backfill-posts-meta.ts",
+    "db:bootstrap-admin": "tsx scripts/bootstrap-admin.ts",
     "db:backfill-search": "tsx scripts/backfill-search-vector.ts",
     "translate": "tsx scripts/translate.ts",
     "translate:check": "tsx scripts/translate-check.ts",

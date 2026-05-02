@@ -41,6 +41,7 @@ export const createAuth = () => {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
+      disableSignUp: true,
     },
     session: {
       expiresIn: 60 * 60 * 24 * 30,
