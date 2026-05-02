@@ -46,5 +46,9 @@
   "projects.links": "Ссылки",
   "projects.status.active": "В активной разработке",
   "projects.status.maintained": "Поддерживается",
-  "projects.status.archived": "Архив"
+  "projects.status.archived": "Архив",
+  "authorCard.aboutLabel": "Об авторе",
+  "authorCard.viewProfile": "Профиль автора →",
+  "authorCard.viewProjects": "Проекты →",
+  "authorCard.role": "Backend & AI agent engineer"
 }

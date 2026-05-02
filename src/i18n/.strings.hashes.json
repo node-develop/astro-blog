@@ -46,5 +46,9 @@
   "projects.links": "da2ab76991a2ebd55696013382cc1609d3c675cedf86d12b7aeec07078a6f355",
   "projects.status.active": "ecce8675311fecafad8b9fd2aa298d800c95adc04add0df3524d01e14c926488",
   "projects.status.maintained": "e3df638795d8a5dbdc137e3cff0ec99296a5a8071303186414b99e132e92f531",
-  "projects.status.archived": "3c54b5e783ef6052cc4b7a7528c0a757be3a6e3a539d4be6e0f37a5a4d10b1d1"
+  "projects.status.archived": "3c54b5e783ef6052cc4b7a7528c0a757be3a6e3a539d4be6e0f37a5a4d10b1d1",
+  "authorCard.aboutLabel": "0a22c28c089fa4204c0e84e2f709ec26c7a9e25a21c326e7d5fb89ac098fdda3",
+  "authorCard.viewProfile": "df7568fd5a46e4f932cc9b562ace57ecac7062d775258d8a91eeaa23b768b4c9",
+  "authorCard.viewProjects": "03d533d77b9c39c07d06e1f8fdc1468eafd280d7ca8b85ed91ea404603c50d3a",
+  "authorCard.role": "0c8dee51eec568736d4225cdffa8cd107b3c89442ddc59789971dd095e533994"
 }

@@ -46,5 +46,9 @@
   "projects.links": "Links",
   "projects.status.active": "Active development",
   "projects.status.maintained": "Maintained",
-  "projects.status.archived": "Archived"
+  "projects.status.archived": "Archived",
+  "authorCard.aboutLabel": "About the author",
+  "authorCard.viewProfile": "Author profile →",
+  "authorCard.viewProjects": "Projects →",
+  "authorCard.role": "Backend & AI agent engineer"
 }
