@@ -4,8 +4,10 @@ set -e
 if [ -n "$DATABASE_URL" ]; then
   echo "[entrypoint] applying migrations..."
   node ./scripts/migrate-prod.mjs
+  echo "[entrypoint] backfilling posts_meta..."
+  node ./scripts/backfill-prod.mjs
 else
-  echo "[entrypoint] DATABASE_URL not set, skipping migrations"
+  echo "[entrypoint] DATABASE_URL not set, skipping migrations + backfill"
 fi
 
 echo "[entrypoint] starting astro server..."

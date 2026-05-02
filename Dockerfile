@@ -43,6 +43,8 @@ COPY --from=builder --chown=astro:astro /app/node_modules ./node_modules
 COPY --from=builder --chown=astro:astro /app/package.json ./package.json
 COPY --from=builder --chown=astro:astro /app/drizzle ./drizzle
 COPY --from=builder --chown=astro:astro /app/scripts/migrate-prod.mjs ./scripts/migrate-prod.mjs
+COPY --from=builder --chown=astro:astro /app/scripts/backfill-prod.mjs ./scripts/backfill-prod.mjs
+COPY --from=builder --chown=astro:astro /app/src/content/posts ./src/content/posts
 COPY --from=builder --chown=astro:astro /app/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
