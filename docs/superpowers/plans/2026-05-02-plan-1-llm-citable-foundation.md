@@ -1435,7 +1435,7 @@ git commit -m "feat(seo): add Blog node to RU/EN blog index @graph"
 
 (Both `src/pages/rss.xml.ts` and `src/pages/en/rss.xml.ts` already render full HTML via `markdown-it` — see lines 6 and 24 of each file. Task 10 prevents regression.)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/seo/rss-content.test.ts`:
 
@@ -1459,14 +1459,14 @@ describe("RSS feeds emit full content", () => {
 });
 ```
 
-- [ ] **Step 2: Run test**
+- [x] **Step 2: Run test**
 
 ```bash
 pnpm test tests/unit/seo/rss-content.test.ts
 ```
 Expected: PASS — both feeds already conform.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/unit/seo/rss-content.test.ts
@@ -1483,7 +1483,7 @@ git commit -m "test(seo): pin RSS content:encoded behaviour for RU and EN feeds"
 - Create: `public/llms.txt`
 - Create: `tests/unit/seo/llms-txt.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/seo/llms-txt.test.ts`:
 
@@ -1522,14 +1522,14 @@ describe("public/llms.txt", () => {
 });
 ```
 
-- [ ] **Step 2: Run test**
+- [x] **Step 2: Run test**
 
 ```bash
 pnpm test tests/unit/seo/llms-txt.test.ts
 ```
 Expected: FAIL — file does not exist.
 
-- [ ] **Step 3: Create `public/llms.txt`**
+- [x] **Step 3: Create `public/llms.txt`**
 
 ```text
 # artka.dev
@@ -1563,14 +1563,14 @@ a@artka.dev
 
 (`/now`, `/uses`, `/projects` are listed pre-emptively — phase 2 of the parent spec creates them; LLMs will receive 404 until then but the link list signals intent.)
 
-- [ ] **Step 4: Run test**
+- [x] **Step 4: Run test**
 
 ```bash
 pnpm test tests/unit/seo/llms-txt.test.ts
 ```
 Expected: PASS — all 4 assertions green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add public/llms.txt tests/unit/seo/llms-txt.test.ts
@@ -1587,7 +1587,7 @@ git commit -m "feat(seo): add public/llms.txt — AI access policy and link map"
 - Create: `src/pages/llms-full.txt.ts`
 - Create: `tests/unit/seo/llms-full-endpoint.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/seo/llms-full-endpoint.test.ts`:
 
@@ -1619,14 +1619,14 @@ describe("llms-full.txt endpoint source", () => {
 });
 ```
 
-- [ ] **Step 2: Run test**
+- [x] **Step 2: Run test**
 
 ```bash
 pnpm test tests/unit/seo/llms-full-endpoint.test.ts
 ```
 Expected: FAIL — endpoint does not exist.
 
-- [ ] **Step 3: Implement `src/pages/llms-full.txt.ts`**
+- [x] **Step 3: Implement `src/pages/llms-full.txt.ts`**
 
 ```ts
 import type { APIContext } from "astro";
@@ -1695,14 +1695,14 @@ export async function GET(_ctx: APIContext) {
 }
 ```
 
-- [ ] **Step 4:** Run test.
+- [x] **Step 4:** Run test.
 
 ```bash
 pnpm test tests/unit/seo/llms-full-endpoint.test.ts
 ```
 Expected: PASS — all 4 assertions green.
 
-- [ ] **Step 5:** Verify with the real loader during dev.
+- [x] **Step 5:** Verify with the real loader during dev.
 
 ```bash
 pnpm dev
@@ -1718,7 +1718,7 @@ curl -sI http://localhost:4321/llms-full.txt | grep -i content-type
 ```
 Expected: `Content-Type: text/plain; charset=utf-8`. Stop dev server.
 
-- [ ] **Step 6:** Run full build to confirm prerender lands in `dist/`.
+- [x] **Step 6:** Run full build to confirm prerender lands in `dist/`.
 
 ```bash
 pnpm build
@@ -1730,7 +1730,7 @@ test -s dist/client/llms-full.txt && echo "OK" || echo "MISSING"
 ```
 Expected: `OK`.
 
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add src/pages/llms-full.txt.ts tests/unit/seo/llms-full-endpoint.test.ts
