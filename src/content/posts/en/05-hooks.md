@@ -1,24 +1,23 @@
 ---
 title: "05. Hooks: deterministic control over agent loop"
 description: >-
-  Hooks are git hooks, but for Claude Code. Points in the lifecycle where the harness executes your script. If a skill
-  is a model recommendation, a hook is a mandatory harness step that **g
+  Hooks are git hooks, but for Claude Code. Points in the lifecycle where harness executes your script. If a skill is a
+  model recommendation, a hook is a mandatory harness step that **g
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
-sourceHash: a507dfc9fb4d25674db19593abd62c2436c60c9bcf878b09fa31759350646984
+lang: en
+sourceHash: e005a74b56e4ed970dc2b7c8ba015ab20762b128a791169935a0a879671b6a07
 manuallyEdited: false
 ---
 
-# 05. Hooks: deterministic control over agent loop
-
-> Hooks are git hooks, but for Claude Code. Points in the lifecycle where the harness executes your script. If a skill is a recommendation to the model, a hook is a mandatory harness step that **is guaranteed** to happen.
+> Hooks are git hooks, but for Claude Code. Points in the lifecycle where the harness executes your script. If a skill is a model recommendation, a hook is a mandatory harness step that **is guaranteed** to happen.
 
 ---
 
-## 5.1. Why hooks are needed
+## 5.1. Why you need hooks
 
 📘 From docs (`hooks-guide`): «Hooks provide deterministic control over Claude Code's behavior, ensuring certain actions always happen rather than relying on the LLM to choose to run them».
 
@@ -31,7 +30,7 @@ Comparison of "the same thing via skill vs hook":
 | Sync with CI after Stop    | Skill "after task run CI"                                    | `Stop` hook → bash "push branch + open PR"                  |
 | Notify Slack on completion | This isn't a skill at all, it's an operation                 | `Stop` or `Notification` hook → curl webhook                |
 
-⚠️ The model _can_ ignore skills. Hooks — no. This is both a plus and a minus: hooks give iron discipline, but also slow things down if you hang them on every little thing.
+⚠️ The model _can_ ignore skills. Hooks — no. This is both a plus and a minus: hooks give you iron discipline, but also slow things down if you attach them to every little thing.
 
 ---
 
@@ -53,43 +52,43 @@ flowchart TD
   agent -. locally in agent .-> project
 ```
 
-All sources are merged. If multiple hooks match the same event — they all execute **in order of registration**.
+All sources are merged. If multiple hooks match the same event — they all execute **in registration order**.
 
 ---
 
 ## 5.3. Complete list of events
 
-📘 The actual list in Claude Code v2.1.89 is much richer than what most tutorials describe:
+📘 The actual list in Claude Code v2.1.89 is much richer than what most tutorials mention:
 
-| Event                 | When it fires                                            |
-| --------------------- | -------------------------------------------------------- |
-| `SessionStart`        | On session start                                         |
-| `SessionEnd`          | On session end                                           |
-| `UserPromptSubmit`    | User submitted a message                                 |
-| `UserPromptExpansion` | Expansion of shortcuts in prompt                         |
-| `InstructionsLoaded`  | After loading CLAUDE.md / skills / agents                |
-| `PreToolUse`          | Before calling any tool                                  |
-| `PostToolUse`         | After successful tool call                               |
-| `PostToolUseFailure`  | After failed tool call                                   |
-| `PermissionRequest`   | When tool requires confirmation                          |
-| `PermissionDenied`    | When user denied                                         |
-| `SubagentStart`       | Before running subagent                                  |
-| `SubagentStop`        | After subagent completion                                |
-| `TaskCreated`         | Task created (TaskCreate)                                |
-| `TaskCompleted`       | Task completed                                           |
-| `TeammateIdle`        | Teammate in Agent Team is idle                           |
-| `Notification`        | System notification                                      |
-| `Stop`                | End of "model ↔ tools" cycle (model finished responding) |
-| `StopFailure`         | Session ended with error                                 |
-| `PreCompact`          | Before auto-compaction                                   |
-| `PostCompact`         | After auto-compaction                                    |
-| `ConfigChange`        | Configuration changed                                    |
-| `CwdChanged`          | Working directory changed                                |
-| `FileChanged`         | File changed (filesystem watch)                          |
-| `WorktreeCreate`      | Git worktree created                                     |
-| `WorktreeRemove`      | Git worktree removed                                     |
-| `Elicitation`         | MCP elicitation request                                  |
-| `ElicitationResult`   | MCP elicitation response                                 |
+| Event                 | When it fires                                           |
+| --------------------- | ------------------------------------------------------- |
+| `SessionStart`        | On session start                                        |
+| `SessionEnd`          | On session end                                          |
+| `UserPromptSubmit`    | User submitted a message                                |
+| `UserPromptExpansion` | Shortcut expansion in prompt                            |
+| `InstructionsLoaded`  | After loading CLAUDE.md / skills / agents               |
+| `PreToolUse`          | Before calling any tool                                 |
+| `PostToolUse`         | After successful tool call                              |
+| `PostToolUseFailure`  | After failed tool call                                  |
+| `PermissionRequest`   | When tool requires confirmation                         |
+| `PermissionDenied`    | When user denied                                        |
+| `SubagentStart`       | Before subagent launch                                  |
+| `SubagentStop`        | After subagent completion                               |
+| `TaskCreated`         | Task created (TaskCreate)                               |
+| `TaskCompleted`       | Task completed                                          |
+| `TeammateIdle`        | Teammate in Agent Team idle                             |
+| `Notification`        | System notification                                     |
+| `Stop`                | End of "model ↔ tools" loop (model finished responding) |
+| `StopFailure`         | Session ended with error                                |
+| `PreCompact`          | Before auto-compaction                                  |
+| `PostCompact`         | After auto-compaction                                   |
+| `ConfigChange`        | Configuration changed                                   |
+| `CwdChanged`          | Working directory changed                               |
+| `FileChanged`         | File changed (filesystem watch)                         |
+| `WorktreeCreate`      | Git worktree created                                    |
+| `WorktreeRemove`      | Git worktree removed                                    |
+| `Elicitation`         | MCP elicitation request                                 |
+| `ElicitationResult`   | MCP elicitation response                                |
 
 ---
 
@@ -176,7 +175,7 @@ All sources are merged. If multiple hooks match the same event — they all exec
 }
 ```
 
-**Stdout:** normal output. For `PostToolUse` — can be feedback that will be added to the model's context.
+**Stdout:** normal output. For `PostToolUse` — can be feedback that gets added to the model's context.
 
 **Exit code:**
 
@@ -184,9 +183,9 @@ All sources are merged. If multiple hooks match the same event — they all exec
 | ----- | -------------------------------------------------------------------------------------------------------- |
 | `0`   | OK, continue                                                                                             |
 | `2`   | Block action. **Stderr is shown to the model** as the reason. Used for `PreToolUse` to forbid tool call. |
-| other | Hook failed, harness will report error, but action will continue                                         |
+| other | Hook failed, harness will report error, but action continues                                             |
 
-**JSON protocol** (for fine-grained control):
+**JSON protocol** (for fine control):
 
 ```json
 {
@@ -197,13 +196,13 @@ All sources are merged. If multiple hooks match the same event — they all exec
 }
 ```
 
-Possible `permissionDecision`: `allow`, `deny`, `ask`, `defer`.
+Possible `permissionDecision` values: `allow`, `deny`, `ask`, `defer`.
 
 ⚠️ `PreToolUse` hook with `deny` blocks action **even in `bypassPermissions` mode**. This is not "you can bypass it if you really want" — this is the final gate.
 
 ---
 
-## 5.6. Type `prompt`: hook as a separate request to the model
+## 5.6. Type `prompt`: hook as a separate model request
 
 📘 Example:
 
@@ -217,7 +216,7 @@ Possible `permissionDecision`: `allow`, `deny`, `ask`, `defer`.
 
 What happens: the harness makes an additional request to the model with this prompt and tool result. The response is returned to the main session as "inspector says ...".
 
-💡 This is convenient for AI second opinion. Downside: each such hook — additional tokens.
+💡 This is convenient for AI second opinion. Downside: each such hook costs additional tokens.
 
 ---
 
@@ -402,7 +401,7 @@ if (( count % 3 == 0 )); then
 fi
 ```
 
-💡 Useful for long sessions — there's something to roll back to.
+💡 Useful for long sessions — you have something to roll back to.
 
 ---
 
@@ -439,7 +438,7 @@ In hooks.json inside the plugin, use `${CLAUDE_PLUGIN_ROOT}` — this variable p
 }
 ```
 
-See chapter [07-plugins.md](./07-plugins) for full plugin structure.
+See chapter [07-plugins.md](./07-plugins) for the full plugin structure.
 
 ---
 
@@ -448,11 +447,11 @@ See chapter [07-plugins.md](./07-plugins) for full plugin structure.
 | Mechanism           | When invoked         | Who invokes           |
 | ------------------- | -------------------- | --------------------- |
 | Hook                | On lifecycle event   | Harness automatically |
-| Slash-command       | By user `/cmd`       | User manually         |
+| Slash-command       | User `/cmd`          | User manually         |
 | Skill               | By description match | Model decides         |
 | Tool (MCP/built-in) | By model decision    | Model in agent loop   |
 
-Hooks — the only one of these mechanisms that **is guaranteed** to fire without the model's involvement.
+Hooks are the only one of these mechanisms that **is guaranteed** to fire without the model's involvement.
 
 ---
 
@@ -467,7 +466,7 @@ claude
 tail -f ~/.claude/logs/hooks.log
 ```
 
-💡 In a hook's bash script, it's useful to duplicate stdin to a file for parsing:
+💡 In a hook's bash script, it's useful to duplicate stdin to a file for inspection:
 
 ```bash
 #!/bin/bash
@@ -480,17 +479,17 @@ echo "$input" >> /tmp/claude-hook-input.jsonl
 
 ## 5.11. Antipatterns
 
-❌ **Hook on every `Read`.** You hung a hook on `PostToolUse: .*` and now after every file read the shell is triggered. Slowdowns.
+❌ **Hook on every `Read`.** You attached a hook to `PostToolUse: .*` and now after every file read the shell gets called. Slowdown.
 
-❌ **Hook without timeout.** Your script hangs — session hangs.
+❌ **Hook without timeout.** Your script hangs — the session hangs.
 
-❌ **`exit 2` without stderr.** Hook blocks action, but model doesn't understand why. Always write the reason to `stderr`.
+❌ **`exit 2` without stderr.** Hook blocks action, but the model doesn't understand why. Always write the reason to `stderr`.
 
-❌ **Long operations in hook.** Hook on `Stop` that runs a 5-minute deploy — this is anti-UX. Run in background (`&`) or via queue.
+❌ **Long operations in hook.** Hook on `Stop` that runs a 5-minute deploy — that's anti-UX. Run in background (`&`) or via queue.
 
-❌ **Hook breaking permissions.** `PreToolUse` with `permissionDecision: allow` — bypass all checks. Dangerous.
+❌ **Hook breaking permissions.** `PreToolUse` with `permissionDecision: allow` — bypasses all checks. Dangerous.
 
-❌ **Duplicating skills with hooks.** If the procedure is multi-step and depends on context — it's a skill. Hook — for atomic "always like this".
+❌ **Duplicating skills with hooks.** If a procedure is multi-step and situation-dependent — that's a skill. Hook is for atomic "always do this".
 
 ---
 

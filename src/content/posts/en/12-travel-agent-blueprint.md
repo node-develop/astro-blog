@@ -8,13 +8,12 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 94b74722a27e5285b973ec9fe41ef569861ce17e3648e7a16547a6355b7b3b64
+lang: en
+sourceHash: bfb94c0cc912c996e6d66c8c2a5e0eff204303ef860b9ff98361c659500e746f
 manuallyEdited: false
 ---
 
-# 12. Travel Agent from scratch: blueprint
-
-> Bringing it all together. One real project. One monorepo. Concrete files, configs, structure. From here on you copy-paste and adapt.
+> Bringing it all together. One real project. One monorepo. Concrete files, configs, structure. From here you copy-paste and adapt.
 
 ---
 
@@ -312,7 +311,7 @@ travel-agent/
 
 ---
 
-## 12.5. .mcp.json (ready, both for CC and for prod agent)
+## 12.5. .mcp.json (ready, both for CC and production agent)
 
 🔧 `./.mcp.json`:
 
@@ -358,7 +357,7 @@ travel-agent/
 
 ## 12.6. Minimal set of skills (with examples)
 
-Full list — in [04-skills.md](./04-skills). Here's a diagram of when each one triggers:
+Full list — in [04-skills.md](./04-skills). Here — a diagram of when each one triggers:
 
 ```mermaid
 flowchart LR
@@ -735,7 +734,7 @@ claude                            # стартует CC, подхватывае�
 
 ---
 
-## 12.12. Optional step: package everything as a plugin
+## 12.12. Optional step: package everything into a plugin
 
 If your company is going to build **multiple** travel projects on this stack, it makes sense to extract `.claude/` + `.mcp.json` into a plugin `travel-stack-toolkit` (see [07-plugins](./07-plugins)).
 

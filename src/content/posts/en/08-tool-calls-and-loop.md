@@ -8,13 +8,12 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 71a30d2a59e767a2003f2164e2ddd168199adddbbc2cfedc0653da7c600e9df6
+lang: en
+sourceHash: 8c3e69ae3abed605e1dabef80de96bae18cb9c3d67da7e0ec3f4a7b35c52c565
 manuallyEdited: false
 ---
 
-# 08. Tool calls and agent loop under the hood
-
-> Tool call — this is not a "Claude Code feature", it's a fundamental mechanism that transforms a model from a chatbot into an agent. By understanding the tool loop, you understand 80% of how any AI agent works.
+> Tool call is not a "Claude Code feature," it's the fundamental mechanism that transforms a model from a chatbot into an agent. By understanding the tool loop, you understand 80% of how any AI agent works.
 
 ---
 
@@ -42,7 +41,7 @@ response = client.messages.create(
 )
 ```
 
-The model sees tool descriptions and decides whether it needs to call something. If it does — it returns not text, but a **`tool_use` block**:
+The model sees the tool descriptions and decides whether it needs to call something. If it does — it returns not text, but a **`tool_use` block**:
 
 ```json
 {
@@ -80,11 +79,11 @@ Harness (Claude Code in our case) sees this, executes `read_file`, and sends the
 }
 ```
 
-And so on until the model returns `stop_reason: "end_turn"` — this is its signal "that's it, I'm done, you can respond to the user".
+And so on until the model returns `stop_reason: "end_turn"` — that's its signal "done, you can respond to the user."
 
 ---
 
-## 8.2. Full agent loop in one image
+## 8.2. Full agent loop in one diagram
 
 ```mermaid
 sequenceDiagram
@@ -116,7 +115,7 @@ Important nuances:
 
 - In a single `assistant` message, the model can request **multiple tool_use blocks in parallel**. Harness can execute them in parallel (if safe).
 - `stop_reason: "max_tokens"` means the model didn't fit within `max_tokens`. Harness increases the limit and continues.
-- Each iteration — is a **separate API request** with **full history**. That's why prompt cache is critical.
+- Each iteration is a **separate API request** with **full history**. That's why prompt cache is critical.
 
 ---
 
@@ -161,7 +160,7 @@ Claude Code comes with preset tools (without MCP):
 
 ## 8.5. Permissions: how Claude Code decides "ask or not"
 
-Each tool has a permission level. By default, for destructive ones (`Bash`, `Edit`, `Write`) — the user is asked.
+Each tool has a permission level. By default, destructive ones (`Bash`, `Edit`, `Write`) prompt the user.
 
 📘 Config in `.claude/settings.json`:
 
@@ -185,7 +184,7 @@ Each tool has a permission level. By default, for destructive ones (`Bash`, `Edi
 
 `allow` / `ask` / `deny` — three types of decisions. You can use patterns (`*`, `**`).
 
-⚠️ `deny` — final gate. Impossible to bypass even in `bypassPermissions` mode. This is your "red button".
+⚠️ `deny` is the final gate. Impossible to bypass even in `bypassPermissions` mode. This is your "red button."
 
 `/permissions` — view/edit.
 
@@ -193,7 +192,7 @@ Each tool has a permission level. By default, for destructive ones (`Bash`, `Edi
 
 ## 8.6. Parallel tool calls
 
-The model can request multiple tools to run simultaneously — you often see this during large analysis:
+The model can request multiple tools to run simultaneously — you often see this during heavy analysis:
 
 ```
 assistant.content = [
@@ -205,7 +204,7 @@ assistant.content = [
 
 Harness executes them **in parallel** (if they have no dependencies and don't conflict with permissions). This greatly speeds up the browse phase.
 
-💡 If your skill says "do steps sequentially" — the model will do that. But if there's no hard sequence, leave room for freedom — parallelism pays off.
+💡 If your skill says "do steps sequentially" — the model will. But if there's no hard sequence, leave room for freedom — parallelism pays off.
 
 ---
 
@@ -220,9 +219,9 @@ flowchart LR
   result --> r4["MCP search hotels<br/>~ 1k-10k if returns 10 objects"]
 ```
 
-Bad example: `Bash(cat huge.log)` → returns 80k lines → entire context is filled. Good: `Bash(tail -200 huge.log)` or `Grep(pattern=..., path=huge.log)`.
+Bad example: `Bash(cat huge.log)` → returns 80k lines → context is full. Good: `Bash(tail -200 huge.log)` or `Grep(pattern=..., path=huge.log)`.
 
-💡 Teach the model to be economical. In CLAUDE.md or skill: "When working with logs, use `tail`, `head`, `grep`, not `cat` entirely".
+💡 Teach the model to be economical. In CLAUDE.md or skill: "When working with logs, use `tail`, `head`, `grep`, not `cat` entirely."
 
 ---
 
@@ -230,12 +229,12 @@ Bad example: `Bash(cat huge.log)` → returns 80k lines → entire context is fi
 
 Harness keeps timeouts on each tool call. By default:
 
-- `Bash` — 2 minutes (can be raised to 10).
-- `Read`, `Edit`, `Write` — instant (these are file operations).
+- `Bash` — 2 minutes (can raise to 10).
+- `Read`, `Edit`, `Write` — instant (file operations).
 - `WebFetch`, `WebSearch` — a few seconds.
 - MCP tools — defined by server, but harness also imposes a limit.
 
-⚠️ If your MCP tool regularly exceeds timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with "in progress, check later" status and implement polling.
+⚠️ If your MCP tool regularly exceeds timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with status "in progress, check later" and implement polling.
 
 ---
 
@@ -266,16 +265,16 @@ const final = await stream.finalMessage();
 
 ## 8.10. What makes a good "agent" different from a bad one
 
-After everything above, an important practical takeaway:
+After all the above, an important practical takeaway:
 
 **Good agent:**
 
 - Has a narrow, meaningful set of tools (not 50 "just in case").
 - Each tool with clear description and schema.
 - Returns compact tool_results (doesn't dump gigabytes).
-- Has system prompt that sets goal and work style.
+- Has a system prompt that sets the goal and work style.
 - Has hooks that limit damage.
-- Uses subagents for browse-heavy tasks to save main context.
+- Uses subagents for browse-heavy tasks to preserve main context.
 
 **Bad agent:**
 

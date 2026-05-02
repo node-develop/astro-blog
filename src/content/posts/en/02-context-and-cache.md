@@ -1,26 +1,25 @@
 ---
-title: 02. Context Window and Prompt Cache
+title: 02. Context window and prompt cache
 description: >-
-  The most common reason "Claude suddenly became dumber" — an overflowing context window. The most common reason "it
-  suddenly became expensive" — a lost cache. This chapter is about how to avoid both.
+  The most common reason "Claude suddenly became dumber" — an overflowed window. The most common reason "it suddenly
+  became expensive" — a lost cache. This chapter is about how to avoid this.
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
-sourceHash: b20cbc4348f6db31fd595e937e2aa9f22a8f73e13cfd56e34ff4e02328ac808a
+lang: en
+sourceHash: e5174f86f3049d22ed6cc1fef61b67e35ffd827f23fab2f683cd09816666b6ae
 manuallyEdited: false
 ---
 
-# 02. Context window and prompt cache
-
-> The most common reason "Claude suddenly got dumber" is a full context window. The most common reason "it suddenly got expensive" is a lost cache. This chapter is about how to avoid both.
+> The most common reason "Claude suddenly got dumber" is a full context window. The most common reason "suddenly it got expensive" is lost cache. This chapter is about how to avoid both.
 
 ---
 
 ## 2.1. What is a context window
 
-**Context window** — the maximum number of tokens a model sees in a single request. This includes both input (everything you send it) and space for output (what it will write).
+**Context window** — the maximum number of tokens a model sees in a single request. This includes both input (everything you sent it) and space for output (what it will write).
 
 Limits as of 23.04.2026:
 
@@ -69,7 +68,7 @@ flowchart TD
 3. **Long history** — each previous tool call with its result stays in the window.
 4. **Tool definitions** — definitions of all tools (including MCP) can weigh 3-15k. Especially if you have 5+ MCP servers connected with dozens of tools each.
 
-💡 Before a complex task, run `/context` — you'll see the breakdown and understand what to remove.
+💡 Before a complex task, run `/context` — you'll see the breakdown and understand what to cut.
 
 ---
 
@@ -89,7 +88,7 @@ flowchart LR
 
 If you change an **earlier** layer — all later ones are also recalculated. For example, you add one MCP server → `tools` changes → the entire cache is invalidated.
 
-**How much cache vs no-cache costs** (using Sonnet 4.6 as example, $3 per 1M input tokens):
+**How much cache vs no-cache costs** (example: Sonnet 4.6, $3 per 1M input tokens):
 
 | Operation                  | Price                            | When                                      |
 | -------------------------- | -------------------------------- | ----------------------------------------- |
@@ -115,7 +114,7 @@ Cache is invalidated (or expires) when:
 
 | Event                                           | What happens                                                    | How to avoid                                                       |
 | ----------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 5 minutes pass without requests                 | TTL expires, next request — write anew                          | Raise TTL to 1h (`cache_control.ttl: "1h"`) or work without pauses |
+| 5 minutes pass without requests                 | TTL expires, next request — write cache anew                    | Raise TTL to 1h (`cache_control.ttl: "1h"`) or work without pauses |
 | You change `tools` (add MCP, plugin)            | Cache invalidated at tools level                                | Don't connect MCP in the middle of a session                       |
 | You change `system` (edit CLAUDE.md, add skill) | Cache invalidated at system level                               | Finalize CLAUDE.md before starting work                            |
 | You switch models via `/model`                  | Cache is specific to each model                                 | Use `opusplan` (it manages switching) or start a new session       |
@@ -180,7 +179,7 @@ sequenceDiagram
 
 **`/clear`** — full reset. Keeps only system + CLAUDE.md. Message cache is completely lost.
 
-**Auto-compaction** — the harness itself runs `/compact` when the window fills above a threshold (default ~95%).
+**Auto-compaction** — the harness runs `/compact` itself when the window fills above a threshold (default ~95%).
 
 📘 Controlled by env variable **`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`** (1–100). Not `CLAUDE_CODE_AUTO_COMPACT_THRESHOLD`, as sometimes written.
 
@@ -224,14 +223,14 @@ flowchart TD
 
 ## 2.8. Checklist: "how not to burn the window and cache"
 
-✅ Before a long task, run `/context` — assess starting fill.
+✅ Before a long task, run `/context` — assess initial fill.
 ✅ Keep CLAUDE.md ≤ 5k tokens. Larger — split into subdirectory CLAUDE.md (see [03](./03-claude-md)).
 ✅ Connect MCP servers before starting work, not in the middle.
-✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (setting flag or passing `cache_control.ttl="1h"` via SDK).
+✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (config flag or pass `cache_control.ttl="1h"` via SDK).
 ✅ Don't `Read` entire huge files (50k-line logs) — use `Grep` or offset/limit.
 ✅ After each completed task — `/clear`.
 ✅ For architectural decisions enable `opusplan` (plan by Opus, execution by Sonnet).
-✅ If you catch "model acting dumb after long session" — do `/compact` or start fresh.
+✅ If you catch "model is dumb after long session" — do `/compact` or start fresh.
 
 ⚠️ **What NOT to do:**
 ❌ Use 1M window "because it exists" — it's both expensive and worse quality.

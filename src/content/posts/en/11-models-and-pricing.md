@@ -2,19 +2,18 @@
 title: 11. Models and pricing
 description: >-
   Choosing a model is not 'always Opus because it's the best'. It's a trade-off between speed / cost / quality for a
-  specific task. This chapter covers tables, budgets, and strategies for combining
+  specific task. This chapter covers tables, budgets, and combination strategies.
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 12f9c690876ab758bd55f9cd347848c747b80e214cb3cd0090b52c10751acbb6
+lang: en
+sourceHash: 1e88caf7ecca00a1226e89cf358c6142c1cfefa815aaf16ed3f2be0211178e74
 manuallyEdited: false
 ---
 
-# 11. Models and pricing
-
-> Choosing a model isn't "always Opus because it's better." It's a tradeoff between speed / cost / quality for a specific task. This chapter covers tables, budgets, and combination strategies.
+> Model selection is not "always Opus because it's better". It's a trade-off between speed / cost / quality for a specific task. This chapter covers tables, budgets, and strategies for combining models.
 
 ---
 
@@ -33,7 +32,7 @@ manuallyEdited: false
 
 ---
 
-## 11.2. Prices (April 2026)
+## 11.2. Pricing (April 2026)
 
 | Model          | Input ($/MTok) | Output ($/MTok) | Cache write 5min ($/MTok) | Cache write 1h ($/MTok) | Cache read ($/MTok) |
 | -------------- | -------------- | --------------- | ------------------------- | ----------------------- | ------------------- |
@@ -65,7 +64,7 @@ flowchart LR
 
 ---
 
-## 11.4. Model combination strategies
+## 11.4. Strategies for combining models
 
 ### 11.4.1. Default: Sonnet
 
@@ -77,7 +76,7 @@ Start most sessions with Sonnet 4.6. It's a sensible baseline.
 /model opusplan
 ```
 
-Enables plan mode on Opus. After `ExitPlanMode` automatically switches to Sonnet for implementation. **This is the right pattern: "think with Opus, do with Sonnet."**
+Enables plan mode on Opus. After `ExitPlanMode` automatically switches to Sonnet for implementation. **This is the correct pattern: "think with Opus, build with Sonnet".**
 
 ⚠️ In opusplan, the **plan phase runs in standard 200k**, even if you enabled a 1M window.
 
@@ -95,7 +94,7 @@ model: sonnet
 # explore (built-in) → haiku
 ```
 
-This lets you keep the main agent on Sonnet and bump up the model for specialized subagents only when needed.
+This lets you keep the main agent on Sonnet and upgrade the model only for specialized subagents when needed.
 
 ### 11.4.4. Agent Teams: Lead = Opus, teammates = Sonnet/Haiku
 
@@ -143,8 +142,8 @@ Savings — **65%**. And that's on a modest session. On longer ones with large C
 | ------------------------------------------------ | -------------------------------------------------- |
 | Load entire monorepo as context once             | ✅ If many small tasks follow. Cache + 1M = okay   |
 | Long multi-hour session with accumulated history | ⚠️ Better to use /compact, otherwise quality drops |
-| Parse huge log in one request                    | ✅ One request beats ten with pagination           |
-| "Just in case"                                   | ❌ Pay more, get worse                             |
+| Parse huge log in one request                    | ✅ One request better than ten with pagination     |
+| "Just in case"                                   | ❌ Pay more, get worse results                     |
 
 📘 Enabled via alias `opus[1m]` or `sonnet[1m]`. On Max/Team/Enterprise.
 
@@ -164,7 +163,7 @@ Savings — **65%**. And that's on a modest session. On longer ones with large C
 | `/usage`         | Costs for a period, by model                   |
 | `/release-notes` | Version news (sometimes pricing updates)       |
 
-🔧 Env variables for alerts:
+🔧 Environment variables for alerts:
 
 ```bash
 export CLAUDE_CODE_BUDGET_USD_SESSION=5      # warn at $5/session
@@ -175,7 +174,7 @@ export CLAUDE_CODE_BUDGET_USD_DAILY=50       # daily ceiling
 
 ## 11.8. Should you revisit `CLAUDE.md` and skills with new models?
 
-⚠️ The claim "settings become outdated over time, you need to revisit CLAUDE.md and skills with new models" — **is sound practice, but not a quote from docs**. There's no direct recommendation in public docs.
+⚠️ The claim "settings become outdated over time, with new models you need to revisit CLAUDE.md and skills" — **is sound practice, but not a quote from docs**. There's no direct recommendation in public docs.
 
 Reality:
 
@@ -183,11 +182,11 @@ Reality:
 - Skills can become outdated if you stuffed them with "model understands X poorly, always remind it" — but the new model understands X on its own.
 - Hooks usually don't depend on the model.
 
-💡 Once a quarter, quickly scan CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?" Especially hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
+💡 Once a quarter, quickly review CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?". Especially for hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
 
 ---
 
-## 11.9. Subagent context windows
+## 11.9. Context windows for subagents
 
 📝 Each subagent has **its own** limit:
 
@@ -209,13 +208,13 @@ flowchart LR
 
 ❌ **Always Opus.** Expensive and unnecessary. Sonnet handles 80% of tasks.
 
-❌ **Always Haiku.** Fast and cheap, but on a complex task it'll loop and end up costing more than Sonnet.
+❌ **Always Haiku.** Fast and cheap, but on a complex task it will loop and end up costing more than Sonnet.
 
 ❌ **Switch models mid-task without opusplan.** Cache miss + loss of context trust. Use opusplan if you need switching.
 
 ❌ **Enable 1M by default.** Expensive, slower, and quality isn't better.
 
-❌ **Don't use prompt cache.** Check that your SDK code adds `cache_control` markers. In Claude Code it's already there out of the box.
+❌ **Don't use prompt cache.** Check that your SDK code adds `cache_control` markers. In Claude Code this is already built-in.
 
 ---
 

@@ -6,8 +6,6 @@ tags: ["claude-code", "guide"]
 draft: false
 ---
 
-# 07. Plugins: упаковка skills + hooks + agents + MCP
-
 > Plugin — это «npm package для Claude Code». Если у вас несколько связанных артефактов (скиллы + hooks + агенты + MCP-конфиг), которыми хочется делиться между проектами или с командой — упакуйте в плагин.
 
 ---

@@ -54,5 +54,15 @@
   "authorCard.viewProfile": "Профиль автора →",
   "authorCard.viewProjects": "Проекты →",
   "authorCard.role": "Backend & AI agent engineer",
-  "post.related": "Похожие статьи"
+  "post.related": "Похожие статьи",
+  "tags.title": "Темы",
+  "tags.description": "Все теги, по которым каталогизированы статьи блога.",
+  "tags.eyebrow": "Каталог",
+  "tags.empty": "Пока нет тегов.",
+  "tags.postsCountAria": "{count} статей по теме «{label}»",
+  "tags.archiveTitle": "Тег: {label}",
+  "tags.archiveDescription": "Все статьи блога с тегом «{label}».",
+  "tags.archiveEmptyRu": "В русской версии блога пока нет статей с этим тегом.",
+  "tags.archiveEmptyEn": "В английской версии блога пока нет статей с этим тегом.",
+  "tags.backToIndex": "Все теги"
 }

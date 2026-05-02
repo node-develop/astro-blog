@@ -6,6 +6,9 @@ import AuthorCard from "~/components/AuthorCard.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import { resolveTagLabel } from "~/lib/content/tags";
+import tagsRu from "~/i18n/tags.ru.json";
+import tagsEn from "~/i18n/tags.en.json";
 import { pickRelated, type RelatedCandidate } from "~/lib/related";
 import { getOrderedPosts } from "~/lib/content/loader";
 import Tldr from "~/components/mdx/Tldr.astro";
@@ -94,6 +97,8 @@ const candidates: ReadonlyArray<RelatedCandidate> = allPosts.map((p) => ({
 }));
 const related = pickRelated({ current: currentCandidate, all: candidates, limit: 3 });
 const blogPathPrefix = locale === "en" ? "/en/blog" : "/blog";
+const tagDict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 ---
 
 <BaseLayout
@@ -146,7 +151,9 @@ const blogPathPrefix = locale === "en" ? "/en/blog" : "/blog";
           <ul class="post__tags" aria-label={t(locale, "post.tags")}>
             {tags.map((tag: string) => (
               <li>
-                <span class="post__tag-chip">#{tag}</span>
+                <a class="post__tag-chip" href={`${tagsHrefBase}${tag}`}>
+                  #{resolveTagLabel(tag, locale, tagDict)}
+                </a>
               </li>
             ))}
           </ul>
@@ -244,6 +251,15 @@ const blogPathPrefix = locale === "en" ? "/en/blog" : "/blog";
       padding: 2px 8px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-pill);
+      display: inline-block;
+      text-decoration: none;
+      transition:
+        border-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out);
+    }
+    .post__tag-chip:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-hover);
     }
     .post__cover {
       margin: 0 0 var(--space-7) 0;

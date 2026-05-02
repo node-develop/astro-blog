@@ -8,24 +8,23 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 880a38ed7d8c5879909af594bc692a6d0c4ed1be9fc6ce29af8b5888277a1404
+lang: en
+sourceHash: 0464b0a2a47a03ad78575ed76d4597ee5f6c6a0b280b2e87e09fc901422ee6d0
 manuallyEdited: false
 ---
 
-# 10. Agent Teams (experimental)
-
-> If subagents are "send an assistant on a business trip and wait for results", then Agent Teams are "assemble a team of several developers, give them a task list, and they work in parallel, communicating with each other". A fundamentally different architecture. As of April 2026 — an experimental feature of Claude Code.
+> If subagents are "send an assistant on a business trip and wait for results", then Agent Teams is "assemble a team of several developers, give them a task list, and they work in parallel, communicating with each other". A fundamentally different architecture. As of April 2026 — an experimental feature in Claude Code.
 
 ---
 
-## 10.1. What this is and how it differs from subagents
+## 10.1. What it is and how it differs from subagents
 
 🧪 From docs (`agent-teams`): "Agent teams let you coordinate multiple Claude Code instances working together. One session acts as the team lead … Teammates work independently … and communicate directly with each other".
 
 |                   | Subagents                       | Agent Teams                                                                   |
 | ----------------- | ------------------------------- | ----------------------------------------------------------------------------- |
 | Who launches whom | Main → subagent (one direction) | Lead creates teammates, teammates communicate with each other                 |
-| Context           | Isolated, returns only summary  | Each teammate has their own, but there's **shared task list** and **mailbox** |
+| Context           | Isolated, only summary returned | Each teammate has their own, but there's **shared task list** and **mailbox** |
 | Duration          | One task → answer → end         | Long-lived, until entire task list is completed                               |
 | Communication     | None                            | Mailbox (direct messages) + shared task list                                  |
 | Parallelism       | Yes, but independently          | Yes, with dependencies (Task A blocks Task B)                                 |
@@ -61,7 +60,7 @@ flowchart TB
 
   subgraph store["Shared state"]
     tasks["Task list<br/>(dependencies, statuses)"]
-    mailbox["Mailbox<br/>(teammate messages)"]
+    mailbox["Mailbox<br/>(messages from teammates)"]
     locks["File locks<br/>(when teammate claims files)"]
   end
 
@@ -118,7 +117,7 @@ sequenceDiagram
 
 ## 10.5. How teammates are created
 
-In the Lead session, the command:
+In the Lead session, the team:
 
 ```bash
 /team add implementer --description "writes code per spec"
@@ -172,13 +171,13 @@ Additional lifecycle events appear:
 - `TaskCompleted` — task is done.
 - `TeammateIdle` — teammate is idle.
 
-You can use these for notifications, auto-redistribution, metrics.
+You can use them for notifications, auto-redistribution, metrics.
 
 ---
 
 ## 10.9. Cost
 
-⚠️ Each teammate is a separate Claude instance with its own prefix. 4 teammates on Opus with large CLAUDE.md = 4× subagent cost × N turns each.
+⚠️ Each teammate is a separate Claude instance with its own prefix. 4 teammates on Opus with a large CLAUDE.md = 4× subagent cost × N turns each.
 
 📘 The documentation directly warns: "token usage scales with the number of active teammates … For routine tasks, a single session is more cost-effective".
 
@@ -200,7 +199,7 @@ You can use these for notifications, auto-redistribution, metrics.
 
 Task: "add route sharing via short links (`/t/abc123`)".
 
-Lead's decomposition into task list:
+Decomposition by Lead into task list:
 
 ```
 Task 1: schema migration "shareable_links" table
@@ -236,7 +235,7 @@ gantt
   PR + changelog :a5, after a4, 5m
 ```
 
-Lead monitors, gives small follow-up tasks when idle (`TeammateIdle`). Once Task 5 is done — `gh pr create` is ready.
+Lead monitors, when idle (`TeammateIdle`) gives small follow-up tasks. After Task 5 completes — `gh pr create` is ready.
 
 ⚠️ For such a feature in a regular session you could spend 15-20 minutes on ~$2-5. Via team — same 15-20 minutes of real time, but $10-20 bill. You're buying parallelization of people, not machine time.
 
@@ -266,11 +265,11 @@ Lead monitors, gives small follow-up tasks when idle (`TeammateIdle`). Once Task
 
 ✅ **Use `TeammateIdle` hook** for logging / metrics.
 
-✅ **Lock files.** Without locks, two teammates can overwrite each other.
+✅ **Lock files.** Without locks two teammates can overwrite each other.
 
 ❌ **Don't use teams for browse/analysis** — subagents are cheaper for that.
 
-❌ **Don't give all teammates `bypassPermissions`** — that's "5 hands with write-anything rights". At least one should have `ask`.
+❌ **Don't give all teammates `bypassPermissions`** — that's "5 hands with write access to anything". At least one should have `ask`.
 
 ❌ **Don't run >4-5 teammates** — coordination becomes more expensive than work.
 

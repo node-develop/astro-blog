@@ -1,0 +1,203 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
+import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
+import { t } from "~/i18n";
+import tagsEn from "~/i18n/tags.en.json";
+import { graphIds } from "~/lib/seo/schema";
+import type { GetStaticPaths } from "astro";
+
+export const getStaticPaths = (async () => {
+  const ru = await getOrderedPosts({ locale: "ru" });
+  const en = await getOrderedPosts({ locale: "en" });
+  return getAllTagSlugs({ ru, en }).map((tag) => ({ params: { tag } }));
+}) satisfies GetStaticPaths;
+
+const { tag } = Astro.params;
+if (typeof tag !== "string") throw new Error("Tag param missing");
+
+const enPosts = await getOrderedPosts({ locale: "en" });
+const grouped = groupPostsByTag(enPosts);
+const matches: ReadonlyArray<PostWithMeta> = grouped.get(tag) ?? [];
+
+const dict = tagsEn as Record<string, string>;
+const label = resolveTagLabel(tag, "en", dict);
+const title = t("en", "tags.archiveTitle").replace("{label}", label);
+const description = t("en", "tags.archiveDescription").replace("{label}", label);
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+
+const SITE = "https://artka.dev";
+const bareSlug = (id: string): string => id.replace(/^en\//, "");
+
+// Blog node for THIS archive — distinct @id per slug; references global Person/Org.
+const blogNode = {
+  "@type": "Blog",
+  "@id": `${canonical}#blog`,
+  url: canonical,
+  name: title,
+  description,
+  inLanguage: "en-US",
+  author: { "@id": graphIds.person },
+  publisher: { "@id": graphIds.organization },
+  blogPost: matches.map((p) => ({
+    "@type": "BlogPosting",
+    "@id": `${SITE}/en/blog/${bareSlug(p.entry.id)}#blogposting`,
+    headline: p.entry.data.title,
+    url: `${SITE}/en/blog/${bareSlug(p.entry.id)}`,
+    datePublished: p.entry.data.pubDate.toISOString(),
+  })),
+};
+
+const breadcrumbNode = {
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/en/` },
+    { "@type": "ListItem", position: 2, name: t("en", "tags.title"), item: `${SITE}/en/tags` },
+    { "@type": "ListItem", position: 3, name: label },
+  ],
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  fullWidth={true}
+  extraSchemaNodes={[blogNode, breadcrumbNode]}
+>
+  <SiteSidebar slot="sidebar" />
+
+  <section class="tag-archive">
+    <header class="tag-archive__header">
+      <p class="tag-archive__eyebrow">
+        <a href="/en/tags">{t("en", "tags.backToIndex")}</a>
+      </p>
+      <h1 class="tag-archive__title">#{label}</h1>
+      <p class="tag-archive__lede">{description}</p>
+    </header>
+
+    {
+      matches.length === 0 ? (
+        <p class="tag-archive__empty">{t("en", "tags.archiveEmptyEn")}</p>
+      ) : (
+        <ul class="tag-archive__posts">
+          {matches.map((p) => (
+            <li class="tag-archive__item">
+              <a href={`/en/blog/${bareSlug(p.entry.id)}`} class="tag-archive__link">
+                <span class="tag-archive__num">{String(p.meta.order).padStart(2, "0")}</span>
+                <span class="tag-archive__body">
+                  <h2 class="tag-archive__post-title">{p.entry.data.title}</h2>
+                  <p class="tag-archive__post-desc">{p.entry.data.description}</p>
+                  <time
+                    datetime={p.entry.data.pubDate.toISOString()}
+                    class="tag-archive__post-date"
+                  >
+                    {p.entry.data.pubDate.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <style>
+    .tag-archive {
+      max-width: 720px;
+    }
+    .tag-archive__header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .tag-archive__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .tag-archive__eyebrow a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .tag-archive__eyebrow a:hover {
+      color: var(--color-accent-hover);
+    }
+    .tag-archive__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-3xl);
+      font-weight: 500;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+      letter-spacing: var(--tracking-tight);
+    }
+    .tag-archive__lede {
+      margin: 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+    }
+    .tag-archive__posts {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .tag-archive__item + .tag-archive__item {
+      border-top: 1px solid var(--color-border);
+    }
+    .tag-archive__link {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: var(--space-4);
+      padding: var(--space-5) 0;
+      color: inherit;
+      text-decoration: none;
+      transition: transform var(--dur-fast) var(--ease-out);
+    }
+    .tag-archive__link:hover {
+      transform: translateX(2px);
+    }
+    .tag-archive__num {
+      font-family: var(--font-mono);
+      font-size: var(--fs-lg);
+      color: var(--color-fg-subtle);
+      font-variant-numeric: tabular-nums;
+      padding-top: 2px;
+    }
+    .tag-archive__post-title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-xl);
+      line-height: var(--lh-snug);
+      letter-spacing: var(--tracking-tight);
+      font-weight: 500;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+    }
+    .tag-archive__link:hover .tag-archive__post-title {
+      color: var(--color-accent-hover);
+    }
+    .tag-archive__post-desc {
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+    }
+    .tag-archive__post-date {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+    }
+    .tag-archive__empty {
+      color: var(--color-fg-muted);
+      font-style: italic;
+    }
+  </style>
+</BaseLayout>

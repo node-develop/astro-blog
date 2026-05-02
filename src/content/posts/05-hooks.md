@@ -6,8 +6,6 @@ tags: ["claude-code", "guide"]
 draft: false
 ---
 
-# 05. Hooks: детерминированный контроль над agent loop
-
 > Hooks — это git hooks, но для Claude Code. Точки в lifecycle, в которые harness исполняет ваш скрипт. Если skill — это рекомендация модели, hook — это обязательный шаг harness'а, который **гарантированно** случится.
 
 ---

@@ -6,8 +6,6 @@ tags: ["claude-code", "guide"]
 draft: false
 ---
 
-# 04. Skills: SKILL.md, scripts, references
-
 > Skill — это переиспользуемая «процедура для модели». Не gut-feeling «вот так делай» в чате, а зафиксированный в файле плейбук, который Claude сам выбирает, когда задача подходит под описание.
 
 ---

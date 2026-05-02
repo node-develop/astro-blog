@@ -42,7 +42,7 @@ git worktree add ../astro-blog-authority -b feat/authority-graph main && cd ../a
 
 **Files:** none (read-only)
 
-- [ ] **Step 1: Verify clean state, prerequisites, and baseline.**
+- [x] **Step 1: Verify clean state, prerequisites, and baseline.**
 
 ```bash
 git status
@@ -55,7 +55,7 @@ pnpm typecheck && pnpm test && pnpm lint
 
 Expected: working tree clean; `OK — prerequisites present`; all checks green. If `MISSING`, abort and rebase onto latest `main`.
 
-- [ ] **Step 2: Run gitnexus impact analysis on the load-bearing files.**
+- [x] **Step 2: Run gitnexus impact analysis on the load-bearing files.**
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -64,7 +64,7 @@ mcp__gitnexus__impact({ target: "blog/index", direction: "upstream", repo: "astr
 
 Expected: `PostLayout` is MEDIUM (consumed by `src/pages/blog/[...slug].astro` and EN sibling); `blog/index` is LOW. Note any surprise consumers in the PR description.
 
-- [ ] **Step 3: Inventory current tag slugs.**
+- [x] **Step 3: Inventory current tag slugs.**
 
 ```bash
 grep -hE '^  - ' src/content/posts/*.md src/content/posts/en/*.md | sort -u
@@ -87,7 +87,7 @@ Expected: list of unique tag entries (e.g. `- claude-code`, `- guide`). Confirm 
 
 This module is the single source of truth for "which tag slugs exist, and which posts belong to each." It is fed `PostWithMeta[]` by callers — no I/O of its own — so it is trivially testable.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Create `tests/unit/content/tags.test.ts`:
 
@@ -152,7 +152,7 @@ describe("resolveTagLabel", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails.**
+- [x] **Step 2: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags.test.ts
@@ -160,7 +160,7 @@ pnpm test tests/unit/content/tags.test.ts
 
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `src/lib/content/tags.ts`.**
+- [x] **Step 3: Implement `src/lib/content/tags.ts`.**
 
 ```ts
 import type { PostWithMeta } from "./loader";
@@ -222,7 +222,7 @@ export const resolveTagLabel = (
 ): string => dict[slug] ?? slug;
 ```
 
-- [ ] **Step 4: Verify and commit.**
+- [x] **Step 4: Verify and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags.test.ts && pnpm typecheck
@@ -248,7 +248,7 @@ Expected: 8 assertions pass; 0 typecheck errors.
 
 The index page lists every tag slug with a post count in the current locale and links to `/tags/<slug>` (RU) or `/en/tags/<slug>` (EN). It emits a `WebPage` schema node referencing `Person#me` via `about` (matches Plan 2's entity-page pattern).
 
-- [ ] **Step 1: Add i18n strings for the page (RU + EN, mirror keys).**
+- [x] **Step 1: Add i18n strings for the page (RU + EN, mirror keys).**
 
 Append to `src/i18n/strings.ru.json` (and mirror in `src/i18n/strings.en.json` with the EN values shown after the slash):
 
@@ -267,7 +267,7 @@ Append to `src/i18n/strings.ru.json` (and mirror in `src/i18n/strings.en.json` w
 
 `pnpm translate` hash-tracks these as new keys; both locales must be committed manually.
 
-- [ ] **Step 2: Write the failing source-shape regression test.**
+- [x] **Step 2: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tags-index-page.test.ts`:
 
@@ -308,7 +308,7 @@ describe.each([
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails.**
+- [x] **Step 3: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags-index-page.test.ts
@@ -316,7 +316,7 @@ pnpm test tests/unit/content/tags-index-page.test.ts
 
 Expected: FAIL — files do not exist yet.
 
-- [ ] **Step 4: Implement `src/pages/tags/index.astro`.**
+- [x] **Step 4: Implement `src/pages/tags/index.astro`.**
 
 ```astro
 ---
@@ -415,7 +415,7 @@ const rows = slugs.map((slug) => ({
 </BaseLayout>
 ```
 
-- [ ] **Step 5: Implement the EN sibling `src/pages/en/tags/index.astro`.**
+- [x] **Step 5: Implement the EN sibling `src/pages/en/tags/index.astro`.**
 
 Copy the RU file verbatim, then apply these three edits:
 
@@ -425,7 +425,7 @@ Copy the RU file verbatim, then apply these three edits:
 
 Everything else — frontmatter imports order, layout markup, `<style>` block — is byte-identical to the RU sibling.
 
-- [ ] **Step 6: Verify, smoke-check, and commit.**
+- [x] **Step 6: Verify, smoke-check, and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags-index-page.test.ts && pnpm typecheck
@@ -459,7 +459,7 @@ Each archive page lists posts matching the current locale, with a `Blog` JSON-LD
 
 **Key i18n decision (recorded here per the risk callout):** `getStaticPaths()` enumerates the **union** of slugs across both locales. A slug present only in (say) RU posts still produces an `/en/tags/<slug>` route — that page renders with an empty list and a localized "no posts in this language yet" hint, plus a back-link to the index. This keeps URLs stable across translations and avoids 404 churn when a slug appears in one locale before the other ships its translation.
 
-- [ ] **Step 1: Write the failing source-shape regression test.**
+- [x] **Step 1: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tags-archive-page.test.ts`:
 
@@ -502,7 +502,7 @@ describe.each([
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails.**
+- [x] **Step 2: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags-archive-page.test.ts
@@ -510,7 +510,7 @@ pnpm test tests/unit/content/tags-archive-page.test.ts
 
 Expected: FAIL — files do not exist.
 
-- [ ] **Step 3: Implement `src/pages/tags/[tag].astro`.**
+- [x] **Step 3: Implement `src/pages/tags/[tag].astro`.**
 
 ```astro
 ---
@@ -648,7 +648,7 @@ const breadcrumbNode = {
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Implement the EN sibling `src/pages/en/tags/[tag].astro`.**
+- [x] **Step 4: Implement the EN sibling `src/pages/en/tags/[tag].astro`.**
 
 Copy the RU file verbatim, then apply these substitutions:
 
@@ -661,7 +661,7 @@ Copy the RU file verbatim, then apply these substitutions:
 
 The `<style>` block is byte-identical to the RU sibling. Layout markup classes (`.tag-archive*`) are unchanged.
 
-- [ ] **Step 5: Verify, smoke-check, and commit.**
+- [x] **Step 5: Verify, smoke-check, and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags-archive-page.test.ts && pnpm typecheck
@@ -696,7 +696,7 @@ git commit -m "feat(authority): add /tags/[tag] archives with Blog schema"
 
 Both renderers currently show `<span>#tag</span>` with no link. We swap them for `<a>` and resolve display labels through the locale-specific dict (consistent with Tasks 2 and 3).
 
-- [ ] **Step 1: Run impact analysis.**
+- [x] **Step 1: Run impact analysis.**
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -705,7 +705,7 @@ mcp__gitnexus__impact({ target: "blog/index", direction: "upstream", repo: "astr
 
 Expected: same as Task 0 step 3. Confirm no surprise consumers.
 
-- [ ] **Step 2: Write the failing source-shape regression test.**
+- [x] **Step 2: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tag-chip-links.test.ts`:
 
@@ -746,7 +746,7 @@ describe("tag chips are anchors", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails.**
+- [x] **Step 3: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tag-chip-links.test.ts
@@ -754,7 +754,7 @@ pnpm test tests/unit/content/tag-chip-links.test.ts
 
 Expected: FAIL — current chips are `<span>` elements.
 
-- [ ] **Step 4: Modify `src/pages/blog/index.astro`.**
+- [x] **Step 4: Modify `src/pages/blog/index.astro`.**
 
 Add to the existing frontmatter (preserving Plan 1's `buildBlogNode` import / `blogNode` const / `extraSchemaNodes={[blogNode]}`):
 
@@ -798,7 +798,7 @@ In the `<style>` block, append `text-decoration: none;` and a hover transition t
 }
 ```
 
-- [ ] **Step 5: Apply the same edits to `src/pages/en/blog/index.astro`.**
+- [x] **Step 5: Apply the same edits to `src/pages/en/blog/index.astro`.**
 
 Substitutions:
 
@@ -806,7 +806,7 @@ Substitutions:
 - `const dict = tagsEn as Record<string, string>;`
 - `tagsHrefBase` simplifies to `"/en/tags"` directly (since the page is always EN), but the locale-conditional form is fine too — keep the structure parallel for symmetry.
 
-- [ ] **Step 6: Modify `src/layouts/PostLayout.astro`.**
+- [x] **Step 6: Modify `src/layouts/PostLayout.astro`.**
 
 Add to the imports near the top of the frontmatter (after the existing `t` import):
 
@@ -843,7 +843,7 @@ Replace the existing tag chips block in the post header (lines ~144-154) with:
 
 In the `<style>` block, add `display: inline-block; text-decoration: none;` plus a transition to `.post__tag-chip` and a `:hover` selector mirroring `.list__tag-chip` above (same property values).
 
-- [ ] **Step 7: Verify and commit.**
+- [x] **Step 7: Verify and commit.**
 
 ```bash
 pnpm test tests/unit/content/tag-chip-links.test.ts
@@ -882,7 +882,7 @@ git commit -m "feat(authority): make tag chips clickable, link to /tags/<slug>"
 
 **Distinguishing real top-level h1 from bash-comment lines in fenced code blocks:** the cleanup edits a single line (the leading `# NN. Title` line, plus the blank line that follows it where present). Bash-comment lines like `# В CLI` inside `` ```bash ... ``` `` blocks are out of scope — they are NOT h1 nodes per markdown grammar (remark-parse parses them as `code` nodes' raw text). Task 6's test uses `unified + remark-parse` which respects this; we never need to touch those bash comments.
 
-- [ ] **Step 1: Strip the leading `# ...` heading from each offender via an ad-hoc script.**
+- [x] **Step 1: Strip the leading `# ...` heading from each offender via an ad-hoc script.**
 
 The leading h1 is invariably the first non-frontmatter content (`# 01. Title…`). Bash-comment lines inside fenced code blocks are NOT h1 nodes per markdown grammar — `remark-parse` treats them as text inside a `code` node — so a regex that targets only the line directly after the closing `---` is safe.
 
@@ -922,7 +922,7 @@ rm scripts/strip-leading-h1.ts
 
 Expected: ~16 lines of `stripped:` output (15 RU + 14 EN translations + `claude.md`).
 
-- [ ] **Step 2: Confirm the strip looks correct.**
+- [x] **Step 2: Confirm the strip looks correct.**
 
 ```bash
 git diff --stat src/content/posts/
@@ -931,7 +931,7 @@ head -16 src/content/posts/01-introduction.md
 
 Expected: ~30 files touched, each `-2 lines`. The post starts with the blockquote `> Перед тем как разбирать ...`, NOT a `# 01. ...` line.
 
-- [ ] **Step 3: Run all existing tests to confirm nothing broke.**
+- [x] **Step 3: Run all existing tests to confirm nothing broke.**
 
 ```bash
 pnpm test && pnpm typecheck
@@ -939,7 +939,7 @@ pnpm test && pnpm typecheck
 
 Expected: all green. The translation pipeline's hash-based drift detector (`pnpm translate:check`) compares frontmatter `sourceHash`; because we edit only the body and edit RU + EN symmetrically, hashes are unaffected. If `pnpm translate:check` flags drift, run `pnpm translate` once to refresh, then re-stage.
 
-- [ ] **Step 4: Detect changes scope and commit.**
+- [x] **Step 4: Detect changes scope and commit.**
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
@@ -964,7 +964,7 @@ git commit -m "fix(content): strip duplicate leading h1 from post bodies"
 
 The test parses each post's markdown body via `unified + remark-parse` (NOT regex on raw text — that would false-positive on bash `# comment` lines inside fenced code blocks). It walks the mdast and fails on any `heading` node with `depth === 1`.
 
-- [ ] **Step 1: Write the failing-but-currently-passing test.**
+- [x] **Step 1: Write the failing-but-currently-passing test.**
 
 Create `tests/unit/posts-h1.test.ts`:
 
@@ -1034,7 +1034,7 @@ describe("post bodies must not contain a top-level h1", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test.**
+- [x] **Step 2: Run the test.**
 
 ```bash
 pnpm test tests/unit/posts-h1.test.ts
@@ -1042,7 +1042,7 @@ pnpm test tests/unit/posts-h1.test.ts
 
 Expected: PASS — Task 5 already cleaned all offenders. If this fails, the Task 5 strip script missed a file (or a code block was misclassified). Inspect the failure message which lists offending paths, fix manually, and re-run.
 
-- [ ] **Step 3: Belt-and-braces — verify the test fails on a regression, then revert.**
+- [x] **Step 3: Belt-and-braces — verify the test fails on a regression, then revert.**
 
 ```bash
 { printf '# Test\n\n'; cat src/content/posts/01-introduction.md; } > /tmp/x.md && \
@@ -1054,7 +1054,7 @@ Expected: PASS — Task 5 already cleaned all offenders. If this fails, the Task
 
 Expected: first invocation FAILs listing `01-introduction.md`; after revert, second invocation PASSes.
 
-- [ ] **Step 4: Typecheck and commit.**
+- [x] **Step 4: Typecheck and commit.**
 
 ```bash
 pnpm typecheck
@@ -1078,7 +1078,7 @@ The `@astrojs/sitemap` integration auto-discovers all prerendered routes (its `f
 
 This test uses `vi.beforeAll` to require a build artifact. To avoid forcing every Vitest run to do a full build, we make it skip gracefully when `dist/client/sitemap-index.xml` is missing — and document that the CI pipeline already runs `pnpm build` before `pnpm test` in the deploy workflow. Local devs run `pnpm build && pnpm test tests/unit/seo/sitemap-coverage.test.ts` to validate.
 
-- [ ] **Step 1: Confirm the sitemap config does NOT need changes.**
+- [x] **Step 1: Confirm the sitemap config does NOT need changes.**
 
 ```bash
 grep -n "filter:" astro.config.ts
@@ -1086,7 +1086,7 @@ grep -n "filter:" astro.config.ts
 
 Expected: the existing filter only excludes `/admin/`, `/login/`, `/api/`. `/tags`, `/tags/<slug>`, `/about`, `/now`, `/uses`, `/projects` and their `/en/...` variants are not excluded — they will appear in the sitemap automatically.
 
-- [ ] **Step 2: Write the failing-or-skipped test.**
+- [x] **Step 2: Write the failing-or-skipped test.**
 
 Create `tests/unit/seo/sitemap-coverage.test.ts`:
 
@@ -1158,7 +1158,7 @@ describe("sitemap coverage", () => {
 });
 ```
 
-- [ ] **Step 3: Build and run the test.**
+- [x] **Step 3: Build and run the test.**
 
 ```bash
 pnpm build && pnpm test tests/unit/seo/sitemap-coverage.test.ts
@@ -1168,7 +1168,7 @@ Expected: PASS — all 4 assertions green.
 
 If the "entity pages" assertion fails because a particular Plan 2 page hasn't shipped (e.g. `/projects` postponed), comment that one assertion with a TODO referencing Plan 2 and re-run.
 
-- [ ] **Step 4: Commit.**
+- [x] **Step 4: Commit.**
 
 ```bash
 git add tests/unit/seo/sitemap-coverage.test.ts
@@ -1187,7 +1187,7 @@ git commit -m "test(seo): assert sitemap covers tag pages and entity pages"
 
 - Modify: `CLAUDE.md` (one-line note about the new helper module — only if a corresponding pointer block exists; otherwise skip without stalling).
 
-- [ ] **Step 1: Full build and preview smoke check.**
+- [x] **Step 1: Full build and preview smoke check.**
 
 ```bash
 pnpm build && pnpm preview
@@ -1195,7 +1195,7 @@ pnpm build && pnpm preview
 
 Expected: 0 build errors. In another shell, hit `/tags`, `/en/tags`, `/tags/claude-code`, `/en/tags/claude-code`, `/blog`, and `/blog/01-introduction` and confirm: chips are anchors; `/blog/01-introduction` has exactly one `<h1>` (the layout title, no duplicate body h1). Stop preview.
 
-- [ ] **Step 2: Static-output assertions.**
+- [x] **Step 2: Static-output assertions.**
 
 ```bash
 # Single h1 per post page

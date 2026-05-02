@@ -8,8 +8,6 @@ tags: []
 draft: true
 ---
 
-# Claude Code: глубокий гайд для разработчиков
-
 > Сквозной пример: **Travel Agent** — Node.js backend + React frontend + LLM + MCP-серверы для авиа/отелей/погоды.
 >
 > Все утверждения в этом гайде проверены по официальной документации `code.claude.com/docs` и Anthropic API docs (актуально на **23 апреля 2026**, Claude Code v2.1.89, Opus 4.7 / Sonnet 4.6 / Haiku 4.5).

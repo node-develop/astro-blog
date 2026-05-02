@@ -1,0 +1,145 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getOrderedPosts } from "~/lib/content/loader";
+import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
+import { t } from "~/i18n";
+import tagsEn from "~/i18n/tags.en.json";
+import { buildWebPageNode } from "~/lib/seo/schema";
+
+const locale = "en" as const;
+const ru = await getOrderedPosts({ locale: "ru" });
+const en = await getOrderedPosts({ locale: "en" });
+const slugs = getAllTagSlugs({ ru, en });
+const grouped = groupPostsByTag(en); // EN page counts EN posts only
+const dict = tagsEn as Record<string, string>;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const title = t(locale, "tags.title");
+const description = t(locale, "tags.description");
+
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: title,
+  description,
+});
+
+const rows = slugs.map((slug) => ({
+  slug,
+  label: resolveTagLabel(slug, locale, dict),
+  count: grouped.get(slug)?.length ?? 0,
+}));
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  fullWidth={true}
+  extraSchemaNodes={[webPageNode]}
+>
+  <SiteSidebar slot="sidebar" />
+
+  <section class="tags-index">
+    <header class="tags-index__header">
+      <p class="tags-index__eyebrow">{t(locale, "tags.eyebrow")}</p>
+      <h1 class="tags-index__title">{title}</h1>
+      <p class="tags-index__lede">{description}</p>
+    </header>
+
+    {
+      rows.length === 0 ? (
+        <p class="tags-index__empty">{t(locale, "tags.empty")}</p>
+      ) : (
+        <ul class="tags-index__list" aria-label={title}>
+          {rows.map((row) => (
+            <li class="tags-index__item">
+              <a class="tags-index__link" href={`/en/tags/${row.slug}`}>
+                <span class="tags-index__chip">#{row.label}</span>
+                <span
+                  class="tags-index__count"
+                  aria-label={t(locale, "tags.postsCountAria")
+                    .replace("{count}", String(row.count))
+                    .replace("{label}", row.label)}
+                >
+                  {row.count}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <style>
+    .tags-index {
+      max-width: 720px;
+    }
+    .tags-index__header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .tags-index__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .tags-index__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-3xl);
+      font-weight: 500;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+      letter-spacing: var(--tracking-tight);
+    }
+    .tags-index__lede {
+      margin: 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+    }
+    .tags-index__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .tags-index__link {
+      display: inline-flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+      color: var(--color-fg);
+      text-decoration: none;
+      transition:
+        border-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out);
+    }
+    .tags-index__link:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-hover);
+    }
+    .tags-index__chip {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+    }
+    .tags-index__count {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-subtle);
+      font-variant-numeric: tabular-nums;
+    }
+    .tags-index__empty {
+      color: var(--color-fg-muted);
+      font-style: italic;
+    }
+  </style>
+</BaseLayout>
