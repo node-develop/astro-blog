@@ -48,10 +48,10 @@ describe("SEO: BaseLayout meta", () => {
     expect(src).toMatch(/hreflang="x-default"/);
   });
 
-  it("emits WebSite JSON-LD", async () => {
+  it("emits WebSite JSON-LD via buildGraph", async () => {
     const src = await read("src/layouts/BaseLayout.astro");
     expect(src).toMatch(/application\/ld\+json/);
-    expect(src).toMatch(/"@type":\s*"WebSite"/);
+    expect(src).toMatch(/buildGraph/);
   });
 
   it("supports noindex prop", async () => {
@@ -62,20 +62,11 @@ describe("SEO: BaseLayout meta", () => {
 });
 
 describe("SEO: PostLayout meta", () => {
-  it("emits BlogPosting JSON-LD with all required fields", async () => {
+  it("passes BlogPosting and BreadcrumbList nodes via extraSchemaNodes", async () => {
     const src = await read("src/layouts/PostLayout.astro");
-    expect(src).toMatch(/"@type":\s*"BlogPosting"/);
-    expect(src).toMatch(/headline/);
-    expect(src).toMatch(/datePublished/);
-    expect(src).toMatch(/dateModified/);
-    expect(src).toMatch(/mainEntityOfPage/);
-    expect(src).toMatch(/inLanguage/);
-  });
-
-  it("emits BreadcrumbList JSON-LD", async () => {
-    const src = await read("src/layouts/PostLayout.astro");
-    expect(src).toMatch(/"@type":\s*"BreadcrumbList"/);
-    expect(src).toMatch(/itemListElement/);
+    expect(src).toMatch(/buildBlogPostingNode/);
+    expect(src).toMatch(/buildBreadcrumbListNode/);
+    expect(src).toMatch(/extraSchemaNodes/);
   });
 
   it("emits article-specific OG meta", async () => {

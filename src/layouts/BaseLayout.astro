@@ -7,6 +7,7 @@ import SkipLink from "~/components/SkipLink.astro";
 import CommandPalette from "~/components/search/CommandPalette";
 import { t } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
+import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 
 interface Props {
   title: string;
@@ -16,6 +17,8 @@ interface Props {
   noindex?: boolean;
   /** When true, omits the right TOC column for list/about/home pages. */
   fullWidth?: boolean;
+  /** Additional JSON-LD nodes to merge into the page @graph. */
+  extraSchemaNodes?: ReadonlyArray<GraphNode | null>;
 }
 
 const {
@@ -25,6 +28,7 @@ const {
   ogType = "website",
   noindex = false,
   fullWidth = false,
+  extraSchemaNodes = [],
 } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
@@ -48,23 +52,7 @@ const absoluteOgImage = ogImage
 
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
 
-const safeJsonLd = (data: unknown): string =>
-  JSON.stringify(data).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
-
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
-
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "artka.dev",
-  url: Astro.site?.toString() ?? "https://artka.dev",
-  inLanguage: locale === "ru" ? "ru-RU" : "en-US",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${Astro.site?.toString() ?? "https://artka.dev"}search?q={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
-};
 ---
 
 <!doctype html>
@@ -103,7 +91,11 @@ const websiteJsonLd = {
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={title} href={rssHref} />
-    <script is:inline type="application/ld+json" set:html={safeJsonLd(websiteJsonLd)} />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={safeJsonLd(buildGraph({ locale, extraNodes: extraSchemaNodes }))}
+    />
     <slot name="head" />
     <ClientRouter />
   </head>

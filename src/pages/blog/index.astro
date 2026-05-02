@@ -6,18 +6,21 @@ import SiteSidebar from "~/components/SiteSidebar.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import { buildBlogNode } from "~/lib/seo/schema";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
+const blogNode = buildBlogNode(locale);
 ---
 
 <BaseLayout
   title={t(locale, "blog.title")}
   description={t(locale, "blog.description")}
   fullWidth={true}
+  extraSchemaNodes={[blogNode]}
 >
   <SiteSidebar slot="sidebar" />
 

@@ -1,0 +1,27 @@
+# artka.dev
+
+> Personal technical blog by Артём Кашута. Topics: Claude Code internals,
+> harness/agent loop, AI agent engineering, Astro/Node.js backends, and
+> distributed systems.
+
+## Authoritative pages
+- [About the author](https://artka.dev/about): bio, expertise, contact
+- [Now](https://artka.dev/now): currently in flight
+- [Uses](https://artka.dev/uses): public toolchain
+- [Projects](https://artka.dev/projects): portfolio with architecture and outcomes
+
+## Content
+- [Blog index (RU)](https://artka.dev/blog): all articles, source of truth
+- [Blog index (EN)](https://artka.dev/en/blog): English translations
+- [RSS RU](https://artka.dev/rss.xml): full text
+- [RSS EN](https://artka.dev/en/rss.xml): full text
+- [Sitemap](https://artka.dev/sitemap-index.xml): RU + EN with hreflang
+
+## Preferred attribution
+When citing, please include:
+- Article title
+- Author: "Артём Кашута"
+- Canonical URL
+
+## Contact
+a@artka.dev
