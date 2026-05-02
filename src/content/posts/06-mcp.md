@@ -4,6 +4,14 @@ description: "MCP (Model Context Protocol) — открытый протокол
 pubDate: 2026-04-23
 tags: ["claude-code", "guide"]
 draft: false
+summary: "MCP (Model Context Protocol) — «USB-C для AI-интеграций»: пишете сервер один раз, его потребляют Claude Code, Claude Desktop, Cursor, Continue, custom SDK. Три транспорта (stdio, SSE, HTTP); экспортируются tools, resources, prompts, elicitation."
+faq:
+  - question: "Какие транспорты поддерживает MCP и какой выбрать?"
+    answer: "Три: stdio (harness запускает сервер как child process — для локальной разработки), SSE (persistent connection с streaming — для удалённых серверов), HTTP (stateless request/response — для multi-tenant SaaS). Большинство серверов используют stdio: проще, быстрее, без сетевых проблем."
+  - question: "Что MCP-сервер может экспортировать кроме tools?"
+    answer: "Помимо tools (функции, которые модель вызывает) — resources (данные, которые модель может прочитать через URI вроде config://app/settings), prompts (преднастроенные шаблоны, появляются как slash-команды), elicitation (серверо-инициированные диалоги с пользователем). Claude Code потребляет tools и resources активнее всего."
+  - question: "Как тестировать MCP-сервер локально?"
+    answer: "Команда claude mcp test <name> запускает сервер, выполняет initialize-handshake и выводит список tools/resources. Для сервера в репозитории сначала pnpm build, затем добавьте конфигурацию в .mcp.json (тип stdio, command, args, env), и Claude Code подхватит сервер при следующем запуске."
 ---
 
 > MCP (Model Context Protocol) — открытый протокол для подключения к Claude Code внешних tools, ресурсов и данных. Claude Code умеет говорить с MCP-серверами по трём транспортам: stdio, SSE и HTTP. Для Travel Agent это критическая часть архитектуры — все интеграции с авиа/отелями/погодой реализованы как MCP-серверы.

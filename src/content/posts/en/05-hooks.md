@@ -1,15 +1,35 @@
 ---
 title: "05. Hooks: deterministic control over agent loop"
 description: >-
-  Hooks are git hooks, but for Claude Code. Points in the lifecycle where harness executes your script. If a skill is a
-  model recommendation, a hook is a mandatory harness step that **g
+  Hooks are git hooks, but for Claude Code. Points in the lifecycle where the harness executes your script. If a skill
+  is a model recommendation, a hook is a mandatory harness step that **
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Hooks are git hooks for Claude Code: points in the lifecycle where the harness is guaranteed to execute your script.
+  In Claude Code v2.1.89 there are 28+ events, exit code 2 blocks model action, JSON response {"action":"block"} does
+  the same.
+faq:
+  - question: How do hooks differ from skills?
+    answer: >-
+      Skill — a model recommendation (probabilistic: the model can ignore it). Hook — a harness program trigger that
+      will happen guaranteed. Hooks provide strict discipline but slow down if attached to every event; skills are more
+      flexible but less predictable.
+  - question: How can a hook block a model's action?
+    answer: >-
+      Two ways. Exit code 2 with standard stderr output: the harness will return this message to the model as an error,
+      and the model will decide what to do next. Alternative — a JSON response like {"action":"block","reason":"…"}: the
+      effect is similar, but allows passing structured data.
+  - question: How many events do hooks support in Claude Code?
+    answer: >-
+      In v2.1.89 — 28+ lifecycle events, including SessionStart, PreToolUse, PostToolUse, UserPromptSubmit,
+      Notification, Stop, SubagentStop, PreCompact, and so on. The claim that "there are 6" from early tutorials is very
+      outdated: the actual list is significantly richer.
 lang: en
-sourceHash: e005a74b56e4ed970dc2b7c8ba015ab20762b128a791169935a0a879671b6a07
+sourceHash: 321e8cc3dd97e090191efd29566e46aabbddb2e16b3c6b131929a0288b8c8d84
 manuallyEdited: false
 ---
 
@@ -196,7 +216,7 @@ All sources are merged. If multiple hooks match the same event — they all exec
 }
 ```
 
-Possible `permissionDecision` values: `allow`, `deny`, `ask`, `defer`.
+Possible `permissionDecision`: `allow`, `deny`, `ask`, `defer`.
 
 ⚠️ `PreToolUse` hook with `deny` blocks action **even in `bypassPermissions` mode**. This is not "you can bypass it if you really want" — this is the final gate.
 
@@ -489,7 +509,7 @@ echo "$input" >> /tmp/claude-hook-input.jsonl
 
 ❌ **Hook breaking permissions.** `PreToolUse` with `permissionDecision: allow` — bypasses all checks. Dangerous.
 
-❌ **Duplicating skills with hooks.** If a procedure is multi-step and situation-dependent — that's a skill. Hook is for atomic "always do this".
+❌ **Duplicating skills with hooks.** If the procedure is multi-step and situation-dependent — that's a skill. Hook is for atomic "always like this".
 
 ---
 

@@ -4,6 +4,14 @@ description: "Hooks — это git hooks, но для Claude Code. Точки в
 pubDate: 2026-04-23
 tags: ["claude-code", "guide"]
 draft: false
+summary: 'Hooks — это git hooks для Claude Code: точки в lifecycle, в которых harness гарантированно исполнит ваш скрипт. В Claude Code v2.1.89 их 28+ событий, exit code 2 блокирует действие модели, JSON-ответ {"action":"block"} делает то же.'
+faq:
+  - question: "Чем hooks отличаются от skills?"
+    answer: "Skill — рекомендация модели (вероятностная: модель может проигнорировать). Hook — программный триггер harness'а, который случится гарантированно. Hooks дают железную дисциплину, но тормозят, если повешены на каждое событие; skills гибче, но непредсказуемее."
+  - question: "Как hook может заблокировать действие модели?"
+    answer: 'Двумя способами. Exit code 2 со стандартным выводом stderr: harness вернёт это сообщение в модель как ошибку, и модель сама решит, что делать дальше. Альтернатива — JSON-ответ вида {"action":"block","reason":"…"}: эффект аналогичный, но позволяет передавать структурированные данные.'
+  - question: "Сколько событий поддерживают hooks в Claude Code?"
+    answer: "В v2.1.89 — 28+ событий жизненного цикла, включая SessionStart, PreToolUse, PostToolUse, UserPromptSubmit, Notification, Stop, SubagentStop, PreCompact, и так далее. Утверждение «их 6» из ранних туториалов сильно устарело: реальный список значительно богаче."
 ---
 
 > Hooks — это git hooks, но для Claude Code. Точки в lifecycle, в которые harness исполняет ваш скрипт. Если skill — это рекомендация модели, hook — это обязательный шаг harness'а, который **гарантированно** случится.

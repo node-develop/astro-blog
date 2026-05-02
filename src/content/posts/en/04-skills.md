@@ -1,19 +1,38 @@
 ---
 title: "04. Skills: SKILL.md, scripts, references"
 description: >-
-  Skill is a reusable "procedure for the model". Not a gut-feeling "just do it this way" in chat, but a fixed playbook
-  in a file that Claude itself selects when the task matches the description
+  Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a fixed playbook in a
+  file that Claude selects himself when the task matches the description
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Skill is a directory with SKILL.md and optional scripts/references/templates, not a single markdown file. A brief
+  description of the skill goes into each request; the full SKILL.md "unfolds" only when the task matches.
+faq:
+  - question: Is a Skill a file or a directory?
+    answer: >-
+      A directory. It must contain SKILL.md with YAML frontmatter (name, description, allowed-tools, model, effort) plus
+      optional scripts/, references/, templates/. The statement "a skill is just a markdown file" is an
+      oversimplification: a skill can run arbitrary scripts via Bash.
+  - question: When does Claude decide to load a skill?
+    answer: >-
+      When the task formulation semantically matches the description field in SKILL.md. That's why description is the
+      most important frontmatter field: write it in the format "when a user asks for X, use Y". Skills can also be
+      invoked explicitly via /skill name (user-invoked).
+  - question: How does a skill differ from CLAUDE.md?
+    answer: >-
+      CLAUDE.md is a static prefix that gets included in every request. A skill is a modular playbook that loads on
+      demand. You can have 50 skills in a project, and only their brief descriptions (name + description) will enter the
+      main context — the actual SKILL.md files will only expand when triggered.
 lang: en
-sourceHash: bf4d5073a7b3988276d61ca714e7285cbedad1078f3836a146e55b089e661049
+sourceHash: bed8089631176253bcd7aa30a773bb9751934b8e4c6f4e09445a98bcba58b505
 manuallyEdited: false
 ---
 
-> Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a playbook fixed in a file that Claude himself chooses when the task matches the description.
+> A Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a playbook fixed in a file that Claude himself chooses when the task matches the description.
 
 ---
 
@@ -23,13 +42,13 @@ manuallyEdited: false
 
 **Skill** — a modular playbook that **loads as needed**. When a task matches the skill description, Claude himself decides to "open" it (model-invoked) or you call it explicitly (user-invoked).
 
-This is a principled token economy: you can have 50 skills in a project, and only their **brief descriptions** (`name + description` from frontmatter) go into the main context. The SKILL.md itself "unfolds" only when needed.
+This is a principled token economy: you might have 50 skills in a project, and only their **brief descriptions** (`name + description` from frontmatter) go into the main context. The SKILL.md itself "unfolds" only when needed.
 
 📘 Skills appeared as a feature of Claude Code and Anthropic API in **October 2025** (`skills-2025-10-02` beta). In **December 2025**, Anthropic published the specification as an open standard.
 
 ---
 
-## 4.2. SKILL.md structure
+## 4.2. SKILL.md Structure
 
 📘 From docs (`skills`): "Every skill needs a `SKILL.md` file with two parts: YAML frontmatter (between `---` markers)... and markdown content".
 
@@ -78,12 +97,12 @@ Brief PR-style summary: file list, route signature, test coverage.
 | `description`              | ✅       | **The most important field.** Claude decides whether to load the skill based on it          |
 | `when_to_use`              | —        | Clarification to description, when exactly the skill is appropriate                         |
 | `allowed-tools`            | —        | Whitelist of tools for the skill. If set, the skill can only call them                      |
-| `disable-model-invocation` | —        | If `true`, skill is **only** user-invocable (must be called explicitly via `/skill <name>`) |
+| `disable-model-invocation` | —        | If `true`, the skill is **only** user-invocable (must be called explicitly `/skill <name>`) |
 | `user-invocable`           | —        | Can it be called via `/skill name`                                                          |
-| `argument-hint`            | —        | Hint for `argument-hint`, displayed in slash menu                                           |
+| `argument-hint`            | —        | Hint for `argument-hint`, displayed in slash-menu                                           |
 | `arguments`                | —        | Description of expected arguments (for CLI)                                                 |
-| `model`                    | —        | Always execute skill on this model (`sonnet`, `opus`, `haiku`)                              |
-| `effort`                   | —        | `low` / `medium` / `high` — controls amount of reasoning                                    |
+| `model`                    | —        | Always execute the skill on this model (`sonnet`, `opus`, `haiku`)                          |
+| `effort`                   | —        | `low` / `medium` / `high` — controls the amount of reasoning                                |
 | `context`                  | —        | `inherit` (default — in current context) or `fork` (subagent with clean context)            |
 | `agent`                    | —        | Run through a specific subagent                                                             |
 | `hooks`                    | —        | Inline hooks for the skill                                                                  |
@@ -109,7 +128,7 @@ Also: **subdirectory-skills** — `.claude/skills/<name>/SKILL.md` inside projec
 
 ---
 
-## 4.4. Skill is a directory, not a file
+## 4.4. A Skill is a directory, not a file
 
 ⚠️ **This is a critical correction to a popular myth.**
 
@@ -165,7 +184,7 @@ flowchart TD
   user2[User: /skill name args] --> read
 ```
 
-⚠️ **Skills are probabilistic, not deterministic.** Claude _may_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks)).
+⚠️ **Skills are probabilistic, not deterministic.** Claude _might_ skip a skill even when it's a perfect fit. If you need a guarantee — use hooks (see [05-hooks.md](./05-hooks)).
 
 ---
 
@@ -174,7 +193,7 @@ flowchart TD
 The decision is made in several steps:
 
 1. **Does the description match the request?** Words, patterns in `description` and `when_to_use` are compared with the user message.
-2. **Doesn't conflict with other skills?** If multiple match — Claude picks the most specific one.
+2. **Doesn't contradict other skills?** If multiple match — Claude picks the most specific one.
 3. **Not forbidden by `paths`?** If frontmatter specifies `paths: ["apps/api/**"]`, the skill activates only when the model works in these files.
 
 💡 **That's why `description` is the most important part of a skill.** A good description:
@@ -350,7 +369,7 @@ flowchart TD
 
 **Simple rule:**
 
-- Fact about the project → CLAUDE.md
+- Project fact → CLAUDE.md
 - Procedure "user says X — do Y, Z, W" → Skill
 - "Always after X do Y" → Hook
 
@@ -362,7 +381,7 @@ flowchart TD
 
 ❌ **Skill duplicating CLAUDE.md.** If knowledge is needed always — it's CLAUDE.md.
 
-❌ **Skill without `allowed-tools` for destructive operations.** If a skill can delete data — restrict the set of tools.
+❌ **Skill without `allowed-tools` for destructive operations.** If the skill can delete data — limit the set of tools.
 
 ❌ **Huge SKILL.md with 2000 lines.** Break it into references and link via `@`.
 

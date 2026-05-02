@@ -2,15 +2,32 @@
 title: "09. Subagents: isolated agent cycles"
 description: >-
   Subagent is a mini-session of Claude Code launched from the main one. With its own context, its own system prompt, its
-  own set of tools. Only the final result is returned to the main context. Th
+  own set of tools. Only the final result is returned to the main context. This
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: "Subagent is a mini-session of Claude Code with its own context and system prompt. Only the final summary is returned to the main context. It saves from context overflow on browse-heavy tasks and causes unexpected bills if launched without restraint."
+faq:
+  - question: When is a subagent justified, and when is it unnecessary?
+    answer: >-
+      Justified on browse-heavy tasks (Grep with 200+ matches, reading 30 files): intermediate tool_results stay in its
+      context, only the summary returns to the main agent. Unnecessary on short tasks of 1–2 steps: overhead from a
+      separate API call exceeds context savings.
+  - question: Which tool does Claude use to invoke a subagent?
+    answer: >-
+      Through the built-in Agent (previously called Task; renamed in v2.1.63, Task retained as an alias). Parameters:
+      subagent_type (e.g., Explore, Plan, general-purpose, or your custom one from .claude/agents/), description,
+      prompt. You can also pass isolation: "worktree" to run in a separate git worktree.
+  - question: Can multiple subagents run in parallel?
+    answer: >-
+      Yes. Put multiple Agent tool_use calls in one assistant-message — the harness will execute them in parallel. This
+      is useful for independent tasks (searching different parts of the repo, checking multiple MCP servers). Parallel
+      subagents only share the final merge of their summaries into the main context.
 lang: en
-sourceHash: e75953830e06864dee8bc84206a9b100af7b7582b3de8900e031d4dd106200d8
-manuallyEdited: false
+sourceHash: 10b44fb940210efe053913214baabf94966ceba3b70032a02a13d2b8f3d1cc56
+manuallyEdited: true
 ---
 
 > Subagent — a mini-session of Claude Code launched from the main one. With its own context, its own system prompt, its own set of tools. Only the final result is returned to the main context. This is both salvation from context window overflow and the reason for unexpected bills.
@@ -23,7 +40,7 @@ manuallyEdited: false
 
 Main use case: **isolation of browse-heavy tasks**.
 
-Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3-endpoint".
+Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3 endpoint".
 
 Without subagent: model `Grep` across the repo → 200 matches → reads 30 files → analyzes → solution. All intermediate tool_results stay in the main context. After such a task, the window is 60% full.
 
@@ -51,7 +68,7 @@ flowchart TB
 
 ## 9.2. How Claude calls a subagent
 
-Through the built-in tool **`Agent`** (formerly called `Task`).
+Through the built-in **`Agent`** tool (formerly called `Task`).
 
 Inside the agent loop, the model does:
 
@@ -145,24 +162,24 @@ You are a senior travel architect. Your job is to compose multi-city itineraries
 Markdown table per day + cost breakdown. No prose-style narratives.
 ```
 
-| Field             | Meaning                                                     |
-| ----------------- | ----------------------------------------------------------- |
-| `name`            | Identifier (slug)                                           |
-| `description`     | Model uses this to decide which agent to call               |
-| `model`           | `sonnet` / `opus` / `haiku` / `claude-opus-4-7` / `inherit` |
-| `color`           | UI color in `/agents` manager                               |
-| `tools`           | Whitelist built-in/MCP tools                                |
-| `disallowedTools` | Blacklist (applied on top of tools)                         |
-| `permissionMode`  | `default` / `ask` / `bypassPermissions`                     |
-| `mcpServers`      | Which MCP servers to start for this subagent                |
-| `hooks`           | Inline hooks only for this subagent                         |
-| `maxTurns`        | Limit on agent loop iterations                              |
-| `skills`          | Additional skills available to the subagent                 |
-| `memory`          | `none` / `read-only` / `read-write` (access to CLAUDE.md)   |
-| `effort`          | `low` / `medium` / `high`                                   |
-| `background`      | Run in background (without blocking main agent)             |
-| `isolation`       | `none` / `worktree` (create git worktree copy of repo)      |
-| `initialPrompt`   | Additional message that harness adds to the prompt          |
+| Field             | Meaning                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| `name`            | Identifier (slug)                                            |
+| `description`     | Model uses this to decide which agent to call                |
+| `model`           | `sonnet` / `opus` / `haiku` / `claude-opus-4-7` / `inherit`  |
+| `color`           | UI color in `/agents` manager                                |
+| `tools`           | Whitelist built-in/MCP tools                                 |
+| `disallowedTools` | Blacklist (applied on top of tools)                          |
+| `permissionMode`  | `default` / `ask` / `bypassPermissions`                      |
+| `mcpServers`      | Which MCP servers to start for this subagent                 |
+| `hooks`           | Inline hooks only for this subagent                          |
+| `maxTurns`        | Limit on agent loop iterations                               |
+| `skills`          | Additional skills available to the subagent                  |
+| `memory`          | `none` / `read-only` / `read-write` (access to CLAUDE.md)    |
+| `effort`          | `low` / `medium` / `high`                                    |
+| `background`      | Run in background (without blocking the main agent)          |
+| `isolation`       | `none` / `worktree` (create a git worktree copy of the repo) |
+| `initialPrompt`   | Additional message that harness adds to the prompt           |
 
 ---
 
@@ -233,7 +250,7 @@ flowchart LR
 
 ## 9.8. Economics of subagents
 
-⚠️ This is where beginners lose money.
+⚠️ This is where newcomers lose money.
 
 **Each subagent is a separate session with its own prefix.** It has:
 
@@ -327,7 +344,7 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 | `/agents`             | UI agent manager            |
 | `/agents create`      | Guide to creating a new one |
 | `/agents list`        | List with locations         |
-| `/agents test <name>` | Run agent on test prompt    |
+| `/agents test <name>` | Run agent on a test prompt  |
 
 ---
 
@@ -335,15 +352,15 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ❌ **Subagent for every task.** If the task is short (5-10 turns) — this is overspending. Subagent is justified when browse volume is large.
 
-❌ **Give all tools to subagent.** Waste of context and money. Give only what's really needed.
+❌ **Give all tools to the subagent.** Waste of context and money. Give only what's really needed.
 
 ❌ **Duplicating the main agent.** Making a `general-purpose` subagent with the same CLAUDE.md and MCP — that's just two instances of the same thing. Use only if you really need isolation.
 
-❌ **Subagent with `permissionMode: bypassPermissions` on opus.** If it breaks something — nothing will stop it.
+❌ **Subagent with `permissionMode: bypassPermissions` on opus.** If it breaks something — no one will stop it.
 
 ❌ **Ignoring `maxTurns`.** Without a limit, a subagent can get stuck in an infinite loop if it gets confused.
 
-❌ **Using subagents where you need an agent team.** If the task requires communication between executors — that's a team. See next chapter.
+❌ **Using subagents where you need an agent team.** If the task requires exchange between executors — that's a team. See the next chapter.
 
 ---
 

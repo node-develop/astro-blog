@@ -8,8 +8,28 @@ tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  MCP (Model Context Protocol) — "USB-C for AI integrations": write a server once, and it's consumed by Claude Code,
+  Claude Desktop, Cursor, Continue, custom SDK. Three transports (stdio, SSE, HTTP); exports tools, resources, prompts,
+  elicitation.
+faq:
+  - question: What transports does MCP support and which one to choose?
+    answer: >-
+      Three: stdio (harness launches server as child process — for local development), SSE (persistent connection with
+      streaming — for remote servers), HTTP (stateless request/response — for multi-tenant SaaS). Most servers use
+      stdio: simpler, faster, no network issues.
+  - question: What can an MCP server export besides tools?
+    answer: >-
+      Besides tools (functions that the model invokes) — resources (data that the model can read via URI like
+      config://app/settings), prompts (pre-configured templates, appear as slash-commands), elicitation
+      (server-initiated dialogs with the user). Claude Code consumes tools and resources most actively.
+  - question: How to test an MCP server locally?
+    answer: >-
+      The command claude mcp test <name> launches the server, performs initialize-handshake and outputs a list of
+      tools/resources. For a server in a repository, first run pnpm build, then add configuration to .mcp.json (stdio
+      type, command, args, env), and Claude Code will pick up the server on the next launch.
 lang: en
-sourceHash: cf04a2c6ce7eed842f57189e0db90e48b5f46aaab2df8af6eb82a3f0418f7771
+sourceHash: add5ed3610b67245a06832a3a0750be89a18fddb83820ea3f2706346dd9dbc70
 manuallyEdited: false
 ---
 
@@ -351,7 +371,7 @@ export async function runAgent(userMessage: string) {
 
 ## 6.8. Resources: reading data through MCP
 
-Besides tools, MCP can expose **resources** — static or dynamic data:
+In addition to tools, MCP can expose **resources** — static or dynamic data:
 
 ```typescript
 server.setRequestHandler(ListResourcesRequestSchema, async () => ({
@@ -391,7 +411,7 @@ In Claude Code, resources become available through `@`-mention in the prompt: `@
 ✅ Never connect MCP servers from untrusted sources. This is equivalent to `npm install random-package`.
 ✅ Use `.mcp.local.json` for servers with real keys (don't commit).
 ✅ For HTTP-MCP, verify TLS and Authorization.
-✅ Limit MCP scope with env variables — give only necessary secrets.
+✅ Limit MCP scope with environment variables — give only necessary secrets.
 ✅ For production — deploy MCP in separate processes/containers with minimal privileges.
 
 ❌ Don't use `npx <unknown-mcp-package>` without audit. This will execute foreign code in your environment.
@@ -402,7 +422,7 @@ In Claude Code, resources become available through `@`-mention in the prompt: `@
 
 A few commonly used ones:
 
-- **@modelcontextprotocol/server-filesystem** — directory access. Be careful with permissions!
+- **@modelcontextprotocol/server-filesystem** — access to directories. Be careful with permissions!
 - **@modelcontextprotocol/server-github** — issues, PRs, repos.
 - **@modelcontextprotocol/server-postgres** — read-only SQL.
 - **@modelcontextprotocol/server-puppeteer** — browser control.

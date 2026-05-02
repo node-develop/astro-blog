@@ -1,19 +1,39 @@
 ---
 title: 08. Tool calls and agent loop under the hood
 description: >-
-  Tool call is not a 'Claude Code feature', it's a fundamental mechanism that transforms the model from a chatbot into
-  an agent. Understanding the tool loop, you understand 80% of how any
+  Tool call — this is not a 'Claude Code feature', it's a fundamental mechanism that transforms a model from a chatbot
+  into an agent. Understanding the tool loop, you understand 80% of how any
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Tool call — a fundamental mechanism that transforms an LLM from a chatbot into an agent. The model returns not text,
+  but a tool_use block; the harness executes the call and returns tool_result. Understanding this cycle, you understand
+  80% of how any AI-agent works.
+faq:
+  - question: What does a tool_use block from the model look like?
+    answer: >-
+      It's JSON with stop_reason equal to tool_use, containing a tool_use block in content with a unique id, the tool
+      name, and input — parameters satisfying input_schema. Harness takes this block, executes the tool, and forms a
+      tool_result block with the same tool_use_id for the next dialogue step.
+  - question: What are permissions in Claude Code and how do they work?
+    answer: >-
+      Three levels: allow (execute without confirmation), ask (ask the user), deny (always forbidden, can't be bypassed
+      even in bypassPermissions). Permissions are configured in settings.json by matcher patterns — for example,
+      Bash(pnpm test*) or Edit(.env*). Deny is the final verdict.
+  - question: What does stop_reason mean in the model's response?
+    answer: >-
+      It's a marker indicating the reason for turn completion. Main values: end_turn (model responded and doesn't want
+      to do anything else), tool_use (model asks harness to execute a tool), max_tokens (hit the limit — output is
+      truncated), pause_turn (model paused itself for thinking). Harness responds to each value differently.
 lang: en
-sourceHash: 8c3e69ae3abed605e1dabef80de96bae18cb9c3d67da7e0ec3f4a7b35c52c565
+sourceHash: 864f33fe141c9a4719484bf94d703938bae702636a411759763e28dc6ddaca6f
 manuallyEdited: false
 ---
 
-> Tool call is not a "Claude Code feature," it's the fundamental mechanism that transforms a model from a chatbot into an agent. By understanding the tool loop, you understand 80% of how any AI agent works.
+> Tool call — this is not a "Claude Code feature", it's the fundamental mechanism that transforms a model from a chatbot into an agent. By understanding the tool loop, you understand 80% of how any AI agent works.
 
 ---
 
@@ -79,11 +99,11 @@ Harness (Claude Code in our case) sees this, executes `read_file`, and sends the
 }
 ```
 
-And so on until the model returns `stop_reason: "end_turn"` — that's its signal "done, you can respond to the user."
+And so on until the model returns `stop_reason: "end_turn"` — this is its signal "that's it, I'm done, you can respond to the user".
 
 ---
 
-## 8.2. Full agent loop in one diagram
+## 8.2. Full agent loop in one image
 
 ```mermaid
 sequenceDiagram
@@ -121,7 +141,7 @@ Important nuances:
 
 ## 8.3. What harness gives the model "for free" (built-in tools)
 
-Claude Code comes with preset tools (without MCP):
+Claude Code comes with pre-installed tools (without MCP):
 
 | Tool                      | What it does                                  |
 | ------------------------- | --------------------------------------------- |
@@ -160,7 +180,7 @@ Claude Code comes with preset tools (without MCP):
 
 ## 8.5. Permissions: how Claude Code decides "ask or not"
 
-Each tool has a permission level. By default, destructive ones (`Bash`, `Edit`, `Write`) prompt the user.
+Each tool has a permission level. By default, for destructive ones (`Bash`, `Edit`, `Write`) — the user is asked.
 
 📘 Config in `.claude/settings.json`:
 
@@ -184,7 +204,7 @@ Each tool has a permission level. By default, destructive ones (`Bash`, `Edit`, 
 
 `allow` / `ask` / `deny` — three types of decisions. You can use patterns (`*`, `**`).
 
-⚠️ `deny` is the final gate. Impossible to bypass even in `bypassPermissions` mode. This is your "red button."
+⚠️ `deny` is the final gate. It's impossible to bypass even in `bypassPermissions` mode. This is your "red button".
 
 `/permissions` — view/edit.
 
@@ -204,7 +224,7 @@ assistant.content = [
 
 Harness executes them **in parallel** (if they have no dependencies and don't conflict with permissions). This greatly speeds up the browse phase.
 
-💡 If your skill says "do steps sequentially" — the model will. But if there's no hard sequence, leave room for freedom — parallelism pays off.
+💡 If your skill says "do steps sequentially" — the model will do that. But if there's no hard sequence, leave room for freedom — parallelism pays off.
 
 ---
 
@@ -219,22 +239,22 @@ flowchart LR
   result --> r4["MCP search hotels<br/>~ 1k-10k if returns 10 objects"]
 ```
 
-Bad example: `Bash(cat huge.log)` → returns 80k lines → context is full. Good: `Bash(tail -200 huge.log)` or `Grep(pattern=..., path=huge.log)`.
+Bad example: `Bash(cat huge.log)` → returns 80k lines → entire context is filled. Good: `Bash(tail -200 huge.log)` or `Grep(pattern=..., path=huge.log)`.
 
-💡 Teach the model to be economical. In CLAUDE.md or skill: "When working with logs, use `tail`, `head`, `grep`, not `cat` entirely."
+💡 Teach the model to be economical. In CLAUDE.md or skill: "When working with logs, use `tail`, `head`, `grep`, not `cat` entirely".
 
 ---
 
-## 8.8. Timings and retry
+## 8.8. Timeouts and retry
 
 Harness keeps timeouts on each tool call. By default:
 
-- `Bash` — 2 minutes (can raise to 10).
-- `Read`, `Edit`, `Write` — instant (file operations).
+- `Bash` — 2 minutes (can be raised to 10).
+- `Read`, `Edit`, `Write` — instant (these are file operations).
 - `WebFetch`, `WebSearch` — a few seconds.
-- MCP tools — defined by server, but harness also imposes a limit.
+- MCP tools — defined by the server, but harness also imposes a limit.
 
-⚠️ If your MCP tool regularly exceeds timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with status "in progress, check later" and implement polling.
+⚠️ If your MCP tool regularly exceeds the timeout — the model will see an error and try again. This burns tokens. Better to explicitly return `tool_result` with status "in progress, check later" and implement polling.
 
 ---
 
@@ -265,7 +285,7 @@ const final = await stream.finalMessage();
 
 ## 8.10. What makes a good "agent" different from a bad one
 
-After all the above, an important practical takeaway:
+After everything above, here's an important practical takeaway:
 
 **Good agent:**
 
@@ -278,7 +298,7 @@ After all the above, an important practical takeaway:
 
 **Bad agent:**
 
-- 50 tools, half are duplicates.
+- 50 tools, half with duplicates.
 - Descriptions like "Helper for X".
 - One Read returns 200KB JSON.
 - System prompt: "You are a helper".

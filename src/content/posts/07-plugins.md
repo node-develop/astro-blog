@@ -4,6 +4,14 @@ description: "Plugin — это «npm package для Claude Code». Если у 
 pubDate: 2026-04-23
 tags: ["claude-code", "guide"]
 draft: false
+summary: "Plugin — npm-пакет для Claude Code: упаковка skills, hooks, subagents, slash-команд и MCP-конфига в одну версионируемую сущность. Манифест .claude-plugin/plugin.json, установка через /plugin install, маркетплейсы."
+faq:
+  - question: "Зачем нужны плагины, если можно просто закоммитить .claude/?"
+    answer: "Плагины решают проблему переиспользования между репозиториями и командами. Один источник истины, версионирование через семвер, обновление в один клик через /plugin update. Без плагинов вы копипастите .claude/ из проекта в проект и расходитесь по версиям."
+  - question: "Что входит в манифест plugin.json?"
+    answer: "Минимум: name, version (semver), description. Дополнительно — author, repository, claude_code_version (минимальная версия CLI), keywords, license. Этот файл — единственный обязательный артефакт; всё остальное (skills/, agents/, hooks/, .mcp.json) опционально и подхватывается harness'ом из стандартных директорий."
+  - question: "Можно ли публиковать плагины в публичный маркетплейс?"
+    answer: "Да. Существует публичный реестр и возможность держать приватные внутрикорпоративные маркетплейсы. Установка из публичного: /plugin install github:org/repo@v1.2.3. Для приватных — настраиваемый registry URL и аутентификация. Это лучше, чем git submodule."
 ---
 
 > Plugin — это «npm package для Claude Code». Если у вас несколько связанных артефактов (скиллы + hooks + агенты + MCP-конфиг), которыми хочется делиться между проектами или с командой — упакуйте в плагин.
