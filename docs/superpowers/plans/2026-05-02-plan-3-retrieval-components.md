@@ -1844,20 +1844,20 @@ We do TWO things:
 1. Translate `summary` and each `faq[].question` / `faq[].answer` as prose (use the existing `translateStrings` helper).
 2. Pass `keywords` and `lang` verbatim to the EN file.
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "translateFile", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: contained — only called by `translateAllPosts` which is called by `main`. LOW.
 
-- [ ] **Step 2:** Read `src/lib/content/frontmatter.ts` and confirm the `Frontmatter` interface needs to be extended for the new fields to round-trip.
+- [x] **Step 2:** Read `src/lib/content/frontmatter.ts` and confirm the `Frontmatter` interface needs to be extended for the new fields to round-trip.
 
 ```bash
 grep -A 20 "interface Frontmatter" src/lib/content/frontmatter.ts
 ```
 
-- [ ] **Step 3:** Extend `src/lib/content/frontmatter.ts`. Add to the `Frontmatter` interface:
+- [x] **Step 3:** Extend `src/lib/content/frontmatter.ts`. Add to the `Frontmatter` interface:
 
 ```ts
 readonly summary?: string;
@@ -1895,7 +1895,7 @@ In `serializeFrontmatter`, extend the dumped object:
 
 (Frontmatter is also used by `src/lib/content/post-io.ts`. The existing tests for that module must still pass — re-run them at Step 6.)
 
-- [ ] **Step 4:** Modify `scripts/translate.ts` (function `translateFile`):
+- [x] **Step 4:** Modify `scripts/translate.ts` (function `translateFile`):
 
   - In the `fmStrings` block (line ~123), add `summary` if present:
 
@@ -1968,7 +1968,7 @@ const obj: Record<string, unknown> = {
 };
 ```
 
-- [ ] **Step 5:** Write a unit test that smoke-checks the parser/serializer round-trip including the new fields. Create `scripts/translate.summary-faq.test.ts`:
+- [x] **Step 5:** Write a unit test that smoke-checks the parser/serializer round-trip including the new fields. Create `scripts/translate.summary-faq.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -2019,21 +2019,21 @@ describe("frontmatter round-trip — extended fields", () => {
 });
 ```
 
-- [ ] **Step 6:** Run the new test plus the existing frontmatter tests.
+- [x] **Step 6:** Run the new test plus the existing frontmatter tests.
 
 ```bash
 pnpm test src/lib/content/frontmatter.test.ts scripts/translate.summary-faq.test.ts src/lib/content/post-io.test.ts
 ```
 Expected: all pass — round-trip is lossless.
 
-- [ ] **Step 7:** Run the full test suite + typecheck.
+- [x] **Step 7:** Run the full test suite + typecheck.
 
 ```bash
 pnpm test && pnpm typecheck
 ```
 Expected: all green.
 
-- [ ] **Step 8:** Document the new fields in the script header comment.
+- [x] **Step 8:** Document the new fields in the script header comment.
 
 In `scripts/translate.ts`, add to the file-top comment (or create one) documenting that the script now translates `summary` and `faq[].question`/`faq[].answer`, and passes `keywords`/`lang` through verbatim. Example header (lines 1-5):
 
@@ -2045,7 +2045,7 @@ In `scripts/translate.ts`, add to the file-top comment (or create one) documenti
 // i18n string catalog avoids re-translating unchanged values.
 ```
 
-- [ ] **Step 9:** Commit.
+- [x] **Step 9:** Commit.
 
 ```bash
 git add src/lib/content/frontmatter.ts scripts/translate.ts scripts/translate.summary-faq.test.ts
