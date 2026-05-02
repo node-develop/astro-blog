@@ -56,6 +56,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          build-args: |
+            SITE_URL=https://artka.dev
 
       - name: Trigger Dokploy deploy
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -13,7 +13,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-const SITE_URL = process.env.SITE_URL ?? "http://localhost:4321";
+const SITE_URL = process.env.SITE_URL ?? "https://artka.dev";
 
 // Structural Vite plugin type. We avoid importing from `vite` directly
 // because it is not a top-level dependency — only Astro pulls it in
@@ -94,6 +94,8 @@ export default defineConfig({
         defaultLocale: "ru",
         locales: { ru: "ru-RU", en: "en-US" },
       },
+      filter: (page) =>
+        !page.includes("/admin/") && !page.includes("/login/") && !page.includes("/api/"),
     }),
     react(),
   ],

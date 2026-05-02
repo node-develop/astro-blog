@@ -16,6 +16,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # ---------- builder ----------
 FROM base AS builder
+ARG SITE_URL=https://artka.dev
+ENV SITE_URL=$SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Playwright (для rehype-mermaid) тянет headless chromium на этапе билда
