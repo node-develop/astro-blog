@@ -52,7 +52,7 @@ faq:
       you're on Vercel/Netlify free tier with build-minute limits, and +10 seconds per build matters more than +700 KB
       of JS for the user. In all other cases, build-time wins.
 lang: en
-sourceHash: cb6fa42d7c7cb7c9f4da6ebadeb1c94f9de713aebe71a57028a0c953ca68db64
+sourceHash: 57c09d48396659c5f2b65ef36d427cc824445571f79bb38c4dcafdfea1206881
 manuallyEdited: false
 ---
 
@@ -71,7 +71,7 @@ It works, but the user pays the price:
 | JS bundle (gzipped)       | ~250–300 KB (mermaid + d3 + dagre) | 0 KB                                   |
 | Time to Interactive (TTI) | delayed by parse + execute         | unchanged                              |
 | FOUC                      | yes: text first, then SVG          | no: SVG in HTML from first byte        |
-| SEO / Open Graph          | search engine sees only DSL text   | search engine sees SVG as part of page |
+| SEO / Open Graph          | search engine sees only text DSL   | search engine sees SVG as part of page |
 | Page printing             | empty blocks if JS is disabled     | correct render                         |
 | Dark theme without flash  | hard: theme loads after hydration  | works: SVG generated in correct theme  |
 | Build cost                | 0 (just bundle js)                 | +5–10 seconds cold-start Playwright    |
@@ -79,7 +79,7 @@ It works, but the user pays the price:
 
 `rehype-mermaid` (`remcohaszing/rehype-mermaid`, v3.0.0) is a rehype plugin that during the build traverses the HAST tree, finds `<code class="language-mermaid">` nodes, renders them via `mermaid-isomorphic` (`mermaid-isomorphic@3.1.0`), and replaces them with ready SVG. Under the hood: Playwright + headless Chromium.
 
-The `img-svg` strategy we use emits the result as `<img src="data:image/svg+xml,...">`. Alternatives are `inline-svg` (embed SVG directly in HTML) or `pre-mermaid` (leave as-is for client-side rendering).
+The `img-svg` strategy we use emits the result as `<img src="data:image/svg+xml,...">`. Alternatives are `inline-svg` (embed SVG directly in HTML) or `pre-mermaid` (leave as-is for client-side render).
 
 ---
 
@@ -164,7 +164,7 @@ On a warm build, Playwright still starts fresh (there's no long-lived process po
 
 Key fact: **`mermaid-isomorphic` itself does NOT cache SVG between builds**. I searched its source code (`node_modules/.pnpm/mermaid-isomorphic@3.1.0_playwright@1.59.1/.../mermaid-isomorphic.js`) — there's no `persistDir` or file-based cache. Every build, diagrams are rendered from scratch. "Warmth" is Astro/Vite cache, not the plugin's.
 
-> CI measurement for GitHub Actions `ubuntu-latest` `(owner to fill: run workflow_dispatch on clean runner, measure median from 3 runs with `actions/cache@v4` for node_modules + .astro)`.
+> CI measurement for GitHub Actions `ubuntu-latest` `(owner to fill: run workflow_dispatch on a clean runner, measure median from 3 runs with `actions/cache@v4` for node_modules + .astro)`.
 
 ---
 
@@ -223,7 +223,7 @@ Where everything lives:
 - **Vite cache** — `node_modules/.astro/` (5.1 MB). Transpiled TS/JSX modules, unrelated to mermaid rendering.
 - **mermaid-isomorphic has no cache of its own.** This is the key pitfall: if you change a comma in one `*.md` — rehype-mermaid will rebuild ALL diagrams in that file. There's no content-addressable cache "hash diagram source → SVG".
 
-If rehype-mermaid caching is critical for you — a workaround: write a thin rehype plugin wrapper that hashes the diagram source (sha256 of text between ` ```mermaid` and ` ``` `), checks `.cache/mermaid/<hash>.svg` — and returns it without calling `mermaid-isomorphic` on a hit. I haven't done this on this blog — 11.6 seconds cold-start isn't painful enough.
+If rehype-mermaid caching is critical for you — a workaround: write a thin rehype plugin wrapper that hashes the diagram source (sha256 of text between ` ```mermaid` and ` ``` `), checks `.cache/mermaid/<hash>.svg` — and returns it without calling `mermaid-isomorphic` on hit. I haven't done this on this blog — 11.6 seconds cold-start isn't painful enough.
 
 ---
 
@@ -249,22 +249,22 @@ Downsides already covered above: bundle, FOUC, hydration. One upside — dynamic
 
 The same package that rehype-mermaid calls under the hood. You can use it outside Astro: `import { createMermaidRenderer } from 'mermaid-isomorphic'; const renderer = createMermaidRenderer(); const [{ svg }] = await renderer([{ value: 'flowchart TD\nA-->B' }]);`.
 
-When it fits: your own build pipeline (Eleventy, MkDocs plugin on Node.js) that doesn't use a rehype chain. For me — Astro, so rehype-mermaid gives zero-boilerplate.
+When it fits: your own pipeline build (Eleventy, MkDocs plugin on Node.js) that doesn't use a rehype chain. For me — Astro, so rehype-mermaid gives zero-boilerplate.
 
 ### 6.4. Pre-render via GitHub Actions matrix + commit back
 
-Hypothetically: workflow on push that renders SVG, commits to `public/diagrams/`, and the build step uses `pre-mermaid` strategy with replacement to `<img src="/diagrams/<hash>.svg">`. Removes Playwright from the hot build path, but: complicates PR review (binary files in diff), requires separate workflow, breaks local `pnpm dev` if SVG isn't committed yet.
+Hypothetically: workflow on push that renders SVG, commits to `public/diagrams/`, and in the build step use `pre-mermaid` strategy with replacement to `<img src="/diagrams/<hash>.svg">`. Removes Playwright from the hot build path, but: complicates PR review (binary files in diff), requires separate workflow, breaks local `pnpm dev` if SVG isn't committed yet.
 
 Didn't do it — 5 seconds of cold-start savings don't justify the complexity.
 
 ### Summary table
 
-| Variant                                 | Cold-start                      | SVG cache     | JS bundle | Setup complexity |
-| --------------------------------------- | ------------------------------- | ------------- | --------- | ---------------- |
-| `rehype-mermaid` + Playwright (current) | ~5–6s                           | no            | 0         | low (1 plugin)   |
-| `mermaid-cli` (`mmdc`)                  | ~10s+                           | no            | 0         | medium           |
-| Client-side `mermaid`                   | 0                               | browser cache | ~250 KB   | low              |
-| Pre-render + commit                     | 0 in build, but ~5s in pre-step | yes, in git   | 0         | high             |
+| Option                                  | Cold-start                  | SVG cache     | Bundle JS | Setup complexity |
+| --------------------------------------- | --------------------------- | ------------- | --------- | ---------------- |
+| `rehype-mermaid` + Playwright (current) | ~5–6s                       | no            | 0         | low (1 plugin)   |
+| `mermaid-cli` (`mmdc`)                  | ~10s+                       | no            | 0         | medium           |
+| Client-side `mermaid`                   | 0                           | browser cache | ~250 KB   | low              |
+| Pre-render + commit                     | 0 in build, ~5s in pre-step | yes, in git   | 0         | high             |
 
 ---
 
@@ -272,10 +272,10 @@ Didn't do it — 5 seconds of cold-start savings don't justify the complexity.
 
 Before committing to build-time rendering or anything else:
 
-1. **How many diagrams on average.** On 1–3 — client-side is OK (lazy-load mermaid via dynamic import). On 30+ — build-time is cheaper for the user.
-2. **Frequency of edits.** If you edit content 5 times a day — cold-start 11 seconds × 50 pushes = ~10 minutes of CI time per day. If once a week — doesn't matter.
+1. **How many diagrams on average.** On 1–3 — client-side OK (lazy-load mermaid via dynamic import). On 30+ — build-time is cheaper for the user.
+2. **Content edit frequency.** If you edit content 5 times a day — cold-start 11 seconds × 50 pushes = ~10 minutes of CI time per day. If once a week — doesn't matter.
 3. **CI platform.** Vercel hobby, Netlify free, Cloudflare Pages — all have build minute limits. Playwright + Chromium on every PR preview = you'll hit limits fast. On self-hosted runner or Dokploy (like me) — doesn't matter.
-4. **Target JS bundle size.** If your project has a KPI of "<100 KB initial JS" — 250 KB mermaid client-side breaks the budget. Build-time SVG doesn't touch the JS budget.
+4. **Target JS bundle size.** If your project has KPI "<100 KB initial JS" — 250 KB mermaid client-side breaks the budget. Build-time SVG doesn't touch the JS budget.
 5. **Do you need interactivity.** Pan/zoom/click handlers in the diagram? Then client-side is mandatory. Static picture for reading? Build-time.
 6. **Where your cold-start cost lives.** If runtime Docker — cut Playwright from the run stage. If CI — cache Chromium via `actions/cache`.
 7. **Can you live with no SVG cache.** rehype-mermaid renders ALL blocks in a file on any edit. If that hurts — write your own caching wrapper with sha256 key on diagram source.
@@ -288,4 +288,4 @@ On this blog, `rehype-mermaid` + Playwright costs ~5 seconds cold-start, outputs
 
 When it won't fit: a blog with a hundred diagrams, deploy platform with build-minute limits, or requirement for interactive diagrams. In the first case — write a caching wrapper, in the second — pre-render in a separate workflow, in the third — client-side.
 
-The main non-obvious thing to remember: **Astro "warms up" (5.2 MB content store, Vite cache), but `mermaid-isomorphic` doesn't**. Playwright cold-start is paid on every build from scratch. This isn't a bug, it's by-design — and it's why my full build takes 11.6 seconds instead of 1.6.
+The main non-obvious thing to remember: **Astro "warms up" (5.2 MB content store, Vite cache), but `mermaid-isomorphic` doesn't**. Cold-start Playwright is paid on every build from scratch. This isn't a bug, it's by-design — and it's why my full build takes 11.6 seconds instead of 1.6.
