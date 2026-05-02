@@ -1078,7 +1078,7 @@ The `@astrojs/sitemap` integration auto-discovers all prerendered routes (its `f
 
 This test uses `vi.beforeAll` to require a build artifact. To avoid forcing every Vitest run to do a full build, we make it skip gracefully when `dist/client/sitemap-index.xml` is missing — and document that the CI pipeline already runs `pnpm build` before `pnpm test` in the deploy workflow. Local devs run `pnpm build && pnpm test tests/unit/seo/sitemap-coverage.test.ts` to validate.
 
-- [ ] **Step 1: Confirm the sitemap config does NOT need changes.**
+- [x] **Step 1: Confirm the sitemap config does NOT need changes.**
 
 ```bash
 grep -n "filter:" astro.config.ts
@@ -1086,7 +1086,7 @@ grep -n "filter:" astro.config.ts
 
 Expected: the existing filter only excludes `/admin/`, `/login/`, `/api/`. `/tags`, `/tags/<slug>`, `/about`, `/now`, `/uses`, `/projects` and their `/en/...` variants are not excluded — they will appear in the sitemap automatically.
 
-- [ ] **Step 2: Write the failing-or-skipped test.**
+- [x] **Step 2: Write the failing-or-skipped test.**
 
 Create `tests/unit/seo/sitemap-coverage.test.ts`:
 
@@ -1158,7 +1158,7 @@ describe("sitemap coverage", () => {
 });
 ```
 
-- [ ] **Step 3: Build and run the test.**
+- [x] **Step 3: Build and run the test.**
 
 ```bash
 pnpm build && pnpm test tests/unit/seo/sitemap-coverage.test.ts
@@ -1168,7 +1168,7 @@ Expected: PASS — all 4 assertions green.
 
 If the "entity pages" assertion fails because a particular Plan 2 page hasn't shipped (e.g. `/projects` postponed), comment that one assertion with a TODO referencing Plan 2 and re-run.
 
-- [ ] **Step 4: Commit.**
+- [x] **Step 4: Commit.**
 
 ```bash
 git add tests/unit/seo/sitemap-coverage.test.ts
@@ -1187,7 +1187,7 @@ git commit -m "test(seo): assert sitemap covers tag pages and entity pages"
 
 - Modify: `CLAUDE.md` (one-line note about the new helper module — only if a corresponding pointer block exists; otherwise skip without stalling).
 
-- [ ] **Step 1: Full build and preview smoke check.**
+- [x] **Step 1: Full build and preview smoke check.**
 
 ```bash
 pnpm build && pnpm preview
@@ -1195,7 +1195,7 @@ pnpm build && pnpm preview
 
 Expected: 0 build errors. In another shell, hit `/tags`, `/en/tags`, `/tags/claude-code`, `/en/tags/claude-code`, `/blog`, and `/blog/01-introduction` and confirm: chips are anchors; `/blog/01-introduction` has exactly one `<h1>` (the layout title, no duplicate body h1). Stop preview.
 
-- [ ] **Step 2: Static-output assertions.**
+- [x] **Step 2: Static-output assertions.**
 
 ```bash
 # Single h1 per post page
