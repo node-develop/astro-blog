@@ -4,6 +4,14 @@ description: "Tool call — это не «фича Claude Code», это фун�
 pubDate: 2026-04-23
 tags: ["claude-code", "guide"]
 draft: false
+summary: "Tool call — фундаментальный механизм, превращающий LLM из чат-бота в агента. Модель возвращает не текст, а tool_use block; harness исполняет вызов и возвращает tool_result. Поняв этот цикл, вы понимаете 80% работы любого AI-агента."
+faq:
+  - question: "Как выглядит tool_use block от модели?"
+    answer: "Это JSON со stop_reason равным tool_use, в content которого есть блок типа tool_use с уникальным id, name инструмента и input — параметрами, удовлетворяющими input_schema. Harness берёт этот блок, исполняет инструмент, и формирует tool_result block с тем же tool_use_id для следующего шага диалога."
+  - question: "Что такое permissions в Claude Code и как они устроены?"
+    answer: "Три уровня: allow (выполнять без подтверждения), ask (спросить у пользователя), deny (запрещено всегда, нельзя обойти даже в bypassPermissions). Permissions конфигурируются в settings.json по matcher-паттернам — например, Bash(pnpm test*) или Edit(.env*). Deny — финальный приговор."
+  - question: "Что значит stop_reason в ответе модели?"
+    answer: "Это маркер причины завершения хода. Основные значения: end_turn (модель ответила и не хочет ничего больше делать), tool_use (модель просит harness исполнить инструмент), max_tokens (упёрлись в лимит — output обрезан), pause_turn (модель сама взяла паузу для thinking). Harness реагирует на каждое значение по-своему."
 ---
 
 > Tool call — это не «фича Claude Code», это фундаментальный механизм, благодаря которому модель из чат-бота превращается в агента. Понимая tool loop, вы понимаете 80% того, как работает любой AI-агент.
