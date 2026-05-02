@@ -318,5 +318,23 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
       color: var(--color-fg-muted);
       line-height: var(--lh-normal);
     }
+    @media (max-width: 600px) {
+      .post__title {
+        font-size: var(--fs-3xl); /* down from --fs-4xl */
+        line-height: var(--lh-snug);
+      }
+      .post__lede {
+        font-size: var(--fs-base); /* down from --fs-lg */
+      }
+      .post__header {
+        margin-bottom: var(--space-5);
+        padding-bottom: var(--space-4);
+      }
+    }
+    @media (max-width: 414px) {
+      .post__title {
+        font-size: var(--fs-2xl);
+      }
+    }
   </style>
 </BaseLayout>
