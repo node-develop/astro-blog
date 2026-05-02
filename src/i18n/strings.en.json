@@ -54,5 +54,15 @@
   "authorCard.viewProfile": "Author profile →",
   "authorCard.viewProjects": "Projects →",
   "authorCard.role": "Backend & AI agent engineer",
-  "post.related": "Related posts"
+  "post.related": "Related posts",
+  "tags.title": "Topics",
+  "tags.description": "All tags that catalogue posts on this blog.",
+  "tags.eyebrow": "Index",
+  "tags.empty": "No tags yet.",
+  "tags.postsCountAria": "{count} posts tagged \"{label}\"",
+  "tags.archiveTitle": "Tag: {label}",
+  "tags.archiveDescription": "All blog posts tagged \"{label}\".",
+  "tags.archiveEmptyRu": "No posts in the Russian edition use this tag yet.",
+  "tags.archiveEmptyEn": "No posts in the English edition use this tag yet.",
+  "tags.backToIndex": "All topics"
 }
