@@ -1087,14 +1087,14 @@ git commit -m "feat(seo): buildGraph orchestrator unifies @graph with extra page
 **Files:**
 - Modify: `src/layouts/BaseLayout.astro:1-106`
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "BaseLayout", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: HIGH risk — layout is used by `index.astro`, `about.astro`, `search.astro`, `login.astro`, `blog/index.astro`, `PostLayout.astro`, all `/en/*` siblings. Confirm before proceeding.
 
-- [ ] **Step 2:** Replace inline schema in `src/layouts/BaseLayout.astro`.
+- [x] **Step 2:** Replace inline schema in `src/layouts/BaseLayout.astro`.
 
 Open `src/layouts/BaseLayout.astro`. Make these edits:
 
@@ -1155,21 +1155,21 @@ const {
     />
 ```
 
-- [ ] **Step 3:** Run typecheck.
+- [x] **Step 3:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors.
 
-- [ ] **Step 4:** Run unit tests.
+- [x] **Step 4:** Run unit tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass — no test depends on BaseLayout shape.
 
-- [ ] **Step 5:** Verify the rendered HTML contains the expected graph.
+- [x] **Step 5:** Verify the rendered HTML contains the expected graph.
 
 ```bash
 pnpm dev
@@ -1182,14 +1182,14 @@ curl -s http://localhost:4321/ | grep -A 1 'application/ld+json'
 ```
 Expected: a single `<script type="application/ld+json">` block whose JSON contains `"@graph"` with three nodes (Person, Organization, WebSite). Stop the dev server.
 
-- [ ] **Step 6:** Detect changes scope.
+- [x] **Step 6:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: `BaseLayout` only.
 
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add src/layouts/BaseLayout.astro
@@ -1203,14 +1203,14 @@ git commit -m "feat(seo): emit single @graph from BaseLayout via buildGraph"
 **Files:**
 - Modify: `src/layouts/PostLayout.astro:1-115`
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: MEDIUM — used by `src/pages/blog/[...slug].astro` and `src/pages/en/blog/[...slug].astro`.
 
-- [ ] **Step 2:** Rewrite the frontmatter section of `src/layouts/PostLayout.astro` (lines 1-95). Replace it with:
+- [x] **Step 2:** Rewrite the frontmatter section of `src/layouts/PostLayout.astro` (lines 1-95). Replace it with:
 
 ```astro
 ---
@@ -1283,7 +1283,7 @@ const breadcrumbNode: GraphNode = buildBreadcrumbListNode({
 ---
 ```
 
-- [ ] **Step 3:** Update the `<BaseLayout>` invocation block (lines 98-111). Replace it with:
+- [x] **Step 3:** Update the `<BaseLayout>` invocation block (lines 98-111). Replace it with:
 
 ```astro
 <BaseLayout
@@ -1303,21 +1303,21 @@ const breadcrumbNode: GraphNode = buildBreadcrumbListNode({
 
 (The two `<script is:inline type="application/ld+json">` lines that previously sat in the head slot are now removed — the graph is emitted by BaseLayout.)
 
-- [ ] **Step 4:** Run typecheck.
+- [x] **Step 4:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors.
 
-- [ ] **Step 5:** Run all tests.
+- [x] **Step 5:** Run all tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 6:** Manual smoke check.
+- [x] **Step 6:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -1335,7 +1335,7 @@ curl -s http://localhost:4321/blog/01-introduction | python3 -c "import sys, re,
 ```
 Expected: a list including `Person`, `Organization`, `WebSite`, `BlogPosting`, `BreadcrumbList`. Stop the dev server.
 
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add src/layouts/PostLayout.astro
@@ -1350,14 +1350,14 @@ git commit -m "feat(seo): emit BlogPosting and BreadcrumbList through BaseLayout
 - Modify: `src/pages/blog/index.astro:1-15`
 - Modify: `src/pages/en/blog/index.astro` (mirror change)
 
-- [ ] **Step 1:** Inspect both files.
+- [x] **Step 1:** Inspect both files.
 
 ```bash
 ls src/pages/blog/index.astro src/pages/en/blog/index.astro
 ```
 Confirm both exist.
 
-- [ ] **Step 2:** Modify `src/pages/blog/index.astro` frontmatter (replace lines 1-14):
+- [x] **Step 2:** Modify `src/pages/blog/index.astro` frontmatter (replace lines 1-14):
 
 ```astro
 ---
@@ -1379,7 +1379,7 @@ const blogNode = buildBlogNode(locale);
 ---
 ```
 
-- [ ] **Step 3:** Update the `<BaseLayout>` opening tag (line 17-21):
+- [x] **Step 3:** Update the `<BaseLayout>` opening tag (line 17-21):
 
 ```astro
 <BaseLayout
@@ -1390,23 +1390,23 @@ const blogNode = buildBlogNode(locale);
 >
 ```
 
-- [ ] **Step 4:** Apply the **same two edits** to `src/pages/en/blog/index.astro` (the EN sibling has identical structure; verify by reading the file before editing).
+- [x] **Step 4:** Apply the **same two edits** to `src/pages/en/blog/index.astro` (the EN sibling has identical structure; verify by reading the file before editing).
 
-- [ ] **Step 5:** Run typecheck.
+- [x] **Step 5:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors.
 
-- [ ] **Step 6:** Run tests.
+- [x] **Step 6:** Run tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 7:** Manual smoke check.
+- [x] **Step 7:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -1417,7 +1417,7 @@ curl -s http://localhost:4321/blog | python3 -c "import sys, re, json; m = re.se
 ```
 Expected: list contains `Blog` alongside `Person`, `Organization`, `WebSite`. Stop dev server.
 
-- [ ] **Step 8:** Commit.
+- [x] **Step 8:** Commit.
 
 ```bash
 git add src/pages/blog/index.astro src/pages/en/blog/index.astro
