@@ -29,4 +29,24 @@ const site = defineCollection({
   }),
 });
 
-export const collections = { posts, site };
+const projects = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/projects" }),
+  schema: z.object({
+    title: z.string().min(3).max(120),
+    description: z.string().min(10).max(200),
+    role: z.string().min(2).max(80),
+    status: z.enum(["active", "maintained", "archived"]),
+    pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    stack: z.array(z.string()).default([]),
+    outcomes: z.array(z.string()).default([]),
+    links: z.array(z.object({ label: z.string().min(2), url: z.string().url() })).default([]),
+    cover: z.string().optional(),
+    coverAlt: z.string().optional(),
+    featured: z.boolean().default(false),
+    sourceHash: z.string().optional(),
+    manuallyEdited: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts, site, projects };
