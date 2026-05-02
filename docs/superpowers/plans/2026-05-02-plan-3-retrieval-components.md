@@ -69,14 +69,14 @@ pnpm install
 
 **Files:** none (read-only)
 
-- [ ] **Step 1:** Confirm a clean working tree.
+- [x] **Step 1:** Confirm a clean working tree.
 
 ```bash
 git status
 ```
 Expected: `nothing to commit, working tree clean`. If `.gitignore` is dirty from a prior session that's OK; otherwise stash first.
 
-- [ ] **Step 2:** Confirm Plan 1 + Plan 2 prerequisites are merged.
+- [x] **Step 2:** Confirm Plan 1 + Plan 2 prerequisites are merged.
 
 ```bash
 test -f src/lib/seo/schema.ts && echo "seo: OK" || echo "seo: MISSING"
@@ -86,7 +86,7 @@ grep -q "extractArticleBody" src/layouts/PostLayout.astro && echo "postlayout: O
 ```
 Expected: four `OK` lines. If anything reports `MISSING`, STOP and merge Plans 1 and 2 first.
 
-- [ ] **Step 3:** Run gitnexus impact analysis on the load-bearing symbols this plan touches.
+- [x] **Step 3:** Run gitnexus impact analysis on the load-bearing symbols this plan touches.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -99,7 +99,7 @@ Expected:
 - `buildFaqPageNode` — LOW (currently only used by tests; this plan adds the first call site).
 - `collections` (in `src/content.config.ts`) — HIGH (every page that reads `getCollection("posts")` depends on the schema). Note the call sites in the PR description.
 
-- [ ] **Step 4:** Run baseline checks to confirm a green start.
+- [x] **Step 4:** Run baseline checks to confirm a green start.
 
 ```bash
 pnpm typecheck && pnpm test && pnpm lint
@@ -118,14 +118,14 @@ Expected: all pass.
 - Modify: `src/content.config.ts`
 - Create: `tests/unit/content/schema.test.ts`
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "collections", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: HIGH risk; capture every consumer of `getCollection("posts")` in your notes. Existing posts must continue to validate after this change — back-compat is enforced by `.optional()` on every new field.
 
-- [ ] **Step 2:** Write the failing test.
+- [x] **Step 2:** Write the failing test.
 
 Create `tests/unit/content/schema.test.ts`:
 
@@ -225,7 +225,7 @@ describe("post schema — required fields after cutoff", () => {
 });
 ```
 
-- [ ] **Step 3:** Run the test to verify it passes already (back-compat assertions are green; no fresh post exists yet).
+- [x] **Step 3:** Run the test to verify it passes already (back-compat assertions are green; no fresh post exists yet).
 
 ```bash
 pnpm test tests/unit/content/schema.test.ts
@@ -234,7 +234,7 @@ Expected: PASS — old posts have no summary (allowed); no fresh posts with `pub
 
 (The "fresh post needs summary" guard is dormant until the next post is published. That's correct: this test enforces forward, not historical, invariants.)
 
-- [ ] **Step 4:** Modify `src/content.config.ts` to add the new fields.
+- [x] **Step 4:** Modify `src/content.config.ts` to add the new fields.
 
 Replace the entire file with:
 
@@ -294,28 +294,28 @@ const site = defineCollection({
 export const collections = { posts, site };
 ```
 
-- [ ] **Step 5:** Sync types and re-typecheck.
+- [x] **Step 5:** Sync types and re-typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. Astro regenerates `.astro/content.d.ts` so `CollectionEntry<"posts">` now exposes `summary?: string`, `keywords: readonly string[]`, `faq?: Array<{question: string; answer: string}>`, `lang?: "ru" | "en"`.
 
-- [ ] **Step 6:** Run the schema test and the full suite.
+- [x] **Step 6:** Run the schema test and the full suite.
 
 ```bash
 pnpm test tests/unit/content/schema.test.ts && pnpm test
 ```
 Expected: PASS — all green, including the existing 14 RU + 14 EN posts.
 
-- [ ] **Step 7:** Detect changes scope.
+- [x] **Step 7:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: `src/content.config.ts` and the new test file only.
 
-- [ ] **Step 8:** Commit.
+- [x] **Step 8:** Commit.
 
 ```bash
 git add src/content.config.ts tests/unit/content/schema.test.ts
