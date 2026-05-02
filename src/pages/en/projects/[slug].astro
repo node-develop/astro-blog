@@ -1,0 +1,230 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import SiteSidebar from "~/components/SiteSidebar.astro";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t, type Locale } from "~/i18n";
+import { buildCreativeWorkNode, buildBreadcrumbListNode, type GraphNode } from "~/lib/seo/schema";
+
+type Project = CollectionEntry<"projects">;
+
+export async function getStaticPaths() {
+  const all: Project[] = await getCollection("projects", (e: Project) => e.id.startsWith("en/"));
+  return all.map((entry: Project) => ({
+    params: { slug: entry.id.replace(/^en\//, "").replace(/\.md$/, "") },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: Project;
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const locale: Locale = getLocaleFromPath(Astro.url.pathname);
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+
+const creativeWorkNode: GraphNode = buildCreativeWorkNode({
+  locale,
+  canonical,
+  name: entry.data.title,
+  description: entry.data.description,
+  role: entry.data.role,
+  datePublished: entry.data.pubDate,
+  ...(entry.data.updatedDate ? { dateModified: entry.data.updatedDate } : {}),
+  keywords: entry.data.stack,
+  url: canonical,
+}) as GraphNode;
+
+const breadcrumbNode: GraphNode = buildBreadcrumbListNode({
+  locale,
+  blogIndexLabel: t(locale, "projects.title"),
+  title: entry.data.title,
+});
+
+const statusLabel = t(locale, `projects.status.${entry.data.status}` as Parameters<typeof t>[1]);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  extraSchemaNodes={[creativeWorkNode, breadcrumbNode]}
+>
+  <SiteSidebar slot="sidebar" />
+
+  <article class="project">
+    <header class="project__header">
+      <p class="project__eyebrow">
+        <span>{t(locale, "projects.eyebrow")}</span>
+        <span aria-hidden="true">·</span>
+        <span class={`project__status project__status--${entry.data.status}`}>{statusLabel}</span>
+      </p>
+      <h1 class="project__title">{entry.data.title}</h1>
+      <p class="project__lede">{entry.data.description}</p>
+      <dl class="project__meta">
+        <dt>{t(locale, "projects.role")}</dt>
+        <dd>{entry.data.role}</dd>
+      </dl>
+    </header>
+
+    <section class="project__sidecar">
+      {
+        entry.data.stack.length > 0 && (
+          <div class="project__sidecar-block">
+            <h2 class="project__sidecar-label">{t(locale, "projects.stack")}</h2>
+            <ul class="project__chips">
+              {entry.data.stack.map((tech: string) => (
+                <li class="project__chip">{tech}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+      {
+        entry.data.outcomes.length > 0 && (
+          <div class="project__sidecar-block">
+            <h2 class="project__sidecar-label">{t(locale, "projects.outcomes")}</h2>
+            <ul class="project__outcomes">
+              {entry.data.outcomes.map((o: string) => (
+                <li>{o}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+      {
+        entry.data.links.length > 0 && (
+          <div class="project__sidecar-block">
+            <h2 class="project__sidecar-label">{t(locale, "projects.links")}</h2>
+            <ul class="project__links">
+              {entry.data.links.map((l: { label: string; url: string }) => (
+                <li>
+                  <a href={l.url} target="_blank" rel="noopener noreferrer">
+                    {l.label} →
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </section>
+
+    <div class="project__body prose"><Content /></div>
+  </article>
+
+  <style>
+    .project {
+      max-width: 720px;
+    }
+    .project__header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .project__eyebrow {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-3) 0;
+    }
+    .project__status {
+      color: var(--color-fg-muted);
+    }
+    .project__status--active {
+      color: var(--color-accent);
+    }
+    .project__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-4xl);
+      line-height: var(--lh-tight);
+      font-weight: 500;
+      margin: 0 0 var(--space-3) 0;
+      color: var(--color-fg);
+    }
+    .project__lede {
+      font-family: var(--font-sans);
+      font-size: var(--fs-lg);
+      line-height: var(--lh-normal);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-4) 0;
+    }
+    .project__meta {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: var(--space-2) var(--space-3);
+      font-size: var(--fs-sm);
+      margin: 0;
+    }
+    .project__meta dt {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+    }
+    .project__meta dd {
+      margin: 0;
+      color: var(--color-fg);
+    }
+    .project__sidecar {
+      display: grid;
+      gap: var(--space-5);
+      margin: 0 0 var(--space-7) 0;
+      padding: var(--space-5);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-elevated);
+    }
+    .project__sidecar-label {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-subtle);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .project__chips {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .project__chip {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-fg-muted);
+      padding: 2px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+    }
+    .project__outcomes {
+      margin: 0;
+      padding-left: var(--space-4);
+      color: var(--color-fg);
+      line-height: var(--lh-normal);
+    }
+    .project__outcomes li + li {
+      margin-top: var(--space-2);
+    }
+    .project__links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+    .project__links a {
+      color: var(--color-accent);
+    }
+  </style>
+</BaseLayout>
