@@ -2151,14 +2151,14 @@ git commit -m "feat(layout): render AuthorCard at the bottom of every post"
 **Subagent:** `frontender`.
 **Files:** modify `src/components/Header.astro`, `src/i18n/strings.ru.json`.
 
-- [ ] **Step 1: Read current Header**
+- [x] **Step 1: Read current Header**
 
 ```bash
 cat src/components/Header.astro
 ```
 Note the link list pattern (array of `{label, href}` or inline JSX `<a>` tags).
 
-- [ ] **Step 2: Add 3 i18n keys to `src/i18n/strings.ru.json`** (near existing `nav.*`):
+- [x] **Step 2: Add 3 i18n keys to `src/i18n/strings.ru.json`** (near existing `nav.*`):
 
 ```json
   "nav.now": "Сейчас",
@@ -2166,18 +2166,18 @@ Note the link list pattern (array of `{label, href}` or inline JSX `<a>` tags).
   "nav.projects": "Проекты"
 ```
 
-- [ ] **Step 3: Translate** (`pnpm translate` → `[strings] translating 3 key(s)`).
+- [x] **Step 3: Translate** (`pnpm translate` → `[strings] translating 3 key(s)`).
 
-- [ ] **Step 4: Modify `src/components/Header.astro`** — add three locale-aware nav items between `nav.about` and `nav.search`:
+- [x] **Step 4: Modify `src/components/Header.astro`** — add three locale-aware nav items between `nav.about` and `nav.search`:
 - `locale === "en" ? "/en/now" : "/now"` with label `t(locale, "nav.now")`
 - `locale === "en" ? "/en/uses" : "/uses"` with label `t(locale, "nav.uses")`
 - `locale === "en" ? "/en/projects" : "/projects"` with label `t(locale, "nav.projects")`
 
 Mirror Header's existing pattern exactly — if it uses an array `links`, extend the array; if inline `<a>` tags, add three more inline.
 
-- [ ] **Step 5: Run typecheck and tests** (`pnpm typecheck && pnpm test`).
+- [x] **Step 5: Run typecheck and tests** (`pnpm typecheck && pnpm test`).
 
-- [ ] **Step 6: Smoke**
+- [x] **Step 6: Smoke**
 
 ```bash
 pnpm dev
@@ -2189,7 +2189,7 @@ curl -s http://localhost:4321/en/ | grep -oE 'href="/en/(now|uses|projects)"' | 
 ```
 Expected: 3 + 3 unique lines. Stop dev.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/Header.astro src/i18n/strings.ru.json src/i18n/strings.en.json src/i18n/.strings.hashes.json
@@ -2204,14 +2204,14 @@ git commit -m "feat(nav): expose /now /uses /projects in header navigation"
 
 Plan 1 pre-emptively listed `/about`, `/now`, `/uses`, `/projects` in `public/llms.txt`. This task confirms all four URLs now resolve.
 
-- [ ] **Step 1: Build**
+- [x] **Step 1: Build**
 
 ```bash
 pnpm build
 ```
 Expected: 0 errors.
 
-- [ ] **Step 2: Verify each entity page in `dist/`**
+- [x] **Step 2: Verify each entity page in `dist/`**
 
 ```bash
 for path in about now uses projects; do
@@ -2221,7 +2221,7 @@ done
 ```
 Expected: 8 lines, all `OK:`.
 
-- [ ] **Step 3: Verify project detail pages**
+- [x] **Step 3: Verify project detail pages**
 
 ```bash
 test -f dist/client/projects/astro-blog/index.html && echo OK_RU_AB || echo FAIL
@@ -2231,7 +2231,7 @@ test -f dist/client/en/projects/claude-code-guide/index.html && echo OK_EN_CCG |
 ```
 Expected: 4 `OK_*` lines.
 
-- [ ] **Step 4:** No commit — verification only.
+- [x] **Step 4:** No commit — verification only.
 
 ---
 
@@ -2242,9 +2242,9 @@ Expected: 4 `OK_*` lines.
 **Subagent:** `critic`.
 **Files:** optional `CLAUDE.md` edit.
 
-- [ ] **Step 1: Full build** (`pnpm build` → 0 errors).
+- [x] **Step 1: Full build** (`pnpm build` → 0 errors).
 
-- [ ] **Step 2: Validate `/about` graph**
+- [x] **Step 2: Validate `/about` graph**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/about/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const types=g['@graph'].map(n=>n['@type']); console.log('types:',types); const wp=g['@graph'].find(n=>n['@type']==='WebPage'); console.log('WebPage.about:',wp.about); const person=g['@graph'].find(n=>n['@type']==='Person'); console.log('Person.subjectOf.length:',person.subjectOf.length);"
@@ -2254,14 +2254,14 @@ Expected:
 - `WebPage.about: { '@id': 'https://artka.dev/#person' }`
 - `Person.subjectOf.length: 3`
 
-- [ ] **Step 3: Validate `/projects` CollectionPage**
+- [x] **Step 3: Validate `/projects` CollectionPage**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/projects/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const cp=g['@graph'].find(n=>n['@type']==='CollectionPage'); console.log('CollectionPage.hasPart:',JSON.stringify(cp.hasPart,null,2));"
 ```
 Expected: array of 2 `{@id: ...#creativework}` objects.
 
-- [ ] **Step 4: Validate `/projects/astro-blog` CreativeWork**
+- [x] **Step 4: Validate `/projects/astro-blog` CreativeWork**
 
 ```bash
 node -e "const {readFileSync}=require('fs'); const html=readFileSync('dist/client/projects/astro-blog/index.html','utf8'); const m=html.match(/<script[^>]+ld\+json[^>]*>([\s\S]+?)<\/script>/); const g=JSON.parse(m[1].replace(/\\\\u003c/g,'<').replace(/\\\\u003e/g,'>').replace(/\\\\u0026/g,'&')); const cw=g['@graph'].find(n=>n['@type']==='CreativeWork'); console.log('author:',cw.author); console.log('creator:',cw.creator); console.log('keywords:',cw.keywords);"
@@ -2271,7 +2271,7 @@ Expected:
 - `creator: { '@id': 'https://artka.dev/#person' }`
 - `keywords:` non-empty comma-separated string.
 
-- [ ] **Step 5: Confirm exactly one JSON-LD per entity page**
+- [x] **Step 5: Confirm exactly one JSON-LD per entity page**
 
 ```bash
 for f in dist/client/about/index.html dist/client/now/index.html dist/client/uses/index.html dist/client/projects/index.html dist/client/projects/astro-blog/index.html; do
@@ -2282,7 +2282,7 @@ done
 ```
 Expected: each line ends with `1`.
 
-- [ ] **Step 6: Confirm AuthorCard on a representative post**
+- [x] **Step 6: Confirm AuthorCard on a representative post**
 
 ```bash
 grep -c 'class="author-card"' dist/client/blog/01-introduction/index.html
@@ -2290,20 +2290,20 @@ grep -c 'class="author-card"' dist/client/en/blog/01-introduction/index.html
 ```
 Expected: `1` and `1`.
 
-- [ ] **Step 7: Run all gates**
+- [x] **Step 7: Run all gates**
 
 ```bash
 pnpm test && pnpm lint && pnpm typecheck && pnpm translate:check
 ```
 Expected: all green.
 
-- [ ] **Step 8: (Optional) Update `CLAUDE.md`** — under `## Структура` add a one-liner:
+- [x] **Step 8: (Optional) Update `CLAUDE.md`** — under `## Структура` add a one-liner:
 
 ```markdown
 - Entity pages: `/about`, `/now`, `/uses`, `/projects` (collection). RU markdown in `src/content/site/` and `src/content/projects/`; EN twins generated by `pnpm translate`.
 ```
 
-- [ ] **Step 9: detect_changes (full scope)**
+- [x] **Step 9: detect_changes (full scope)**
 
 ```
 mcp__gitnexus__detect_changes({ scope: "all", repo: "astro-blog" })
@@ -2324,14 +2324,14 @@ Expected scope (vs `main`):
 
 Flag anything outside this list before pushing.
 
-- [ ] **Step 10: Commit Step-8 leftovers** (skip if `CLAUDE.md` untouched)
+- [x] **Step 10: Commit Step-8 leftovers** (skip if `CLAUDE.md` untouched)
 
 ```bash
 git add CLAUDE.md
 git commit -m "docs: note entity-page surface in CLAUDE.md"
 ```
 
-- [ ] **Step 11: Push and open PR**
+- [x] **Step 11: Push and open PR**
 
 ```bash
 git push -u origin feat/entity-pages
@@ -2349,13 +2349,13 @@ Plan: docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md
 Depends on: PR for Plan 1 (LLM-citable foundation) — merge first.
 
 ## Test plan
-- [ ] pnpm typecheck passes
-- [ ] pnpm test passes (new tests under tests/unit/entity/ and tests/unit/seo/nodes-projects.test.ts)
-- [ ] pnpm translate:check passes (no EN drift)
-- [ ] pnpm build emits dist/client/{about,now,uses,projects,projects/astro-blog,projects/claude-code-guide}/index.html (and /en/ siblings)
-- [ ] curl /about shows WebPage.about → Person#me
-- [ ] curl /projects/astro-blog shows CreativeWork.author → Person#me
-- [ ] AuthorCard rendered on a sample blog post (RU + EN)
+- [x] pnpm typecheck passes
+- [x] pnpm test passes (new tests under tests/unit/entity/ and tests/unit/seo/nodes-projects.test.ts)
+- [x] pnpm translate:check passes (no EN drift)
+- [x] pnpm build emits dist/client/{about,now,uses,projects,projects/astro-blog,projects/claude-code-guide}/index.html (and /en/ siblings)
+- [x] curl /about shows WebPage.about → Person#me
+- [x] curl /projects/astro-blog shows CreativeWork.author → Person#me
+- [x] AuthorCard rendered on a sample blog post (RU + EN)
 
 ## Owner-pending defaults left in place
 - Person.sameAs[] still empty (spec open-question #2)
