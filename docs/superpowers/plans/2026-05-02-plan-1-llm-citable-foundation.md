@@ -366,7 +366,7 @@ git commit -m "feat(seo): add Person source of truth and safeJsonLd helper"
 - Create: `src/lib/seo/nodes-global.ts`
 - Create: `tests/unit/seo/nodes-global.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/unit/seo/nodes-global.test.ts`:
 
@@ -445,14 +445,14 @@ describe("buildBlogNode", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm test tests/unit/seo/nodes-global.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `src/lib/seo/nodes-global.ts`**
+- [x] **Step 3: Implement `src/lib/seo/nodes-global.ts`**
 
 ```ts
 import { person } from "./person";
@@ -521,14 +521,14 @@ export const buildBlogNode = (locale: Locale) => ({
 });
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm test tests/unit/seo/nodes-global.test.ts
 ```
 Expected: PASS — all assertions green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/seo/nodes-global.ts tests/unit/seo/nodes-global.test.ts
@@ -543,7 +543,7 @@ git commit -m "feat(seo): add global @graph builders (Person, Organization, WebS
 - Create: `src/lib/seo/nodes-page.ts`
 - Create: `tests/unit/seo/nodes-page.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/unit/seo/nodes-page.test.ts`:
 
@@ -660,14 +660,14 @@ describe("buildFaqPageNode", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm test tests/unit/seo/nodes-page.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `src/lib/seo/nodes-page.ts`**
+- [x] **Step 3: Implement `src/lib/seo/nodes-page.ts`**
 
 ```ts
 import { graphIds, type Locale } from "./nodes-global";
@@ -789,14 +789,14 @@ export const buildFaqPageNode = (input: FaqPageInput) => {
 };
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm test tests/unit/seo/nodes-page.test.ts
 ```
 Expected: PASS — all assertions green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/seo/nodes-page.ts tests/unit/seo/nodes-page.test.ts
@@ -811,7 +811,7 @@ git commit -m "feat(seo): add page-level @graph builders (BlogPosting, Breadcrum
 - Create: `src/lib/seo/article-body.ts`
 - Create: `tests/unit/seo/article-body.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/unit/seo/article-body.test.ts`:
 
@@ -873,14 +873,14 @@ describe("extractArticleBody", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm test tests/unit/seo/article-body.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `src/lib/seo/article-body.ts`**
+- [x] **Step 3: Implement `src/lib/seo/article-body.ts`**
 
 ```ts
 import { unified } from "unified";
@@ -930,21 +930,21 @@ export const extractArticleBody = (markdown: string, maxWords: number): Extracte
 };
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm test tests/unit/seo/article-body.test.ts
 ```
 Expected: PASS — all 6 assertions green.
 
-- [ ] **Step 5: Run typecheck**
+- [x] **Step 5: Run typecheck**
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/seo/article-body.ts tests/unit/seo/article-body.test.ts
@@ -959,7 +959,7 @@ git commit -m "feat(seo): plain-text articleBody extractor with word-count cap"
 - Create: `src/lib/seo/schema.ts`
 - Create: `tests/unit/seo/schema.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/unit/seo/schema.test.ts`:
 
@@ -1009,14 +1009,14 @@ describe("buildGraph", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm test tests/unit/seo/schema.test.ts
 ```
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `src/lib/seo/schema.ts`**
+- [x] **Step 3: Implement `src/lib/seo/schema.ts`**
 
 ```ts
 import {
@@ -1064,14 +1064,14 @@ export { buildBlogNode } from "./nodes-global";
 export { extractArticleBody, countWords } from "./article-body";
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm test tests/unit/seo
 ```
 Expected: ALL pass — Tasks 1–6 tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/seo/schema.ts tests/unit/seo/schema.test.ts
