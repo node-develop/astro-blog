@@ -1,16 +1,21 @@
 ---
-import { render, type CollectionEntry } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
 import PostLayout from "~/layouts/PostLayout.astro";
-import { getOrderedPosts } from "~/lib/content/loader";
 import { mdxComponents } from "~/components/mdx";
 
 type Post = CollectionEntry<"posts">;
 
+// Mirror the RU sibling: enumerate all non-draft EN twins via getCollection,
+// not the curated getOrderedPosts (which filters by DB-tracked hidden flag and
+// would silently drop posts without a posts_meta row).
 export async function getStaticPaths() {
-  const posts = await getOrderedPosts({ locale: "en" });
-  return posts.map((p) => ({
-    params: { slug: p.entry.id.replace(/^en\//, "") },
-    props: { post: p.entry },
+  const posts: Post[] = await getCollection(
+    "posts",
+    (entry: Post) => !entry.data.draft && entry.id.startsWith("en/"),
+  );
+  return posts.map((post: Post) => ({
+    params: { slug: post.id.replace(/^en\//, "") },
+    props: { post },
   }));
 }
 
