@@ -15,6 +15,7 @@ const posts = defineCollection({
     coverAlt: z.string().optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
+    author: z.string().default("Артём"),
   }),
 });
 
@@ -22,6 +23,7 @@ const site = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/site" }),
   schema: z.object({
     title: z.string(),
+    description: z.string().min(10).max(200).optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
   }),

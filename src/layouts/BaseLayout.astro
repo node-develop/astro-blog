@@ -12,11 +12,20 @@ interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  ogType?: "website" | "article";
+  noindex?: boolean;
   /** When true, omits the right TOC column for list/about/home pages. */
   fullWidth?: boolean;
 }
 
-const { title, description = "Personal blog", ogImage, fullWidth = false } = Astro.props;
+const {
+  title,
+  description = "Personal blog",
+  ogImage,
+  ogType = "website",
+  noindex = false,
+  fullWidth = false,
+} = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -29,6 +38,33 @@ const enVariant =
   locale === "en" ? canonical : new URL(counterpartPath, Astro.site ?? Astro.url).toString();
 
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
+
+// OG image: make absolute; fall back to default if not provided.
+const absoluteOgImage = ogImage
+  ? /^https?:\/\//.test(ogImage)
+    ? ogImage
+    : new URL(ogImage, Astro.site ?? Astro.url).toString()
+  : new URL("/og-default.svg", Astro.site ?? Astro.url).toString();
+
+const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
+
+const safeJsonLd = (data: unknown): string =>
+  JSON.stringify(data).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+
+const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "artka.dev",
+  url: Astro.site?.toString() ?? "https://artka.dev",
+  inLanguage: locale === "ru" ? "ru-RU" : "en-US",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${Astro.site?.toString() ?? "https://artka.dev"}search?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
 ---
 
 <!doctype html>
@@ -38,6 +74,7 @@ const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
     {
       counterpartExists && (
@@ -50,13 +87,24 @@ const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
     }
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={ogLocale} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="artka.dev" />
+    <meta property="og:image" content={absoluteOgImage} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absoluteOgImage} />
+    {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
+    {twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="theme-color" content="#0a0a0a" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={title} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={title} href={rssHref} />
+    <script is:inline type="application/ld+json" set:html={safeJsonLd(websiteJsonLd)} />
+    <slot name="head" />
     <ClientRouter />
   </head>
   <body>

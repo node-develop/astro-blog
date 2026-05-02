@@ -33,5 +33,7 @@
   "search.searching": "Идёт поиск…",
   "search.noResults": "Ничего не найдено.",
   "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> навигация · <kbd>Enter</kbd> открыть · <kbd>Esc</kbd> закрыть",
-  "footer.meta": "Astro · on-demand · WCAG AA"
+  "footer.meta": "Astro · on-demand · WCAG AA",
+  "meta.home.description": "Личный блог Артёма про разработку, AI-инструменты, Claude Code, Astro и архитектуру.",
+  "meta.about.description": "Об авторе: Node.js/TypeScript разработка, AI-автоматизации, архитектура распределённых систем."
 }

@@ -1,5 +1,6 @@
 ---
 title: About me
+description: "About the author: Node.js/TypeScript engineer, AI automation, distributed systems architecture."
 sourceHash: 6897ed7319a14b1c07a4f97d43ac4a769e22029932ea1f4fc604c700389f40ae
 manuallyEdited: false
 ---

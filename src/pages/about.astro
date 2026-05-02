@@ -14,7 +14,11 @@ if (!entry) {
 const { Content } = await render(entry);
 ---
 
-<BaseLayout title={entry.data.title} description={t(locale, "nav.about")} fullWidth={true}>
+<BaseLayout
+  title={entry.data.title}
+  description={t(locale, "meta.about.description")}
+  fullWidth={true}
+>
   <SiteSidebar slot="sidebar" />
   <article class="prose">
     <Content />
