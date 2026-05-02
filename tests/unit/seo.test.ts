@@ -48,10 +48,10 @@ describe("SEO: BaseLayout meta", () => {
     expect(src).toMatch(/hreflang="x-default"/);
   });
 
-  it("emits WebSite JSON-LD", async () => {
+  it("emits WebSite JSON-LD via buildGraph", async () => {
     const src = await read("src/layouts/BaseLayout.astro");
     expect(src).toMatch(/application\/ld\+json/);
-    expect(src).toMatch(/"@type":\s*"WebSite"/);
+    expect(src).toMatch(/buildGraph/);
   });
 
   it("supports noindex prop", async () => {
