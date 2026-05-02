@@ -211,6 +211,10 @@ const statusLabel = t(locale, `projects.status.${entry.data.status}` as Paramete
       padding-left: var(--space-4);
       color: var(--color-fg);
       line-height: var(--lh-normal);
+      /* Long slash-separated identifiers (e.g. Person/Organization/WebSite)
+         don't have natural break opportunities — let them wrap inside words
+         on narrow screens. */
+      overflow-wrap: anywhere;
     }
     .project__outcomes li + li {
       margin-top: var(--space-2);
@@ -225,6 +229,26 @@ const statusLabel = t(locale, `projects.status.${entry.data.status}` as Paramete
     }
     .project__links a {
       color: var(--color-accent);
+    }
+    /* Constrain the project content tree so deep flex/grid containers
+       (chips, outcomes, prose body) don't push past the viewport on mobile. */
+    .project,
+    .project__sidecar,
+    .project__sidecar-block,
+    .project__chips,
+    .project__outcomes,
+    .project__links,
+    .project__body {
+      min-width: 0;
+      max-width: 100%;
+    }
+    @media (max-width: 600px) {
+      .project__sidecar {
+        padding: var(--space-4);
+      }
+      .project__title {
+        font-size: var(--fs-3xl);
+      }
     }
   </style>
 </BaseLayout>

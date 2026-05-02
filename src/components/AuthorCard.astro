@@ -96,4 +96,19 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
   .author-card__links a {
     color: var(--color-accent);
   }
+  @media (max-width: 600px) {
+    .author-card {
+      grid-template-columns: 1fr;
+      padding: var(--space-4);
+      gap: var(--space-3);
+    }
+    .author-card__avatar-link {
+      width: 48px;
+      height: 48px;
+    }
+    .author-card__avatar {
+      width: 48px;
+      height: 48px;
+    }
+  }
 </style>

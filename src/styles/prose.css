@@ -210,3 +210,28 @@
   overflow-y: hidden;
   padding: var(--space-2) 0;
 }
+
+/* ── Table horizontal scroll ─────────────────────────────────── */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  border-collapse: collapse;
+  /* Restore table layout inside the scroll viewport */
+  white-space: nowrap;
+}
+
+.prose table thead,
+.prose table tbody {
+  display: table;
+  width: 100%;
+  table-layout: auto;
+}
+
+@media (max-width: 768px) {
+  .prose table {
+    /* Hint: faint right edge fade so users know there's more */
+    background-image: linear-gradient(to right, transparent calc(100% - 16px), rgba(0, 0, 0, 0.04));
+  }
+}

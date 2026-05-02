@@ -15,7 +15,22 @@ export default defineConfig({
     baseURL: process.env.BASE_URL ?? "http://localhost:4321",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // iphone-se uses Chromium with the iPhone SE viewport instead of WebKit,
+    // because the WebKit binary isn't installed in CI/dev by default and
+    // mobile-overflow tests only need a narrow viewport, not Safari rendering.
+    {
+      name: "iphone-se",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 375, height: 667 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+  ],
   // We keep `pnpm dev` because Astro 5 enforces CSRF-style origin checks on
   // form POSTs in preview mode that admin tests rely on bypassing. global-setup
   // ensures dist/client/pagefind is built and symlinked into public/pagefind so

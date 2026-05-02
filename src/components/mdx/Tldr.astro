@@ -49,4 +49,10 @@ const showCard = hasSlot || (typeof text === "string" && text.length > 0);
     line-height: var(--lh-normal);
     color: var(--color-fg);
   }
+  @media (max-width: 600px) {
+    .tldr {
+      padding: var(--space-3) var(--space-4);
+      margin-inline: 0;
+    }
+  }
 </style>

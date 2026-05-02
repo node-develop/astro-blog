@@ -174,7 +174,29 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
       display: inline-flex;
     }
     .site-header__nav {
-      margin-left: 0;
+      /* Drawer takes over below 1024px — hide the inline nav so the
+         brand + search + lang-toggle + drawer-btn don't overflow on
+         narrow viewports (the drawer-btn opens a <dialog> with the same links). */
+      display: none;
+    }
+  }
+  @media (max-width: 768px) {
+    .site-header__inner {
+      padding: var(--space-3) var(--space-4);
+      gap: var(--space-2);
+    }
+    .site-header__brand {
+      font-size: var(--fs-base);
+      gap: var(--space-1);
+    }
+  }
+  @media (max-width: 480px) {
+    .site-header__dot,
+    .site-header__author {
+      display: none;
+    }
+    .site-header__search [aria-hidden="true"] {
+      display: none;
     }
   }
 </style>
