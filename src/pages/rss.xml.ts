@@ -8,6 +8,7 @@ export async function GET(context: APIContext) {
     title: "Personal Blog",
     description: "Свежие публикации",
     site: context.site ?? "http://localhost:4321",
+    customData: `<language>ru-RU</language><copyright>© ${new Date().getFullYear()} artka.dev</copyright>`,
     items: [...posts]
       .sort((a, b) => b.entry.data.pubDate.getTime() - a.entry.data.pubDate.getTime())
       .map((p) => ({
@@ -15,6 +16,8 @@ export async function GET(context: APIContext) {
         description: p.entry.data.description,
         pubDate: p.entry.data.pubDate,
         link: `/blog/${p.entry.id.replace(/^en\//, "")}`,
+        author: `a@artka.dev (${p.entry.data.author})`,
+        categories: p.entry.data.tags,
       })),
   });
 }

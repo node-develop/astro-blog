@@ -14,7 +14,7 @@ const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 ---
 
-<BaseLayout title="artka.dev" description="Персональный блог" fullWidth={true}>
+<BaseLayout title="artka.dev" description={t(locale, "meta.home.description")} fullWidth={true}>
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">
