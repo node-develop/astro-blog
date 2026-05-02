@@ -6,9 +6,14 @@ import AuthorCard from "~/components/AuthorCard.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import { pickRelated, type RelatedCandidate } from "~/lib/related";
+import { getOrderedPosts } from "~/lib/content/loader";
+import Tldr from "~/components/mdx/Tldr.astro";
+import Faq from "~/components/mdx/Faq.astro";
 import {
   buildBlogPostingNode,
   buildBreadcrumbListNode,
+  buildFaqPageNode,
   extractArticleBody,
   type GraphNode,
 } from "~/lib/seo/schema";
@@ -21,7 +26,7 @@ interface Props {
 }
 
 const { post, headings } = Astro.props;
-const { title, description, pubDate, updatedDate, tags, cover, coverAlt } = post.data;
+const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary, faq } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -66,6 +71,29 @@ const breadcrumbNode = buildBreadcrumbListNode({
   blogIndexLabel: t(locale, "blog.title"),
   title,
 }) as GraphNode;
+
+const faqItems = faq ?? [];
+const faqNode = buildFaqPageNode({ canonical, items: faqItems });
+
+const allPosts = await getOrderedPosts({ locale });
+const currentCandidate: RelatedCandidate = {
+  slug: post.id.replace(/^en\//, ""),
+  locale,
+  tags: tags ?? [],
+  pubDate,
+  title,
+  description,
+};
+const candidates: ReadonlyArray<RelatedCandidate> = allPosts.map((p) => ({
+  slug: p.entry.id.replace(/^en\//, ""),
+  locale,
+  tags: p.entry.data.tags ?? [],
+  pubDate: p.entry.data.pubDate,
+  title: p.entry.data.title,
+  description: p.entry.data.description,
+}));
+const related = pickRelated({ current: currentCandidate, all: candidates, limit: 3 });
+const blogPathPrefix = locale === "en" ? "/en/blog" : "/blog";
 ---
 
 <BaseLayout
@@ -73,7 +101,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
   description={description}
   ogImage={coverUrl ?? undefined}
   ogType="article"
-  extraSchemaNodes={[blogPostingNode, breadcrumbNode]}
+  extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 >
   <Fragment slot="head">
     <meta property="article:published_time" content={pubDate.toISOString()} />
@@ -132,9 +160,28 @@ const breadcrumbNode = buildBreadcrumbListNode({
         </figure>
       )
     }
+    {summary && <Tldr text={summary} />}
     <div class="post__body prose">
       <slot />
     </div>
+    {faqItems.length > 0 && <Faq items={faqItems} />}
+    {
+      related.length > 0 && (
+        <aside class="related" aria-label={t(locale, "post.related")}>
+          <h2 class="related__title">{t(locale, "post.related")}</h2>
+          <ul class="related__list">
+            {related.map((r) => (
+              <li>
+                <a href={`${blogPathPrefix}/${r.slug}`} class="related__link">
+                  <span class="related__post-title">{r.title}</span>
+                  <span class="related__post-desc">{r.description}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
     <AuthorCard />
   </article>
 
@@ -209,6 +256,51 @@ const breadcrumbNode = buildBreadcrumbListNode({
       display: block;
       width: 100%;
       height: auto;
+    }
+    .related {
+      margin: var(--space-7) 0 var(--space-6) 0;
+      padding-top: var(--space-5);
+      border-top: 1px solid var(--color-border);
+    }
+    .related__title {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg-muted);
+      margin: 0 0 var(--space-3) 0;
+    }
+    .related__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: var(--space-3);
+    }
+    .related__link {
+      display: block;
+      padding: var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      color: var(--color-fg);
+      transition: border-color var(--dur-fast) var(--ease-out);
+    }
+    .related__link:hover {
+      border-color: var(--color-accent);
+    }
+    .related__post-title {
+      display: block;
+      font-family: var(--font-serif);
+      font-size: var(--fs-base);
+      font-weight: 500;
+      margin-bottom: var(--space-1);
+    }
+    .related__post-desc {
+      display: block;
+      font-size: var(--fs-sm);
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
     }
   </style>
 </BaseLayout>

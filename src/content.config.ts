@@ -6,6 +6,24 @@ const posts = defineCollection({
   schema: z.object({
     title: z.string().min(3).max(120),
     description: z.string().min(10).max(200),
+    // TL;DR — answer-first 60–280-char card rendered above the post body.
+    // Required for posts authored after 2026-05-02 (enforced by tests/unit/content/schema.test.ts).
+    summary: z.string().min(60).max(280).optional(),
+    // Semantic keywords for retrieval. Distinct from `tags` (which are slugs
+    // used for tag archives). Free-form short noun phrases — examples:
+    // "harness", "prompt caching", "tool use loop".
+    keywords: z.array(z.string()).default([]),
+    // Question/Answer pairs. When non-empty, PostLayout renders a <Faq>
+    // block below the body and emits a FAQPage JSON-LD node into the
+    // single page @graph (via extraSchemaNodes).
+    faq: z
+      .array(
+        z.object({
+          question: z.string().min(5).max(200),
+          answer: z.string().min(20).max(2000),
+        }),
+      )
+      .optional(),
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
@@ -16,6 +34,9 @@ const posts = defineCollection({
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
     author: z.string().default("Артём"),
+    // Explicit locale. Optional; PostLayout derives from path when absent.
+    // Useful for round-tripping in the translation pipeline.
+    lang: z.enum(["ru", "en"]).optional(),
   }),
 });
 

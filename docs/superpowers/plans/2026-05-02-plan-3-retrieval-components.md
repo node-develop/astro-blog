@@ -69,14 +69,14 @@ pnpm install
 
 **Files:** none (read-only)
 
-- [ ] **Step 1:** Confirm a clean working tree.
+- [x] **Step 1:** Confirm a clean working tree.
 
 ```bash
 git status
 ```
 Expected: `nothing to commit, working tree clean`. If `.gitignore` is dirty from a prior session that's OK; otherwise stash first.
 
-- [ ] **Step 2:** Confirm Plan 1 + Plan 2 prerequisites are merged.
+- [x] **Step 2:** Confirm Plan 1 + Plan 2 prerequisites are merged.
 
 ```bash
 test -f src/lib/seo/schema.ts && echo "seo: OK" || echo "seo: MISSING"
@@ -86,7 +86,7 @@ grep -q "extractArticleBody" src/layouts/PostLayout.astro && echo "postlayout: O
 ```
 Expected: four `OK` lines. If anything reports `MISSING`, STOP and merge Plans 1 and 2 first.
 
-- [ ] **Step 3:** Run gitnexus impact analysis on the load-bearing symbols this plan touches.
+- [x] **Step 3:** Run gitnexus impact analysis on the load-bearing symbols this plan touches.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -99,7 +99,7 @@ Expected:
 - `buildFaqPageNode` — LOW (currently only used by tests; this plan adds the first call site).
 - `collections` (in `src/content.config.ts`) — HIGH (every page that reads `getCollection("posts")` depends on the schema). Note the call sites in the PR description.
 
-- [ ] **Step 4:** Run baseline checks to confirm a green start.
+- [x] **Step 4:** Run baseline checks to confirm a green start.
 
 ```bash
 pnpm typecheck && pnpm test && pnpm lint
@@ -118,14 +118,14 @@ Expected: all pass.
 - Modify: `src/content.config.ts`
 - Create: `tests/unit/content/schema.test.ts`
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "collections", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: HIGH risk; capture every consumer of `getCollection("posts")` in your notes. Existing posts must continue to validate after this change — back-compat is enforced by `.optional()` on every new field.
 
-- [ ] **Step 2:** Write the failing test.
+- [x] **Step 2:** Write the failing test.
 
 Create `tests/unit/content/schema.test.ts`:
 
@@ -225,7 +225,7 @@ describe("post schema — required fields after cutoff", () => {
 });
 ```
 
-- [ ] **Step 3:** Run the test to verify it passes already (back-compat assertions are green; no fresh post exists yet).
+- [x] **Step 3:** Run the test to verify it passes already (back-compat assertions are green; no fresh post exists yet).
 
 ```bash
 pnpm test tests/unit/content/schema.test.ts
@@ -234,7 +234,7 @@ Expected: PASS — old posts have no summary (allowed); no fresh posts with `pub
 
 (The "fresh post needs summary" guard is dormant until the next post is published. That's correct: this test enforces forward, not historical, invariants.)
 
-- [ ] **Step 4:** Modify `src/content.config.ts` to add the new fields.
+- [x] **Step 4:** Modify `src/content.config.ts` to add the new fields.
 
 Replace the entire file with:
 
@@ -294,28 +294,28 @@ const site = defineCollection({
 export const collections = { posts, site };
 ```
 
-- [ ] **Step 5:** Sync types and re-typecheck.
+- [x] **Step 5:** Sync types and re-typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. Astro regenerates `.astro/content.d.ts` so `CollectionEntry<"posts">` now exposes `summary?: string`, `keywords: readonly string[]`, `faq?: Array<{question: string; answer: string}>`, `lang?: "ru" | "en"`.
 
-- [ ] **Step 6:** Run the schema test and the full suite.
+- [x] **Step 6:** Run the schema test and the full suite.
 
 ```bash
 pnpm test tests/unit/content/schema.test.ts && pnpm test
 ```
 Expected: PASS — all green, including the existing 14 RU + 14 EN posts.
 
-- [ ] **Step 7:** Detect changes scope.
+- [x] **Step 7:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: `src/content.config.ts` and the new test file only.
 
-- [ ] **Step 8:** Commit.
+- [x] **Step 8:** Commit.
 
 ```bash
 git add src/content.config.ts tests/unit/content/schema.test.ts
@@ -584,14 +584,14 @@ git commit -m "feat(mdx): add <Tldr> component with auto-render from frontmatter
 - Create: `tests/unit/mdx/faq.test.ts`
 - Modify: `src/layouts/PostLayout.astro`
 
-- [ ] **Step 1:** Re-confirm `buildFaqPageNode` shape (Plan 1 Task 4 baseline).
+- [x] **Step 1:** Re-confirm `buildFaqPageNode` shape (Plan 1 Task 4 baseline).
 
 ```bash
 grep -A 5 "buildFaqPageNode" src/lib/seo/nodes-page.ts | head -20
 ```
 Expected: function signature `buildFaqPageNode({ canonical, items })` returning `null` when items are empty.
 
-- [ ] **Step 2:** Write the failing test.
+- [x] **Step 2:** Write the failing test.
 
 Create `tests/unit/mdx/faq.test.ts`:
 
@@ -640,14 +640,14 @@ describe("<Faq>", () => {
 });
 ```
 
-- [ ] **Step 3:** Run the test to verify it fails.
+- [x] **Step 3:** Run the test to verify it fails.
 
 ```bash
 pnpm test tests/unit/mdx/faq.test.ts
 ```
 Expected: FAIL — `Faq.astro` does not exist.
 
-- [ ] **Step 4:** Implement `src/components/mdx/Faq.astro`.
+- [x] **Step 4:** Implement `src/components/mdx/Faq.astro`.
 
 ```astro
 ---
@@ -755,7 +755,7 @@ const { items, title = "FAQ" } = Astro.props;
 
 (Note: the markup nests `<details>` inside `<dt>` so the `<dl>/<dt>/<dd>` semantics hold while `<details>` provides progressive disclosure. Pure visual choice; structured FAQPage JSON-LD comes from `buildFaqPageNode` and does not depend on this markup.)
 
-- [ ] **Step 5:** Re-export `<Faq>` from the components index.
+- [x] **Step 5:** Re-export `<Faq>` from the components index.
 
 Update `src/components/mdx/index.ts`:
 
@@ -771,7 +771,7 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 6:** Wire `<Faq>` auto-render and FAQPage schema into `PostLayout.astro`.
+- [x] **Step 6:** Wire `<Faq>` auto-render and FAQPage schema into `PostLayout.astro`.
 
 Open `src/layouts/PostLayout.astro`. Modify the frontmatter:
 
@@ -820,21 +820,21 @@ extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 
   (NOTE: `<AuthorCard>` from Plan 2 sits BELOW the `<Faq>` block. `RelatedPosts` from Task 7 will also slot in this region — explicit ordering documented in Task 7.)
 
-- [ ] **Step 7:** Run typecheck.
+- [x] **Step 7:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. The `extraSchemaNodes` prop on `BaseLayout` accepts `ReadonlyArray<GraphNode | null>`, so passing a possibly-`null` `faqNode` is type-safe (`buildGraph` filters nulls — verified by Plan 1 Task 6).
 
-- [ ] **Step 8:** Run tests.
+- [x] **Step 8:** Run tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 9:** Manual smoke check.
+- [x] **Step 9:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -863,14 +863,14 @@ curl -s http://localhost:4321/blog/01-introduction \
 ```
 Expected: list contains `FAQPage` alongside `Person`, `Organization`, `WebSite`, `BlogPosting`, `BreadcrumbList`. Revert the temporary frontmatter (`git checkout -- src/content/posts/01-introduction.md`). Stop the dev server.
 
-- [ ] **Step 10:** Detect changes scope.
+- [x] **Step 10:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: 4 files — `src/components/mdx/Faq.astro`, `src/components/mdx/index.ts`, `src/layouts/PostLayout.astro`, `tests/unit/mdx/faq.test.ts`.
 
-- [ ] **Step 11:** Commit.
+- [x] **Step 11:** Commit.
 
 ```bash
 git add src/components/mdx/Faq.astro src/components/mdx/index.ts src/layouts/PostLayout.astro tests/unit/mdx/faq.test.ts
@@ -890,7 +890,7 @@ git commit -m "feat(mdx): add <Faq> with auto-render and FAQPage JSON-LD merged 
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/compare.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/compare.test.ts`:
 
@@ -952,14 +952,14 @@ describe("<Compare>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/compare.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3:** Implement `src/components/mdx/Compare.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/Compare.astro`.
 
 ```astro
 ---
@@ -1075,7 +1075,7 @@ for (const row of rows) {
 
 (Note: `<caption>` is duplicated as `<figcaption>` because LLMs latch onto either; visual chrome shows only `<figcaption>` since `<caption>` is styled `caption-side: top` and is the same text. Acceptable redundancy for retrieval.)
 
-- [ ] **Step 4:** Re-export from the index.
+- [x] **Step 4:** Re-export from the index.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1093,14 +1093,14 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx/compare.test.ts && pnpm typecheck
 ```
 Expected: PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add src/components/mdx/Compare.astro src/components/mdx/index.ts tests/unit/mdx/compare.test.ts
@@ -1118,7 +1118,7 @@ git commit -m "feat(mdx): add <Compare> table with verdict line and a11y row sco
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/definition.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/definition.test.ts`:
 
@@ -1160,14 +1160,14 @@ describe("<Definition>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/definition.test.ts
 ```
 Expected: FAIL.
 
-- [ ] **Step 3:** Implement `src/components/mdx/Definition.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/Definition.astro`.
 
 ```astro
 ---
@@ -1226,7 +1226,7 @@ const hasTerm = typeof term === "string" && term.length > 0;
 </style>
 ```
 
-- [ ] **Step 4:** Re-export.
+- [x] **Step 4:** Re-export.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1246,14 +1246,14 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx/definition.test.ts && pnpm typecheck
 ```
 Expected: PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add src/components/mdx/Definition.astro src/components/mdx/index.ts tests/unit/mdx/definition.test.ts
@@ -1271,7 +1271,7 @@ git commit -m "feat(mdx): add <Definition> component with <dl><dt><dd> markup"
 - Modify: `src/components/mdx/index.ts`
 - Create: `tests/unit/mdx/key-takeaways.test.ts`
 
-- [ ] **Step 1:** Write the failing test.
+- [x] **Step 1:** Write the failing test.
 
 Create `tests/unit/mdx/key-takeaways.test.ts`:
 
@@ -1325,14 +1325,14 @@ describe("<KeyTakeaways>", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/mdx/key-takeaways.test.ts
 ```
 Expected: FAIL.
 
-- [ ] **Step 3:** Implement `src/components/mdx/KeyTakeaways.astro`.
+- [x] **Step 3:** Implement `src/components/mdx/KeyTakeaways.astro`.
 
 ```astro
 ---
@@ -1398,7 +1398,7 @@ if (items.length < 3 || items.length > 5) {
 </style>
 ```
 
-- [ ] **Step 4:** Re-export.
+- [x] **Step 4:** Re-export.
 
 Update `src/components/mdx/index.ts`:
 
@@ -1420,7 +1420,7 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 5:** Run tests.
+- [x] **Step 5:** Run tests.
 
 ```bash
 pnpm test tests/unit/mdx && pnpm typecheck
@@ -1439,7 +1439,7 @@ Expected feedback dimensions: a11y (aria labels, scopes), CSS token reuse vs har
 
 Address any blocking findings before continuing. Non-blocking nits go to `notes/critic-deferred.md`.
 
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add src/components/mdx/KeyTakeaways.astro src/components/mdx/index.ts tests/unit/mdx/key-takeaways.test.ts
@@ -1459,7 +1459,7 @@ git commit -m "feat(mdx): add <KeyTakeaways> component with 3–5 bullet guard"
 - Create: `tests/unit/related/related.test.ts`
 - Modify: `src/layouts/PostLayout.astro`
 
-- [ ] **Step 1:** Write the failing test for the pure function.
+- [x] **Step 1:** Write the failing test for the pure function.
 
 Create `tests/unit/related/related.test.ts`:
 
@@ -1580,14 +1580,14 @@ describe("pickRelated", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/related/related.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3:** Implement `src/lib/related.ts`.
+- [x] **Step 3:** Implement `src/lib/related.ts`.
 
 ```ts
 /**
@@ -1654,21 +1654,21 @@ export const pickRelated = (input: PickRelatedInput): ReadonlyArray<RelatedCandi
 };
 ```
 
-- [ ] **Step 4:** Run unit tests.
+- [x] **Step 4:** Run unit tests.
 
 ```bash
 pnpm test tests/unit/related/related.test.ts
 ```
 Expected: PASS — all 13 assertions green.
 
-- [ ] **Step 5:** Run impact analysis on `PostLayout` before wiring.
+- [x] **Step 5:** Run impact analysis on `PostLayout` before wiring.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: MEDIUM — same as Task 2.
 
-- [ ] **Step 6:** Wire `RelatedPosts` into `PostLayout.astro`.
+- [x] **Step 6:** Wire `RelatedPosts` into `PostLayout.astro`.
 
 Open `src/layouts/PostLayout.astro`. Add to the imports:
 
@@ -1771,7 +1771,7 @@ Add corresponding styles inside the existing `<style>` block:
 }
 ```
 
-- [ ] **Step 7:** Add the `post.related` i18n key.
+- [x] **Step 7:** Add the `post.related` i18n key.
 
 Open `src/i18n/strings.ru.json` and add (preserving alphabetical key order):
 
@@ -1787,21 +1787,21 @@ Open `src/i18n/strings.en.json` and add:
 "post.related": "Related posts"
 ```
 
-- [ ] **Step 8:** Run typecheck.
+- [x] **Step 8:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. (`getOrderedPosts` is already async; `PostLayout.astro` frontmatter runs at build/SSR time so awaiting works.)
 
-- [ ] **Step 9:** Run all tests.
+- [x] **Step 9:** Run all tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 10:** Manual smoke check.
+- [x] **Step 10:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -1812,14 +1812,14 @@ curl -s http://localhost:4321/blog/01-introduction | grep -c 'class="related"'
 ```
 Expected: `1`. Visit a post and confirm the "Похожие посты" section shows up to three cards. Switch to EN by visiting `/en/blog/01-introduction` and confirm titles/descriptions are EN — never RU. Stop the dev server.
 
-- [ ] **Step 11:** Detect changes scope.
+- [x] **Step 11:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: 5 files — `src/lib/related.ts`, `tests/unit/related/related.test.ts`, `src/layouts/PostLayout.astro`, `src/i18n/strings.ru.json`, `src/i18n/strings.en.json`.
 
-- [ ] **Step 12:** Commit.
+- [x] **Step 12:** Commit.
 
 ```bash
 git add src/lib/related.ts tests/unit/related/related.test.ts src/layouts/PostLayout.astro src/i18n/strings.ru.json src/i18n/strings.en.json
@@ -1844,20 +1844,20 @@ We do TWO things:
 1. Translate `summary` and each `faq[].question` / `faq[].answer` as prose (use the existing `translateStrings` helper).
 2. Pass `keywords` and `lang` verbatim to the EN file.
 
-- [ ] **Step 1:** Run impact analysis.
+- [x] **Step 1:** Run impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "translateFile", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: contained — only called by `translateAllPosts` which is called by `main`. LOW.
 
-- [ ] **Step 2:** Read `src/lib/content/frontmatter.ts` and confirm the `Frontmatter` interface needs to be extended for the new fields to round-trip.
+- [x] **Step 2:** Read `src/lib/content/frontmatter.ts` and confirm the `Frontmatter` interface needs to be extended for the new fields to round-trip.
 
 ```bash
 grep -A 20 "interface Frontmatter" src/lib/content/frontmatter.ts
 ```
 
-- [ ] **Step 3:** Extend `src/lib/content/frontmatter.ts`. Add to the `Frontmatter` interface:
+- [x] **Step 3:** Extend `src/lib/content/frontmatter.ts`. Add to the `Frontmatter` interface:
 
 ```ts
 readonly summary?: string;
@@ -1895,7 +1895,7 @@ In `serializeFrontmatter`, extend the dumped object:
 
 (Frontmatter is also used by `src/lib/content/post-io.ts`. The existing tests for that module must still pass — re-run them at Step 6.)
 
-- [ ] **Step 4:** Modify `scripts/translate.ts` (function `translateFile`):
+- [x] **Step 4:** Modify `scripts/translate.ts` (function `translateFile`):
 
   - In the `fmStrings` block (line ~123), add `summary` if present:
 
@@ -1968,7 +1968,7 @@ const obj: Record<string, unknown> = {
 };
 ```
 
-- [ ] **Step 5:** Write a unit test that smoke-checks the parser/serializer round-trip including the new fields. Create `scripts/translate.summary-faq.test.ts`:
+- [x] **Step 5:** Write a unit test that smoke-checks the parser/serializer round-trip including the new fields. Create `scripts/translate.summary-faq.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -2019,21 +2019,21 @@ describe("frontmatter round-trip — extended fields", () => {
 });
 ```
 
-- [ ] **Step 6:** Run the new test plus the existing frontmatter tests.
+- [x] **Step 6:** Run the new test plus the existing frontmatter tests.
 
 ```bash
 pnpm test src/lib/content/frontmatter.test.ts scripts/translate.summary-faq.test.ts src/lib/content/post-io.test.ts
 ```
 Expected: all pass — round-trip is lossless.
 
-- [ ] **Step 7:** Run the full test suite + typecheck.
+- [x] **Step 7:** Run the full test suite + typecheck.
 
 ```bash
 pnpm test && pnpm typecheck
 ```
 Expected: all green.
 
-- [ ] **Step 8:** Document the new fields in the script header comment.
+- [x] **Step 8:** Document the new fields in the script header comment.
 
 In `scripts/translate.ts`, add to the file-top comment (or create one) documenting that the script now translates `summary` and `faq[].question`/`faq[].answer`, and passes `keywords`/`lang` through verbatim. Example header (lines 1-5):
 
@@ -2045,7 +2045,7 @@ In `scripts/translate.ts`, add to the file-top comment (or create one) documenti
 // i18n string catalog avoids re-translating unchanged values.
 ```
 
-- [ ] **Step 9:** Commit.
+- [x] **Step 9:** Commit.
 
 ```bash
 git add src/lib/content/frontmatter.ts scripts/translate.ts scripts/translate.summary-faq.test.ts

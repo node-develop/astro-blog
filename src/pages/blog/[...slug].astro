@@ -1,6 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import PostLayout from "~/layouts/PostLayout.astro";
+import { mdxComponents } from "~/components/mdx";
 
 type Post = CollectionEntry<"posts">;
 
@@ -24,5 +25,5 @@ const { Content, headings } = await render(post);
 ---
 
 <PostLayout post={post} headings={headings}>
-  <Content />
+  <Content components={mdxComponents} />
 </PostLayout>

@@ -1,0 +1,113 @@
+---
+/**
+ * <Compare cols rows verdict caption>: renders an answer-friendly comparison
+ * table. Each row label becomes a `<th scope="row">` so screen readers can
+ * speak the label/cell pair. The verdict line lives outside the table so an
+ * LLM can quote it as a single sentence.
+ *
+ * Throws on column/row mismatch — better to fail loudly at build than ship
+ * a misaligned table.
+ */
+interface Row {
+  readonly label: string;
+  readonly values: ReadonlyArray<string>;
+}
+
+interface Props {
+  cols: ReadonlyArray<string>;
+  rows: ReadonlyArray<Row>;
+  verdict: string;
+  caption?: string;
+}
+
+const { cols, rows, verdict, caption } = Astro.props;
+
+for (const row of rows) {
+  if (row.values.length !== cols.length) {
+    throw new Error(
+      `<Compare>: column count mismatch in row "${row.label}" (` +
+        `expected ${cols.length} values for ${cols.length} cols, got ${row.values.length})`,
+    );
+  }
+}
+---
+
+<figure class="compare">
+  <table>
+    {caption && <caption class="compare__caption">{caption}</caption>}
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        {cols.map((c) => <th scope="col">{c}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((r) => (
+          <tr>
+            <th scope="row">{r.label}</th>
+            {r.values.map((v) => (
+              <td>{v}</td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  {caption && <figcaption>{caption}</figcaption>}
+  <p class="compare__verdict">{verdict}</p>
+</figure>
+
+<style>
+  .compare {
+    margin: var(--space-6) 0;
+    padding: 0;
+  }
+  .compare table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+  }
+  .compare__caption {
+    caption-side: top;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-muted);
+    padding-bottom: var(--space-2);
+  }
+  .compare th,
+  .compare td {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .compare thead th {
+    font-weight: 500;
+    color: var(--color-fg);
+    border-bottom: 2px solid var(--color-border);
+  }
+  .compare tbody th {
+    font-weight: 500;
+    color: var(--color-fg);
+  }
+  .compare tbody td {
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .compare figcaption {
+    margin-top: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+  }
+  .compare__verdict {
+    margin: var(--space-3) 0 0 0;
+    font-style: italic;
+    color: var(--color-fg);
+    border-left: 2px solid var(--color-accent);
+    padding-left: var(--space-3);
+  }
+</style>

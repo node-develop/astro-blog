@@ -1,0 +1,54 @@
+---
+/**
+ * <Definition term="…">child</Definition>: renders a single-pair description list.
+ * Used inline in MDX to surface key terms in a structured way that LLMs and
+ * screen readers can both parse.
+ *
+ * Renders nothing when `term` is empty (defensive against typos in MDX bodies).
+ */
+interface Props {
+  term: string;
+}
+
+const { term } = Astro.props;
+const hasTerm = typeof term === "string" && term.length > 0;
+---
+
+{
+  hasTerm && (
+    <dl class="definition">
+      <dt>{term}</dt>
+      <dd>
+        <slot />
+      </dd>
+    </dl>
+  )
+}
+
+<style>
+  .definition {
+    margin: var(--space-4) 0;
+    padding: var(--space-3) var(--space-4);
+    border-left: 2px solid var(--color-border);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-sm);
+  }
+  .definition dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--color-fg);
+    margin: 0 0 var(--space-1) 0;
+  }
+  .definition dd {
+    margin: 0;
+    color: var(--color-fg-muted);
+    line-height: var(--lh-normal);
+  }
+  .definition dd p:first-child {
+    margin-top: 0;
+  }
+  .definition dd p:last-child {
+    margin-bottom: 0;
+  }
+</style>

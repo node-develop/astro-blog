@@ -1,0 +1,61 @@
+---
+/**
+ * <KeyTakeaways items={[…]} title="Главное"?>: 3-5 punchy bullets summarising
+ * the post. Visual emphasis (high contrast, top of body or end of long
+ * sections) signals a quote-ready chunk to crawlers and humans alike.
+ *
+ * Throws when items.length is outside [3, 5] — keeps the format honest.
+ */
+interface Props {
+  items: ReadonlyArray<string>;
+  title?: string;
+}
+
+const { items, title = "Key takeaways" } = Astro.props;
+
+if (items.length < 3 || items.length > 5) {
+  throw new Error(
+    `<KeyTakeaways>: expected 3–5 takeaways, got ${items.length}. ` +
+      `Drop weak ones or merge thin ones — the format only works as a tight list.`,
+  );
+}
+---
+
+<aside class="takeaways" aria-label={title}>
+  <p class="takeaways__label">{title}</p>
+  <ul class="takeaways__list">
+    {items.map((it) => <li>{it}</li>)}
+  </ul>
+</aside>
+
+<style>
+  .takeaways {
+    margin: var(--space-6) 0;
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  .takeaways__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-3) 0;
+  }
+  .takeaways__list {
+    margin: 0;
+    padding: 0 0 0 var(--space-4);
+    list-style: "→  ";
+    color: var(--color-fg);
+  }
+  .takeaways__list li {
+    margin: var(--space-2) 0;
+    line-height: var(--lh-normal);
+  }
+  .takeaways__list li::marker {
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+  }
+</style>

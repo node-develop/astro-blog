@@ -53,5 +53,6 @@
   "authorCard.aboutLabel": "Об авторе",
   "authorCard.viewProfile": "Профиль автора →",
   "authorCard.viewProjects": "Проекты →",
-  "authorCard.role": "Backend & AI agent engineer"
+  "authorCard.role": "Backend & AI agent engineer",
+  "post.related": "Похожие статьи"
 }
