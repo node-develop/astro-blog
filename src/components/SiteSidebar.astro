@@ -102,7 +102,11 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
   }
   .sidebar__link {
     display: grid;
-    grid-template-columns: 22px 1fr;
+    /* Default: single column for "Other posts" links that don't render
+       a numeric prefix. Without this, the lone .sidebar__title inherited
+       the 22px first track from the series rule and got clipped to a
+       few characters on both mobile and desktop, RU and EN. */
+    grid-template-columns: 1fr;
     gap: var(--space-2);
     align-items: baseline;
     padding: var(--space-2) var(--space-3);
@@ -112,6 +116,12 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
     transition:
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
+  }
+  /* Series links carry a `<span class="sidebar__num">` prefix; widen the
+     grid only for those. :has() is supported in all evergreen browsers
+     (Chrome 105+, Safari 15.4+, Firefox 121+). */
+  .sidebar__link:has(.sidebar__num) {
+    grid-template-columns: 22px 1fr;
   }
   .sidebar__link:hover {
     color: var(--color-fg);
