@@ -11,12 +11,14 @@ import Tldr from "./Tldr.astro";
 import Faq from "./Faq.astro";
 import Compare from "./Compare.astro";
 import Definition from "./Definition.astro";
+import KeyTakeaways from "./KeyTakeaways.astro";
 
 export const mdxComponents = {
   Tldr,
   Faq,
   Compare,
   Definition,
+  KeyTakeaways,
 } as const;
 
 export type MdxComponents = typeof mdxComponents;
