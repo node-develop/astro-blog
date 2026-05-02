@@ -46,7 +46,12 @@ const absoluteOgImage = ogImage
     : new URL(ogImage, Astro.site ?? Astro.url).toString()
   : new URL("/og-default.svg", Astro.site ?? Astro.url).toString();
 
-const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE as string | undefined;
+const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
+
+const safeJsonLd = (data: unknown): string =>
+  JSON.stringify(data).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+
+const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
@@ -87,8 +92,6 @@ const websiteJsonLd = {
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="artka.dev" />
     <meta property="og:image" content={absoluteOgImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -99,8 +102,8 @@ const websiteJsonLd = {
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={title} href="/rss.xml" />
-    <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
+    <link rel="alternate" type="application/rss+xml" title={title} href={rssHref} />
+    <script is:inline type="application/ld+json" set:html={safeJsonLd(websiteJsonLd)} />
     <slot name="head" />
     <ClientRouter />
   </head>
