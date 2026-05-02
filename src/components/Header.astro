@@ -174,7 +174,10 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
       display: inline-flex;
     }
     .site-header__nav {
-      margin-left: 0;
+      /* Drawer takes over below 1024px — hide the inline nav so the
+         brand + search + lang-toggle + drawer-btn don't overflow on
+         narrow viewports (the drawer-btn opens a <dialog> with the same links). */
+      display: none;
     }
   }
   @media (max-width: 768px) {
