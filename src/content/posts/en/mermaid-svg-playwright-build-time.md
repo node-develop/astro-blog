@@ -98,7 +98,7 @@ flowchart LR
   mdx --> rh
   rh -->|for each block| iso
   iso -->|launch headless| pw
-  pw -->|mermaid.render() in DOM| iso
+  pw -->|"mermaid.render() in DOM"| iso
   iso -->|serialised SVG| rh
   rh --> svg
 ````
