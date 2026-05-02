@@ -62,14 +62,14 @@ cd ../astro-blog-entity-pages && pnpm install
 
 **Subagent:** `backender`. **Files:** none (read-only).
 
-- [ ] **Step 1:** Confirm clean working tree.
+- [x] **Step 1:** Confirm clean working tree.
 
 ```bash
 git status
 ```
 Expected: `nothing to commit, working tree clean` (only `.gitignore` modified is allowed per session start; otherwise stash first).
 
-- [ ] **Step 2:** Confirm Plan 1 deliverables exist.
+- [x] **Step 2:** Confirm Plan 1 deliverables exist.
 
 ```bash
 test -f src/lib/seo/person.ts && \
@@ -79,7 +79,7 @@ grep -q "extraSchemaNodes" src/layouts/BaseLayout.astro || echo "MISSING_PLAN_1"
 ```
 Expected: no `MISSING_PLAN_1` printed. If anything is missing, stop and execute Plan 1 first.
 
-- [ ] **Step 3:** Run gitnexus impact analysis.
+- [x] **Step 3:** Run gitnexus impact analysis.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -89,7 +89,7 @@ mcp__gitnexus__impact({ target: "BaseLayout", direction: "upstream", repo: "astr
 
 Expected: `PostLayout` MEDIUM (used by `src/pages/blog/[...slug].astro` + EN sibling); `person` HIGH (after Plan 1: `nodes-global.ts`, llms-full endpoint, plus new entity pages here); `BaseLayout` HIGH (all public pages).
 
-- [ ] **Step 4:** Baseline checks.
+- [x] **Step 4:** Baseline checks.
 
 ```bash
 pnpm typecheck && pnpm test && pnpm lint
@@ -105,7 +105,7 @@ Expected: all pass.
 **Subagent:** `backender`.
 **Files:** modify `src/lib/seo/person.ts`; create `tests/unit/entity/person-profile.test.ts`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/entity/person-profile.test.ts`:
 
@@ -148,9 +148,9 @@ describe("PersonProfile — expert fields (Plan 2 additions)", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL** (`pnpm test tests/unit/entity/person-profile.test.ts`).
+- [x] **Step 2: Run — expect FAIL** (`pnpm test tests/unit/entity/person-profile.test.ts`).
 
-- [ ] **Step 3: Replace `src/lib/seo/person.ts`**
+- [x] **Step 3: Replace `src/lib/seo/person.ts`**
 
 ```ts
 // Single source of truth for the site author identity. Edit this file when the
@@ -231,13 +231,13 @@ export const person: PersonProfile = {
 };
 ```
 
-- [ ] **Step 4: Run — expect PASS** (`pnpm test tests/unit/entity/person-profile.test.ts`).
+- [x] **Step 4: Run — expect PASS** (`pnpm test tests/unit/entity/person-profile.test.ts`).
 
-- [ ] **Step 5: Run Plan-1 person test — must remain GREEN** (`pnpm test tests/unit/seo/person.test.ts`).
+- [x] **Step 5: Run Plan-1 person test — must remain GREEN** (`pnpm test tests/unit/seo/person.test.ts`).
 
-- [ ] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/seo/person.ts tests/unit/entity/person-profile.test.ts
@@ -253,7 +253,7 @@ git commit -m "feat(seo): extend PersonProfile with notableWork, techStack, expe
 
 `subjectOf[]` carries `notableWork` (correct schema.org idiom). `expertiseAreas` is appended to `knowsAbout` and deduped. `techStack` rides on `/uses` page text — no schema field added.
 
-- [ ] **Step 1: Append failing tests** to `tests/unit/seo/nodes-global.test.ts`:
+- [x] **Step 1: Append failing tests** to `tests/unit/seo/nodes-global.test.ts`:
 
 ```ts
 import { person } from "~/lib/seo/person";
@@ -282,9 +282,9 @@ describe("buildPersonNode — Plan 2 additions", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL** (`pnpm test tests/unit/seo/nodes-global.test.ts`).
+- [x] **Step 2: Run — expect FAIL** (`pnpm test tests/unit/seo/nodes-global.test.ts`).
 
-- [ ] **Step 3: Replace only the `buildPersonNode` function** in `src/lib/seo/nodes-global.ts`:
+- [x] **Step 3: Replace only the `buildPersonNode` function** in `src/lib/seo/nodes-global.ts`:
 
 ```ts
 export const buildPersonNode = () => {
@@ -314,11 +314,11 @@ export const buildPersonNode = () => {
 
 (Other exports — `buildOrganizationNode`, `buildWebSiteNode`, `buildBlogNode`, `graphIds`, `Locale` — unchanged.)
 
-- [ ] **Step 4: Run — expect PASS** (`pnpm test tests/unit/seo/nodes-global.test.ts`). Plan 1 + Plan 2 assertions both green.
+- [x] **Step 4: Run — expect PASS** (`pnpm test tests/unit/seo/nodes-global.test.ts`). Plan 1 + Plan 2 assertions both green.
 
-- [ ] **Step 5: Typecheck** (`pnpm typecheck`).
+- [x] **Step 5: Typecheck** (`pnpm typecheck`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/seo/nodes-global.ts tests/unit/seo/nodes-global.test.ts
