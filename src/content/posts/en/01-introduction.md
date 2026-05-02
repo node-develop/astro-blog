@@ -1,19 +1,38 @@
 ---
-title: "01. What is Claude Code: harness, agent loop and your place in it"
+title: "01. What is Claude Code: harness, agent loop, and your place in it"
 description: >-
-  Before diving into `CLAUDE.md`, skills and subagents, we need to agree on terminology. Otherwise, discussions about
+  Before diving into `CLAUDE.md`, skills, and subagents, we need to agree on terminology. Otherwise, discussions about
   "cache" and "context" turn into arguments about different entities.
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Claude Code is a harness around an LLM, not the model itself. The model decides which tool to call; the harness
+  executes it, returns the result, and runs the agent loop until the final answer.
+faq:
+  - question: How is an agent different from a chatbot?
+    answer: >-
+      A chatbot is model.complete(messages): it takes text and returns text. An agent is a loop where the model itself
+      decides which tool to call (Read, Bash, MCP), gets the result, and continues working until a final answer. This
+      loop is called an agent loop.
+  - question: What is a harness in Claude Code?
+    answer: >-
+      A harness is a local program (Claude Code CLI or IDE plugin) that assembles the prompt, executes the model's tool
+      calls, asks for permission, manages cache and hooks. The model itself is in Anthropic's cloud and has no access to
+      the disk.
+  - question: Can a model directly read files?
+    answer: >-
+      No. When we say 'the model read a file', this is shorthand for: the model made a tool_use Read call, the harness
+      read the file and returned its contents in tool_result. There is no direct access for the model to the file
+      system.
 lang: en
-sourceHash: edd807e33754d025e27e16b3e2c3587b1b4b647dcb4d020b350eb7d1f905d455
+sourceHash: 164cf552e592c1facc720863390880e8ac5bba52800e198403fe066021721afc
 manuallyEdited: false
 ---
 
-> Before diving into `CLAUDE.md`, skills, and subagents, we need to agree on terminology. Otherwise, discussions about "cache" and "context" turn into arguments about different things.
+> Before diving into `CLAUDE.md`, skills, and subagents, we need to agree on terminology. Otherwise, discussions about "cache" and "context" turn into arguments about different entities.
 
 ---
 
@@ -172,7 +191,7 @@ flowchart TB
   sdk -. tool calls .-> docs
 ```
 
-In each chapter we'll answer the question: **"How do I apply this to Travel Agent?"** — with a concrete config snippet, code, or CLAUDE.md.
+In each chapter we'll answer the question: **"How do I apply this to Travel Agent?"** — with concrete config snippets, code, or CLAUDE.md.
 
 In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint) the final repository structure with all artifacts comes together.
 

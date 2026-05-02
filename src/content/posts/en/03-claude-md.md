@@ -1,15 +1,32 @@
 ---
 title: "03. CLAUDE.md: levels, imports, auto-memory"
 description: >-
-  CLAUDE.md is a "paste this every time" in a beautiful wrapper. A file that automatically gets inserted into the system
-  prompt of each session. Used correctly — saves tens of thousands of tokens and
+  CLAUDE.md is a "paste this every time" in a nice wrapper. A file that automatically gets inserted into the system
+  prompt of each session. Used correctly — saves tens of thousands of tokens and more
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  CLAUDE.md is a "paste this every time" in a nice wrapper: an automatic prefix for each session. It has five levels
+  (managed, user, project, local, subdirectory), they concatenate rather than overwrite each other.
+faq:
+  - question: What CLAUDE.md levels exist and how are they prioritized?
+    answer: >-
+      There are five levels: managed (enterprise policies), user (~/.claude/CLAUDE.md), project (./CLAUDE.md),
+      project-local (./CLAUDE.local.md, not committed), and subdirectory (./packages/api/CLAUDE.md). All found files are
+      concatenated; more specific ones don't overwrite but are added.
+  - question: Does CLAUDE.md support @-imports?
+    answer: >-
+      Yes. Use @./path/to/file.md to include a separate file. Imports are recursive up to 5 levels of nesting. This
+      allows you to fragment large context and load only relevant parts when needed.
+  - question: What's the maximum reasonable size for CLAUDE.md?
+    answer: >-
+      Aim for 50–150 substantive lines. CLAUDE.md over 5–10 KB starts to "drown in noise": the model places it in
+      context but stops managing it, more often ignoring fresh prompts. Long specific rules are better moved to skills.
 lang: en
-sourceHash: be10f6f2a3711a5c3018df52b26cc375ddde0a17c963db8504b2aed775ec8a9c
+sourceHash: 47e62e57ccee0ab221547714463c18b854f2833df15aeb8cc8930f20e1f74cec
 manuallyEdited: false
 ---
 
@@ -60,7 +77,7 @@ When a session starts in directory `cwd`, the harness looks for:
 3. `./CLAUDE.local.md` (if it exists)
 4. Through all parent directories up to the filesystem root — all found files are also picked up.
 
-**Subdirectory CLAUDE.md** is loaded **on demand** — when the model starts working in that folder (reads files from it, runs Bash in its root). This allows you to have a huge monorepo with local "notes" in each package without bloating the base context.
+**Subdirectory CLAUDE.md** is loaded **on demand** — when the model starts working in that folder (reading files from it, running Bash in its root). This allows you to have a huge monorepo with local "notes" in each package without bloating the base context.
 
 🔧 **For Travel Agent** (monorepo):
 
@@ -138,7 +155,7 @@ When Claude reads this CLAUDE.md, it automatically inlines the contents of all i
 ❌ License.
 ❌ Long ADRs in full. Better: "we chose Postgres, rationale in @docs/adr/0003-postgres.md" — the model will read it if needed.
 ❌ Full list of dependencies with versions. This changes often, and `package.json` is there anyway.
-❌ Stories about "why it was like this and became like that". It adds noise.
+❌ Stories "why it was like this and became like that". It adds noise.
 
 💡 **Size heuristic:** one CLAUDE.md per level — no more than **300 lines** or **5000 tokens** (`/context` will show). Larger — move to imports or subdirectory CLAUDE.md.
 

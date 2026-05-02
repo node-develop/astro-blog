@@ -1,19 +1,39 @@
 ---
 title: 11. Models and pricing
 description: >-
-  Choosing a model is not 'always Opus because it's the best'. It's a trade-off between speed / cost / quality for a
-  specific task. This chapter covers tables, budgets, and combination strategies.
+  Choosing a model isn't "always Opus because it's the best". It's a trade-off between speed / cost / quality for a
+  specific task. This chapter covers tables, budgets, and strategies for combining
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Model selection is a speed/cost/quality trade-off, not "always Opus". Cache reads cost 0.1× input (10× cheaper),
+  output ~5× input. Opus 4.7 has a new tokenizer (+35% tokens on the same texts), on Bedrock/Vertex default aliases are
+  shifted back one version.
+faq:
+  - question: What's the price difference between Opus, Sonnet, and Haiku?
+    answer: >-
+      As of April 2026, input/output per million tokens: Opus 4.7/4.6 — $5/$25, Sonnet 4.6 — $3/$15, Haiku 4.5 — $1/$5.
+      Cache read is 0.1× input everywhere. Output typically costs 5× input. Sonnet handles 80% of everyday tasks, Opus
+      for architecture and complex reasoning, Haiku for search and initial reads.
+  - question: Why does Opus 4.7 consume more tokens than 4.6?
+    answer: >-
+      Opus 4.7 has a new tokenizer: on the same texts it consumes up to +35% more tokens compared to 4.6. If you had
+      budget estimates for 4.6 — recalculate them. On Bedrock/Vertex/Foundry, the opus/sonnet aliases are shifted back
+      one version: specify the full model name for the latest.
+  - question: What is opusplan mode and how does it work?
+    answer: >-
+      It's plan mode on Opus with automatic switching to Sonnet after ExitPlanMode: the expensive model plans, the
+      cheaper one executes. Enabled via /model opusplan or Shift+Tab. Important: opusplan doesn't support the 1M window
+      — the plan phase works in the standard 200k, even if 1M is enabled globally.
 lang: en
-sourceHash: 1e88caf7ecca00a1226e89cf358c6142c1cfefa815aaf16ed3f2be0211178e74
+sourceHash: 3bb14cd321d1152067f22a91c70b6b58bbc2f3913fa7e903e17edd638dfafd1f
 manuallyEdited: false
 ---
 
-> Model selection is not "always Opus because it's better". It's a trade-off between speed / cost / quality for a specific task. This chapter covers tables, budgets, and strategies for combining models.
+> Model selection is not "always Opus because it's better". It's a trade-off between speed / cost / quality for a specific task. This chapter covers tables, budgets, and combination strategies.
 
 ---
 
@@ -55,8 +75,8 @@ Use metaphors from the original Twitter thread — they work:
 
 ```mermaid
 flowchart LR
-  haiku["Haiku<br/>intern"] --> hcase["• code search<br/>• initial reads<br/>• formulating saved knowledge<br/>• minor regeneration (comments, README sections)"]
-  sonnet["Sonnet<br/>reliable mid-senior"] --> scase["• 80% of everyday tasks<br/>• routine code changes and features<br/>• tests, refactors, debugging"]
+  haiku["Haiku<br/>intern"] --> hcase["• code search<br/>• initial reads<br/>• formulating saved knowledge<br/>• small regeneration (comments, README sections)"]
+  sonnet["Sonnet<br/>reliable mid-senior"] --> scase["• 80% of everyday tasks<br/>• typical code edits and features<br/>• tests, refactors, debugging"]
   opus["Opus<br/>expensive senior"] --> ocase["• architectural decisions<br/>• complex migrations<br/>• debugging subtle bugs<br/>• plan mode"]
 ```
 
@@ -64,7 +84,7 @@ flowchart LR
 
 ---
 
-## 11.4. Strategies for combining models
+## 11.4. Model combination strategies
 
 ### 11.4.1. Default: Sonnet
 
@@ -76,7 +96,7 @@ Start most sessions with Sonnet 4.6. It's a sensible baseline.
 /model opusplan
 ```
 
-Enables plan mode on Opus. After `ExitPlanMode` automatically switches to Sonnet for implementation. **This is the correct pattern: "think with Opus, build with Sonnet".**
+Enable plan mode on Opus. After `ExitPlanMode` it automatically switches to Sonnet for implementation. **This is the correct "think with Opus, do with Sonnet" pattern.**
 
 ⚠️ In opusplan, the **plan phase runs in standard 200k**, even if you enabled a 1M window.
 
@@ -94,7 +114,7 @@ model: sonnet
 # explore (built-in) → haiku
 ```
 
-This lets you keep the main agent on Sonnet and upgrade the model only for specialized subagents when needed.
+This lets you keep the main agent on Sonnet and upgrade the model only when needed for specialized subagents.
 
 ### 11.4.4. Agent Teams: Lead = Opus, teammates = Sonnet/Haiku
 
@@ -174,7 +194,7 @@ export CLAUDE_CODE_BUDGET_USD_DAILY=50       # daily ceiling
 
 ## 11.8. Should you revisit `CLAUDE.md` and skills with new models?
 
-⚠️ The claim "settings become outdated over time, with new models you need to revisit CLAUDE.md and skills" — **is sound practice, but not a quote from docs**. There's no direct recommendation in public docs.
+⚠️ The claim "settings become outdated over time, you need to revisit CLAUDE.md and skills with new models" — **is sound practice, but not a quote from docs**. There's no direct recommendation in public docs.
 
 Reality:
 
@@ -182,7 +202,7 @@ Reality:
 - Skills can become outdated if you stuffed them with "model understands X poorly, always remind it" — but the new model understands X on its own.
 - Hooks usually don't depend on the model.
 
-💡 Once a quarter, quickly review CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?". Especially for hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
+💡 Once a quarter, quickly review CLAUDE.md and `/skills`, ask yourself: "is this still needed for current models?". Especially hints like "don't forget to return `Promise<T>`" — Sonnet 4.6 already doesn't forget.
 
 ---
 
@@ -190,7 +210,7 @@ Reality:
 
 📝 Each subagent has **its own** limit:
 
-- On Haiku-subagent, window is 200k.
+- On Haiku-subagent the window is 200k.
 - On Sonnet/Opus-subagent — 200k or 1M (if enabled).
 
 This gives a convenient pattern: **keep main context on 200k Sonnet, and a browse-heavy subagent on 1M Sonnet**. The subagent reads most of the repo, returns a summary, main context doesn't suffer.

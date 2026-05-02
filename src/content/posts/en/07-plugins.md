@@ -1,19 +1,38 @@
 ---
 title: "07. Plugins: packaging skills + hooks + agents + MCP"
 description: >-
-  Plugin is an "npm package for Claude Code". If you have multiple related artifacts (skills + hooks + agents + MCP
-  config) that you want to share between projects or with your team — pack
+  Plugin is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents +
+  MCP-config) that you want to share between projects or with your team — pack
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Plugin — npm package for Claude Code: packaging skills, hooks, subagents, slash-commands, and MCP-config into a single
+  versioned entity. Manifest .claude-plugin/plugin.json, installation via /plugin install, marketplaces.
+faq:
+  - question: Why do you need plugins if you can just commit .claude/?
+    answer: >-
+      Plugins solve the problem of reuse across repositories and teams. One source of truth, versioning through semver,
+      one-click updates via /plugin update. Without plugins, you copy-paste .claude/ from project to project and drift
+      across versions.
+  - question: What's included in the plugin.json manifest?
+    answer: >-
+      Minimum: name, version (semver), description. Optional — author, repository, claude_code_version (minimum CLI
+      version), keywords, license. This file is the only required artifact; everything else (skills/, agents/, hooks/,
+      .mcp.json) is optional and picked up by the harness from standard directories.
+  - question: Can you publish plugins to a public marketplace?
+    answer: >-
+      Yes. There's a public registry and the ability to maintain private corporate marketplaces. Installation from
+      public: /plugin install github:org/repo@v1.2.3. For private — configurable registry URL and authentication. This
+      is better than git submodule.
 lang: en
-sourceHash: 59b7f4f93d3421a7201e119449b732450964548d7a3a4500777c5a9cf6f45c63
+sourceHash: 22e6d7385b5d7caa179469938d78a9df4fc040eea90e1ec21d18f75c4b1c1453
 manuallyEdited: false
 ---
 
-> Plugin is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents + MCP config) that you want to share between projects or with your team — package them in a plugin.
+> Plugin is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents + MCP config) that you want to share between projects or with your team — package them into a plugin.
 
 ---
 

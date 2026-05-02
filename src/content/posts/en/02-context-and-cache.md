@@ -1,25 +1,44 @@
 ---
 title: 02. Context window and prompt cache
 description: >-
-  The most common reason "Claude suddenly became dumber" — an overflowed window. The most common reason "it suddenly
-  became expensive" — a lost cache. This chapter is about how to avoid this.
+  The most common reason "Claude suddenly became dumber" — an overflowing window. The most common reason "it suddenly
+  became expensive" — a lost cache. This chapter is about how to avoid it.
 pubDate: 2026-04-23
 tags:
   - claude-code
   - guide
 draft: false
+summary: >-
+  Context window is both money and quality. Opus/Sonnet 4.6 standard — 200k tokens; 1M available via alias
+  opus[1m]/sonnet[1m]. Prompt cache cuts the bill 10x, but lives only 5 minutes by default.
+faq:
+  - question: How many tokens fit in Claude's context window?
+    answer: >-
+      The standard window for Opus 4.7, Opus 4.6, and Sonnet 4.6 is 200,000 tokens; 1M is available only through the
+      opus[1m] or sonnet[1m] alias on Max/Team/Enterprise plans. Haiku 4.5 supports only 200k. The window is shared
+      between input and output.
+  - question: How long does prompt cache live in Claude Code?
+    answer: >-
+      By default, 5 minutes from the last write. Cache write 5 min costs 1.25× the input price, cache read costs 0.1×
+      input. You can extend it to 1 hour at the cost of cache write being 2× input. After TTL expires, the prefix is
+      invalidated and recalculated.
+  - question: Why is enabling the 1M window "by default" a bad idea?
+    answer: >-
+      Beyond the linear growth in input token costs, empirically after 300–400k tokens, reasoning quality noticeably
+      degrades. Anthropic does not recommend "always 1M". Enable it consciously for a specific task, disable it via
+      CLAUDE_CODE_DISABLE_1M_CONTEXT=1.
 lang: en
-sourceHash: e5174f86f3049d22ed6cc1fef61b67e35ffd827f23fab2f683cd09816666b6ae
+sourceHash: b365ba4e2512bc860e10b8b08286430ebbdb73caa8c271cb5f450e4d9c90b399
 manuallyEdited: false
 ---
 
-> The most common reason "Claude suddenly got dumber" is a full context window. The most common reason "suddenly it got expensive" is lost cache. This chapter is about how to avoid both.
+> The most common reason "Claude suddenly got dumber" is a full context window. The most common reason "it suddenly got expensive" is lost cache. This chapter is about how to avoid both.
 
 ---
 
 ## 2.1. What is a context window
 
-**Context window** — the maximum number of tokens a model sees in a single request. This includes both input (everything you sent it) and space for output (what it will write).
+**Context window** — the maximum number of tokens the model sees in a single request. This includes both input (everything you send it) and space for output (what it will write).
 
 Limits as of 23.04.2026:
 
@@ -65,7 +84,7 @@ flowchart TD
 
 1. **Tool results** — especially `Read` of large files and `Bash` with verbose output. The leader in "consuming" the window.
 2. **Large CLAUDE.md** — if you put README, ADRs, and changelog there "just in case".
-3. **Long history** — each previous tool call with its result stays in the window.
+3. **Long history** — every previous tool call with its result stays in the window.
 4. **Tool definitions** — definitions of all tools (including MCP) can weigh 3-15k. Especially if you have 5+ MCP servers connected with dozens of tools each.
 
 💡 Before a complex task, run `/context` — you'll see the breakdown and understand what to cut.
@@ -114,22 +133,22 @@ Cache is invalidated (or expires) when:
 
 | Event                                           | What happens                                                    | How to avoid                                                       |
 | ----------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 5 minutes pass without requests                 | TTL expires, next request — write cache anew                    | Raise TTL to 1h (`cache_control.ttl: "1h"`) or work without pauses |
+| 5 minutes pass without requests                 | TTL expires, next request — write cache again                   | Raise TTL to 1h (`cache_control.ttl: "1h"`) or work without pauses |
 | You change `tools` (add MCP, plugin)            | Cache invalidated at tools level                                | Don't connect MCP in the middle of a session                       |
 | You change `system` (edit CLAUDE.md, add skill) | Cache invalidated at system level                               | Finalize CLAUDE.md before starting work                            |
 | You switch models via `/model`                  | Cache is specific to each model                                 | Use `opusplan` (it manages switching) or start a new session       |
 | `/clear` or new session                         | Prefix is recreated from scratch                                | This is normal, cache write is a one-time cost                     |
 | `/compact`                                      | Old history replaced with summary, then new prefix for messages | Also normal, saves window at cost of one cache write               |
 
-⚠️ **Myth:** "switching models breaks prompt cache forever". Reality: the next request will be a cache miss (one-time more expensive), then everything caches again on the new model.
+⚠️ **Myth:** "switching models breaks prompt cache forever". Reality: the next request will be a cache miss (costs more once), then everything caches again on the new model.
 
 📘 From docs `/model`: "opens a picker that asks for confirmation when the conversation has prior output, since the next response re-reads the full history without cached context".
 
-That is, model switching is a **one-time** extra charge. Not "forever" and not "impossible". Just account for it.
+That is, model switching is a **one-time** extra cost. Not "forever" and not "impossible". Just account for it.
 
 ---
 
-## 2.5. `opusplan` — a feature often wrongly called "Advisor mode"
+## 2.5. `opusplan` — the feature that's wrongly called "Advisor mode"
 
 In the thread we started with, "Advisor mode" was mentioned. In official docs, there's **no such feature**. The real feature is called **`opusplan`**.
 
@@ -223,10 +242,10 @@ flowchart TD
 
 ## 2.8. Checklist: "how not to burn the window and cache"
 
-✅ Before a long task, run `/context` — assess initial fill.
+✅ Before a long task, run `/context` — assess starting fill.
 ✅ Keep CLAUDE.md ≤ 5k tokens. Larger — split into subdirectory CLAUDE.md (see [03](./03-claude-md)).
 ✅ Connect MCP servers before starting work, not in the middle.
-✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (config flag or pass `cache_control.ttl="1h"` via SDK).
+✅ If a task lasts > 5 minutes with pauses — ask harness to use 1h TTL (settings flag or pass `cache_control.ttl="1h"` via SDK).
 ✅ Don't `Read` entire huge files (50k-line logs) — use `Grep` or offset/limit.
 ✅ After each completed task — `/clear`.
 ✅ For architectural decisions enable `opusplan` (plan by Opus, execution by Sonnet).
