@@ -35,5 +35,16 @@
   "search.shortcutHint": "<kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close",
   "footer.meta": "Astro · on-demand · WCAG AA",
   "meta.home.description": "Artem's personal blog about development, AI tools, Claude Code, Astro, and architecture.",
-  "meta.about.description": "About the author: Node.js/TypeScript development, AI automation, distributed systems architecture."
+  "meta.about.description": "About the author: Node.js/TypeScript development, AI automation, distributed systems architecture.",
+  "meta.projects.description": "Portfolio: projects with role, architecture, stack, and results.",
+  "projects.title": "Projects",
+  "projects.eyebrow": "Portfolio",
+  "projects.empty": "Nothing published yet.",
+  "projects.role": "Role",
+  "projects.stack": "Stack",
+  "projects.outcomes": "Outcomes",
+  "projects.links": "Links",
+  "projects.status.active": "Active development",
+  "projects.status.maintained": "Maintained",
+  "projects.status.archived": "Archived"
 }

@@ -35,5 +35,16 @@
   "blog.tagsAria": "a2800083983fe0f7e2d41150cfc98d1fc3e722305288bff84e5895e9d62aa60b",
   "post.minutes": "62dcfe2d4dee3196ee4a04c3191fd1d57df7c80070c9a717115fcb03f209bb94",
   "meta.home.description": "b8653c5d6c40e87e0f8c0c7ca335b761ef9d412c30ac9a761c9cf5b396f8bf16",
-  "meta.about.description": "843f22cd8342da579b41dc94040f5eb63dda84b0ebad59e08c42d59c8dac2fe1"
+  "meta.about.description": "843f22cd8342da579b41dc94040f5eb63dda84b0ebad59e08c42d59c8dac2fe1",
+  "meta.projects.description": "8d5622f2614c89eeed061cf38e3c01e82468541988372ac3f199fbb2d53d4520",
+  "projects.title": "5029f02d0a9484eba108ae21fe67b2ad875b7383269700dc8d72fcd01205f817",
+  "projects.eyebrow": "237fea6f8b0c8d27443541bb3250704abaeaa0650efdea89b229120b9bd945f2",
+  "projects.empty": "349cbbf2f8bc3c14155d2cf979bfbdd8b7129b95317d3ea4d7bfc91c1b23cfa2",
+  "projects.role": "ebd4563f5ac7349d5e520aa3cc24640e0b79525ffeaa94abe7153dff5c74e8a7",
+  "projects.stack": "7784aafecc9f12f465f6595f6e6ee4044b534975607eb41330f68fc621972e65",
+  "projects.outcomes": "24735a7161d9deb55f948e4d1de4c68b634d026b33724a21d3c73ae053a89882",
+  "projects.links": "da2ab76991a2ebd55696013382cc1609d3c675cedf86d12b7aeec07078a6f355",
+  "projects.status.active": "ecce8675311fecafad8b9fd2aa298d800c95adc04add0df3524d01e14c926488",
+  "projects.status.maintained": "e3df638795d8a5dbdc137e3cff0ec99296a5a8071303186414b99e132e92f531",
+  "projects.status.archived": "3c54b5e783ef6052cc4b7a7528c0a757be3a6e3a539d4be6e0f37a5a4d10b1d1"
 }
