@@ -882,7 +882,7 @@ git commit -m "feat(authority): make tag chips clickable, link to /tags/<slug>"
 
 **Distinguishing real top-level h1 from bash-comment lines in fenced code blocks:** the cleanup edits a single line (the leading `# NN. Title` line, plus the blank line that follows it where present). Bash-comment lines like `# В CLI` inside `` ```bash ... ``` `` blocks are out of scope — they are NOT h1 nodes per markdown grammar (remark-parse parses them as `code` nodes' raw text). Task 6's test uses `unified + remark-parse` which respects this; we never need to touch those bash comments.
 
-- [ ] **Step 1: Strip the leading `# ...` heading from each offender via an ad-hoc script.**
+- [x] **Step 1: Strip the leading `# ...` heading from each offender via an ad-hoc script.**
 
 The leading h1 is invariably the first non-frontmatter content (`# 01. Title…`). Bash-comment lines inside fenced code blocks are NOT h1 nodes per markdown grammar — `remark-parse` treats them as text inside a `code` node — so a regex that targets only the line directly after the closing `---` is safe.
 
@@ -922,7 +922,7 @@ rm scripts/strip-leading-h1.ts
 
 Expected: ~16 lines of `stripped:` output (15 RU + 14 EN translations + `claude.md`).
 
-- [ ] **Step 2: Confirm the strip looks correct.**
+- [x] **Step 2: Confirm the strip looks correct.**
 
 ```bash
 git diff --stat src/content/posts/
@@ -931,7 +931,7 @@ head -16 src/content/posts/01-introduction.md
 
 Expected: ~30 files touched, each `-2 lines`. The post starts with the blockquote `> Перед тем как разбирать ...`, NOT a `# 01. ...` line.
 
-- [ ] **Step 3: Run all existing tests to confirm nothing broke.**
+- [x] **Step 3: Run all existing tests to confirm nothing broke.**
 
 ```bash
 pnpm test && pnpm typecheck
@@ -939,7 +939,7 @@ pnpm test && pnpm typecheck
 
 Expected: all green. The translation pipeline's hash-based drift detector (`pnpm translate:check`) compares frontmatter `sourceHash`; because we edit only the body and edit RU + EN symmetrically, hashes are unaffected. If `pnpm translate:check` flags drift, run `pnpm translate` once to refresh, then re-stage.
 
-- [ ] **Step 4: Detect changes scope and commit.**
+- [x] **Step 4: Detect changes scope and commit.**
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
@@ -964,7 +964,7 @@ git commit -m "fix(content): strip duplicate leading h1 from post bodies"
 
 The test parses each post's markdown body via `unified + remark-parse` (NOT regex on raw text — that would false-positive on bash `# comment` lines inside fenced code blocks). It walks the mdast and fails on any `heading` node with `depth === 1`.
 
-- [ ] **Step 1: Write the failing-but-currently-passing test.**
+- [x] **Step 1: Write the failing-but-currently-passing test.**
 
 Create `tests/unit/posts-h1.test.ts`:
 
@@ -1034,7 +1034,7 @@ describe("post bodies must not contain a top-level h1", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test.**
+- [x] **Step 2: Run the test.**
 
 ```bash
 pnpm test tests/unit/posts-h1.test.ts
@@ -1042,7 +1042,7 @@ pnpm test tests/unit/posts-h1.test.ts
 
 Expected: PASS — Task 5 already cleaned all offenders. If this fails, the Task 5 strip script missed a file (or a code block was misclassified). Inspect the failure message which lists offending paths, fix manually, and re-run.
 
-- [ ] **Step 3: Belt-and-braces — verify the test fails on a regression, then revert.**
+- [x] **Step 3: Belt-and-braces — verify the test fails on a regression, then revert.**
 
 ```bash
 { printf '# Test\n\n'; cat src/content/posts/01-introduction.md; } > /tmp/x.md && \
@@ -1054,7 +1054,7 @@ Expected: PASS — Task 5 already cleaned all offenders. If this fails, the Task
 
 Expected: first invocation FAILs listing `01-introduction.md`; after revert, second invocation PASSes.
 
-- [ ] **Step 4: Typecheck and commit.**
+- [x] **Step 4: Typecheck and commit.**
 
 ```bash
 pnpm typecheck
