@@ -314,13 +314,13 @@ faq:
 
 ## E1 backfill checklist (per post)
 
-- [ ] Read post end-to-end. Confirm the draft summary actually reflects the thesis.
-- [ ] Confirm each FAQ answer is fully grounded in the post body (no fabrication).
-- [ ] Add `summary:` and `faq:` keys to RU frontmatter.
-- [ ] Run `pnpm typecheck` (zod will reject malformed shapes).
-- [ ] Run `pnpm translate` to regenerate the EN twin under `src/content/posts/en/`.
-- [ ] Spot-check the EN translation: hand-edit if a technical term ("harness", "agent loop") came back wrong; if you do, add `manuallyEdited: true` to EN frontmatter.
-- [ ] Commit RU + EN together: `docs(content): backfill summary+faq for <NN>-<slug>`.
+- [x] Read post end-to-end. Confirm the draft summary actually reflects the thesis.
+- [x] Confirm each FAQ answer is fully grounded in the post body (no fabrication).
+- [x] Add `summary:` and `faq:` keys to RU frontmatter.
+- [x] Run `pnpm typecheck` (zod will reject malformed shapes).
+- [x] Run `pnpm translate` to regenerate the EN twin under `src/content/posts/en/`.
+- [x] Spot-check the EN translation: hand-edit if a technical term ("harness", "agent loop") came back wrong; if you do, add `manuallyEdited: true` to EN frontmatter.
+- [x] Commit RU + EN together: `docs(content): backfill summary+faq for <NN>-<slug>`.
 
 ---
 
