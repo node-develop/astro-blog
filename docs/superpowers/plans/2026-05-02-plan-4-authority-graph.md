@@ -248,7 +248,7 @@ Expected: 8 assertions pass; 0 typecheck errors.
 
 The index page lists every tag slug with a post count in the current locale and links to `/tags/<slug>` (RU) or `/en/tags/<slug>` (EN). It emits a `WebPage` schema node referencing `Person#me` via `about` (matches Plan 2's entity-page pattern).
 
-- [ ] **Step 1: Add i18n strings for the page (RU + EN, mirror keys).**
+- [x] **Step 1: Add i18n strings for the page (RU + EN, mirror keys).**
 
 Append to `src/i18n/strings.ru.json` (and mirror in `src/i18n/strings.en.json` with the EN values shown after the slash):
 
@@ -267,7 +267,7 @@ Append to `src/i18n/strings.ru.json` (and mirror in `src/i18n/strings.en.json` w
 
 `pnpm translate` hash-tracks these as new keys; both locales must be committed manually.
 
-- [ ] **Step 2: Write the failing source-shape regression test.**
+- [x] **Step 2: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tags-index-page.test.ts`:
 
@@ -308,7 +308,7 @@ describe.each([
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails.**
+- [x] **Step 3: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags-index-page.test.ts
@@ -316,7 +316,7 @@ pnpm test tests/unit/content/tags-index-page.test.ts
 
 Expected: FAIL — files do not exist yet.
 
-- [ ] **Step 4: Implement `src/pages/tags/index.astro`.**
+- [x] **Step 4: Implement `src/pages/tags/index.astro`.**
 
 ```astro
 ---
@@ -415,7 +415,7 @@ const rows = slugs.map((slug) => ({
 </BaseLayout>
 ```
 
-- [ ] **Step 5: Implement the EN sibling `src/pages/en/tags/index.astro`.**
+- [x] **Step 5: Implement the EN sibling `src/pages/en/tags/index.astro`.**
 
 Copy the RU file verbatim, then apply these three edits:
 
@@ -425,7 +425,7 @@ Copy the RU file verbatim, then apply these three edits:
 
 Everything else — frontmatter imports order, layout markup, `<style>` block — is byte-identical to the RU sibling.
 
-- [ ] **Step 6: Verify, smoke-check, and commit.**
+- [x] **Step 6: Verify, smoke-check, and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags-index-page.test.ts && pnpm typecheck
@@ -459,7 +459,7 @@ Each archive page lists posts matching the current locale, with a `Blog` JSON-LD
 
 **Key i18n decision (recorded here per the risk callout):** `getStaticPaths()` enumerates the **union** of slugs across both locales. A slug present only in (say) RU posts still produces an `/en/tags/<slug>` route — that page renders with an empty list and a localized "no posts in this language yet" hint, plus a back-link to the index. This keeps URLs stable across translations and avoids 404 churn when a slug appears in one locale before the other ships its translation.
 
-- [ ] **Step 1: Write the failing source-shape regression test.**
+- [x] **Step 1: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tags-archive-page.test.ts`:
 
@@ -502,7 +502,7 @@ describe.each([
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails.**
+- [x] **Step 2: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags-archive-page.test.ts
@@ -510,7 +510,7 @@ pnpm test tests/unit/content/tags-archive-page.test.ts
 
 Expected: FAIL — files do not exist.
 
-- [ ] **Step 3: Implement `src/pages/tags/[tag].astro`.**
+- [x] **Step 3: Implement `src/pages/tags/[tag].astro`.**
 
 ```astro
 ---
@@ -648,7 +648,7 @@ const breadcrumbNode = {
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Implement the EN sibling `src/pages/en/tags/[tag].astro`.**
+- [x] **Step 4: Implement the EN sibling `src/pages/en/tags/[tag].astro`.**
 
 Copy the RU file verbatim, then apply these substitutions:
 
@@ -661,7 +661,7 @@ Copy the RU file verbatim, then apply these substitutions:
 
 The `<style>` block is byte-identical to the RU sibling. Layout markup classes (`.tag-archive*`) are unchanged.
 
-- [ ] **Step 5: Verify, smoke-check, and commit.**
+- [x] **Step 5: Verify, smoke-check, and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags-archive-page.test.ts && pnpm typecheck
@@ -696,7 +696,7 @@ git commit -m "feat(authority): add /tags/[tag] archives with Blog schema"
 
 Both renderers currently show `<span>#tag</span>` with no link. We swap them for `<a>` and resolve display labels through the locale-specific dict (consistent with Tasks 2 and 3).
 
-- [ ] **Step 1: Run impact analysis.**
+- [x] **Step 1: Run impact analysis.**
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -705,7 +705,7 @@ mcp__gitnexus__impact({ target: "blog/index", direction: "upstream", repo: "astr
 
 Expected: same as Task 0 step 3. Confirm no surprise consumers.
 
-- [ ] **Step 2: Write the failing source-shape regression test.**
+- [x] **Step 2: Write the failing source-shape regression test.**
 
 Create `tests/unit/content/tag-chip-links.test.ts`:
 
@@ -746,7 +746,7 @@ describe("tag chips are anchors", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails.**
+- [x] **Step 3: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tag-chip-links.test.ts
@@ -754,7 +754,7 @@ pnpm test tests/unit/content/tag-chip-links.test.ts
 
 Expected: FAIL — current chips are `<span>` elements.
 
-- [ ] **Step 4: Modify `src/pages/blog/index.astro`.**
+- [x] **Step 4: Modify `src/pages/blog/index.astro`.**
 
 Add to the existing frontmatter (preserving Plan 1's `buildBlogNode` import / `blogNode` const / `extraSchemaNodes={[blogNode]}`):
 
@@ -798,7 +798,7 @@ In the `<style>` block, append `text-decoration: none;` and a hover transition t
 }
 ```
 
-- [ ] **Step 5: Apply the same edits to `src/pages/en/blog/index.astro`.**
+- [x] **Step 5: Apply the same edits to `src/pages/en/blog/index.astro`.**
 
 Substitutions:
 
@@ -806,7 +806,7 @@ Substitutions:
 - `const dict = tagsEn as Record<string, string>;`
 - `tagsHrefBase` simplifies to `"/en/tags"` directly (since the page is always EN), but the locale-conditional form is fine too — keep the structure parallel for symmetry.
 
-- [ ] **Step 6: Modify `src/layouts/PostLayout.astro`.**
+- [x] **Step 6: Modify `src/layouts/PostLayout.astro`.**
 
 Add to the imports near the top of the frontmatter (after the existing `t` import):
 
@@ -843,7 +843,7 @@ Replace the existing tag chips block in the post header (lines ~144-154) with:
 
 In the `<style>` block, add `display: inline-block; text-decoration: none;` plus a transition to `.post__tag-chip` and a `:hover` selector mirroring `.list__tag-chip` above (same property values).
 
-- [ ] **Step 7: Verify and commit.**
+- [x] **Step 7: Verify and commit.**
 
 ```bash
 pnpm test tests/unit/content/tag-chip-links.test.ts
