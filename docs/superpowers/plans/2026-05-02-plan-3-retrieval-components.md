@@ -584,14 +584,14 @@ git commit -m "feat(mdx): add <Tldr> component with auto-render from frontmatter
 - Create: `tests/unit/mdx/faq.test.ts`
 - Modify: `src/layouts/PostLayout.astro`
 
-- [ ] **Step 1:** Re-confirm `buildFaqPageNode` shape (Plan 1 Task 4 baseline).
+- [x] **Step 1:** Re-confirm `buildFaqPageNode` shape (Plan 1 Task 4 baseline).
 
 ```bash
 grep -A 5 "buildFaqPageNode" src/lib/seo/nodes-page.ts | head -20
 ```
 Expected: function signature `buildFaqPageNode({ canonical, items })` returning `null` when items are empty.
 
-- [ ] **Step 2:** Write the failing test.
+- [x] **Step 2:** Write the failing test.
 
 Create `tests/unit/mdx/faq.test.ts`:
 
@@ -640,14 +640,14 @@ describe("<Faq>", () => {
 });
 ```
 
-- [ ] **Step 3:** Run the test to verify it fails.
+- [x] **Step 3:** Run the test to verify it fails.
 
 ```bash
 pnpm test tests/unit/mdx/faq.test.ts
 ```
 Expected: FAIL — `Faq.astro` does not exist.
 
-- [ ] **Step 4:** Implement `src/components/mdx/Faq.astro`.
+- [x] **Step 4:** Implement `src/components/mdx/Faq.astro`.
 
 ```astro
 ---
@@ -755,7 +755,7 @@ const { items, title = "FAQ" } = Astro.props;
 
 (Note: the markup nests `<details>` inside `<dt>` so the `<dl>/<dt>/<dd>` semantics hold while `<details>` provides progressive disclosure. Pure visual choice; structured FAQPage JSON-LD comes from `buildFaqPageNode` and does not depend on this markup.)
 
-- [ ] **Step 5:** Re-export `<Faq>` from the components index.
+- [x] **Step 5:** Re-export `<Faq>` from the components index.
 
 Update `src/components/mdx/index.ts`:
 
@@ -771,7 +771,7 @@ export const mdxComponents = {
 export type MdxComponents = typeof mdxComponents;
 ```
 
-- [ ] **Step 6:** Wire `<Faq>` auto-render and FAQPage schema into `PostLayout.astro`.
+- [x] **Step 6:** Wire `<Faq>` auto-render and FAQPage schema into `PostLayout.astro`.
 
 Open `src/layouts/PostLayout.astro`. Modify the frontmatter:
 
@@ -820,21 +820,21 @@ extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 
   (NOTE: `<AuthorCard>` from Plan 2 sits BELOW the `<Faq>` block. `RelatedPosts` from Task 7 will also slot in this region — explicit ordering documented in Task 7.)
 
-- [ ] **Step 7:** Run typecheck.
+- [x] **Step 7:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. The `extraSchemaNodes` prop on `BaseLayout` accepts `ReadonlyArray<GraphNode | null>`, so passing a possibly-`null` `faqNode` is type-safe (`buildGraph` filters nulls — verified by Plan 1 Task 6).
 
-- [ ] **Step 8:** Run tests.
+- [x] **Step 8:** Run tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 9:** Manual smoke check.
+- [x] **Step 9:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -863,14 +863,14 @@ curl -s http://localhost:4321/blog/01-introduction \
 ```
 Expected: list contains `FAQPage` alongside `Person`, `Organization`, `WebSite`, `BlogPosting`, `BreadcrumbList`. Revert the temporary frontmatter (`git checkout -- src/content/posts/01-introduction.md`). Stop the dev server.
 
-- [ ] **Step 10:** Detect changes scope.
+- [x] **Step 10:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: 4 files — `src/components/mdx/Faq.astro`, `src/components/mdx/index.ts`, `src/layouts/PostLayout.astro`, `tests/unit/mdx/faq.test.ts`.
 
-- [ ] **Step 11:** Commit.
+- [x] **Step 11:** Commit.
 
 ```bash
 git add src/components/mdx/Faq.astro src/components/mdx/index.ts src/layouts/PostLayout.astro tests/unit/mdx/faq.test.ts

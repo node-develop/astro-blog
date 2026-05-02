@@ -7,10 +7,12 @@ import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import Tldr from "~/components/mdx/Tldr.astro";
+import Faq from "~/components/mdx/Faq.astro";
 import { mdxComponents } from "~/components/mdx";
 import {
   buildBlogPostingNode,
   buildBreadcrumbListNode,
+  buildFaqPageNode,
   extractArticleBody,
   type GraphNode,
 } from "~/lib/seo/schema";
@@ -23,7 +25,7 @@ interface Props {
 }
 
 const { post, headings } = Astro.props;
-const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary } = post.data;
+const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary, faq } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -68,6 +70,9 @@ const breadcrumbNode = buildBreadcrumbListNode({
   blogIndexLabel: t(locale, "blog.title"),
   title,
 }) as GraphNode;
+
+const faqItems = faq ?? [];
+const faqNode = buildFaqPageNode({ canonical, items: faqItems });
 ---
 
 <BaseLayout
@@ -75,7 +80,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
   description={description}
   ogImage={coverUrl ?? undefined}
   ogType="article"
-  extraSchemaNodes={[blogPostingNode, breadcrumbNode]}
+  extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 >
   <Fragment slot="head">
     <meta property="article:published_time" content={pubDate.toISOString()} />
@@ -138,6 +143,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
     <div class="post__body prose">
       <slot />
     </div>
+    {faqItems.length > 0 && <Faq items={faqItems} />}
     <AuthorCard />
   </article>
 

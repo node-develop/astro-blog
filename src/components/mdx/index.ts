@@ -8,9 +8,11 @@
 //   3. PostLayout will pick it up automatically via the spread.
 
 import Tldr from "./Tldr.astro";
+import Faq from "./Faq.astro";
 
 export const mdxComponents = {
   Tldr,
+  Faq,
 } as const;
 
 export type MdxComponents = typeof mdxComponents;

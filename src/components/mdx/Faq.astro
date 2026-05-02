@@ -1,0 +1,101 @@
+---
+/**
+ * <Faq>: renders a list of question/answer pairs as a <details> block.
+ * Companion FAQPage JSON-LD is emitted by PostLayout via extraSchemaNodes,
+ * so visual + structured layers stay in sync from a single frontmatter source.
+ *
+ * Usage:
+ *   - Auto-rendered by PostLayout when frontmatter.faq[] is non-empty.
+ *   - Authors may also place <Faq items={[…]} /> manually in MDX bodies.
+ */
+interface FaqItem {
+  readonly question: string;
+  readonly answer: string;
+}
+
+interface Props {
+  items: ReadonlyArray<FaqItem>;
+  title?: string;
+}
+
+const { items, title = "FAQ" } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <section class="faq" aria-labelledby="faq-heading">
+      <h2 id="faq-heading">{title}</h2>
+      <dl class="faq__list">
+        {items.map((it) => (
+          <div class="faq__item">
+            <dt>
+              <details>
+                <summary>{it.question}</summary>
+                <dd class="faq__answer">
+                  <p>{it.answer}</p>
+                </dd>
+              </details>
+            </dt>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+<style>
+  .faq {
+    margin: var(--space-7) 0 var(--space-6) 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+  .faq h2 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0 0 var(--space-4) 0;
+  }
+  .faq__list {
+    margin: 0;
+    padding: 0;
+  }
+  .faq__item {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .faq__item:last-child {
+    border-bottom: none;
+  }
+  .faq__item dt {
+    margin: 0;
+  }
+  .faq__item summary {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: var(--fs-base);
+    color: var(--color-fg);
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__item summary::before {
+    content: "+";
+    display: inline-block;
+    width: 1em;
+    margin-right: var(--space-2);
+    color: var(--color-fg-muted);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .faq__item details[open] summary::before {
+    content: "−";
+  }
+  .faq__answer {
+    margin: 0 0 var(--space-3) 1.5em;
+    color: var(--color-fg-muted);
+    line-height: var(--lh-normal);
+  }
+  .faq__answer p {
+    margin: 0;
+  }
+</style>
