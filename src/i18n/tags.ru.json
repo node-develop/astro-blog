@@ -1,4 +1,9 @@
 {
   "claude-code": "Claude Code",
-  "guide": "Гайд"
+  "guide": "Гайд",
+  "seo": "seo",
+  "ai-crawlers": "ai-crawlers",
+  "astro": "astro",
+  "schema-org": "schema-org",
+  "build-tooling": "build-tooling"
 }
