@@ -1,6 +1,9 @@
 {
   "nav.posts": "Posts",
   "nav.about": "About",
+  "nav.now": "Now",
+  "nav.uses": "Uses",
+  "nav.projects": "Projects",
   "nav.search": "Search",
   "home.eyebrow": "Personal blog · on writing code with AI",
   "home.cta": "All posts →",

@@ -1,6 +1,9 @@
 {
   "nav.posts": "Статьи",
   "nav.about": "Обо мне",
+  "nav.now": "Сейчас",
+  "nav.uses": "Использую",
+  "nav.projects": "Проекты",
   "nav.search": "Поиск",
   "home.eyebrow": "Personal blog · on writing code with AI",
   "home.cta": "Все статьи →",

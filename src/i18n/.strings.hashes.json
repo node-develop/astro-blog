@@ -50,5 +50,8 @@
   "authorCard.aboutLabel": "0a22c28c089fa4204c0e84e2f709ec26c7a9e25a21c326e7d5fb89ac098fdda3",
   "authorCard.viewProfile": "df7568fd5a46e4f932cc9b562ace57ecac7062d775258d8a91eeaa23b768b4c9",
   "authorCard.viewProjects": "03d533d77b9c39c07d06e1f8fdc1468eafd280d7ca8b85ed91ea404603c50d3a",
-  "authorCard.role": "0c8dee51eec568736d4225cdffa8cd107b3c89442ddc59789971dd095e533994"
+  "authorCard.role": "0c8dee51eec568736d4225cdffa8cd107b3c89442ddc59789971dd095e533994",
+  "nav.now": "460b59b99f03144929b6fc23dab8c92c9be4128a24b219da349012c03fbbcf75",
+  "nav.uses": "95e8f0451a25cfe52c12970d2240497bf9ec3b99fbf35958de380afe741cd822",
+  "nav.projects": "5029f02d0a9484eba108ae21fe67b2ad875b7383269700dc8d72fcd01205f817"
 }
