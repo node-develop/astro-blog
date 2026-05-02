@@ -158,7 +158,11 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         min-width: 0;
       }
       @media (max-width: 1023px) {
-        .layout {
+        .layout,
+        .layout[data-full-width="true"] {
+          /* Override the higher-specificity .layout[data-full-width="true"]
+             selector — without listing both the rule wouldn't apply on /blog
+             and other fullWidth pages, leaving main column at sidebar width. */
           grid-template-columns: minmax(0, 1fr);
         }
         .layout__sidebar,
