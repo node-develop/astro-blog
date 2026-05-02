@@ -38,7 +38,7 @@ const dict = tagsEn as Record<string, string>;
       allTags.length > 0 && (
         <div class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
           {allTags.map((tag: string) => (
-            <a class="list__tag-chip" href={`/en/tags/${tag}`}>
+            <a class="list__tag-chip" href={`${tagsHrefBase}/${tag}`}>
               #{resolveTagLabel(tag, locale, dict)}
             </a>
           ))}
