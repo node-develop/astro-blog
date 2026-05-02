@@ -301,6 +301,129 @@ const translateAllSite = async (): Promise<readonly FileResult[]> => {
   return results;
 };
 
+const translateProjectFile = async (
+  inputPath: string,
+  outputPath: string,
+  slug: string,
+): Promise<FileResult> => {
+  const source = await readFile(inputPath, "utf8");
+  const ruHash = sha256(source);
+  const existingEn = await readExistingEnState(outputPath);
+  const force = FORCE_ALL || (FORCE_SLUG !== null && FORCE_SLUG === slug);
+
+  const decision = decideAction({ ruHash, existingEn, force });
+  if (decision.action === "skip")
+    return {
+      slug,
+      status: "skipped",
+      ...(decision.reason !== undefined ? { note: decision.reason } : {}),
+    };
+  if (decision.action === "warn")
+    return {
+      slug,
+      status: "warned",
+      note: `RU source changed since manual edit; run \`pnpm translate -- --force projects/${slug}\` to re-baseline.`,
+    };
+
+  const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+  const fenceMatch = FENCE.exec(source);
+  if (!fenceMatch || fenceMatch[1] === undefined) throw new Error("No frontmatter block found");
+  const rawData = yaml.load(fenceMatch[1]) as Record<string, unknown>;
+  const body = source.slice(fenceMatch[0].length).replace(/^\s*\n/, "");
+
+  // Translatable strings: title, description, role, coverAlt, outcomes[], links[].label.
+  const fmStrings: Record<string, string> = {};
+  if (typeof rawData["title"] === "string") fmStrings["title"] = rawData["title"];
+  if (typeof rawData["description"] === "string") fmStrings["description"] = rawData["description"];
+  if (typeof rawData["role"] === "string") fmStrings["role"] = rawData["role"];
+  if (typeof rawData["coverAlt"] === "string") fmStrings["coverAlt"] = rawData["coverAlt"];
+  const outcomes = Array.isArray(rawData["outcomes"]) ? (rawData["outcomes"] as unknown[]) : [];
+  outcomes.forEach((o, i) => {
+    if (typeof o === "string") fmStrings[`outcome_${i}`] = o;
+  });
+  const links = Array.isArray(rawData["links"]) ? (rawData["links"] as unknown[]) : [];
+  links.forEach((l, i) => {
+    if (
+      l &&
+      typeof l === "object" &&
+      "label" in l &&
+      typeof (l as { label: unknown }).label === "string"
+    ) {
+      fmStrings[`link_label_${i}`] = (l as { label: string }).label;
+    }
+  });
+
+  const fmTranslated =
+    Object.keys(fmStrings).length > 0
+      ? await translateStrings({
+          apiKey: apiKey!,
+          sourceLocale: "ru",
+          targetLocale: "en",
+          strings: fmStrings,
+        })
+      : {};
+
+  const { placeholders, skeleton } = extractProse(body, { rewriteInternalLink: () => undefined });
+  const translated = await translateProse({
+    apiKey: apiKey!,
+    sourceLocale: "ru",
+    targetLocale: "en",
+    placeholders,
+  });
+  const enBody = reassemble(skeleton, translated);
+
+  const enOutcomes = outcomes.map((o, i) =>
+    typeof o === "string" ? (fmTranslated[`outcome_${i}`] ?? o) : o,
+  );
+  const enLinks = links.map((l, i) => {
+    if (l && typeof l === "object" && "label" in l && "url" in l) {
+      const link = l as { label: string; url: string };
+      return { label: fmTranslated[`link_label_${i}`] ?? link.label, url: link.url };
+    }
+    return l;
+  });
+
+  const enData: Record<string, unknown> = {
+    ...rawData,
+    title: fmTranslated["title"] ?? rawData["title"],
+    description: fmTranslated["description"] ?? rawData["description"],
+    role: fmTranslated["role"] ?? rawData["role"],
+    ...(fmTranslated["coverAlt"] ? { coverAlt: fmTranslated["coverAlt"] } : {}),
+    outcomes: enOutcomes,
+    links: enLinks,
+    sourceHash: ruHash,
+    manuallyEdited: false,
+  };
+  const rawYml = yaml.dump(enData, { lineWidth: 120 });
+  const enFile = `---\n${rawYml}---\n\n${enBody}`;
+
+  await mkdir(join(outputPath, ".."), { recursive: true });
+  await writeFile(outputPath, enFile, "utf8");
+  return { slug, status: "translated" };
+};
+
+const translateAllProjects = async (): Promise<readonly FileResult[]> => {
+  if (!existsSync(PATHS.projectsDir)) return [];
+  const files = (await readdir(PATHS.projectsDir)).filter(
+    (f) => /\.md$/.test(f) && !f.startsWith("."),
+  );
+  const results: FileResult[] = [];
+  for (const file of files) {
+    const slug = file.replace(/\.md$/, "");
+    const inputPath = join(PATHS.projectsDir, file);
+    const outputPath = join(PATHS.projectsEnDir, file);
+    try {
+      const r = await translateProjectFile(inputPath, outputPath, slug);
+      results.push(r);
+      console.warn(`[projects] ${slug}: ${r.status}${r.note ? " (" + r.note + ")" : ""}`);
+    } catch (err) {
+      results.push({ slug, status: "failed", note: String(err) });
+      console.error(`[projects] ${slug}: failed —`, err);
+    }
+  }
+  return results;
+};
+
 const translateStringCatalog = async (): Promise<void> => {
   const ruPath = join(PATHS.i18nDir, "strings.ru.json");
   const enPath = join(PATHS.i18nDir, "strings.en.json");
@@ -377,12 +500,14 @@ const main = async (): Promise<void> => {
   const posts = await translateAllPosts();
   console.warn("==> Translating site content");
   const site = await translateAllSite();
+  console.warn("==> Translating projects");
+  const projects = await translateAllProjects();
   console.warn("==> Translating string catalog");
   await translateStringCatalog();
   console.warn("==> Translating tag catalog");
   await translateTagCatalog();
 
-  const all = [...posts, ...site];
+  const all = [...posts, ...site, ...projects];
   const failed = all.filter((r) => r.status === "failed");
   const warned = all.filter((r) => r.status === "warned");
   if (warned.length) {
