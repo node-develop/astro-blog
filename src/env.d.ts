@@ -1,5 +1,13 @@
 /// <reference types="astro/client" />
 
+// Allow importing *.astro files from plain .ts modules (e.g. src/components/mdx/index.ts barrel).
+// astro/client already handles this for .astro frontmatter; tsc needs the wildcard to resolve.
+declare module "*.astro" {
+  import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+  const Component: AstroComponentFactory;
+  export default Component;
+}
+
 declare module "*?pagefind" {
   // Placeholder so TS treats this query-style import as a module.
   // The real Pagefind API is loaded at runtime from /pagefind/pagefind.js

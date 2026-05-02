@@ -1,0 +1,52 @@
+---
+/**
+ * <Tldr>: answer-first card rendered above the post body.
+ *
+ * Two ways to use:
+ *   1. `<Tldr>В двух словах…</Tldr>` — slot contains MDX/markdown.
+ *   2. `<Tldr text="…" />` — string prop (used by PostLayout's auto-render).
+ *
+ * Renders nothing when neither prop nor slot is supplied.
+ */
+interface Props {
+  text?: string;
+}
+
+const { text } = Astro.props;
+const hasSlot = Astro.slots.has("default");
+const showCard = hasSlot || (typeof text === "string" && text.length > 0);
+---
+
+{
+  showCard && (
+    <aside class="tldr" aria-label="TL;DR">
+      <p class="tldr__label">TL;DR</p>
+      {text && !hasSlot ? <p class="tldr__body">{text}</p> : <slot />}
+    </aside>
+  )
+}
+
+<style>
+  .tldr {
+    margin: 0 0 var(--space-6) 0;
+    padding: var(--space-4) var(--space-5);
+    border-left: 3px solid var(--color-accent);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-sm);
+  }
+  .tldr__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .tldr__body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    color: var(--color-fg);
+  }
+</style>

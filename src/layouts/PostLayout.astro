@@ -6,6 +6,8 @@ import AuthorCard from "~/components/AuthorCard.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import Tldr from "~/components/mdx/Tldr.astro";
+import { mdxComponents } from "~/components/mdx";
 import {
   buildBlogPostingNode,
   buildBreadcrumbListNode,
@@ -21,7 +23,7 @@ interface Props {
 }
 
 const { post, headings } = Astro.props;
-const { title, description, pubDate, updatedDate, tags, cover, coverAlt } = post.data;
+const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -132,6 +134,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
         </figure>
       )
     }
+    {summary && <Tldr text={summary} />}
     <div class="post__body prose">
       <slot />
     </div>
