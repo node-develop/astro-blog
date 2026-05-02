@@ -8,11 +8,12 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 9d48bd5eea7dbc40dad64dd906d44c90f7397a5027d7a73ce6b708e642c9dc9f
+lang: en
+sourceHash: e75953830e06864dee8bc84206a9b100af7b7582b3de8900e031d4dd106200d8
 manuallyEdited: false
 ---
 
-> Subagent — a mini-session of Claude Code, launched from the main one. With its own context, its own system prompt, its own set of tools. Only the final result is returned to the main context. This is both salvation from window overflow and the reason for unexpected bills.
+> Subagent — a mini-session of Claude Code launched from the main one. With its own context, its own system prompt, its own set of tools. Only the final result is returned to the main context. This is both salvation from context window overflow and the reason for unexpected bills.
 
 ---
 
@@ -22,9 +23,9 @@ manuallyEdited: false
 
 Main use case: **isolation of browse-heavy tasks**.
 
-Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3 endpoint".
+Example from Travel Agent: you ask Claude Code "find all places where we use the Amadeus API, and tell me which ones need to be refactored for their new v3-endpoint".
 
-Without subagent: model `Grep` through the repo → 200 matches → reads 30 files → analyzes → solution. All intermediate tool_results stay in the main context. After such a task, the window is 60% full.
+Without subagent: model `Grep` across the repo → 200 matches → reads 30 files → analyzes → solution. All intermediate tool_results stay in the main context. After such a task, the window is 60% full.
 
 With subagent: the main agent makes one tool call `Agent(subagent_type="Explore", prompt="...")`. The subagent searches and reads everything in **its own** window, returns a 500-word summary. The main context grew by 500 words.
 
@@ -50,7 +51,7 @@ flowchart TB
 
 ## 9.2. How Claude calls a subagent
 
-Through the built-in **`Agent`** tool (formerly called `Task`).
+Through the built-in tool **`Agent`** (formerly called `Task`).
 
 Inside the agent loop, the model does:
 
@@ -92,7 +93,7 @@ File name = agent name (used as `subagent_type`).
 
 ## 9.4. Subagent frontmatter
 
-📘 Full list of fields (Claude Code v2.1.89):
+📘 Complete list of fields (Claude Code v2.1.89):
 
 ```markdown
 ---
@@ -147,7 +148,7 @@ Markdown table per day + cost breakdown. No prose-style narratives.
 | Field             | Meaning                                                     |
 | ----------------- | ----------------------------------------------------------- |
 | `name`            | Identifier (slug)                                           |
-| `description`     | Model uses it to decide who to call                         |
+| `description`     | Model uses this to decide which agent to call               |
 | `model`           | `sonnet` / `opus` / `haiku` / `claude-opus-4-7` / `inherit` |
 | `color`           | UI color in `/agents` manager                               |
 | `tools`           | Whitelist built-in/MCP tools                                |
@@ -181,7 +182,7 @@ Markdown table per day + cost breakdown. No prose-style narratives.
 
 "Use Explore to find all places where we send requests to Amadeus".
 
-The model will make `Agent(subagent_type="Explore", prompt="...")` .
+The model will make `Agent(subagent_type="Explore", prompt="...")` call.
 
 ---
 
@@ -208,9 +209,9 @@ You can launch multiple subagents in one assistant turn:
 }
 ```
 
-They will execute in parallel. The main agent will receive **two** independent summaries.
+They will execute in parallel. The main agent will get **two** independent summaries.
 
-⚠️ They **do not communicate**. If a task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams)).
+⚠️ They **do not communicate**. If the task requires information exchange — that's already an **agent team** (see [10-agent-teams.md](./10-agent-teams)).
 
 ---
 
@@ -226,7 +227,7 @@ flowchart LR
   done -->|or returns branch ref| main
 ```
 
-💡 Use case: you want a subagent to try a large refactoring — but without risking breaking the main workspace. If the subagent didn't commit anything — the worktree deletes automatically. If it did commit — it returns the branch name, and you decide whether to merge or not.
+💡 Use case: you want a subagent to try a large refactoring — but without risking breaking the main workspace. If the subagent doesn't commit anything — the worktree is deleted automatically. If it commits — it returns the branch name, and you decide whether to merge or not.
 
 ---
 
@@ -243,7 +244,7 @@ flowchart LR
 
 📘 The claim "a subagent doesn't have the cached prefix of the main session — all base tokens are billed again" — **is essentially true**: the subagent starts with its own prefix, which on first run goes as a cache write. **But** within the subagent itself, caching works normally on subsequent turns.
 
-**Calculation:** subagent on Haiku (Explore) with system_prompt 3k tokens doing 5 turns:
+**Calculation:** subagent on Haiku (Explore) with system_prompt of 3k tokens doing 5 turns:
 
 - Turn 1: 3k cache write + 2k input + N output → cache write at $1.25/M = $0.004.
 - Turn 2-5: 3k cache read + N input + N output → cheap.
@@ -338,11 +339,11 @@ You are a senior code reviewer for the Travel Agent monorepo. Be specific, prior
 
 ❌ **Duplicating the main agent.** Making a `general-purpose` subagent with the same CLAUDE.md and MCP — that's just two instances of the same thing. Use only if you really need isolation.
 
-❌ **Subagent with `permissionMode: bypassPermissions` on opus.** If it breaks something — no one will stop it.
+❌ **Subagent with `permissionMode: bypassPermissions` on opus.** If it breaks something — nothing will stop it.
 
 ❌ **Ignoring `maxTurns`.** Without a limit, a subagent can get stuck in an infinite loop if it gets confused.
 
-❌ **Using subagents where you need an agent team.** If the task requires exchange between executors — that's a team. See next chapter.
+❌ **Using subagents where you need an agent team.** If the task requires communication between executors — that's a team. See next chapter.
 
 ---
 

@@ -8,7 +8,8 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: e0961257995b3b8b27432ef9719ecf30bc30fe80a200610b178d488728c92584
+lang: en
+sourceHash: cf04a2c6ce7eed842f57189e0db90e48b5f46aaab2df8af6eb82a3f0418f7771
 manuallyEdited: false
 ---
 
@@ -18,7 +19,7 @@ manuallyEdited: false
 
 ## 6.1. What is MCP (in a nutshell)
 
-MCP is the "USB-C for AI integrations." Instead of inventing functions for a specific model each time, you write an MCP server once, and any MCP client can use it: Claude Code, Claude Desktop, Cursor, Continue, your own SDK agent, etc.
+MCP is the "USB-C for AI integrations". Instead of inventing functions for a specific model each time, you write an MCP server once, and any MCP client can use it: Claude Code, Claude Desktop, Cursor, Continue, your own SDK agent, etc.
 
 ```mermaid
 flowchart LR
@@ -52,7 +53,7 @@ Claude Code consumes **tools** and **resources** most actively. Prompts become a
 
 ## 6.2. Transports
 
-MCP supports three ways to communicate:
+MCP supports three ways of communication:
 
 | Transport | When to use                                       | Pros                     | Cons                    |
 | --------- | ------------------------------------------------- | ------------------------ | ----------------------- |
@@ -244,7 +245,7 @@ When the `flights` MCP server is connected, a tool definitions block appears in 
 
 (The prefix `mcp__<server-name>__<tool-name>` is a standard convention.)
 
-In the CLI you can see what tools are provided:
+In the CLI you can see which tools are provided:
 
 ```bash
 /mcp

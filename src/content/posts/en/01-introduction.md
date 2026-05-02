@@ -8,7 +8,8 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: 31ce2e45b7a5e0d21ce13b1c0a4e131fc73fe020c605a3036670e9a6b0d4626c
+lang: en
+sourceHash: edd807e33754d025e27e16b3e2c3587b1b4b647dcb4d020b350eb7d1f905d455
 manuallyEdited: false
 ---
 
@@ -27,7 +28,7 @@ manuallyEdited: false
 3. Gets the tool result back.
 4. Decides: either call another tool or respond to the user.
 
-This cycle is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
+This loop is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
 
 ```mermaid
 sequenceDiagram
@@ -54,7 +55,7 @@ sequenceDiagram
 
 ## 1.2. What is harness
 
-**Harness** — a local program (Claude Code CLI or IDE plugin) that:
+**Harness** — this is a local program (Claude Code CLI or IDE plugin) that:
 
 | Function               | What it does                                                             |
 | ---------------------- | ------------------------------------------------------------------------ |
@@ -66,7 +67,7 @@ sequenceDiagram
 | Hooks                  | Triggers your scripts on lifecycle events                                |
 | MCP transport          | Supports stdio/SSE/HTTP connections to MCP servers                       |
 
-Harness is **not the model**. The model lives in Anthropic's cloud. Harness is the model's eyes, hands, and memory.
+Harness is **not the model**. The model is in Anthropic's cloud. Harness is the model's eyes, hands, and memory.
 
 ```mermaid
 flowchart LR
@@ -87,11 +88,11 @@ flowchart LR
   cli <--> mcp
 ```
 
-⚠️ This is important to understand: when we say "the model read a file" — it's shorthand for "the model made a tool_use Read call, the harness read the file, returned the contents in tool_result, the model saw this in the next step". The model has no direct disk access.
+⚠️ This is important to understand: when we say "the model read a file" — this is shorthand for "the model made a tool_use Read call, the harness read the file, returned the contents in tool_result, the model saw this in the next step". The model has no direct disk access.
 
 ---
 
-## 1.3. What really makes up the "context" in each request
+## 1.3. What actually makes up the "context" in each request
 
 Each request to the Anthropic API contains:
 
@@ -121,9 +122,9 @@ See details in [02-context-and-cache.md](./02-context-and-cache).
 
 ---
 
-## 1.4. Versions and editions
+## 1.4. Versions and releases
 
-As of 04.23.2026, current are:
+As of 04.23.2026, current versions are:
 
 - **Claude Code** v2.1.89 (CLI, IDE plugins)
 - **Default models on Anthropic API:**
@@ -140,7 +141,7 @@ As of 04.23.2026, current are:
 
 ## 1.5. End-to-end example: Travel Agent
 
-One project runs through the entire guide — **Travel Agent**. It's an AI service for travel planning:
+One project runs through the entire guide — **Travel Agent**. This is an AI service for travel planning:
 
 ```mermaid
 flowchart TB
@@ -179,17 +180,17 @@ In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint) the final reposit
 
 ## 1.6. Quick reference of CLI commands used in the guide
 
-| Command                 | What it does                               | Chapter                                                     |
-| ----------------------- | ------------------------------------------ | ----------------------------------------------------------- |
-| `/context`              | Visualizes current window fill             | [02](./02-context-and-cache)                                |
-| `/compact [hint]`       | Compresses history, frees space            | [02](./02-context-and-cache)                                |
-| `/clear`                | Full session reset (restarts, loses cache) | [02](./02-context-and-cache)                                |
-| `/model [name]`         | Switch model in current session            | [02](./02-context-and-cache), [10](./11-models-and-pricing) |
-| `/agents`               | Subagent manager                           | [09](./09-subagents)                                        |
-| `/plugin install <ref>` | Install plugin from marketplace            | [07](./07-plugins)                                          |
-| `/mcp`                  | List connected MCP servers                 | [06](./06-mcp)                                              |
-| `/permissions`          | Current allow/deny rules                   | [05](./05-hooks)                                            |
-| `/release-notes`        | Changes in version                         | —                                                           |
+| Command                 | What it does                              | Chapter                                                     |
+| ----------------------- | ----------------------------------------- | ----------------------------------------------------------- |
+| `/context`              | Visualizes current window fill            | [02](./02-context-and-cache)                                |
+| `/compact [hint]`       | Compresses history, frees space           | [02](./02-context-and-cache)                                |
+| `/clear`                | Full session reset (restarts, cache lost) | [02](./02-context-and-cache)                                |
+| `/model [name]`         | Switch model in current session           | [02](./02-context-and-cache), [10](./11-models-and-pricing) |
+| `/agents`               | Subagent manager                          | [09](./09-subagents)                                        |
+| `/plugin install <ref>` | Install plugin from marketplace           | [07](./07-plugins)                                          |
+| `/mcp`                  | List connected MCP servers                | [06](./06-mcp)                                              |
+| `/permissions`          | Current allow/deny rules                  | [05](./05-hooks)                                            |
+| `/release-notes`        | Changes in version                        | —                                                           |
 
 ---
 

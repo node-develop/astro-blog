@@ -8,24 +8,25 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: f687ea9f8f64e56b921f396d1d1ab823ad83e7da848f63acbac69e9089d50be3
+lang: en
+sourceHash: 2b60287eb226a65542637e0d81e4a565ca631c11aae76eb7973626d6717ab46d
 manuallyEdited: false
 ---
 
-> This chapter is a line-by-line breakdown of those ~20 points that started the guide's preparation. Each claim has been verified against official documentation (`docs.claude.com`, `code.claude.com/docs`), the Claude Code changelog, and through Context7 (`/anthropics/claude-code/v2.1.89`). The goal is to separate facts from speculation so you can cite the thread without worrying about "what if there's misinformation there."
+> This chapter is a line-by-line breakdown of those ~20 points that started the guide preparation. Each statement has been verified against official documentation (`docs.claude.com`, `code.claude.com/docs`), the Claude Code changelog, and through Context7 (`/anthropics/claude-code/v2.1.89`). The goal is to separate facts from speculation so you can cite this thread without worrying about "what if there's misinformation."
 
 Legend:
 
 - ✅ — confirmed by documentation.
-- 🟡 — partially correct / has nuances.
+- 🟡 — partially true / has nuances.
 - ❌ — inaccurate or incorrect.
 - 🧪 — relates to experimental feature (behavior may change).
 
 ---
 
-## 14.1. Summary Table
+## 14.1. Summary table
 
-| #   | Thread Claim                                                                     | Status | Reality                                                                                                                                                                                                     |
+| #   | Thread claim                                                                     | Status | Reality                                                                                                                                                                                                     |
 | --- | -------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Claude Code is a harness around an LLM, not the model itself                     | ✅     | See [01.](./01-introduction), [08.](./08-tool-calls-and-loop). The harness manages context, tools, hooks, permissions.                                                                                      |
 | 2   | An LLM by itself is a chatbot; the loop tool_use → tool_result makes it an agent | ✅     | This is the basic Anthropic API protocol: `stop_reason: "tool_use"` → harness executes → `tool_result` → next iteration.                                                                                    |
@@ -60,7 +61,7 @@ Legend:
 
 ---
 
-## 14.2. Detailed Comments on Inaccuracies
+## 14.2. Detailed comments on inaccuracies
 
 ### 14.2.1. "Advisor mode" vs `opusplan`
 
@@ -70,7 +71,7 @@ The thread mentioned "Advisor mode" — there's no such name in the docs. The re
 /model opusplan
 ```
 
-or directly at the start of a session:
+or right at the start of the session:
 
 ```bash
 claude --model opusplan
@@ -91,7 +92,7 @@ Takes a number from 0 to 100 (percentage of window fill at which autocompact tri
 export CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=85
 ```
 
-Default is around 92%. You can disable it via 100 (never compress) or via `--no-auto-compact` flag when starting.
+Default is around 92%. Can be disabled via 100 (never compress) or via `--no-auto-compact` flag on startup.
 
 ### 14.2.3. Skill = directory
 
@@ -117,9 +118,9 @@ The thread had ~6 events. Actually on v2.1.89 there are **28+**. Full list in [0
 - `SessionStart` — for welcome message / pre-flight checks.
 - `Stop` — for desktop notifications "model finished, check it".
 - `TeammateIdle` — for Agent Teams.
-- `Notification` — notification customization.
+- `Notification` — customize notifications.
 - `SubagentStop` — when a subagent completes.
-- `PreCompact` / `PostCompact` — for logging or compression customization.
+- `PreCompact` / `PostCompact` — for logging or customizing compression.
 
 ### 14.2.5. Opus 4.6 → 4.7
 
@@ -142,7 +143,7 @@ Agent(subagent_type="Explore", prompt=...)  # новый, с v2.1.63
 
 They're equivalent. Inside the harness — it's the same tool. In new projects, use `Agent` for compatibility with future versions.
 
-### 14.2.7. CLAUDE.md Hierarchy
+### 14.2.7. CLAUDE.md hierarchy
 
 The thread mentioned 3 levels. Actually — 5:
 
@@ -157,13 +158,13 @@ flowchart TD
 
 Subdirectory CLAUDE.md files are loaded automatically when the model works with files in that subdirectory. This is convenient for monorepos.
 
-⚠️ `CLAUDE.local.md` — formally deprecated in favor of gitignored `CLAUDE.md` or just using `~/.claude/CLAUDE.md`.
+⚠️ `CLAUDE.local.md` is formally deprecated in favor of gitignored `CLAUDE.md` or just using `~/.claude/CLAUDE.md`.
 
 ---
 
-## 14.3. What Was Completely Correct in the Thread
+## 14.3. What was completely correct in the thread
 
-To avoid the impression that "everything was wrong" — no, the thread described the system pretty well overall. Here's what was definitely accurate:
+To avoid the impression that "everything was wrong" — no, the thread overall described the system pretty well. Here's what was definitely accurate:
 
 ✅ Main idea of harness vs model.
 ✅ The tool_use / tool_result cycle as the heart of an agent.
@@ -178,7 +179,7 @@ Where the thread author was especially right — in general recommendations. Whe
 
 ---
 
-## 14.4. Verification Sources
+## 14.4. Verification sources
 
 Each claim in this table has been verified against one or more sources:
 
@@ -203,32 +204,32 @@ Each claim in this table has been verified against one or more sources:
 
 - Model announcements (Opus 4.7, Sonnet 4.6, Haiku 4.5) — for dates and pricing.
 
-⚠️ In case of source conflicts, priority: changelog > docs > blog > Context7. Context7 is good for code, but sometimes lags behind fresh API changes.
+⚠️ In case of source conflict, priority: changelog > docs > blog > Context7. Context7 is good for code, but sometimes lags behind fresh API changes.
 
 ---
 
-## 14.5. Conclusion: How to Read Twitter Threads About AI Tools
+## 14.5. Conclusion: how to read Twitter threads about AI tools
 
 📝 A few heuristics that will save you time:
 
-1. **Always verify command names / env variables against docs.** They're easiest to forget, and they change between versions.
-2. **Always verify numbers.** Price, context size, TTL frequency — this is specifics, and it changes too.
+1. **Always cross-check command names / env variables with docs.** They're easiest to forget, and they change between versions.
+2. **Always cross-check numbers.** Price, context size, TTL frequency — this is specifics, and it changes too.
 3. **Principles are usually correct.** "Cache saves", "subagent isolates context", "opus is expensive" — these are stable properties, and they don't break from version to version.
-4. **Be skeptical of praise.** If the author is selling a course / service on the topic, there's always exaggeration. Especially suspicious are numbers like "10x productivity" without methodology.
-5. **`/release-notes` is your friend.** Every major version (2.1.50 → 2.1.89) brings changes. Reading once a month — not enough, twice a month — normal.
+4. **Be skeptical of promotional posts.** If the author is selling a course / service on the topic, there's always exaggeration. Especially suspicious are numbers like "10x productivity" without methodology.
+5. **`/release-notes` is your friend.** Every major version (2.1.50 → 2.1.89) brings changes. Reading once a month is too little, twice a month is normal.
 
 ---
 
-## 14.6. What to Do With This Guide
+## 14.6. What to do with this guide
 
-This guide is a snapshot of the state as of **April 23, 2026, Claude Code v2.1.89**. Some things will become outdated in a month, some in a quarter. Use it as:
+This guide is a snapshot as of **April 23, 2026, Claude Code v2.1.89**. Some things will become outdated in a month, some in a quarter. Use it as:
 
 - ✅ Reference for concepts (they change slowly).
 - ✅ Template for CLAUDE.md / skills / hooks (adapt to your project).
 - ✅ Checklist of antipatterns.
-- 🟡 Source of specific numbers and commands — but always verify against current docs before serious use.
+- 🟡 Source of specific numbers and commands — but always cross-check with current docs before serious use.
 
-💡 If you find an error — that's normal, tooling evolves fast. Best practice: keep your own "corrections map" nearby, and sync with current docs once a quarter.
+💡 If you find an error — that's normal, the tooling evolves fast. Best practice: keep your own "corrections map" nearby, and sync with current docs once a quarter.
 
 ---
 
@@ -236,4 +237,4 @@ This guide is a snapshot of the state as of **April 23, 2026, Claude Code v2.1.8
 
 🚀 Good luck with Claude Code. If this guide helped you avoid even one mistake — it paid for itself.
 
-**Back →** [Blog index](/en/blog)
+**Back →** [README (table of contents)](./README)

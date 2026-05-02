@@ -8,17 +8,18 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: b78cfbdc44ceafa913b4277d68a70fb1027dcc3bc786e7b91d3ed7a224d34d79
+lang: en
+sourceHash: 1baa7c8f28abe6fbb1dd44f69e2d3dff43d92c1534bce89b2bfeb979d4ee53ed
 manuallyEdited: false
 ---
 
-> All previous chapters are about mechanics. This one is about discipline. Without it, even a perfect configuration eventually turns into a mess: cache misses, skills go stale, hooks fail silently, and you don't understand why your monthly bill doubled.
+> All previous chapters are about mechanics. This one is about discipline. Without it, even a perfect configuration turns into a mess over time: cache misses, skills go stale, hooks fail silently, and you don't understand why your monthly bill doubled.
 
 ---
 
-## 13.1. Daily routine for a developer using Claude Code
+## 13.1. Daily routine for a developer with Claude Code
 
-This isn't dogma, just a guideline. Everyone has their own rhythm. But if your day looks very different and you're not happy with the results — try comparing.
+This is not dogma, but a guideline. Everyone has their own rhythm. But if your day looks very different and you're not happy with the results — try comparing.
 
 ### Morning (10 minutes)
 
@@ -35,7 +36,7 @@ flowchart LR
 
 1. `git pull --rebase` — pull your colleagues' changes.
 2. Open Claude Code in the repo root. CLAUDE.md and MCP will be picked up automatically.
-3. `/cost` — check how much was spent yesterday. If there's a sharp spike — figure out why before starting new tasks.
+3. `/cost` — see how much was spent yesterday. If there's a sharp spike — figure out why before starting new tasks.
 4. `/usage` optionally — breakdown by models for the week.
 5. If there's a `TodoWrite` list from yesterday — go through it, cross out what's outdated.
 6. Formulate the first task of the day **completely**, not "let's start with X".
@@ -63,19 +64,19 @@ flowchart LR
 
 ## 13.2. Once a week: hygiene
 
-| What               | Command                     | Why                                      |
-| ------------------ | --------------------------- | ---------------------------------------- |
-| Review CLAUDE.md   | `claude /memory`            | Has it grown? Does it contradict itself? |
-| Review skills      | `ls .claude/skills/`        | Are they all current? Do they duplicate? |
-| Review hooks       | `cat .claude/settings.json` | Is there a hook that's no longer needed? |
-| Spending by models | `/usage`                    | Did Opus unexpectedly consume a lot?     |
-| MCP servers        | `/mcp`                      | Are they all connected? Any error-state? |
+| What               | Command                     | Why                                                 |
+| ------------------ | --------------------------- | --------------------------------------------------- |
+| Review CLAUDE.md   | `claude /memory`            | Has it grown? Does it contradict itself?            |
+| Review skills      | `ls .claude/skills/`        | Are they all current? Do they duplicate each other? |
+| Review hooks       | `cat .claude/settings.json` | Is there a hook hanging that's no longer needed?    |
+| Spending by models | `/usage`                    | Did Opus unexpectedly consume a lot?                |
+| MCP servers        | `/mcp`                      | Are they all connected? Any error-state?            |
 
-💡 Once a **month**: go through `.claude/agents/` and ask yourself — do you still need each subagent? "Just in case" is bad reasoning.
+💡 Once a **month**: go through `.claude/agents/` and ask yourself — do you still need each subagent. "It might be useful" is bad reasoning.
 
 ---
 
-## 13.3. When CLAUDE.md has "overlearned"
+## 13.3. When CLAUDE.md "overlearned"
 
 Symptoms:
 
@@ -83,19 +84,19 @@ Symptoms:
 - Strange code patterns: uses a library that was deleted long ago.
 - Doesn't use new skills.
 
-📘 Reason — CLAUDE.md has grown to 5-10 KB, and the model can't manage it anymore (it fits, but drowns in noise).
+📘 Reason — CLAUDE.md has grown to 5-10 KB, and the model can no longer manage it (it fits, but drowns in noise).
 
 Treatment:
 
-1. Open CLAUDE.md, read top to bottom. How many lines could you delete right now because "it's obvious for a modern model anyway"?
-2. Move long specific rules to `.claude/skills/<topic>/SKILL.md` — they'll load only when needed.
+1. Open CLAUDE.md, read it top to bottom. How many lines could you delete right now because "it's obvious for a modern model anyway"?
+2. Move long specific rules to `.claude/skills/<topic>/SKILL.md` — they'll be loaded only when needed.
 3. Use @-imports for fragmentation.
 
 ⚠️ For a new employee, CLAUDE.md over 200 lines is an anti-signal "everything here is confusing". Aim for 50-100 meaningful lines.
 
 ---
 
-## 13.4. When your monthly bill shocks you
+## 13.4. When the monthly bill shocks you
 
 ```mermaid
 flowchart TD
@@ -120,7 +121,7 @@ flowchart TD
 
 ---
 
-## 13.5. Anti-patterns: what NOT to do
+## 13.5. Antipatterns: what NOT to do
 
 ### 13.5.1. CLAUDE.md as "a dump of everything I know about the project"
 
@@ -132,7 +133,7 @@ flowchart TD
 
 ❌ 30 skills, each "might be useful". The model spends tokens on their description with every request.
 
-✅ 5-10 targeted skills. Deleting is better than leaving unused.
+✅ 5-10 targeted skills. Deleted is better than unused.
 
 ### 13.5.3. Subagents for everything
 
@@ -154,17 +155,17 @@ flowchart TD
 
 ### 13.5.6. One big prompt instead of iterative dialogue
 
-❌ "Add auth, implement RBAC, write tests, update docs, create PR" — all in one line.
+❌ "Add auth, implement RBAC, write tests, update docs, create PR" — in one line.
 
 ✅ Break it into 4 prompts. After each one, look at the diff. It's not slower because errors in the first step don't have time to bury the rest.
 
 ### 13.5.7. Ignoring `/cost`
 
-❌ Find out the bill amount at the end of the month.
+❌ You find out the bill amount at the end of the month.
 
-✅ Check `/cost` at the end of each big task. Zero effort and builds a sense of proportion.
+✅ Check `/cost` at the end of each big task. It's zero effort and builds a sense of proportion.
 
-### 13.5.8. Skills with `model: opus` for routine work
+### 13.5.8. Skills with `model: opus` for routine
 
 ❌ Skill `format-pr-description` with `model: opus`. Why? It's a copying task.
 
@@ -178,7 +179,7 @@ flowchart TD
 
 ### 13.5.10. Never reading docs
 
-❌ "I read it on Twitter". Anthropic documentation changes fast (new hook events, new env vars). Especially `release-notes`.
+❌ "I read it on Twitter". Anthropic documentation changes fast (new hook events, new env vars). Especially — `release-notes`.
 
 ✅ Every two weeks — `/release-notes`. Once a month — `https://docs.claude.com/en/docs/claude-code/changelog`.
 
@@ -247,13 +248,13 @@ When a newcomer joins a project where Claude Code is already built into the proc
 
 ---
 
-## 13.9. When Claude Code isn't needed
+## 13.9. When Claude Code is not needed
 
 Sometimes it's worth closing Claude Code and working by hand. Signs:
 
 - Task is one line change in one file you know by heart.
 - You're trying to learn something and need to feel the material.
-- System operations (chmod, chown, system updates) — there's no copy cost and full cost of error.
+- System operations (chmod, chown, system updates) — there's no copy cost and there's full cost of error.
 - Emotionally charged moment (panic after prod) — Claude doesn't calm you down, better to take a deep breath first.
 - You don't understand the task yourself. If you can't formulate it — you won't formulate it for Claude either.
 
@@ -263,7 +264,7 @@ Sometimes it's worth closing Claude Code and working by hand. Signs:
 
 ## 13.10. Practice: your personal "knowledge capsule"
 
-📘 Gradually build your own patterns in `~/.claude/CLAUDE.md` (user-level). In 3-6 months you'll have:
+📘 Gradually collect your own patterns in `~/.claude/CLAUDE.md` (user-level). In 3-6 months you'll have:
 
 - List of favorite prompt formulations.
 - 3-5 universal skills (for typical PRs, for refactoring, for testing).

@@ -8,11 +8,12 @@ tags:
   - claude-code
   - guide
 draft: false
-sourceHash: f96b4444e9daa51661feb05cd96fa863774d7e7d47a9126f1f7c27103961e3c0
+lang: en
+sourceHash: 59b7f4f93d3421a7201e119449b732450964548d7a3a4500777c5a9cf6f45c63
 manuallyEdited: false
 ---
 
-> Plugin — this is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents + MCP config) that you want to share between projects or with your team — package them into a plugin.
+> Plugin is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents + MCP config) that you want to share between projects or with your team — package them in a plugin.
 
 ---
 
@@ -90,7 +91,7 @@ Minimal manifest:
 
 ## 7.4. Plugins and marketplaces
 
-📘 Marketplaces — these are plugin catalog repositories. They come in:
+📘 Marketplaces are plugin catalog repositories. They come in:
 
 - **Anthropic Official** — `anthropics/claude-plugins-official` on GitHub.
 - **Community** — public repos with community plugin lists.
@@ -189,7 +190,7 @@ flowchart TD
   q2 -- no --> plg2["Plugin with pinned version"]
 ```
 
-💡 Travel heuristic: as long as there are fewer than 5 artifacts and you're working in one repo — use `.claude/`. Once a second project appears that wants the same thing — it's time to move to a plugin.
+💡 Travel heuristic: while you have fewer than 5 artifacts and work in a single repo — use `.claude/`. Once a second project appears that wants the same thing — it's time for a plugin.
 
 ---
 
@@ -197,7 +198,7 @@ flowchart TD
 
 Use semver (`MAJOR.MINOR.PATCH`):
 
-- **MAJOR** — breaking change in some skill, hook, or agent.
+- **MAJOR** — breaking change in a skill, hook, or agent.
 - **MINOR** — new artifact.
 - **PATCH** — fix / description / docs.
 
@@ -207,7 +208,7 @@ Specify `engines.claude-code` — otherwise a CLI update can break your plugin a
 
 ## 7.9. What to put in the Travel Agent plugin
 
-If you have Travel Agent — the only project on this stack, you can live in `.claude/`. But as soon as you want a second project using the same approaches (for example, Booking Agent or Cargo Logistics Agent) — it makes sense to create a **`travel-stack-toolkit`** plugin with:
+If you have Travel Agent — the only project on this stack, you can live in `.claude/`. But once you want a second project using the same approaches (for example, Booking Agent or Cargo Logistics Agent) — it makes sense to create a **`travel-stack-toolkit`** plugin with:
 
 - Skills for typical patterns (Hono+drizzle backend, React+TanStack frontend, MCP server template).
 - `code-reviewer` agent tailored to your style.
@@ -226,7 +227,7 @@ Then a new project just does `/plugin install travel-stack-toolkit` and gets all
 | `/plugin install <ref>`    | Install                          |
 | `/plugin uninstall <name>` | Remove                           |
 | `/plugin update <name>`    | Update to latest                 |
-| `/plugin info <name>`      | Details + list of contents       |
+| `/plugin info <name>`      | Details + contents list          |
 | `/plugin search <query>`   | Search in connected marketplaces |
 
 ---
