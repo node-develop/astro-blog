@@ -898,7 +898,7 @@ git commit -m "feat(pages): add /uses and /en/uses routes with WebPage JSON-LD"
 **Subagent:** `backender`.
 **Files:** modify `src/content.config.ts`; create `tests/unit/entity/projects-schema.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/projects-schema.test.ts`:
 
@@ -937,9 +937,9 @@ describe("projects content collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/content.config.ts`** with:
+- [x] **Step 3: Replace `src/content.config.ts`** with:
 
 ```ts
 import { defineCollection, z } from "astro:content";
@@ -997,13 +997,13 @@ const projects = defineCollection({
 export const collections = { posts, site, projects };
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: `pnpm astro sync`** — regenerates `.astro/types.d.ts` so `CollectionEntry<"projects">` is valid.
+- [x] **Step 5: `pnpm astro sync`** — regenerates `.astro/types.d.ts` so `CollectionEntry<"projects">` is valid.
 
-- [ ] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 6: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content.config.ts tests/unit/entity/projects-schema.test.ts
@@ -1017,7 +1017,7 @@ git commit -m "feat(content): add projects collection schema (role, status, stac
 **Subagent:** `frontender`.
 **Files:** create `src/content/projects/{astro-blog,claude-code-guide}.md`; create `tests/unit/entity/projects-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/projects-content.test.ts`:
 
@@ -1044,9 +1044,9 @@ describe("projects collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/projects/astro-blog.md`**:
+- [x] **Step 3: Create `src/content/projects/astro-blog.md`**:
 
 ```markdown
 ---
@@ -1105,7 +1105,7 @@ links:
 Spec на v2: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`. Превращаю блог в LLM-citable knowledge node — entity-страницы (то, что вы читаете), retrieval frontmatter, MDX-компоненты.
 ```
 
-- [ ] **Step 4: Create `src/content/projects/claude-code-guide.md`**:
+- [x] **Step 4: Create `src/content/projects/claude-code-guide.md`**:
 
 ```markdown
 ---
@@ -1151,11 +1151,11 @@ links:
 EPIC C parent-spec'а: добавить `summary`/`faq` frontmatter и MDX-компоненты в существующие 14 частей.
 ```
 
-- [ ] **Step 5: Run — expect PASS** (3 assertions).
+- [x] **Step 5: Run — expect PASS** (3 assertions).
 
-- [ ] **Step 6: Typecheck** (zod schema validates each markdown file) — 0 errors. If a file fails validation, fix the frontmatter, **don't** loosen the schema.
+- [x] **Step 6: Typecheck** (zod schema validates each markdown file) — 0 errors. If a file fails validation, fix the frontmatter, **don't** loosen the schema.
 
-- [ ] **Step 7: Commit (RU only — EN twins land in Task 9)**
+- [x] **Step 7: Commit (RU only — EN twins land in Task 9)**
 
 ```bash
 git add src/content/projects/astro-blog.md src/content/projects/claude-code-guide.md tests/unit/entity/projects-content.test.ts
@@ -1169,7 +1169,7 @@ git commit -m "feat(content): seed projects collection with astro-blog and claud
 **Subagent:** `backender`.
 **Files:** modify `scripts/lib/site-config.ts` and `scripts/translate.ts`; create `tests/unit/entity/translate-projects.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/translate-projects.test.ts`:
 
@@ -1200,9 +1200,9 @@ describe("translate pipeline supports projects collection", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `scripts/lib/site-config.ts`** with:
+- [x] **Step 3: Replace `scripts/lib/site-config.ts`** with:
 
 ```ts
 import { join } from "node:path";
@@ -1220,7 +1220,7 @@ export const PATHS = {
 } as const;
 ```
 
-- [ ] **Step 4: Add `translateProjectFile` + `translateAllProjects` to `scripts/translate.ts`**
+- [x] **Step 4: Add `translateProjectFile` + `translateAllProjects` to `scripts/translate.ts`**
 
 After the existing `translateAllSite` function, insert:
 
@@ -1340,7 +1340,7 @@ const translateAllProjects = async (): Promise<readonly FileResult[]> => {
 };
 ```
 
-- [ ] **Step 5: Wire it into `main()`**
+- [x] **Step 5: Wire it into `main()`**
 
 In `scripts/translate.ts`, replace the existing `main()` with:
 
@@ -1372,11 +1372,11 @@ const main = async (): Promise<void> => {
 };
 ```
 
-- [ ] **Step 6: Run unit test — expect PASS** (4 assertions).
+- [x] **Step 6: Run unit test — expect PASS** (4 assertions).
 
-- [ ] **Step 7: Typecheck** (`pnpm typecheck` → 0 errors).
+- [x] **Step 7: Typecheck** (`pnpm typecheck` → 0 errors).
 
-- [ ] **Step 8: Run translate**
+- [x] **Step 8: Run translate**
 
 ```bash
 pnpm translate
@@ -1388,7 +1388,7 @@ Expected:
 
 If `ANTHROPIC_API_KEY` missing, the script exits at the top — set it in `.env` first.
 
-- [ ] **Step 9: Inspect EN files**
+- [x] **Step 9: Inspect EN files**
 
 ```bash
 ls src/content/projects/en/
@@ -1396,9 +1396,9 @@ head -30 src/content/projects/en/astro-blog.md
 ```
 Expected: both `.md` files present, English title, translated outcomes, `links[].url` preserved verbatim.
 
-- [ ] **Step 10: Run translate:check** (`pnpm translate:check`) — clean output.
+- [x] **Step 10: Run translate:check** (`pnpm translate:check`) — clean output.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add scripts/lib/site-config.ts scripts/translate.ts src/content/projects/en/ tests/unit/entity/translate-projects.test.ts
