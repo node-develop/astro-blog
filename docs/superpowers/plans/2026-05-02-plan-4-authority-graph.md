@@ -42,7 +42,7 @@ git worktree add ../astro-blog-authority -b feat/authority-graph main && cd ../a
 
 **Files:** none (read-only)
 
-- [ ] **Step 1: Verify clean state, prerequisites, and baseline.**
+- [x] **Step 1: Verify clean state, prerequisites, and baseline.**
 
 ```bash
 git status
@@ -55,7 +55,7 @@ pnpm typecheck && pnpm test && pnpm lint
 
 Expected: working tree clean; `OK — prerequisites present`; all checks green. If `MISSING`, abort and rebase onto latest `main`.
 
-- [ ] **Step 2: Run gitnexus impact analysis on the load-bearing files.**
+- [x] **Step 2: Run gitnexus impact analysis on the load-bearing files.**
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
@@ -64,7 +64,7 @@ mcp__gitnexus__impact({ target: "blog/index", direction: "upstream", repo: "astr
 
 Expected: `PostLayout` is MEDIUM (consumed by `src/pages/blog/[...slug].astro` and EN sibling); `blog/index` is LOW. Note any surprise consumers in the PR description.
 
-- [ ] **Step 3: Inventory current tag slugs.**
+- [x] **Step 3: Inventory current tag slugs.**
 
 ```bash
 grep -hE '^  - ' src/content/posts/*.md src/content/posts/en/*.md | sort -u
@@ -87,7 +87,7 @@ Expected: list of unique tag entries (e.g. `- claude-code`, `- guide`). Confirm 
 
 This module is the single source of truth for "which tag slugs exist, and which posts belong to each." It is fed `PostWithMeta[]` by callers — no I/O of its own — so it is trivially testable.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Create `tests/unit/content/tags.test.ts`:
 
@@ -152,7 +152,7 @@ describe("resolveTagLabel", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails.**
+- [x] **Step 2: Run test to verify it fails.**
 
 ```bash
 pnpm test tests/unit/content/tags.test.ts
@@ -160,7 +160,7 @@ pnpm test tests/unit/content/tags.test.ts
 
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `src/lib/content/tags.ts`.**
+- [x] **Step 3: Implement `src/lib/content/tags.ts`.**
 
 ```ts
 import type { PostWithMeta } from "./loader";
@@ -222,7 +222,7 @@ export const resolveTagLabel = (
 ): string => dict[slug] ?? slug;
 ```
 
-- [ ] **Step 4: Verify and commit.**
+- [x] **Step 4: Verify and commit.**
 
 ```bash
 pnpm test tests/unit/content/tags.test.ts && pnpm typecheck
