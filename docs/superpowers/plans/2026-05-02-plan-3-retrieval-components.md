@@ -1459,7 +1459,7 @@ git commit -m "feat(mdx): add <KeyTakeaways> component with 3–5 bullet guard"
 - Create: `tests/unit/related/related.test.ts`
 - Modify: `src/layouts/PostLayout.astro`
 
-- [ ] **Step 1:** Write the failing test for the pure function.
+- [x] **Step 1:** Write the failing test for the pure function.
 
 Create `tests/unit/related/related.test.ts`:
 
@@ -1580,14 +1580,14 @@ describe("pickRelated", () => {
 });
 ```
 
-- [ ] **Step 2:** Run test to confirm failure.
+- [x] **Step 2:** Run test to confirm failure.
 
 ```bash
 pnpm test tests/unit/related/related.test.ts
 ```
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3:** Implement `src/lib/related.ts`.
+- [x] **Step 3:** Implement `src/lib/related.ts`.
 
 ```ts
 /**
@@ -1654,21 +1654,21 @@ export const pickRelated = (input: PickRelatedInput): ReadonlyArray<RelatedCandi
 };
 ```
 
-- [ ] **Step 4:** Run unit tests.
+- [x] **Step 4:** Run unit tests.
 
 ```bash
 pnpm test tests/unit/related/related.test.ts
 ```
 Expected: PASS — all 13 assertions green.
 
-- [ ] **Step 5:** Run impact analysis on `PostLayout` before wiring.
+- [x] **Step 5:** Run impact analysis on `PostLayout` before wiring.
 
 ```
 mcp__gitnexus__impact({ target: "PostLayout", direction: "upstream", repo: "astro-blog" })
 ```
 Expected: MEDIUM — same as Task 2.
 
-- [ ] **Step 6:** Wire `RelatedPosts` into `PostLayout.astro`.
+- [x] **Step 6:** Wire `RelatedPosts` into `PostLayout.astro`.
 
 Open `src/layouts/PostLayout.astro`. Add to the imports:
 
@@ -1771,7 +1771,7 @@ Add corresponding styles inside the existing `<style>` block:
 }
 ```
 
-- [ ] **Step 7:** Add the `post.related` i18n key.
+- [x] **Step 7:** Add the `post.related` i18n key.
 
 Open `src/i18n/strings.ru.json` and add (preserving alphabetical key order):
 
@@ -1787,21 +1787,21 @@ Open `src/i18n/strings.en.json` and add:
 "post.related": "Related posts"
 ```
 
-- [ ] **Step 8:** Run typecheck.
+- [x] **Step 8:** Run typecheck.
 
 ```bash
 pnpm typecheck
 ```
 Expected: 0 errors. (`getOrderedPosts` is already async; `PostLayout.astro` frontmatter runs at build/SSR time so awaiting works.)
 
-- [ ] **Step 9:** Run all tests.
+- [x] **Step 9:** Run all tests.
 
 ```bash
 pnpm test
 ```
 Expected: all pass.
 
-- [ ] **Step 10:** Manual smoke check.
+- [x] **Step 10:** Manual smoke check.
 
 ```bash
 pnpm dev
@@ -1812,14 +1812,14 @@ curl -s http://localhost:4321/blog/01-introduction | grep -c 'class="related"'
 ```
 Expected: `1`. Visit a post and confirm the "Похожие посты" section shows up to three cards. Switch to EN by visiting `/en/blog/01-introduction` and confirm titles/descriptions are EN — never RU. Stop the dev server.
 
-- [ ] **Step 11:** Detect changes scope.
+- [x] **Step 11:** Detect changes scope.
 
 ```
 mcp__gitnexus__detect_changes({ scope: "staged", repo: "astro-blog" })
 ```
 Expected: 5 files — `src/lib/related.ts`, `tests/unit/related/related.test.ts`, `src/layouts/PostLayout.astro`, `src/i18n/strings.ru.json`, `src/i18n/strings.en.json`.
 
-- [ ] **Step 12:** Commit.
+- [x] **Step 12:** Commit.
 
 ```bash
 git add src/lib/related.ts tests/unit/related/related.test.ts src/layouts/PostLayout.astro src/i18n/strings.ru.json src/i18n/strings.en.json
