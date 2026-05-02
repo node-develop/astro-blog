@@ -12,8 +12,6 @@ sourceHash: 12f9c690876ab758bd55f9cd347848c747b80e214cb3cd0090b52c10751acbb6
 manuallyEdited: false
 ---
 
-# 11. Models and pricing
-
 > Choosing a model isn't "always Opus because it's better." It's a tradeoff between speed / cost / quality for a specific task. This chapter covers tables, budgets, and combination strategies.
 
 ---

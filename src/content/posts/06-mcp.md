@@ -6,8 +6,6 @@ tags: ["claude-code", "guide"]
 draft: false
 ---
 
-# 06. MCP-серверы
-
 > MCP (Model Context Protocol) — открытый протокол для подключения к Claude Code внешних tools, ресурсов и данных. Claude Code умеет говорить с MCP-серверами по трём транспортам: stdio, SSE и HTTP. Для Travel Agent это критическая часть архитектуры — все интеграции с авиа/отелями/погодой реализованы как MCP-серверы.
 
 ---

@@ -12,8 +12,6 @@ sourceHash: 880a38ed7d8c5879909af594bc692a6d0c4ed1be9fc6ce29af8b5888277a1404
 manuallyEdited: false
 ---
 
-# 10. Agent Teams (experimental)
-
 > If subagents are "send an assistant on a business trip and wait for results", then Agent Teams are "assemble a team of several developers, give them a task list, and they work in parallel, communicating with each other". A fundamentally different architecture. As of April 2026 — an experimental feature of Claude Code.
 
 ---

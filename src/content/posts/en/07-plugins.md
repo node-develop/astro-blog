@@ -12,8 +12,6 @@ sourceHash: f96b4444e9daa51661feb05cd96fa863774d7e7d47a9126f1f7c27103961e3c0
 manuallyEdited: false
 ---
 
-# 07. Plugins: packaging skills + hooks + agents + MCP
-
 > Plugin — this is an "npm package for Claude Code". If you have several related artifacts (skills + hooks + agents + MCP config) that you want to share between projects or with your team — package them into a plugin.
 
 ---

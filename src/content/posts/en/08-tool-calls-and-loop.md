@@ -12,8 +12,6 @@ sourceHash: 71a30d2a59e767a2003f2164e2ddd168199adddbbc2cfedc0653da7c600e9df6
 manuallyEdited: false
 ---
 
-# 08. Tool calls and agent loop under the hood
-
 > Tool call — this is not a "Claude Code feature", it's a fundamental mechanism that transforms a model from a chatbot into an agent. By understanding the tool loop, you understand 80% of how any AI agent works.
 
 ---

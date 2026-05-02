@@ -12,8 +12,6 @@ sourceHash: b78cfbdc44ceafa913b4277d68a70fb1027dcc3bc786e7b91d3ed7a224d34d79
 manuallyEdited: false
 ---
 
-# 13. Best practices: daily routine and anti-patterns
-
 > All previous chapters are about mechanics. This one is about discipline. Without it, even a perfect configuration eventually turns into a mess: cache misses, skills go stale, hooks fail silently, and you don't understand why your monthly bill doubled.
 
 ---

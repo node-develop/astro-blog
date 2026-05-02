@@ -12,8 +12,6 @@ sourceHash: 82f88d5ab6b7dc712f4dd87344490b9efddb56d22dc0cdc29069687b1edc8d03
 manuallyEdited: false
 ---
 
-# 03. CLAUDE.md: levels, imports, auto-memory
-
 > CLAUDE.md is "paste this every time" in a nice wrapper. A file that automatically gets pasted into the system prompt of every session. Used correctly — it saves tens of thousands of tokens and makes the model suddenly smart about your project. Used incorrectly — it bloats the context and contradicts itself.
 
 ---

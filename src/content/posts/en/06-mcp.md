@@ -12,8 +12,6 @@ sourceHash: e0961257995b3b8b27432ef9719ecf30bc30fe80a200610b178d488728c92584
 manuallyEdited: false
 ---
 
-# 06. MCP Servers
-
 > MCP (Model Context Protocol) is an open protocol for connecting external tools, resources, and data to Claude Code. Claude Code can communicate with MCP servers over three transports: stdio, SSE, and HTTP. For Travel Agent, this is a critical part of the architecture — all integrations with airlines/hotels/weather are implemented as MCP servers.
 
 ---

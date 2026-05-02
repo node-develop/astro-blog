@@ -12,8 +12,6 @@ sourceHash: b20cbc4348f6db31fd595e937e2aa9f22a8f73e13cfd56e34ff4e02328ac808a
 manuallyEdited: false
 ---
 
-# 02. Context window and prompt cache
-
 > The most common reason "Claude suddenly got dumber" is a full context window. The most common reason "it suddenly got expensive" is a lost cache. This chapter is about how to avoid both.
 
 ---

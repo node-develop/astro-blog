@@ -12,8 +12,6 @@ sourceHash: 9d48bd5eea7dbc40dad64dd906d44c90f7397a5027d7a73ce6b708e642c9dc9f
 manuallyEdited: false
 ---
 
-# 09. Subagents: isolated agent cycles
-
 > Subagent — a mini-session of Claude Code, launched from the main one. With its own context, its own system prompt, its own set of tools. Only the final result is returned to the main context. This is both salvation from window overflow and the reason for unexpected bills.
 
 ---

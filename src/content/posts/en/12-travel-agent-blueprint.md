@@ -12,8 +12,6 @@ sourceHash: 94b74722a27e5285b973ec9fe41ef569861ce17e3648e7a16547a6355b7b3b64
 manuallyEdited: false
 ---
 
-# 12. Travel Agent from scratch: blueprint
-
 > Bringing it all together. One real project. One monorepo. Concrete files, configs, structure. From here on you copy-paste and adapt.
 
 ---

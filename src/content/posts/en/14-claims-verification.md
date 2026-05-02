@@ -12,8 +12,6 @@ sourceHash: f687ea9f8f64e56b921f396d1d1ab823ad83e7da848f63acbac69e9089d50be3
 manuallyEdited: false
 ---
 
-# 14. Verifying Claims from the Original Thread
-
 > This chapter is a line-by-line breakdown of those ~20 points that started the guide's preparation. Each claim has been verified against official documentation (`docs.claude.com`, `code.claude.com/docs`), the Claude Code changelog, and through Context7 (`/anthropics/claude-code/v2.1.89`). The goal is to separate facts from speculation so you can cite the thread without worrying about "what if there's misinformation there."
 
 Legend:

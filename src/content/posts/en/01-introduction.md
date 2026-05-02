@@ -12,8 +12,6 @@ sourceHash: 31ce2e45b7a5e0d21ce13b1c0a4e131fc73fe020c605a3036670e9a6b0d4626c
 manuallyEdited: false
 ---
 
-# 01. What is Claude Code: harness, agent loop, and your place in it
-
 > Before diving into `CLAUDE.md`, skills, and subagents, we need to agree on terminology. Otherwise, discussions about "cache" and "context" turn into arguments about different things.
 
 ---

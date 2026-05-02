@@ -12,8 +12,6 @@ sourceHash: 1f5a8349043e23707ea011bf4be35ab3c30d1a03175e22adbb83c0bfaa3fa468
 manuallyEdited: false
 ---
 
-# 04. Skills: SKILL.md, scripts, references
-
 > Skill is a reusable "procedure for the model". Not a gut-feeling "do it this way" in chat, but a playbook fixed in a file that Claude himself chooses when the task matches the description.
 
 ---

@@ -12,8 +12,6 @@ sourceHash: a507dfc9fb4d25674db19593abd62c2436c60c9bcf878b09fa31759350646984
 manuallyEdited: false
 ---
 
-# 05. Hooks: deterministic control over agent loop
-
 > Hooks are git hooks, but for Claude Code. Points in the lifecycle where the harness executes your script. If a skill is a recommendation to the model, a hook is a mandatory harness step that **is guaranteed** to happen.
 
 ---
