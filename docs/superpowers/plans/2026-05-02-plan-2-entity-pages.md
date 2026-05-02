@@ -334,7 +334,7 @@ git commit -m "feat(seo): surface notableWork (subjectOf) and expertiseAreas in 
 **Subagent:** `frontender`.
 **Files:** modify `src/content/site/about.md`; create `tests/unit/entity/about-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/about-content.test.ts`:
 
@@ -376,9 +376,9 @@ describe("src/content/site/about.md — expert profile", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/content/site/about.md`** with:
+- [x] **Step 3: Replace `src/content/site/about.md`** with:
 
 ```markdown
 ---
@@ -424,20 +424,20 @@ description: "Артём Кашута — backend и AI agent engineer. 10+ ле
 LinkedIn / GitHub / X появятся, когда будет, что туда вешать (spec open-question #2).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Typecheck** (content schema only requires `title` + optional `description`).
+- [x] **Step 5: Typecheck** (content schema only requires `title` + optional `description`).
 
-- [ ] **Step 6: Regenerate EN twin**
+- [x] **Step 6: Regenerate EN twin**
 
 ```bash
 pnpm translate -- --force about
 ```
 Expected: `[site] about: translated`. Writes `src/content/site/en/about.md`.
 
-- [ ] **Step 7: Quick read** (`head -30 src/content/site/en/about.md`) — title in English, section headers translated.
+- [x] **Step 7: Quick read** (`head -30 src/content/site/en/about.md`) — title in English, section headers translated.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/content/site/about.md src/content/site/en/about.md tests/unit/entity/about-content.test.ts
@@ -451,7 +451,7 @@ git commit -m "feat(content): expand /about into expert profile (RU + EN twin)"
 **Subagent:** `frontender`.
 **Files:** modify `src/pages/about.astro` and `src/pages/en/about.astro`; create `tests/unit/entity/about-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/about-page.test.ts`:
 
@@ -477,9 +477,9 @@ describe.each([["ru", ru], ["en", en]])("/%s/about page wires WebPage JSON-LD", 
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Replace `src/pages/about.astro`** with:
+- [x] **Step 3: Replace `src/pages/about.astro`** with:
 
 ```astro
 ---
@@ -518,11 +518,11 @@ const webPageNode: GraphNode = buildWebPageNode({
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Replace `src/pages/en/about.astro`** with the **same content** (locale is read from `Astro.url.pathname`, both files identical by design).
+- [x] **Step 4: Replace `src/pages/en/about.astro`** with the **same content** (locale is read from `Astro.url.pathname`, both files identical by design).
 
-- [ ] **Step 5: Run — expect PASS** (6 assertions).
+- [x] **Step 5: Run — expect PASS** (6 assertions).
 
-- [ ] **Step 6: Typecheck + smoke**
+- [x] **Step 6: Typecheck + smoke**
 
 ```bash
 pnpm typecheck
@@ -536,7 +536,7 @@ curl -s http://localhost:4321/about | python3 -c "import sys, re, json; m = re.s
 ```
 Expected: list contains `Person`, `Organization`, `WebSite`, `WebPage`. Stop dev server.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/about.astro src/pages/en/about.astro tests/unit/entity/about-page.test.ts
@@ -552,7 +552,7 @@ git commit -m "feat(seo): emit WebPage JSON-LD on /about and /en/about referenci
 **Subagent:** `frontender`.
 **Files:** create `src/content/site/now.md`; create `tests/unit/entity/now-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/now-content.test.ts`:
 
@@ -583,9 +583,9 @@ describe("src/content/site/now.md", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/site/now.md`**:
+- [x] **Step 3: Create `src/content/site/now.md`**:
 
 ```markdown
 ---
@@ -620,18 +620,18 @@ description: "Что я делаю прямо сейчас в работе и п
 Если хочется обсудить — пишите на [a@artka.dev](mailto:a@artka.dev).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Generate EN twin**
+- [x] **Step 5: Generate EN twin**
 
 ```bash
 pnpm translate -- --force now
 ```
 Expected: `[site] now: translated`.
 
-- [ ] **Step 6: Verify** (`head -20 src/content/site/en/now.md`) — English title, translated headers, `2026-05-02` preserved verbatim.
+- [x] **Step 6: Verify** (`head -20 src/content/site/en/now.md`) — English title, translated headers, `2026-05-02` preserved verbatim.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content/site/now.md src/content/site/en/now.md tests/unit/entity/now-content.test.ts
@@ -645,7 +645,7 @@ git commit -m "feat(content): add /now page (RU + EN twin) — current focus, mo
 **Subagent:** `frontender`.
 **Files:** create `src/pages/now.astro` + `src/pages/en/now.astro`; create `tests/unit/entity/now-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/now-page.test.ts`:
 
@@ -671,9 +671,9 @@ describe.each([["ru", ruP], ["en", enP]])("/%s/now page", (_l, p) => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/pages/now.astro`**:
+- [x] **Step 3: Create `src/pages/now.astro`**:
 
 ```astro
 ---
@@ -709,11 +709,11 @@ const webPageNode: GraphNode = buildWebPageNode({
 </BaseLayout>
 ```
 
-- [ ] **Step 4: Create `src/pages/en/now.astro`** identical to Step 3 (copy verbatim).
+- [x] **Step 4: Create `src/pages/en/now.astro`** identical to Step 3 (copy verbatim).
 
-- [ ] **Step 5: Run — expect PASS** (8 assertions).
+- [x] **Step 5: Run — expect PASS** (8 assertions).
 
-- [ ] **Step 6: Smoke**
+- [x] **Step 6: Smoke**
 
 ```bash
 pnpm typecheck && pnpm dev
@@ -725,7 +725,7 @@ curl -sI http://localhost:4321/en/now | head -3
 ```
 Expected: both 200. Stop dev.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/now.astro src/pages/en/now.astro tests/unit/entity/now-page.test.ts
@@ -741,7 +741,7 @@ git commit -m "feat(pages): add /now and /en/now routes with WebPage JSON-LD"
 **Subagent:** `frontender`.
 **Files:** create `src/content/site/uses.md`; create `tests/unit/entity/uses-content.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/uses-content.test.ts`:
 
@@ -773,9 +773,9 @@ describe("src/content/site/uses.md", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/content/site/uses.md`**:
+- [x] **Step 3: Create `src/content/site/uses.md`**:
 
 ```markdown
 ---
@@ -825,13 +825,13 @@ description: "Публичный toolkit: редактор, бэкенд-сте�
 Если что-то отсюда интересно — пишите на [a@artka.dev](mailto:a@artka.dev).
 ```
 
-- [ ] **Step 4: Run — expect PASS**.
+- [x] **Step 4: Run — expect PASS**.
 
-- [ ] **Step 5: Generate EN twin** (`pnpm translate -- --force uses`).
+- [x] **Step 5: Generate EN twin** (`pnpm translate -- --force uses`).
 
-- [ ] **Step 6: Quick read** (`head -20 src/content/site/en/uses.md`) — English title, version numbers preserved.
+- [x] **Step 6: Quick read** (`head -20 src/content/site/en/uses.md`) — English title, version numbers preserved.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/content/site/uses.md src/content/site/en/uses.md tests/unit/entity/uses-content.test.ts
@@ -845,7 +845,7 @@ git commit -m "feat(content): add /uses page (RU + EN twin) — public toolkit w
 **Subagent:** `frontender`.
 **Files:** create `src/pages/uses.astro` + `src/pages/en/uses.astro`; create `tests/unit/entity/uses-page.test.ts`.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/unit/entity/uses-page.test.ts`:
 
@@ -870,17 +870,17 @@ describe.each([["ru", ruP], ["en", enP]])("/%s/uses page", (_l, p) => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**.
+- [x] **Step 2: Run — expect FAIL**.
 
-- [ ] **Step 3: Create `src/pages/uses.astro`** — same shape as `now.astro`, with `slug = locale === "en" ? "en/uses" : "uses"` and `description` fallback `"Public toolkit: editor, backend, infra, observability, AI tooling."`. Mirror Task 5b Step 3 verbatim, swapping the slug.
+- [x] **Step 3: Create `src/pages/uses.astro`** — same shape as `now.astro`, with `slug = locale === "en" ? "en/uses" : "uses"` and `description` fallback `"Public toolkit: editor, backend, infra, observability, AI tooling."`. Mirror Task 5b Step 3 verbatim, swapping the slug.
 
-- [ ] **Step 4: Create `src/pages/en/uses.astro`** identical to Step 3.
+- [x] **Step 4: Create `src/pages/en/uses.astro`** identical to Step 3.
 
-- [ ] **Step 5: Run — expect PASS**.
+- [x] **Step 5: Run — expect PASS**.
 
-- [ ] **Step 6: Smoke** (`pnpm typecheck`, `pnpm dev`, `curl -sI http://localhost:4321/uses` and `/en/uses` → 200 each).
+- [x] **Step 6: Smoke** (`pnpm typecheck`, `pnpm dev`, `curl -sI http://localhost:4321/uses` and `/en/uses` → 200 each).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/uses.astro src/pages/en/uses.astro tests/unit/entity/uses-page.test.ts
