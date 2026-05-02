@@ -9,10 +9,12 @@
 
 import Tldr from "./Tldr.astro";
 import Faq from "./Faq.astro";
+import Compare from "./Compare.astro";
 
 export const mdxComponents = {
   Tldr,
   Faq,
+  Compare,
 } as const;
 
 export type MdxComponents = typeof mdxComponents;
