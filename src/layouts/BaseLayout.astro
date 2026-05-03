@@ -5,6 +5,7 @@ import Header from "~/components/Header.astro";
 import MobileDrawer from "~/components/MobileDrawer.astro";
 import SkipLink from "~/components/SkipLink.astro";
 import Search from "~/components/Search.astro";
+import Analytics from "~/components/Analytics.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
@@ -111,6 +112,7 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       type="application/ld+json"
       set:html={safeJsonLd(buildGraph({ locale, extraNodes: extraSchemaNodes }))}
     />
+    <Analytics domain="artka.dev" />
     <slot name="head" />
     <ClientRouter />
   </head>

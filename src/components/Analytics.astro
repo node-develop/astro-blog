@@ -1,0 +1,50 @@
+---
+/**
+ * Analytics — Plausible (self-hosted ready, DNT-aware).
+ *
+ * Usage in BaseLayout.astro <head>:
+ *
+ *   <Analytics
+ *     domain="artka.dev"
+ *     src="https://plausible.io/js/script.js"
+ *   />
+ *
+ * For self-hosted Plausible, swap `src` to your instance:
+ *   src="https://stats.artka.dev/js/script.js"
+ *
+ * Behaviour:
+ *   - Skipped entirely if `navigator.doNotTrack === '1'`.
+ *   - Skipped on localhost (Astro dev) so dev traffic doesn't pollute.
+ *   - No cookies, no fingerprinting (Plausible default).
+ *   - Loads `defer` so it never blocks the critical path.
+ */
+interface Props {
+  domain: string;
+  /** Plausible script URL. Default: hosted plausible.io */
+  src?: string;
+}
+
+const { domain, src = "https://plausible.io/js/script.js" } = Astro.props;
+---
+
+<script is:inline define:vars={{ domain, src }}>
+  (function () {
+    try {
+      // Honor Do Not Track
+      if (navigator.doNotTrack === "1" || window.doNotTrack === "1") return;
+
+      // Skip on localhost / dev
+      var host = window.location.hostname;
+      if (host === "localhost" || host === "127.0.0.1" || host.endsWith(".local")) return;
+
+      var s = document.createElement("script");
+      s.defer = true;
+      s.dataset.domain = domain;
+      s.src = src;
+      document.head.appendChild(s);
+    } catch (e) {
+      // Analytics failure must not break the page.
+      console.warn("[analytics] init skipped:", e);
+    }
+  })();
+</script>

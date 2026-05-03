@@ -1,0 +1,76 @@
+---
+/**
+ * PostMeta — meta strip below the post title.
+ *
+ * Renders: pubDate · reading-time · primary tag.
+ *
+ * Use inside PostLayout.astro, after the H1 and before the content:
+ *
+ *   <PostMeta
+ *     pubDate={entry.data.pubDate}
+ *     bodyText={await renderToText(entry)}
+ *     tag={entry.data.tags?.[0]}
+ *     locale={locale}
+ *   />
+ *
+ * `bodyText` is the raw markdown body — pass `entry.body` (Astro
+ * content collections expose this on every entry).
+ */
+import { formatReadingTime, getReadingTime } from "~/lib/posts/reading-time";
+import type { Locale } from "~/i18n";
+
+interface Props {
+  pubDate: Date;
+  bodyText: string;
+  tag?: string;
+  locale: Locale;
+}
+
+const { pubDate, bodyText, tag, locale } = Astro.props;
+
+const minutes = getReadingTime({ text: bodyText, locale });
+const reading = formatReadingTime(minutes, locale);
+
+const dateFmt = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ru-RU", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+}).format(pubDate);
+---
+
+<p class="post-meta" data-post-meta>
+  <time datetime={pubDate.toISOString()} class="post-meta__date">{dateFmt}</time>
+  <span class="post-meta__sep" aria-hidden="true">·</span>
+  <span class="post-meta__reading">{reading}</span>
+  {
+    tag && (
+      <>
+        <span class="post-meta__sep" aria-hidden="true">
+          ·
+        </span>
+        <span class="post-meta__tag">{tag}</span>
+      </>
+    )
+  }
+</p>
+
+<style>
+  .post-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    margin: 0 0 var(--space-6) 0;
+  }
+  .post-meta__sep {
+    opacity: 0.5;
+  }
+  .post-meta__tag {
+    color: var(--color-accent);
+  }
+</style>

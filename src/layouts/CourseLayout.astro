@@ -1,0 +1,361 @@
+---
+/**
+ * CourseLayout — landing page for a course.
+ *
+ * Use as `<CourseLayout course={courseEntry} lessons={...}>`. Renders:
+ *   - Hero: title, blurb, level / duration / lesson count
+ *   - Progress bar (live, reads from localStorage)
+ *   - "Continue where you left off" CTA if state exists
+ *   - Lesson list with status (idle / done / bookmarked)
+ *
+ * Drop at: src/layouts/CourseLayout.astro
+ *
+ * Page route example: src/pages/courses/[slug]/index.astro
+ *   const courses = await getCollection("course");
+ *   ...
+ */
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  course: CollectionEntry<"course">;
+  lessons: ReadonlyArray<CollectionEntry<"lesson">>;
+}
+
+const { course, lessons } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
+const blogPrefix = locale === "en" ? "/en" : "";
+
+const courseSlug = course.id.replace(/\/?_index$/, "");
+const lessonHref = (l: CollectionEntry<"lesson">): string =>
+  `${blogPrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
+
+const labels =
+  locale === "en"
+    ? {
+        lessons: "lessons",
+        continueCta: "Continue where you left off",
+        start: "Start course",
+        restart: "Restart",
+      }
+    : {
+        lessons: "уроков",
+        continueCta: "Продолжить с последнего",
+        start: "Начать курс",
+        restart: "Начать заново",
+      };
+---
+
+<BaseLayout title={course.data.title} description={course.data.blurb}>
+  <article class="course" data-course-slug={courseSlug}>
+    <header class="course__hero">
+      <p class="course__eyebrow">
+        <span class="course__rule" aria-hidden="true"></span>
+        {course.data.level.toUpperCase()} · {lessons.length}
+        {labels.lessons}
+        {course.data.duration && <> · {course.data.duration}</>}
+      </p>
+      <h1 class="course__title">{course.data.title}</h1>
+      <p class="course__blurb">{course.data.blurb}</p>
+    </header>
+
+    <section class="course__progress" data-course-progress aria-label="Progress">
+      <div class="course__progress-track">
+        <div class="course__progress-bar" data-progress-bar></div>
+      </div>
+      <p class="course__progress-meta">
+        <span data-progress-count>0 / {lessons.length}</span>
+        <span data-progress-percent>0%</span>
+      </p>
+      <div class="course__cta-row">
+        <a class="course__cta" href={lessons[0] ? lessonHref(lessons[0]) : "#"} data-cta-default>
+          {labels.start}
+        </a>
+        <a class="course__cta course__cta--ghost" href="#" data-cta-continue hidden>
+          {labels.continueCta} →
+        </a>
+      </div>
+    </section>
+
+    <section class="course__lessons">
+      <ol class="course__list">
+        {
+          lessons.map((l, i) => (
+            <li class="course__lesson" data-lesson-slug={l.id.replace(/^.*\//, "")}>
+              <a href={lessonHref(l)} class="course__lesson-link">
+                <span class="course__lesson-num">{String(i + 1).padStart(2, "0")}</span>
+                <span class="course__lesson-body">
+                  <span class="course__lesson-title">{l.data.title}</span>
+                  {l.data.blurb && <span class="course__lesson-blurb">{l.data.blurb}</span>}
+                </span>
+                <span class="course__lesson-status" aria-hidden="true">
+                  <span class="course__lesson-status-icon" data-icon-default>
+                    {l.data.duration ? `${l.data.duration} ${locale === "en" ? "min" : "мин"}` : ""}
+                  </span>
+                  <span
+                    class="course__lesson-status-icon course__lesson-status-icon--done"
+                    data-icon-done
+                    hidden
+                  >
+                    ✓
+                  </span>
+                  <span
+                    class="course__lesson-status-icon course__lesson-status-icon--bookmark"
+                    data-icon-bookmark
+                    hidden
+                  >
+                    ★
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .course {
+    max-width: var(--content-max, 720px);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4);
+  }
+  .course__hero {
+    margin-bottom: var(--space-7);
+  }
+  .course__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0 0 var(--space-4) 0;
+  }
+  .course__rule {
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .course__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-3xl);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    margin: 0 0 var(--space-3) 0;
+    color: var(--color-fg);
+    text-wrap: balance;
+  }
+  .course__blurb {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    line-height: var(--lh-base);
+    color: var(--color-fg-muted);
+    margin: 0;
+    max-width: 56ch;
+    text-wrap: pretty;
+  }
+
+  .course__progress {
+    margin: var(--space-6) 0 var(--space-7) 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+  .course__progress-track {
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .course__progress-bar {
+    height: 100%;
+    width: 0;
+    background: var(--color-accent);
+    transition: width var(--dur-base) var(--ease-out);
+  }
+  .course__progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--space-2) 0 var(--space-4) 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .course__cta-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .course__cta {
+    display: inline-block;
+    padding: var(--space-3) var(--space-5);
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .course__cta:hover {
+    background: var(--color-accent-hover);
+  }
+  .course__cta--ghost {
+    background: transparent;
+    color: var(--color-accent);
+  }
+  .course__cta--ghost:hover {
+    background: var(--color-accent-subtle);
+  }
+
+  .course__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .course__lesson {
+    border-top: 1px solid var(--color-border);
+  }
+  .course__lesson:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .course__lesson-link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-4);
+    align-items: center;
+    padding: var(--space-4) var(--space-2);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .course__lesson-link:hover {
+    background: var(--color-bg-elevated);
+  }
+  .course__lesson-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    letter-spacing: var(--tracking-wide);
+  }
+  .course__lesson-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .course__lesson-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: var(--lh-snug);
+  }
+  .course__lesson-blurb {
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    line-height: var(--lh-base);
+  }
+  .course__lesson-status {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    min-width: 60px;
+    justify-content: flex-end;
+  }
+  .course__lesson[data-state="done"] .course__lesson-num,
+  .course__lesson[data-state="done"] .course__lesson-title {
+    color: var(--color-fg-muted);
+  }
+  .course__lesson-status-icon--done {
+    color: var(--color-accent);
+    font-size: var(--fs-md);
+  }
+  .course__lesson-status-icon--bookmark {
+    color: var(--color-accent);
+  }
+</style>
+
+<script>
+  import { getCourse, summarise } from "~/lib/courses/progress";
+
+  function init(): void {
+    const root = document.querySelector<HTMLElement>("[data-course-slug]");
+    if (!root || root.dataset.courseBound === "1") return;
+    root.dataset.courseBound = "1";
+
+    const slug = root.dataset.courseSlug ?? "";
+    const lessons = Array.from(root.querySelectorAll<HTMLElement>("[data-lesson-slug]"));
+    const total = lessons.length;
+
+    const bar = root.querySelector<HTMLElement>("[data-progress-bar]");
+    const countEl = root.querySelector<HTMLElement>("[data-progress-count]");
+    const percentEl = root.querySelector<HTMLElement>("[data-progress-percent]");
+    const ctaDefault = root.querySelector<HTMLAnchorElement>("[data-cta-default]");
+    const ctaContinue = root.querySelector<HTMLAnchorElement>("[data-cta-continue]");
+
+    const render = (): void => {
+      const state = getCourse(slug);
+      const summary = summarise(state, total);
+
+      if (bar) bar.style.width = `${summary.percent}%`;
+      if (countEl) countEl.textContent = `${summary.completed} / ${summary.total}`;
+      if (percentEl) percentEl.textContent = `${summary.percent}%`;
+
+      lessons.forEach((li) => {
+        const lessonSlug = li.dataset.lessonSlug ?? "";
+        const done = state.completed.includes(lessonSlug);
+        const bookmarked = state.bookmarks.includes(lessonSlug);
+        li.dataset.state = done ? "done" : bookmarked ? "bookmarked" : "idle";
+
+        const iconDefault = li.querySelector<HTMLElement>("[data-icon-default]");
+        const iconDone = li.querySelector<HTMLElement>("[data-icon-done]");
+        const iconBookmark = li.querySelector<HTMLElement>("[data-icon-bookmark]");
+        if (iconDefault) iconDefault.hidden = done || bookmarked;
+        if (iconDone) iconDone.hidden = !done;
+        if (iconBookmark) iconBookmark.hidden = !bookmarked || done;
+      });
+
+      // CTA logic
+      if (ctaContinue && state.lastVisited) {
+        const lessonHref = lessons
+          .find((li) => li.dataset.lessonSlug === state.lastVisited)
+          ?.querySelector<HTMLAnchorElement>("a")?.href;
+        if (lessonHref) {
+          ctaContinue.href = lessonHref;
+          ctaContinue.hidden = false;
+        }
+      } else if (ctaContinue) {
+        ctaContinue.hidden = true;
+      }
+      if (ctaDefault && state.completed.length > 0 && summary.percent === 100) {
+        ctaDefault.textContent = ctaDefault.textContent?.replace(/.*/, "Restart") ?? "Restart";
+      }
+    };
+
+    render();
+    window.addEventListener("course-progress:change", render);
+  }
+
+  document.addEventListener("astro:page-load", init);
+</script>

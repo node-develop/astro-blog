@@ -73,6 +73,18 @@ samp {
 /* Preserve KaTeX layer */
 @import "katex/dist/katex.min.css";
 
+/* View Transitions — title morph between blog index and post */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-base);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-group([transition-name^="post-title"]) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-out);
+}
+
 /* Accessibility utility */
 .sr-only {
   position: absolute;

@@ -1,6 +1,5 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
-import sitemap from "@astrojs/sitemap";
 import node from "@astrojs/node";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
@@ -99,14 +98,6 @@ export default defineConfig({
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
       ],
-    }),
-    sitemap({
-      i18n: {
-        defaultLocale: "ru",
-        locales: { ru: "ru-RU", en: "en-US" },
-      },
-      filter: (page) =>
-        !page.includes("/admin/") && !page.includes("/login/") && !page.includes("/api/"),
     }),
     react(),
   ],

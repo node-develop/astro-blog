@@ -238,7 +238,10 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
   }
 
   interface Pagefind {
-    debouncedSearch: (q: string) => Promise<{ results: PagefindResult[] } | null>;
+    debouncedSearch: (
+      q: string,
+      options?: { filters?: Record<string, string | string[]> },
+    ) => Promise<{ results: PagefindResult[] } | null>;
     init?: () => Promise<void>;
   }
 
@@ -351,6 +354,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
         return;
       }
 
+      // Pagefind auto-scopes by <html lang>, so explicit locale filter is redundant.
       const search = await pagefind.debouncedSearch(q);
       if (!search) return;
       const top = search.results.slice(0, 8);

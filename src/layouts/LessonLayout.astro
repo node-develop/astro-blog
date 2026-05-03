@@ -1,0 +1,363 @@
+---
+/**
+ * LessonLayout — single lesson view with player chrome.
+ *
+ * Renders:
+ *   - Breadcrumb back to course
+ *   - Lesson title + meta (NN / total · duration)
+ *   - Slot for lesson content (MDX)
+ *   - Bottom toolbar: ◀ prev · ★ bookmark · ✓ mark complete · next ▶
+ *
+ * Persists `lastVisited`, `completed`, `bookmarks` via course-progress.
+ */
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  course: CollectionEntry<"course">;
+  lesson: CollectionEntry<"lesson">;
+  prev?: CollectionEntry<"lesson">;
+  next?: CollectionEntry<"lesson">;
+  index: number; // 1-based
+  total: number;
+}
+
+const { course, lesson, prev, next, index, total } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
+const localePrefix = locale === "en" ? "/en" : "";
+const courseSlug = course.id.replace(/\/?_index$/, "");
+const lessonSlug = lesson.id.replace(/^.*\//, "");
+
+const lessonHref = (l: CollectionEntry<"lesson">): string =>
+  `${localePrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
+const courseHref = `${localePrefix}/courses/${courseSlug}`;
+
+const labels =
+  locale === "en"
+    ? {
+        back: "Back to course",
+        complete: "Mark complete",
+        completed: "Completed",
+        bookmark: "Bookmark",
+        bookmarked: "Bookmarked",
+        prev: "Previous",
+        next: "Next",
+        lesson: "Lesson",
+      }
+    : {
+        back: "К курсу",
+        complete: "Отметить пройденным",
+        completed: "Пройдено",
+        bookmark: "Закладка",
+        bookmarked: "В закладках",
+        prev: "Назад",
+        next: "Далее",
+        lesson: "Урок",
+      };
+---
+
+<BaseLayout title={`${lesson.data.title} — ${course.data.title}`} description={lesson.data.blurb}>
+  <article class="lesson" data-course-slug={courseSlug} data-lesson-slug={lessonSlug}>
+    <nav class="lesson__breadcrumb">
+      <a href={courseHref} class="lesson__back">← {labels.back}</a>
+    </nav>
+
+    <header class="lesson__head">
+      <p class="lesson__eyebrow">
+        <span class="lesson__rule" aria-hidden="true"></span>
+        {labels.lesson}
+        {String(index).padStart(2, "0")} / {String(total).padStart(2, "0")}
+        {
+          lesson.data.duration && (
+            <>
+              {" "}
+              · {lesson.data.duration} {locale === "en" ? "min" : "мин"}
+            </>
+          )
+        }
+      </p>
+      <h1 class="lesson__title" transition:name={`lesson-title-${lessonSlug}`}>
+        {lesson.data.title}
+      </h1>
+      {lesson.data.blurb && <p class="lesson__blurb">{lesson.data.blurb}</p>}
+    </header>
+
+    <section class="lesson__body prose">
+      <slot />
+    </section>
+
+    <aside class="lesson__toolbar" aria-label="Lesson controls">
+      <div class="lesson__toolbar-left">
+        {
+          prev && (
+            <a href={lessonHref(prev)} class="lesson__nav-btn" rel="prev">
+              <span aria-hidden="true">◀</span>
+              <span>{labels.prev}</span>
+            </a>
+          )
+        }
+      </div>
+
+      <div class="lesson__toolbar-center">
+        <button type="button" class="lesson__action" data-action="bookmark" aria-pressed="false">
+          <span aria-hidden="true" class="lesson__action-icon">★</span>
+          <span data-bookmark-label>{labels.bookmark}</span>
+        </button>
+        <button
+          type="button"
+          class="lesson__action lesson__action--complete"
+          data-action="complete"
+          aria-pressed="false"
+        >
+          <span aria-hidden="true" class="lesson__action-icon">✓</span>
+          <span data-complete-label>{labels.complete}</span>
+        </button>
+      </div>
+
+      <div class="lesson__toolbar-right">
+        {
+          next && (
+            <a href={lessonHref(next)} class="lesson__nav-btn lesson__nav-btn--next" rel="next">
+              <span>{labels.next}</span>
+              <span aria-hidden="true">▶</span>
+            </a>
+          )
+        }
+      </div>
+    </aside>
+  </article>
+</BaseLayout>
+
+<style>
+  .lesson {
+    max-width: var(--content-max, 720px);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-7) var(--space-4);
+  }
+  .lesson__breadcrumb {
+    margin-bottom: var(--space-5);
+  }
+  .lesson__back {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .lesson__back:hover {
+    color: var(--color-accent);
+  }
+  .lesson__head {
+    margin-bottom: var(--space-7);
+  }
+  .lesson__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0 0 var(--space-3) 0;
+  }
+  .lesson__rule {
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .lesson__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    margin: 0 0 var(--space-3) 0;
+    color: var(--color-fg);
+    text-wrap: balance;
+  }
+  .lesson__blurb {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    line-height: var(--lh-base);
+    color: var(--color-fg-muted);
+    margin: 0;
+    max-width: 56ch;
+    text-wrap: pretty;
+  }
+
+  .lesson__toolbar {
+    position: sticky;
+    bottom: var(--space-3);
+    margin-top: var(--space-7);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+  }
+  .lesson__toolbar-left {
+    justify-self: start;
+  }
+  .lesson__toolbar-right {
+    justify-self: end;
+  }
+  .lesson__toolbar-center {
+    display: flex;
+    gap: var(--space-2);
+    justify-self: center;
+  }
+
+  .lesson__nav-btn {
+    display: inline-flex;
+    gap: var(--space-2);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg);
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .lesson__nav-btn:hover {
+    border-color: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .lesson__action {
+    display: inline-flex;
+    gap: var(--space-2);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .lesson__action:hover {
+    color: var(--color-fg);
+    border-color: var(--color-accent);
+  }
+  .lesson__action[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+  .lesson__action--complete[aria-pressed="true"] {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-color: var(--color-accent);
+  }
+  .lesson__action-icon {
+    font-size: var(--fs-md);
+    line-height: 1;
+  }
+
+  @media (max-width: 600px) {
+    .lesson__toolbar {
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+    }
+    .lesson__toolbar-left,
+    .lesson__toolbar-center,
+    .lesson__toolbar-right {
+      justify-self: stretch;
+    }
+    .lesson__toolbar-center {
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  import {
+    getCourse,
+    markComplete,
+    setLastVisited,
+    toggleBookmark,
+    unmarkComplete,
+  } from "~/lib/courses/progress";
+
+  function init(): void {
+    const root = document.querySelector<HTMLElement>(".lesson[data-course-slug]");
+    if (!root || root.dataset.lessonBound === "1") return;
+    root.dataset.lessonBound = "1";
+
+    const courseSlug = root.dataset.courseSlug ?? "";
+    const lessonSlug = root.dataset.lessonSlug ?? "";
+    if (!courseSlug || !lessonSlug) return;
+
+    setLastVisited(courseSlug, lessonSlug);
+
+    const bookmarkBtn = root.querySelector<HTMLButtonElement>('[data-action="bookmark"]');
+    const completeBtn = root.querySelector<HTMLButtonElement>('[data-action="complete"]');
+    const bookmarkLabel = root.querySelector<HTMLElement>("[data-bookmark-label]");
+    const completeLabel = root.querySelector<HTMLElement>("[data-complete-label]");
+
+    const labels = {
+      ru: {
+        bookmark: "Закладка",
+        bookmarked: "В закладках",
+        complete: "Отметить пройденным",
+        completed: "Пройдено",
+      },
+      en: {
+        bookmark: "Bookmark",
+        bookmarked: "Bookmarked",
+        complete: "Mark complete",
+        completed: "Completed",
+      },
+    };
+    const isEn = window.location.pathname.startsWith("/en");
+    const L = isEn ? labels.en : labels.ru;
+
+    const render = (): void => {
+      const state = getCourse(courseSlug);
+      const isBookmarked = state.bookmarks.includes(lessonSlug);
+      const isComplete = state.completed.includes(lessonSlug);
+
+      if (bookmarkBtn) bookmarkBtn.setAttribute("aria-pressed", String(isBookmarked));
+      if (completeBtn) completeBtn.setAttribute("aria-pressed", String(isComplete));
+      if (bookmarkLabel) bookmarkLabel.textContent = isBookmarked ? L.bookmarked : L.bookmark;
+      if (completeLabel) completeLabel.textContent = isComplete ? L.completed : L.complete;
+    };
+
+    bookmarkBtn?.addEventListener("click", () => {
+      toggleBookmark(courseSlug, lessonSlug);
+      render();
+    });
+    completeBtn?.addEventListener("click", () => {
+      const state = getCourse(courseSlug);
+      if (state.completed.includes(lessonSlug)) unmarkComplete(courseSlug, lessonSlug);
+      else markComplete(courseSlug, lessonSlug);
+      render();
+    });
+
+    render();
+    window.addEventListener("course-progress:change", render);
+  }
+
+  document.addEventListener("astro:page-load", init);
+</script>

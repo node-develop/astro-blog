@@ -53,7 +53,9 @@ const dict = tagsEn as Record<string, string>;
             <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="list__link">
               <span class="list__num">{String(p.meta.order).padStart(2, "0")}</span>
               <span class="list__body">
-                <h2 class="list__post-title">{p.entry.data.title}</h2>
+                <h2 class="list__post-title" transition:name={`post-title-${bareSlug(p.entry.id)}`}>
+                  {p.entry.data.title}
+                </h2>
                 <p class="list__post-desc">{p.entry.data.description}</p>
                 <time datetime={p.entry.data.pubDate.toISOString()} class="list__post-date">
                   {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {

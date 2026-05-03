@@ -16,6 +16,7 @@ import tagsRu from "~/i18n/tags.ru.json";
 import tagsEn from "~/i18n/tags.en.json";
 import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
+import { getReadingTime, formatReadingTime } from "~/lib/posts/reading-time";
 import {
   buildBlogPostingNode,
   buildBreadcrumbListNode,
@@ -45,12 +46,8 @@ const coverUrl = cover
     ? cover
     : `/uploads/${cover}`
   : null;
-const readingTime = estimateReadingTimeMinutes(post.body ?? "");
-
-function estimateReadingTimeMinutes(body: string): number {
-  const words = body.trim().split(/\s+/).length;
-  return Math.max(1, Math.round(words / 220));
-}
+const bodyText = post.body ?? "";
+const readingTime = getReadingTime({ text: bodyText, locale });
 
 const siteBase = Astro.site?.toString() ?? "https://artka.dev";
 const absoluteCover = coverUrl
@@ -88,7 +85,7 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 
 const primaryTag = tags?.[0] ?? "—";
 const pubYear = pubDate.getFullYear();
-const pagefindFilter = `tag:${primaryTag}, date:${pubYear}, lang:${locale}`;
+const pagefindFilter = `tag:${primaryTag}, date:${pubYear}`;
 ---
 
 <BaseLayout
@@ -128,7 +125,7 @@ const pagefindFilter = `tag:${primaryTag}, date:${pubYear}, lang:${locale}`;
           }
         </time>
         <span aria-hidden="true">·</span>
-        <span>{readingTime} {t(locale, "post.minutes")}</span>
+        <span>{formatReadingTime(readingTime, locale)}</span>
         {
           updatedDate && (
             <>
@@ -141,7 +138,7 @@ const pagefindFilter = `tag:${primaryTag}, date:${pubYear}, lang:${locale}`;
           )
         }
       </p>
-      <h1 class="post__title">{title}</h1>
+      <h1 class="post__title" transition:name={`post-title-${slug}`}>{title}</h1>
       {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
       {
         tags.length > 0 && (
