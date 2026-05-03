@@ -11,6 +11,10 @@ export const createAuth = () => {
   if (!secret) throw new Error("BETTER_AUTH_SECRET is required");
   if (!baseUrl) throw new Error("BETTER_AUTH_URL or SITE_URL is required");
 
+  const githubClientId = process.env.GITHUB_CLIENT_ID;
+  const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const githubEnabled = Boolean(githubClientId && githubClientSecret);
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -42,6 +46,21 @@ export const createAuth = () => {
       enabled: true,
       requireEmailVerification: false,
       disableSignUp: true,
+    },
+    socialProviders: githubEnabled
+      ? {
+          github: {
+            clientId: githubClientId!,
+            clientSecret: githubClientSecret!,
+            disableSignUp: true,
+          },
+        }
+      : undefined,
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["github"],
+      },
     },
     session: {
       expiresIn: 60 * 60 * 24 * 30,

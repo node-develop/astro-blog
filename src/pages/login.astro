@@ -4,53 +4,19 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 
 if (Astro.locals.user) return Astro.redirect("/admin");
 const next = Astro.url.searchParams.get("next") ?? "/admin";
-
-// Handle form POST: proxy to Better-Auth and redirect on success.
-let loginError: string | null = null;
-if (Astro.request.method === "POST") {
-  const form = await Astro.request.formData();
-  const email = form.get("email") as string;
-  const password = form.get("password") as string;
-  const callbackURL = Astro.url.searchParams.get("callbackURL") ?? "/admin";
-
-  const apiURL = new URL("/api/auth/sign-in/email", Astro.url.origin);
-  const res = await fetch(apiURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // Forward cookies from the browser so Better-Auth can locate an existing session.
-      cookie: Astro.request.headers.get("cookie") ?? "",
-      origin: Astro.url.origin,
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (res.ok) {
-    // Forward Set-Cookie headers from Better-Auth to the browser.
-    const setCookies = res.headers.getSetCookie
-      ? res.headers.getSetCookie()
-      : [res.headers.get("set-cookie") ?? ""].filter(Boolean);
-    const headers = new Headers({ Location: callbackURL });
-    for (const cookie of setCookies) {
-      headers.append("Set-Cookie", cookie);
-    }
-    return new Response(null, { status: 302, headers });
-  }
-
-  loginError = "Неверный email или пароль";
-}
+const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
 ---
 
 <BaseLayout title="Вход" description="Страница входа в админку">
   <h1 class="mb-6 text-3xl font-bold">Вход</h1>
-  <form method="post" action={`/login?callbackURL=${encodeURIComponent(next)}`} class="space-y-4">
-    {
-      loginError && (
-        <p class="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/40 dark:text-red-300">
-          {loginError}
-        </p>
-      )
-    }
+  <form id="login-form" data-callback={next} class="space-y-4">
+    <p
+      id="login-error"
+      hidden
+      class="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/40 dark:text-red-300"
+    >
+      Неверный email или пароль
+    </p>
     <label class="block">
       <span class="text-sm font-medium">Email</span>
       <input
@@ -71,8 +37,93 @@ if (Astro.request.method === "POST") {
         class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
       />
     </label>
-    <button type="submit" class="bg-brand-500 hover:bg-brand-700 rounded px-4 py-2 text-white">
+    <button
+      type="submit"
+      class="bg-brand-500 hover:bg-brand-700 rounded px-4 py-2 text-white disabled:opacity-60"
+    >
       Войти
     </button>
   </form>
+  {
+    githubEnabled && (
+      <>
+        <div class="my-6 flex items-center gap-3 text-xs tracking-wide text-slate-400 uppercase">
+          <span class="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+          <span>или</span>
+          <span class="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+        </div>
+        <button
+          id="github-login"
+          type="button"
+          data-callback={next}
+          class="flex w-full items-center justify-center gap-2 rounded border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-1.94c-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.07.78 2.16v3.2c0 .31.21.66.79.55 4.56-1.52 7.85-5.83 7.85-10.91C23.5 5.65 18.35.5 12 .5z" />
+          </svg>
+          Войти через GitHub
+        </button>
+      </>
+    )
+  }
+  <script>
+    const form = document.getElementById("login-form") as HTMLFormElement | null;
+    const errorEl = document.getElementById("login-error");
+    if (form) {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (errorEl) errorEl.hidden = true;
+        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        const data = new FormData(form);
+        const callback = form.dataset.callback || "/admin";
+        try {
+          const res = await fetch("/api/auth/sign-in/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              email: String(data.get("email") ?? ""),
+              password: String(data.get("password") ?? ""),
+            }),
+          });
+          if (res.ok) {
+            window.location.href = callback;
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        if (submitBtn) submitBtn.disabled = false;
+        if (errorEl) errorEl.hidden = false;
+      });
+    }
+
+    const githubBtn = document.getElementById("github-login") as HTMLButtonElement | null;
+    if (githubBtn) {
+      githubBtn.addEventListener("click", async () => {
+        githubBtn.disabled = true;
+        try {
+          const res = await fetch("/api/auth/sign-in/social", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              provider: "github",
+              callbackURL: githubBtn.dataset.callback || "/admin",
+            }),
+          });
+          const data = (await res.json()) as { url?: string };
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        githubBtn.disabled = false;
+        alert("Не удалось начать GitHub-вход");
+      });
+    }
+  </script>
 </BaseLayout>

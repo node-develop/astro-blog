@@ -1,7 +1,7 @@
 import "../src/lib/env.js";
 import { eq } from "drizzle-orm";
 import { db } from "../src/lib/db/index.js";
-import { users } from "../src/lib/db/schema.js";
+import { users, accounts } from "../src/lib/db/schema.js";
 import { auth } from "../src/lib/auth.js";
 
 const main = async (): Promise<void> => {
@@ -14,27 +14,56 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  // Use Better-Auth's internal password hasher so the produced hash is
+  // verifiable by `signInEmail` (same scrypt params + format).
+  const ctx = await auth.$context;
+  const passwordHash = await ctx.password.hash(password);
 
-  if (existing.length === 0) {
-    await auth.api.signUpEmail({ body: { email, password, name } });
-    console.warn(`created user ${email}`);
-  } else {
-    console.warn(`user ${email} already exists, skipping signup`);
-  }
-
-  const result = await db
-    .update(users)
-    .set({ role: "admin", emailVerified: true })
+  const existing = await db
+    .select({ id: users.id })
+    .from(users)
     .where(eq(users.email, email))
-    .returning({ id: users.id, role: users.role });
+    .limit(1);
 
-  if (result.length === 0) {
-    console.error("failed to promote user to admin");
-    process.exit(1);
+  let userId: string;
+  if (existing.length === 0) {
+    const [created] = await db
+      .insert(users)
+      .values({ email, name, emailVerified: true, role: "admin" })
+      .returning({ id: users.id });
+    userId = created!.id;
+    console.warn(`created user ${email} (id=${userId})`);
+  } else {
+    userId = existing[0]!.id;
+    await db
+      .update(users)
+      .set({ role: "admin", emailVerified: true, name, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    console.warn(`user ${email} already exists (id=${userId}) → ensured admin`);
   }
 
-  console.warn(`user ${email} → role=${result[0]!.role}`);
+  // Upsert the credential account row that holds the password hash.
+  const existingAccount = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.userId, userId))
+    .limit(1);
+
+  if (existingAccount.length === 0) {
+    await db.insert(accounts).values({
+      userId,
+      providerId: "credential",
+      accountId: userId,
+      password: passwordHash,
+    });
+    console.warn(`created credential account for ${email}`);
+  } else {
+    await db
+      .update(accounts)
+      .set({ password: passwordHash, updatedAt: new Date() })
+      .where(eq(accounts.userId, userId));
+    console.warn(`updated credential password for ${email}`);
+  }
 };
 
 main()
