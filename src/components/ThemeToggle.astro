@@ -1,0 +1,128 @@
+---
+/**
+ * ThemeToggle — paper / dark switch.
+ *
+ * - Reads current state from <html data-theme>.
+ * - Persists to localStorage('artka-theme') = 'paper' | 'dark'.
+ * - Fires `themechange` CustomEvent so other components (e.g. shiki code blocks)
+ *   can react without a page reload.
+ * - Pairs with the no-flash bootstrap injected in BaseLayout.astro.
+ *
+ * Mounted in Header.astro between LangToggle and the ⌘K search button.
+ */
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const ariaLabel = t(locale, "theme.toggle.aria");
+---
+
+<button type="button" class="theme-toggle" aria-label={ariaLabel} data-theme-toggle>
+  <svg
+    class="theme-toggle__icon theme-toggle__icon--sun"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.6"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="4"></circle>
+    <path
+      stroke-linecap="round"
+      d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"
+    ></path>
+  </svg>
+  <svg
+    class="theme-toggle__icon theme-toggle__icon--moon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.6"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-subtle);
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .theme-toggle:hover {
+    color: var(--color-fg);
+    background: var(--color-bg-elevated);
+  }
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+  .theme-toggle__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Default (paper) — show moon (click → go dark) */
+  .theme-toggle__icon--sun {
+    display: none;
+  }
+  .theme-toggle__icon--moon {
+    display: block;
+  }
+
+  /* Dark — show sun (click → go paper) */
+  :global([data-theme="dark"]) .theme-toggle .theme-toggle__icon--sun {
+    display: block;
+  }
+  :global([data-theme="dark"]) .theme-toggle .theme-toggle__icon--moon {
+    display: none;
+  }
+</style>
+
+<script>
+  function initThemeToggle(): void {
+    document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]").forEach((btn) => {
+      // Avoid double-binding when astro:transitions re-runs the script.
+      if (btn.dataset.themeToggleBound === "1") return;
+      btn.dataset.themeToggleBound = "1";
+
+      btn.addEventListener("click", () => {
+        const root = document.documentElement;
+        const isDark = root.getAttribute("data-theme") === "dark";
+        const next = isDark ? "paper" : "dark";
+
+        if (next === "dark") {
+          root.setAttribute("data-theme", "dark");
+        } else {
+          root.removeAttribute("data-theme");
+        }
+
+        try {
+          localStorage.setItem("artka-theme", next);
+        } catch {
+          /* storage blocked — toggle still works for the session */
+        }
+
+        window.dispatchEvent(new CustomEvent("themechange", { detail: { theme: next } }));
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", initThemeToggle);
+</script>

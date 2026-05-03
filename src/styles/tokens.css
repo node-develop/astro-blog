@@ -1,5 +1,12 @@
 /* Editorial × Technical — single source of truth for visual tokens.
-   Consumed by Tailwind 4 @theme in global.css and directly by components. */
+   Consumed by Tailwind 4 @theme in global.css and directly by components.
+
+   Phase 1 update (Refined Editorial / Direction A):
+   - Palette shifts from honeyed ochre to burnt-sienna editorial.
+   - Dark theme moved from prefers-color-scheme media query to
+     [data-theme="dark"] selector — see no-flash bootstrap in BaseLayout.
+   - Token NAMES are unchanged so Tailwind @theme keeps working.
+*/
 
 :root {
   /* ── Typography ───────────────────────────────────────────── */
@@ -26,22 +33,25 @@
   --tracking-normal: 0;
   --tracking-wide: 0.08em;
 
-  /* ── Colors (light) ───────────────────────────────────────── */
-  --color-bg: #fdfcf7;
-  --color-bg-elevated: #f7f3e8;
-  --color-bg-subtle: #f2edde;
-  --color-fg: #1f1b16;
-  --color-fg-muted: #6b5d4f;
-  --color-fg-subtle: #6f6350;
-  --color-border: #e8e0cf;
-  --color-border-strong: #d7cbb2;
-  --color-accent: #946708;
-  --color-accent-hover: #7b5607;
-  --color-accent-soft: #fdf4e3;
+  /* ── Colors (paper / light — default) ─────────────────────── */
+  /* Refined Editorial: warm off-white, ink-deep text, single sienna accent. */
+  --color-bg: #f4efe6; /* paper */
+  --color-bg-elevated: #ede7da; /* card surface */
+  --color-bg-subtle: #e7dfcd; /* subtle wash, code blocks */
+  --color-fg: #1a1714; /* ink */
+  --color-fg-muted: #5a544c; /* secondary text */
+  --color-fg-subtle: #8a8278; /* tertiary, captions */
+  --color-border: #d8cfb8; /* hairlines */
+  --color-border-strong: #b8ad94; /* emphasized dividers */
+  --color-accent: #c2410c; /* burnt sienna */
+  --color-accent-hover: #9a3308;
+  --color-accent-soft: #f0d9c5; /* sienna washed onto paper */
   --color-danger: #c0392b;
 
   /* Focus ring derived from accent, at AA contrast against bg. */
   --color-focus-ring: color-mix(in srgb, var(--color-accent) 65%, transparent);
+
+  color-scheme: light;
 
   /* ── Space scale (4px base) ───────────────────────────────── */
   --space-1: 4px;
@@ -79,23 +89,25 @@
   --dur-slow: 320ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #1a1712;
-    --color-bg-elevated: #221e17;
-    --color-bg-subtle: #2b261e;
-    --color-fg: #f2ede0;
-    --color-fg-muted: #b4a993;
-    --color-fg-subtle: #9e907a;
-    --color-border: #3a3328;
-    --color-border-strong: #554a38;
-    --color-accent: #d4a22a;
-    --color-accent-hover: #e6b441;
-    --color-accent-soft: #3a2f18;
-    --color-danger: #e55c4f;
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
-  }
+/* ── Colors (dark) — explicit toggle via [data-theme="dark"] ────────────────
+   No more prefers-color-scheme; the no-flash bootstrap in BaseLayout reads
+   localStorage('artka-theme') and sets this attribute before first paint. */
+:root[data-theme="dark"] {
+  --color-bg: #16140f; /* warm off-black */
+  --color-bg-elevated: #1f1c16;
+  --color-bg-subtle: #2a261e;
+  --color-fg: #e8e2d4;
+  --color-fg-muted: #9a9388;
+  --color-fg-subtle: #6b665d;
+  --color-border: #2e2a22;
+  --color-border-strong: #3f3a30;
+  --color-accent: #e87a4d; /* lifted sienna for dark */
+  --color-accent-hover: #f29067;
+  --color-accent-soft: #3a2418;
+  --color-danger: #e55c4f;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -104,4 +116,10 @@
     --dur-base: 0ms;
     --dur-slow: 0ms;
   }
+}
+
+/* ── Selection ─────────────────────────────────────────────── */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
 }

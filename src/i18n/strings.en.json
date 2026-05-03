@@ -25,6 +25,7 @@
   "post.tags": "Tags",
   "post.readMore": "Read more →",
   "post.draft": "Draft",
+  "theme.toggle.aria": "Toggle theme",
   "lang.toggle.ariaLabel": "Change language",
   "lang.toggle.toEn": "EN",
   "lang.toggle.toRu": "RU",

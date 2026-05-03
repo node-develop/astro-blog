@@ -25,6 +25,7 @@
   "post.tags": "Теги",
   "post.readMore": "Читать дальше →",
   "post.draft": "Черновик",
+  "theme.toggle.aria": "Переключить тему",
   "lang.toggle.ariaLabel": "Сменить язык",
   "lang.toggle.toEn": "EN",
   "lang.toggle.toRu": "RU",

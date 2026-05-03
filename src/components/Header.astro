@@ -1,10 +1,18 @@
 ---
 /**
- * Site header with title, primary nav, language toggle, and the mobile drawer trigger.
- * The trigger is a `<button>` controlling the drawer via a custom event;
- * the drawer itself lives in MobileDrawer.astro (added in Task 13).
+ * Site header — Phase 1 refresh (Direction A: Refined Editorial).
+ *
+ * Changes from previous version:
+ *   - Lockup migrated from serif → mono (editorial-technical signature)
+ *   - "notes from production" tagline added under brand
+ *   - Active nav link: 1px sienna underline (was bottom-border block)
+ *   - ThemeToggle inserted between LangToggle and ⌘K
+ *   - Subtle hairline appears only after scroll (data-scrolled)
+ *
+ * Untouched: i18n routing, drawer trigger, search dispatch, aria contracts.
  */
 import LangToggle from "./LangToggle.astro";
+import ThemeToggle from "./ThemeToggle.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 
@@ -22,14 +30,15 @@ const aboutHref = locale === "en" ? "/en/about" : "/about";
 const nowHref = locale === "en" ? "/en/now" : "/now";
 const usesHref = locale === "en" ? "/en/uses" : "/uses";
 const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+
+const tagline = locale === "en" ? "notes from production" : "записки из продакшна";
 ---
 
-<header class="site-header" role="banner">
+<header class="site-header" role="banner" data-site-header>
   <div class="site-header__inner">
     <a href={homeHref} class="site-header__brand" aria-label={t(locale, "nav.posts")}>
-      <span class="site-header__label">{t(locale, "nav.posts")}</span>
-      <span class="site-header__dot" aria-hidden="true">·</span>
-      <span class="site-header__author">artka.dev</span>
+      <span class="site-header__lockup">artka.dev</span>
+      <span class="site-header__tagline">{tagline}</span>
     </a>
 
     <nav class="site-header__nav" aria-label={t(locale, "nav.posts")}>
@@ -50,41 +59,52 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
       >
     </nav>
 
-    <LangToggle />
+    <div class="site-header__actions">
+      <LangToggle />
+      <ThemeToggle />
+      <button
+        type="button"
+        class="site-header__search"
+        aria-label={t(locale, "nav.search") + " (⌘K)"}
+        onclick="window.dispatchEvent(new CustomEvent('astro-open-search'))"
+      >
+        <span aria-hidden="true">⌘K</span>
+        <span class="visually-hidden">{t(locale, "nav.search")}</span>
+      </button>
 
-    <button
-      type="button"
-      class="site-header__search"
-      aria-label={t(locale, "nav.search") + " (⌘K)"}
-      onclick="window.dispatchEvent(new CustomEvent('astro-open-search'))"
-    >
-      <span aria-hidden="true">⌘K</span>
-      <span class="visually-hidden">{t(locale, "nav.search")}</span>
-    </button>
-
-    <button
-      type="button"
-      class="site-header__drawer-btn"
-      aria-label={t(locale, "drawer.openAria")}
-      aria-controls="site-drawer"
-      aria-expanded="false"
-      data-drawer-trigger
-    >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M4 6h16M4 12h16M4 18h16"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"></path>
-      </svg>
-    </button>
+      <button
+        type="button"
+        class="site-header__drawer-btn"
+        aria-label={t(locale, "drawer.openAria")}
+        aria-controls="site-drawer"
+        aria-expanded="false"
+        data-drawer-trigger
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </div>
   </div>
 </header>
 
 <style>
   .site-header {
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .site-header[data-scrolled] {
+    border-bottom-color: var(--color-border);
   }
   .site-header__inner {
     max-width: var(--content-max);
@@ -94,42 +114,59 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
     align-items: center;
     gap: var(--space-5);
   }
+
+  /* ── Lockup ─────────────────────────────────────────────── */
   .site-header__brand {
-    font-family: var(--font-serif);
-    font-size: var(--fs-lg);
-    font-weight: 500;
-    color: var(--color-fg);
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.1;
     text-decoration: none;
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-2);
+    color: var(--color-fg);
   }
-  .site-header__dot {
-    color: var(--color-accent);
-  }
-  .site-header__author {
+  .site-header__lockup {
     font-family: var(--font-mono);
-    font-size: var(--fs-xs);
-    color: var(--color-fg-muted);
-    letter-spacing: var(--tracking-wide);
-    text-transform: uppercase;
+    font-size: var(--fs-base);
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
+  .site-header__tagline {
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--color-fg-subtle);
+    margin-top: 2px;
+  }
+
+  /* ── Nav ───────────────────────────────────────────────── */
   .site-header__nav {
     margin-left: auto;
     display: flex;
     gap: var(--space-5);
     font-size: var(--fs-sm);
+    font-family: var(--font-mono);
   }
   .site-header__nav a {
     color: var(--color-fg-muted);
     text-decoration: none;
-  }
-  .site-header__nav a[aria-current="page"] {
-    color: var(--color-fg);
-    border-bottom: 1px solid var(--color-accent);
+    padding: var(--space-1) 0;
+    transition: color var(--dur-fast) var(--ease-out);
   }
   .site-header__nav a:hover {
     color: var(--color-fg);
+  }
+  .site-header__nav a[aria-current="page"] {
+    color: var(--color-fg);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+    text-decoration-color: var(--color-accent);
+  }
+
+  /* ── Actions cluster ───────────────────────────────────── */
+  .site-header__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
   }
 
   .site-header__drawer-btn {
@@ -181,26 +218,40 @@ const projectsHref = locale === "en" ? "/en/projects" : "/projects";
       font-size: var(--fs-xs);
     }
   }
-  /* Narrow mobile (≤767px): nav doesn't fit alongside brand + search +
-     lang-toggle + drawer-btn — hide it; the drawer dialog contains the
-     same 5 links so users still have access via the hamburger. */
+  /* Narrow mobile (≤767px): hide inline nav; drawer carries it. */
   @media (max-width: 767px) {
     .site-header__inner {
       padding: var(--space-3) var(--space-4);
       gap: var(--space-2);
     }
-    .site-header__brand {
+    .site-header__lockup {
       font-size: var(--fs-base);
-      gap: var(--space-1);
+    }
+    .site-header__tagline {
+      display: none;
     }
     .site-header__nav {
       display: none;
     }
   }
-  @media (max-width: 480px) {
-    .site-header__dot,
-    .site-header__author {
-      display: none;
-    }
-  }
 </style>
+
+<script>
+  function initHeaderScroll(): void {
+    const header = document.querySelector<HTMLElement>("[data-site-header]");
+    if (!header || header.dataset.scrollBound === "1") return;
+    header.dataset.scrollBound = "1";
+
+    const sync = (): void => {
+      if (window.scrollY > 4) {
+        header.setAttribute("data-scrolled", "");
+      } else {
+        header.removeAttribute("data-scrolled");
+      }
+    };
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+  }
+
+  document.addEventListener("astro:page-load", initHeaderScroll);
+</script>
