@@ -40,9 +40,10 @@ const isoOf = (v: unknown): string => {
 describe("post schema — back-compat for existing posts", () => {
   it("all existing posts (pubDate < cutoff) parse without summary", () => {
     const old = posts.filter((p) => isoOf(p.fm["pubDate"]) < CUTOFF_ISO);
-    // 14 RU + 14 EN baseline. Assertion guards against accidental cutoff
-    // drift; bump the floor when intentional history grows.
-    expect(old.length).toBeGreaterThanOrEqual(28);
+    // Standalone posts that remain in /blog after the claude-code-guide
+    // series moved to /courses/claude-code-guide/. The course lessons live
+    // in their own collection now and are validated by lesson-schema tests.
+    expect(old.length).toBeGreaterThanOrEqual(1);
     for (const p of old) {
       // No assertion on `summary` presence — back-compat by design.
       expect(typeof p.fm["title"]).toBe("string");
