@@ -13,13 +13,13 @@
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 interface Props {
-  /** Buttondown username, e.g. "artkadev". */
+  /** Buttondown username, e.g. "kashuta". */
   username?: string;
   /** Optional subtitle/blurb override. */
   blurb?: string;
 }
 
-const username = Astro.props.username ?? "artkadev";
+const username = Astro.props.username ?? "kashuta";
 const locale = getLocaleFromPath(Astro.url.pathname);
 const labelEyebrow = locale === "en" ? "Newsletter" : "Рассылка";
 const headline =

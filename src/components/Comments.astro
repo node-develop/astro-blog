@@ -20,10 +20,10 @@ interface Props {
   categoryId?: string;
 }
 
-const repo = Astro.props.repo ?? "artka-dev/blog-comments";
-const repoId = Astro.props.repoId ?? "REPLACE_ME_REPO_ID";
+const repo = Astro.props.repo ?? "node-develop/blog-discussions";
+const repoId = Astro.props.repoId ?? "R_kgDOSTJVrw";
 const category = Astro.props.category ?? "Comments";
-const categoryId = Astro.props.categoryId ?? "REPLACE_ME_CATEGORY_ID";
+const categoryId = Astro.props.categoryId ?? "DIC_kwDOSTJVr84C8QBo";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const giscusLang = locale === "en" ? "en" : "ru";
