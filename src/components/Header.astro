@@ -66,7 +66,7 @@ const tagline = locale === "en" ? "notes from production" : "записки из
         type="button"
         class="site-header__search"
         aria-label={t(locale, "nav.search") + " (⌘K)"}
-        onclick="window.dispatchEvent(new CustomEvent('astro-open-search'))"
+        onclick="window.dispatchEvent(new CustomEvent('search:open'))"
       >
         <span aria-hidden="true">⌘K</span>
         <span class="visually-hidden">{t(locale, "nav.search")}</span>
@@ -79,6 +79,7 @@ const tagline = locale === "en" ? "notes from production" : "записки из
         aria-controls="site-drawer"
         aria-expanded="false"
         data-drawer-trigger
+        onclick="window.dispatchEvent(new CustomEvent('mobile-drawer:toggle'))"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path

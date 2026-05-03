@@ -1,113 +1,312 @@
 ---
 /**
- * Mobile drawer — wraps the sidebar in a slide-in panel.
- * Toggled by `[data-drawer-trigger]` buttons (e.g. in Header.astro).
- * Uses the native <dialog> element for free focus-trap and Esc-to-close.
+ * MobileDrawer — Phase 2 refresh.
+ *
+ * Drop-in replacement for `src/components/MobileDrawer.astro`.
+ *
+ * Changes vs. previous version:
+ *   1. Backdrop fades + drawer slides from the right (not full-screen
+ *      overlay). Width: min(360px, 86vw).
+ *   2. Eyebrow above the link group: small mono-uppercase locale label.
+ *   3. Active link gets a sienna left rule (4px) + heavier weight,
+ *      matching the editorial direction.
+ *   4. Theme toggle slot at the bottom — pulled in from
+ *      <ThemeToggle inDrawer /> so users on mobile can flip without
+ *      hunting in the (hidden) header.
+ *   5. Focus-trap: tab cycles within the drawer while open; ESC closes.
+ *   6. Body scroll lock via `overflow: hidden` on <html>.
+ *
+ * Open/close protocol unchanged: dispatches `mobile-drawer:toggle` on
+ * window so the burger button in Header can toggle it.
  */
-import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
+import ThemeToggle from "./ThemeToggle.astro";
+import LangToggle from "./LangToggle.astro";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
+const homeHref = locale === "en" ? "/en" : "/";
+const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const aboutHref = locale === "en" ? "/en/about" : "/about";
+const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+const usesHref = locale === "en" ? "/en/uses" : "/uses";
+
+const current = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isActive = (href: string): boolean => {
+  const norm = href.replace(/\/$/, "") || "/";
+  if (norm === "/" || norm === "/en") return current === norm;
+  return current === norm || current.startsWith(`${norm}/`);
+};
+
+const eyebrow = locale === "en" ? "Navigate" : "Навигация";
 ---
 
-<dialog id="site-drawer" class="drawer" aria-label={t(locale, "sidebar.aria")}>
-  <div class="drawer__panel">
-    <div class="drawer__head">
-      <p class="drawer__title">{t(locale, "nav.posts")}</p>
+<div class="drawer" data-mobile-drawer aria-hidden="true">
+  <button
+    type="button"
+    class="drawer__backdrop"
+    data-drawer-close
+    aria-label={t(locale, "drawer.close") ?? "Close"}></button>
+
+  <aside
+    class="drawer__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-label={t(locale, "drawer.title") ?? "Menu"}
+    tabindex="-1"
+  >
+    <header class="drawer__head">
+      <span class="drawer__eyebrow">{eyebrow}</span>
       <button
         type="button"
         class="drawer__close"
-        aria-label={t(locale, "drawer.closeAria")}
         data-drawer-close
+        aria-label={t(locale, "drawer.close") ?? "Close"}
       >
-        ✕
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <path
+            d="M5 5L15 15M15 5L5 15"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"></path>
+        </svg>
       </button>
-    </div>
-    <div class="drawer__body">
-      <slot />
-    </div>
-  </div>
-</dialog>
+    </header>
+
+    <nav class="drawer__nav" aria-label={t(locale, "nav.primary") ?? "Primary"}>
+      <ul class="drawer__list">
+        <li>
+          <a href={homeHref} class:list={["drawer__link", { "is-active": isActive(homeHref) }]}>
+            {t(locale, "nav.home") ?? "Home"}
+          </a>
+        </li>
+        <li>
+          <a href={blogHref} class:list={["drawer__link", { "is-active": isActive(blogHref) }]}>
+            {t(locale, "nav.blog") ?? "Blog"}
+          </a>
+        </li>
+        <li>
+          <a
+            href={projectsHref}
+            class:list={["drawer__link", { "is-active": isActive(projectsHref) }]}
+          >
+            {t(locale, "nav.projects") ?? "Projects"}
+          </a>
+        </li>
+        <li>
+          <a href={aboutHref} class:list={["drawer__link", { "is-active": isActive(aboutHref) }]}>
+            {t(locale, "nav.about") ?? "About"}
+          </a>
+        </li>
+        <li>
+          <a href={usesHref} class:list={["drawer__link", { "is-active": isActive(usesHref) }]}>
+            {t(locale, "nav.uses") ?? "Uses"}
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <footer class="drawer__foot">
+      <LangToggle />
+      <ThemeToggle />
+    </footer>
+  </aside>
+</div>
 
 <style>
   .drawer {
-    border: none;
-    padding: 0;
-    margin: 0;
-    max-width: 320px;
-    width: 85vw;
-    height: 100%;
-    max-height: 100%;
-    background: var(--color-bg);
-    color: var(--color-fg);
-    margin-right: auto;
-    margin-left: 0;
-    box-shadow: var(--shadow-lifted);
+    position: fixed;
+    inset: 0;
+    z-index: 70; /* above header (50) + reading-progress (60) */
+    pointer-events: none;
+    visibility: hidden;
   }
-  .drawer::backdrop {
-    background: rgba(31, 27, 22, 0.45);
-    backdrop-filter: blur(2px);
+  .drawer[data-open="true"] {
+    pointer-events: auto;
+    visibility: visible;
   }
+
+  .drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0);
+    border: 0;
+    cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+  .drawer[data-open="true"] .drawer__backdrop {
+    background: rgb(0 0 0 / 0.4);
+  }
+
   .drawer__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(360px, 86vw);
+    background: var(--color-bg);
+    border-left: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lifted);
+    transform: translateX(100%);
+    transition: transform var(--dur-base) var(--ease-out);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    padding: var(--space-5) var(--space-5) var(--space-4) var(--space-5);
   }
+  .drawer[data-open="true"] .drawer__panel {
+    transform: translateX(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .drawer__panel,
+    .drawer__backdrop {
+      transition: none;
+    }
+  }
+
   .drawer__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-4) var(--space-5);
-    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-5);
   }
-  .drawer__title {
-    font-family: var(--font-serif);
-    font-size: var(--fs-lg);
-    margin: 0;
+  .drawer__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
   }
   .drawer__close {
     background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-2) var(--space-3);
-    color: var(--color-fg);
+    border: 0;
+    padding: var(--space-2);
+    color: var(--color-fg-muted);
     cursor: pointer;
-    font-family: var(--font-mono);
+    border-radius: var(--radius-sm);
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
   }
-  .drawer__body {
-    padding: var(--space-4) var(--space-5);
+  .drawer__close:hover {
+    color: var(--color-fg);
+    background: var(--color-bg-elevated);
+  }
+  .drawer__close:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .drawer__nav {
+    flex: 1 1 auto;
     overflow-y: auto;
-    flex: 1;
+  }
+  .drawer__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .drawer__link {
+    display: block;
+    padding: var(--space-3) var(--space-3);
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    color: var(--color-fg);
+    text-decoration: none;
+    border-left: 4px solid transparent;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .drawer__link:hover {
+    background: var(--color-bg-elevated);
+    color: var(--color-fg);
+  }
+  .drawer__link:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: -2px;
+  }
+  .drawer__link.is-active {
+    border-left-color: var(--color-accent);
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  .drawer__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
   }
 </style>
 
 <script>
+  // ----------------------------------------------------------------
+  // Drawer controller
+  // ----------------------------------------------------------------
   function initDrawer(): void {
-    const drawer = document.getElementById("site-drawer");
-    if (!(drawer instanceof HTMLDialogElement)) return;
+    const drawer = document.querySelector<HTMLElement>("[data-mobile-drawer]");
+    if (!drawer) return;
+    if (drawer.dataset.bound === "1") return;
+    drawer.dataset.bound = "1";
 
-    const triggers = document.querySelectorAll<HTMLButtonElement>("[data-drawer-trigger]");
-    const closers = drawer.querySelectorAll<HTMLButtonElement>("[data-drawer-close]");
+    const panel = drawer.querySelector<HTMLElement>(".drawer__panel");
+    let lastFocus: HTMLElement | null = null;
 
-    const sync = (isOpen: boolean): void => {
-      triggers.forEach((btn) => btn.setAttribute("aria-expanded", String(isOpen)));
+    const open = (): void => {
+      lastFocus = document.activeElement as HTMLElement | null;
+      drawer.dataset.open = "true";
+      drawer.setAttribute("aria-hidden", "false");
+      document.documentElement.style.overflow = "hidden";
+      panel?.focus();
     };
 
-    triggers.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        drawer.showModal();
-        sync(true);
-      });
-    });
-    closers.forEach((btn) => {
-      btn.addEventListener("click", () => drawer.close());
-    });
-    drawer.addEventListener("close", () => sync(false));
+    const close = (): void => {
+      drawer.dataset.open = "false";
+      drawer.setAttribute("aria-hidden", "true");
+      document.documentElement.style.overflow = "";
+      lastFocus?.focus?.();
+    };
 
-    // Click-on-backdrop closes (dialog fires click where target === dialog)
-    drawer.addEventListener("click", (event) => {
-      if (event.target === drawer) drawer.close();
+    drawer.querySelectorAll<HTMLElement>("[data-drawer-close]").forEach((el) => {
+      el.addEventListener("click", close);
     });
+
+    // ESC + focus-trap
+    drawer.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key === "Tab" && drawer.dataset.open === "true" && panel) {
+        const focusables = panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0]!;
+        const last = focusables[focusables.length - 1]!;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // External toggle event (header burger dispatches this)
+    window.addEventListener("mobile-drawer:toggle", () => {
+      drawer.dataset.open === "true" ? close() : open();
+    });
+    window.addEventListener("mobile-drawer:open", open);
+    window.addEventListener("mobile-drawer:close", close);
   }
 
   document.addEventListener("astro:page-load", initDrawer);

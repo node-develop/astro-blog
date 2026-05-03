@@ -9,6 +9,11 @@ import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeCodeTitles from "rehype-code-titles";
+import { autolinkOptions } from "./src/lib/markdown/autolink";
+import { shikiThemes } from "./src/lib/markdown/shiki";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -87,7 +92,13 @@ export default defineConfig({
   integrations: [
     mdx({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
-      rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: "img-svg", dark: true }]],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, autolinkOptions],
+        rehypeCodeTitles,
+        rehypeKatex,
+        [rehypeMermaid, { strategy: "img-svg", dark: true }],
+      ],
     }),
     sitemap({
       i18n: {
@@ -104,12 +115,15 @@ export default defineConfig({
       type: "shiki",
       excludeLangs: ["mermaid", "math"],
     },
-    shikiConfig: {
-      themes: { light: "github-light", dark: "github-dark" },
-      wrap: true,
-    },
+    shikiConfig: shikiThemes,
     remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
-    rehypePlugins: [rehypeKatex, [rehypeMermaid, { strategy: "img-svg", dark: true }]],
+    rehypePlugins: [
+      rehypeSlug,
+      [rehypeAutolinkHeadings, autolinkOptions],
+      rehypeCodeTitles,
+      rehypeKatex,
+      [rehypeMermaid, { strategy: "img-svg", dark: true }],
+    ],
   },
   vite: {
     plugins: [tailwindcss(), pagefindDevMiddleware()],

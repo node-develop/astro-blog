@@ -46,6 +46,7 @@
   --color-accent: #c2410c; /* burnt sienna */
   --color-accent-hover: #9a3308;
   --color-accent-soft: #f0d9c5; /* sienna washed onto paper */
+  --color-accent-subtle: color-mix(in srgb, var(--color-accent) 12%, transparent);
   --color-danger: #c0392b;
 
   /* Focus ring derived from accent, at AA contrast against bg. */
@@ -104,6 +105,7 @@
   --color-accent: #e87a4d; /* lifted sienna for dark */
   --color-accent-hover: #f29067;
   --color-accent-soft: #3a2418;
+  --color-accent-subtle: color-mix(in srgb, var(--color-accent) 18%, transparent);
   --color-danger: #e55c4f;
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);

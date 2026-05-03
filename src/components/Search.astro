@@ -1,0 +1,399 @@
+---
+/**
+ * Search — Pagefind-backed search modal.
+ *
+ * Opens on ⌘K / Ctrl+K (or programmatically by dispatching
+ * `search:open` on window). Renders a typographic input + result list
+ * styled to match the site's editorial direction.
+ *
+ * Pagefind is built by `pnpm exec pagefind --site dist` after `astro
+ * build`. Index is served from /pagefind/ at the site root.
+ *
+ * Existing CommandPalette: this component is meant to REPLACE the
+ * search-only behaviour of the existing CommandPalette. If you want to
+ * keep CommandPalette for non-search actions, leave it; this modal
+ * binds ⌘K too, so dedupe the binding (remove the keyboard listener
+ * from CommandPalette, or change its trigger to ⌘P).
+ */
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const placeholder = locale === "en" ? "Search articles…" : "Поиск по статьям…";
+const empty = locale === "en" ? "No results" : "Ничего не найдено";
+const hint = locale === "en" ? "Type to search" : "Начните печатать";
+const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия";
+---
+
+<div class="search" data-search aria-hidden="true">
+  <button type="button" class="search__backdrop" data-search-close aria-label="Close"></button>
+
+  <div
+    class="search__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-label={locale === "en" ? "Search" : "Поиск"}
+  >
+    <div class="search__field">
+      <svg width="16" height="16" viewBox="0 0 16 16" class="search__icon" aria-hidden="true">
+        <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+        <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+        ></path>
+      </svg>
+      <input
+        type="search"
+        class="search__input"
+        data-search-input
+        placeholder={placeholder}
+        autocomplete="off"
+        spellcheck="false"
+        aria-label={placeholder}
+      />
+      <kbd class="search__kbd">esc</kbd>
+    </div>
+
+    <div class="search__results" data-search-results role="listbox" aria-live="polite">
+      <p class="search__hint" data-search-hint>{hint}</p>
+    </div>
+
+    <footer class="search__foot">
+      <span class="search__lang" data-search-lang>{locale === "en" ? "EN" : "RU"}</span>
+      <span class="search__hint-foot">{escLabel}</span>
+    </footer>
+  </div>
+</div>
+
+<style>
+  .search {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .search[data-open="true"] {
+    pointer-events: auto;
+    visibility: visible;
+  }
+  .search__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0);
+    border: 0;
+    cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+  .search[data-open="true"] .search__backdrop {
+    background: rgb(0 0 0 / 0.4);
+  }
+
+  .search__panel {
+    position: absolute;
+    top: 12vh;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    width: min(640px, 92vw);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lifted);
+    opacity: 0;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+    overflow: hidden;
+  }
+  .search[data-open="true"] .search__panel {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .search__panel {
+      transition: none;
+    }
+  }
+
+  .search__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .search__icon {
+    color: var(--color-fg-subtle);
+    flex-shrink: 0;
+  }
+  .search__input {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    color: var(--color-fg);
+    padding: 0;
+  }
+  .search__input::placeholder {
+    color: var(--color-fg-subtle);
+  }
+  .search__kbd {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    background: var(--color-bg-subtle);
+  }
+
+  .search__results {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: var(--space-3) 0;
+  }
+  .search__hint {
+    text-align: center;
+    color: var(--color-fg-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    padding: var(--space-5);
+    margin: 0;
+  }
+
+  .search__result {
+    display: block;
+    padding: var(--space-3) var(--space-4);
+    text-decoration: none;
+    color: var(--color-fg);
+    border-left: 4px solid transparent;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .search__result:hover,
+  .search__result[aria-selected="true"] {
+    background: var(--color-bg-elevated);
+    border-left-color: var(--color-accent);
+  }
+  .search__result-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: var(--lh-snug);
+    margin: 0 0 4px 0;
+  }
+  .search__result-excerpt {
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+    color: var(--color-fg-muted);
+    margin: 0;
+    /* Pagefind highlights matches with <mark> */
+  }
+  .search__result-excerpt :global(mark) {
+    background: var(--color-accent-subtle);
+    color: var(--color-fg);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .search__result-meta {
+    display: flex;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    margin-top: 6px;
+  }
+
+  .search__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    background: var(--color-bg-subtle);
+  }
+</style>
+
+<script>
+  interface PagefindResult {
+    id: string;
+    data: () => Promise<{
+      url: string;
+      excerpt: string;
+      meta: { title?: string; image?: string };
+      filters?: Record<string, string[]>;
+    }>;
+  }
+
+  interface Pagefind {
+    debouncedSearch: (q: string) => Promise<{ results: PagefindResult[] } | null>;
+    init?: () => Promise<void>;
+  }
+
+  let pagefindPromise: Promise<Pagefind | null> | null = null;
+  const loadPagefind = async (): Promise<Pagefind | null> => {
+    if (pagefindPromise) return pagefindPromise;
+    pagefindPromise = (async () => {
+      try {
+        const url = "/pagefind/pagefind.js";
+        const mod = (await import(/* @vite-ignore */ url)) as Pagefind;
+        if (mod.init) await mod.init();
+        return mod;
+      } catch (e) {
+        console.warn("[search] Pagefind not available — run `pnpm exec pagefind` after build", e);
+        return null;
+      }
+    })();
+    return pagefindPromise;
+  };
+
+  function initSearch(): void {
+    const root = document.querySelector<HTMLElement>("[data-search]");
+    if (!root || root.dataset.bound === "1") return;
+    root.dataset.bound = "1";
+
+    const input = root.querySelector<HTMLInputElement>("[data-search-input]");
+    const list = root.querySelector<HTMLElement>("[data-search-results]");
+    const hint = root.querySelector<HTMLElement>("[data-search-hint]");
+    const langEl = root.querySelector<HTMLElement>("[data-search-lang]");
+    const lang = (langEl?.textContent ?? "RU").toLowerCase();
+
+    const open = (): void => {
+      root.dataset.open = "true";
+      root.setAttribute("aria-hidden", "false");
+      document.documentElement.style.overflow = "hidden";
+      requestAnimationFrame(() => input?.focus());
+      void loadPagefind();
+    };
+
+    const close = (): void => {
+      root.dataset.open = "false";
+      root.setAttribute("aria-hidden", "true");
+      document.documentElement.style.overflow = "";
+      if (input) input.value = "";
+    };
+
+    root.querySelectorAll<HTMLElement>("[data-search-close]").forEach((el) => {
+      el.addEventListener("click", close);
+    });
+
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toLowerCase().includes("mac");
+      const meta = isMac ? e.metaKey : e.ctrlKey;
+      if (meta && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        root.dataset.open === "true" ? close() : open();
+      } else if (e.key === "Escape" && root.dataset.open === "true") {
+        e.preventDefault();
+        close();
+      }
+    });
+
+    window.addEventListener("search:open", open);
+    window.addEventListener("search:close", close);
+
+    let active = -1;
+    let resultEls: HTMLElement[] = [];
+    const select = (idx: number): void => {
+      resultEls.forEach((el) => el.removeAttribute("aria-selected"));
+      active = (idx + resultEls.length) % Math.max(1, resultEls.length);
+      const el = resultEls[active];
+      if (el) {
+        el.setAttribute("aria-selected", "true");
+        el.scrollIntoView({ block: "nearest" });
+      }
+    };
+
+    input?.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        select(active + 1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        select(active - 1);
+      } else if (e.key === "Enter" && active >= 0) {
+        e.preventDefault();
+        resultEls[active]?.click();
+      }
+    });
+
+    let lastQuery = "";
+    input?.addEventListener("input", async () => {
+      const q = (input.value || "").trim();
+      if (q === lastQuery) return;
+      lastQuery = q;
+
+      if (!list || !hint) return;
+      if (q.length < 2) {
+        list.innerHTML = "";
+        list.appendChild(hint);
+        hint.textContent = lang === "en" ? "Type to search" : "Начните печатать";
+        return;
+      }
+
+      const pagefind = await loadPagefind();
+      if (!pagefind) {
+        list.innerHTML = "";
+        list.appendChild(hint);
+        hint.textContent = "Pagefind not built. Run `pnpm exec pagefind` after build.";
+        return;
+      }
+
+      const search = await pagefind.debouncedSearch(q);
+      if (!search) return;
+      const top = search.results.slice(0, 8);
+      const datas = await Promise.all(top.map((r) => r.data()));
+
+      list.innerHTML = "";
+      if (datas.length === 0) {
+        list.appendChild(hint);
+        hint.textContent = lang === "en" ? "No results" : "Ничего не найдено";
+        resultEls = [];
+        active = -1;
+        return;
+      }
+
+      resultEls = datas.map((d, i) => {
+        const a = document.createElement("a");
+        a.href = d.url;
+        a.className = "search__result";
+        a.setAttribute("role", "option");
+        if (i === 0) {
+          a.setAttribute("aria-selected", "true");
+          active = 0;
+        }
+        const title = d.meta?.title ?? d.url;
+        const filters = d.filters ?? {};
+        const tag = filters.tag?.[0];
+        const date = filters.date?.[0];
+
+        const meta: string[] = [];
+        if (date) meta.push(date);
+        if (tag) meta.push(tag);
+
+        a.innerHTML = `
+          <p class="search__result-title">${title}</p>
+          <p class="search__result-excerpt">${d.excerpt}</p>
+          ${meta.length ? `<p class="search__result-meta">${meta.join(" · ")}</p>` : ""}
+        `;
+        a.addEventListener("click", () => close());
+        return a;
+      });
+      resultEls.forEach((el) => list.appendChild(el));
+    });
+  }
+
+  document.addEventListener("astro:page-load", initSearch);
+</script>

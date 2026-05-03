@@ -1,0 +1,136 @@
+---
+/**
+ * PrevNext — paginated navigation between posts.
+ *
+ * Behaviour:
+ *   - Series posts (NN-prefixed slug): linked to neighbouring series posts
+ *     by `meta.order`.
+ *   - Other posts: linked by reverse-chronological pubDate.
+ *
+ * Renders nothing if neither prev nor next exists.
+ */
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { getPrevNext, type NeighbourPost } from "~/lib/posts/prev-next";
+import type { Locale } from "~/i18n";
+
+interface Props {
+  currentSlug: string;
+  locale: Locale;
+}
+
+const { currentSlug, locale: forcedLocale } = Astro.props;
+const locale = forcedLocale ?? getLocaleFromPath(Astro.url.pathname);
+const { prev, next } = await getPrevNext({ slug: currentSlug, locale });
+const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+
+const linkFor = (n: NeighbourPost): string => `${blogPrefix}/${n.slug}`;
+const labelPrev = locale === "en" ? "Previous" : "Предыдущая";
+const labelNext = locale === "en" ? "Next" : "Следующая";
+---
+
+{
+  (prev || next) && (
+    <nav class="prevnext" aria-label={t(locale, "post.related")}>
+      {prev ? (
+        <a href={linkFor(prev)} class="prevnext__link prevnext__link--prev" rel="prev">
+          <span class="prevnext__label">
+            <span class="prevnext__arrow" aria-hidden="true">
+              ←
+            </span>{" "}
+            {labelPrev}
+          </span>
+          <span class="prevnext__title">{prev.title}</span>
+        </a>
+      ) : (
+        <span class="prevnext__placeholder" aria-hidden="true" />
+      )}
+      {next ? (
+        <a href={linkFor(next)} class="prevnext__link prevnext__link--next" rel="next">
+          <span class="prevnext__label">
+            {labelNext}{" "}
+            <span class="prevnext__arrow" aria-hidden="true">
+              →
+            </span>
+          </span>
+          <span class="prevnext__title">{next.title}</span>
+        </a>
+      ) : (
+        <span class="prevnext__placeholder" aria-hidden="true" />
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .prevnext {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin: var(--space-7) 0 var(--space-6) 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+  .prevnext__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+  .prevnext__link:hover {
+    border-color: var(--color-accent);
+    background: var(--color-bg-elevated);
+  }
+  .prevnext__link--prev {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .prevnext__link--next {
+    align-items: flex-end;
+    text-align: right;
+  }
+  .prevnext__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+  }
+  .prevnext__arrow {
+    transition: transform var(--dur-fast) var(--ease-out);
+    display: inline-block;
+  }
+  .prevnext__link--prev:hover .prevnext__arrow {
+    transform: translateX(-2px);
+  }
+  .prevnext__link--next:hover .prevnext__arrow {
+    transform: translateX(2px);
+  }
+  .prevnext__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: var(--lh-snug);
+    color: var(--color-fg);
+  }
+  .prevnext__placeholder {
+    /* keeps grid 1fr/1fr balance when only one side exists */
+  }
+  @media (max-width: 600px) {
+    .prevnext {
+      grid-template-columns: 1fr;
+    }
+    .prevnext__link--next {
+      align-items: flex-start;
+      text-align: left;
+    }
+  }
+</style>

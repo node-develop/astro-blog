@@ -1,0 +1,222 @@
+---
+/**
+ * Newsletter — Buttondown email signup.
+ *
+ * Configuration: set the form action to your Buttondown username:
+ *   https://buttondown.email/api/emails/embed-subscribe/<username>
+ *
+ * Honeypot: hidden `<input name="hp" tabindex="-1">` traps bots.
+ *
+ * Layout: editorial single-column. On wide viewports, label sits to
+ * the left of the input; on narrow, stacks.
+ */
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  /** Buttondown username, e.g. "artkadev". */
+  username?: string;
+  /** Optional subtitle/blurb override. */
+  blurb?: string;
+}
+
+const username = Astro.props.username ?? "artkadev";
+const locale = getLocaleFromPath(Astro.url.pathname);
+const labelEyebrow = locale === "en" ? "Newsletter" : "Рассылка";
+const headline =
+  locale === "en" ? "Notes from production, in your inbox." : "Заметки из production — на почту.";
+const blurb =
+  Astro.props.blurb ??
+  (locale === "en"
+    ? "One short letter every couple of weeks. New posts, work-in-progress, occasional code snippet. No spam, unsubscribe anytime."
+    : "Одно короткое письмо раз в пару недель. Новые статьи, work-in-progress, иногда фрагменты кода. Без спама, отписаться в один клик.");
+const placeholder = locale === "en" ? "you@example.com" : "you@example.com";
+const cta = locale === "en" ? "Subscribe" : "Подписаться";
+const note =
+  locale === "en"
+    ? "Hosted by Buttondown. No tracking pixels."
+    : "На Buttondown. Без пикселей-трекеров.";
+
+const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`;
+---
+
+<section class="newsletter" aria-labelledby="newsletter-heading">
+  <p class="newsletter__eyebrow">
+    <span class="newsletter__rule" aria-hidden="true"></span>
+    {labelEyebrow}
+  </p>
+
+  <h2 id="newsletter-heading" class="newsletter__headline">{headline}</h2>
+  <p class="newsletter__blurb">{blurb}</p>
+
+  <form
+    class="newsletter__form"
+    action={action}
+    method="post"
+    target="popupwindow"
+    data-newsletter-form
+  >
+    <label class="newsletter__field">
+      <span class="newsletter__label">Email</span>
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder={placeholder}
+        autocomplete="email"
+        class="newsletter__input"
+      />
+    </label>
+    {/* Honeypot — keep hidden from real users + bots that fill all fields */}
+    <input
+      type="text"
+      name="hp"
+      class="newsletter__hp"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+    />
+    <input type="hidden" name="embed" value="1" />
+    <button type="submit" class="newsletter__submit">{cta}</button>
+  </form>
+
+  <p class="newsletter__note">{note}</p>
+</section>
+
+<style>
+  .newsletter {
+    margin: var(--space-7) 0;
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .newsletter__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0 0 var(--space-3) 0;
+  }
+  .newsletter__rule {
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .newsletter__headline {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    margin: 0 0 var(--space-3) 0;
+    color: var(--color-fg);
+    text-wrap: balance;
+  }
+  .newsletter__blurb {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    line-height: var(--lh-base);
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-5) 0;
+    max-width: 56ch;
+    text-wrap: pretty;
+  }
+  .newsletter__form {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+  .newsletter__field {
+    flex: 1 1 280px;
+  }
+  .newsletter__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .newsletter__input {
+    width: 100%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-sans);
+    font-size: var(--fs-md);
+    color: var(--color-fg);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .newsletter__input:focus {
+    outline: 0;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+  .newsletter__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .newsletter__submit {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+  .newsletter__submit:hover {
+    background: var(--color-accent-hover);
+  }
+  .newsletter__submit:active {
+    transform: translateY(1px);
+  }
+  .newsletter__submit:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+  .newsletter__note {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+</style>
+
+<script>
+  // Block submissions where the honeypot field has a value.
+  function initNewsletter(): void {
+    document.querySelectorAll<HTMLFormElement>("[data-newsletter-form]").forEach((form) => {
+      if (form.dataset.bound === "1") return;
+      form.dataset.bound = "1";
+      form.addEventListener("submit", (e: SubmitEvent) => {
+        const hp = form.querySelector<HTMLInputElement>('input[name="hp"]');
+        if (hp && hp.value !== "") {
+          e.preventDefault();
+          // Silent success-looking UI; bots get no signal.
+          form.reset();
+        }
+      });
+    });
+  }
+  document.addEventListener("astro:page-load", initNewsletter);
+</script>

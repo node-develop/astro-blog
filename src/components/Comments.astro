@@ -1,0 +1,126 @@
+---
+/**
+ * Comments — Giscus (GitHub Discussions backed).
+ *
+ * Setup:
+ *   1. Install the Giscus app on your repo: https://giscus.app
+ *   2. Copy the data-* values it generates into the script attrs below,
+ *      OR pass them as props from PostLayout.
+ *   3. Theme syncs with the site's [data-theme] via postMessage.
+ *
+ * Default repo: artka-dev/blog-comments. Replace via props:
+ *   <Comments repo="user/repo" repoId="..." category="Comments" categoryId="..." />
+ */
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  repo?: `${string}/${string}`;
+  repoId?: string;
+  category?: string;
+  categoryId?: string;
+}
+
+const repo = Astro.props.repo ?? "artka-dev/blog-comments";
+const repoId = Astro.props.repoId ?? "REPLACE_ME_REPO_ID";
+const category = Astro.props.category ?? "Comments";
+const categoryId = Astro.props.categoryId ?? "REPLACE_ME_CATEGORY_ID";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const giscusLang = locale === "en" ? "en" : "ru";
+const heading = locale === "en" ? "Comments" : "Комментарии";
+---
+
+<section class="comments" aria-labelledby="comments-heading">
+  <header class="comments__head">
+    <span class="comments__rule" aria-hidden="true"></span>
+    <h2 id="comments-heading" class="comments__title">{heading}</h2>
+  </header>
+
+  <div class="comments__giscus" data-giscus-mount></div>
+</section>
+
+<script is:inline define:vars={{ repo, repoId, category, categoryId, giscusLang }}>
+  /* Inline so define:vars works. Mounted on every page-load. */
+  (function () {
+    function mount() {
+      var slot = document.querySelector("[data-giscus-mount]");
+      if (!slot || slot.dataset.mounted === "1") return;
+      slot.dataset.mounted = "1";
+
+      var theme =
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "transparent_dark"
+          : "light";
+
+      var s = document.createElement("script");
+      s.src = "https://giscus.app/client.js";
+      s.async = true;
+      s.crossOrigin = "anonymous";
+      s.setAttribute("data-repo", repo);
+      s.setAttribute("data-repo-id", repoId);
+      s.setAttribute("data-category", category);
+      s.setAttribute("data-category-id", categoryId);
+      s.setAttribute("data-mapping", "pathname");
+      s.setAttribute("data-strict", "0");
+      s.setAttribute("data-reactions-enabled", "1");
+      s.setAttribute("data-emit-metadata", "0");
+      s.setAttribute("data-input-position", "bottom");
+      s.setAttribute("data-theme", theme);
+      s.setAttribute("data-lang", giscusLang);
+      s.setAttribute("data-loading", "lazy");
+      slot.appendChild(s);
+    }
+
+    function syncTheme() {
+      var iframe = document.querySelector("iframe.giscus-frame");
+      if (!iframe) return;
+      var theme =
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "transparent_dark"
+          : "light";
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: theme } } },
+        "https://giscus.app",
+      );
+    }
+
+    document.addEventListener("astro:page-load", mount);
+    window.addEventListener("themechange", syncTheme);
+    // Fallback: also listen to the storage event for cross-tab sync
+    window.addEventListener("storage", function (e) {
+      if (e.key === "artka-theme") syncTheme();
+    });
+  })();
+</script>
+
+<style>
+  .comments {
+    margin: var(--space-7) 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+  .comments__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  .comments__rule {
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .comments__title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0;
+  }
+  .comments__giscus {
+    /* Giscus injects an iframe; let it size to its content. */
+    min-height: 200px;
+  }
+</style>

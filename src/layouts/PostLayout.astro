@@ -3,14 +3,17 @@ import BaseLayout from "./BaseLayout.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import AuthorCard from "~/components/AuthorCard.astro";
+import ReadingProgress from "~/components/ReadingProgress.astro";
+import PrevNext from "~/components/PrevNext.astro";
+import RelatedPosts from "~/components/RelatedPosts.astro";
+import Newsletter from "~/components/Newsletter.astro";
+import Comments from "~/components/Comments.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { resolveTagLabel } from "~/lib/content/tags";
 import tagsRu from "~/i18n/tags.ru.json";
 import tagsEn from "~/i18n/tags.en.json";
-import { pickRelated, type RelatedCandidate } from "~/lib/related";
-import { getOrderedPosts } from "~/lib/content/loader";
 import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
 import {
@@ -32,6 +35,8 @@ const { post, headings } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary, faq } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const slug = post.id.replace(/^en\//, "");
+const ogImagePath = `/og/${slug}.png`;
 
 // Cover is stored as a path relative to /uploads/ (e.g. "2026/04/file.png").
 // Accept both bare relatives and pre-prefixed absolutes for forward compatibility.
@@ -78,33 +83,18 @@ const breadcrumbNode = buildBreadcrumbListNode({
 const faqItems = faq ?? [];
 const faqNode = buildFaqPageNode({ canonical, items: faqItems });
 
-const allPosts = await getOrderedPosts({ locale });
-const currentCandidate: RelatedCandidate = {
-  slug: post.id.replace(/^en\//, ""),
-  locale,
-  tags: tags ?? [],
-  pubDate,
-  title,
-  description,
-};
-const candidates: ReadonlyArray<RelatedCandidate> = allPosts.map((p) => ({
-  slug: p.entry.id.replace(/^en\//, ""),
-  locale,
-  tags: p.entry.data.tags ?? [],
-  pubDate: p.entry.data.pubDate,
-  title: p.entry.data.title,
-  description: p.entry.data.description,
-}));
-const related = pickRelated({ current: currentCandidate, all: candidates, limit: 3 });
-const blogPathPrefix = locale === "en" ? "/en/blog" : "/blog";
 const tagDict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
 const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
+
+const primaryTag = tags?.[0] ?? "—";
+const pubYear = pubDate.getFullYear();
+const pagefindFilter = `tag:${primaryTag}, date:${pubYear}, lang:${locale}`;
 ---
 
 <BaseLayout
   title={title}
   description={description}
-  ogImage={coverUrl ?? undefined}
+  ogImage={ogImagePath}
   ogType="article"
   extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 >
@@ -118,7 +108,14 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
   <SiteSidebar slot="sidebar" activeSlug={post.id} />
   <PostTOC slot="toc" headings={headings} />
 
-  <article class="post">
+  <ReadingProgress targetSelector=".post" />
+
+  <article
+    class="post"
+    data-pagefind-body
+    data-pagefind-filter={pagefindFilter}
+    data-pagefind-meta={`title:${title}`}
+  >
     <header class="post__header">
       <p class="post__eyebrow">
         <time datetime={pubDate.toISOString()}>
@@ -172,32 +169,26 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
       <slot />
     </div>
     {faqItems.length > 0 && <Faq items={faqItems} />}
-    {
-      related.length > 0 && (
-        <aside class="related" aria-label={t(locale, "post.related")}>
-          <h2 class="related__title">{t(locale, "post.related")}</h2>
-          <ul class="related__list">
-            {related.map((r) => (
-              <li>
-                <a href={`${blogPathPrefix}/${r.slug}`} class="related__link">
-                  <span class="related__post-title">{r.title}</span>
-                  <span class="related__post-desc">{r.description}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </aside>
-      )
-    }
+    <PrevNext currentSlug={slug} locale={locale} />
     <AuthorCard />
   </article>
 
+  <aside class="post__after">
+    <RelatedPosts currentSlug={slug} locale={locale} />
+    <Newsletter />
+    <Comments />
+  </aside>
+
   <script>
     import { enhanceCodeBlocks } from "~/lib/enhance-code-blocks";
+    import { initSideNotes } from "~/lib/posts/side-notes";
 
     // astro:page-load fires on initial mount and after every View Transitions navigation.
     // DOMContentLoaded is redundant and would register a second listener on subsequent pages.
-    document.addEventListener("astro:page-load", () => enhanceCodeBlocks(document));
+    document.addEventListener("astro:page-load", () => {
+      enhanceCodeBlocks(document);
+      initSideNotes();
+    });
   </script>
 
   <style>
@@ -273,50 +264,9 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
       width: 100%;
       height: auto;
     }
-    .related {
-      margin: var(--space-7) 0 var(--space-6) 0;
-      padding-top: var(--space-5);
-      border-top: 1px solid var(--color-border);
-    }
-    .related__title {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
-      color: var(--color-fg-muted);
-      margin: 0 0 var(--space-3) 0;
-    }
-    .related__list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: var(--space-3);
-    }
-    .related__link {
-      display: block;
-      padding: var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      text-decoration: none;
-      color: var(--color-fg);
-      transition: border-color var(--dur-fast) var(--ease-out);
-    }
-    .related__link:hover {
-      border-color: var(--color-accent);
-    }
-    .related__post-title {
-      display: block;
-      font-family: var(--font-serif);
-      font-size: var(--fs-base);
-      font-weight: 500;
-      margin-bottom: var(--space-1);
-    }
-    .related__post-desc {
-      display: block;
-      font-size: var(--fs-sm);
-      color: var(--color-fg-muted);
-      line-height: var(--lh-normal);
+    .post__after {
+      max-width: 720px;
+      margin: var(--space-6) 0 var(--space-9) 0;
     }
     @media (max-width: 600px) {
       .post__title {

@@ -1,0 +1,13 @@
+{
+  "site": "dist/client",
+  "output_subdir": "pagefind",
+  "glob": "**/*.{html}",
+  "exclude_selectors": [
+    ".site-header",
+    ".site-footer",
+    ".prevnext",
+    ".reading-progress",
+    "[data-mobile-drawer]",
+    "[data-search]"
+  ]
+}

@@ -1,0 +1,92 @@
+---
+/**
+ * ReadingProgress — fixed top progress bar.
+ *
+ * Mounts above the sticky header (z-index higher than .site-header's 50).
+ * Tracks scroll position relative to the article body and fills a sienna
+ * line from 0 → 100%.
+ *
+ * Place inside PostLayout.astro, just before <article>:
+ *     <ReadingProgress targetSelector=".post" />
+ *
+ * Hidden on print and when the user has prefers-reduced-motion + is at top.
+ */
+interface Props {
+  /** CSS selector for the element whose scroll progress is tracked.
+   *  Defaults to `.post` (the article wrapper). */
+  targetSelector?: string;
+}
+
+const { targetSelector = ".post" } = Astro.props;
+---
+
+<div class="reading-progress" data-reading-progress data-target={targetSelector} aria-hidden="true">
+  <div class="reading-progress__bar" data-bar></div>
+</div>
+
+<style>
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 60; /* above .site-header (z-index: 50) */
+    pointer-events: none;
+    background: transparent;
+  }
+  .reading-progress__bar {
+    height: 100%;
+    width: 0;
+    background: var(--color-accent);
+    transform-origin: left center;
+    transition: width var(--dur-fast) linear;
+    will-change: width;
+  }
+
+  /* Hide on print */
+  @media print {
+    .reading-progress {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  function initReadingProgress(): void {
+    const wrappers = document.querySelectorAll<HTMLElement>("[data-reading-progress]");
+    wrappers.forEach((wrapper) => {
+      if (wrapper.dataset.boundProgress === "1") return;
+      wrapper.dataset.boundProgress = "1";
+
+      const bar = wrapper.querySelector<HTMLElement>("[data-bar]");
+      const targetSel = wrapper.dataset.target ?? ".post";
+      const target = document.querySelector<HTMLElement>(targetSel);
+      if (!bar || !target) return;
+
+      let frame = 0;
+      const update = (): void => {
+        const rect = target.getBoundingClientRect();
+        const viewport = window.innerHeight;
+        const total = rect.height - viewport;
+        // -rect.top: how far we have scrolled INTO the target
+        const progress = Math.min(1, Math.max(0, -rect.top / Math.max(1, total)));
+        bar.style.width = `${progress * 100}%`;
+      };
+
+      const onScroll = (): void => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          update();
+        });
+      };
+
+      update();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+    });
+  }
+
+  document.addEventListener("astro:page-load", initReadingProgress);
+</script>

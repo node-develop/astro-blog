@@ -1,0 +1,57 @@
+/**
+ * Phase 2 — code block dual-theme.
+ *
+ * Astro/Shiki with `themes: { light, dark }` outputs every token as:
+ *   <span style="--shiki-light: #xxx; --shiki-dark: #yyy">…</span>
+ *
+ * The default Astro behaviour switches based on `prefers-color-scheme`.
+ * Our app uses `[data-theme='dark']` on <html>, so we override.
+ *
+ * Append this file to `src/styles/global.css` (or import from there).
+ */
+
+/* ---- DEFAULT (light, paper) ----------------------------------- */
+.prose :is(pre, pre code, pre code span) {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+
+.prose pre {
+  /* Override Shiki's inline bg so the pre frame matches our paper tone */
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  margin: var(--space-5) 0;
+}
+
+/* ---- DARK ----------------------------------------------------- */
+:root[data-theme="dark"] .prose :is(pre, pre code, pre code span) {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+:root[data-theme="dark"] .prose pre {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+/* ---- Inline `code` (not inside pre) --------------------------- */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+}

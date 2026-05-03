@@ -1,5 +1,6 @@
 /* Typography for rendered Markdown body.
    Extends @tailwindcss/typography by mapping it to our tokens. */
+@import "./prose.additions.css";
 
 .prose {
   --tw-prose-body: var(--color-fg);

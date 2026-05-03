@@ -1,0 +1,123 @@
+---
+/**
+ * RelatedPosts — surface 3 posts most similar to the current one.
+ *
+ * Algorithm: Jaccard tag overlap, tie-break by recency.
+ * Excludes the current post + posts in another locale.
+ *
+ * Renders nothing if no candidates have any tag overlap.
+ */
+import { getRelatedPosts } from "~/lib/posts/related";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import type { Locale } from "~/i18n";
+
+interface Props {
+  currentSlug: string;
+  locale?: Locale;
+  limit?: number;
+}
+
+const { currentSlug, locale: forced, limit = 3 } = Astro.props;
+const locale = forced ?? getLocaleFromPath(Astro.url.pathname);
+const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+
+const related = await getRelatedPosts({ slug: currentSlug, locale, limit });
+const heading = locale === "en" ? "Related" : "Похожее";
+
+const fmtDate = (d: Date): string =>
+  new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ru-RU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+---
+
+{
+  related.length > 0 && (
+    <section class="related" aria-labelledby="related-heading">
+      <header class="related__head">
+        <span class="related__rule" aria-hidden="true" />
+        <h2 id="related-heading" class="related__title">
+          {heading}
+        </h2>
+      </header>
+      <ul class="related__list">
+        {related.map((p) => (
+          <li class="related__item">
+            <a href={`${blogPrefix}/${p.slug}`} class="related__link">
+              <p class="related__post-title">{p.title}</p>
+              <p class="related__meta">
+                <time datetime={p.pubDate.toISOString()}>{fmtDate(p.pubDate)}</time>
+                {p.tags.length > 0 && (
+                  <span class="related__tags"> · {p.tags.slice(0, 2).join(", ")}</span>
+                )}
+              </p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+<style>
+  .related {
+    margin: var(--space-7) 0 var(--space-6) 0;
+  }
+  .related__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  .related__rule {
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .related__title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0;
+  }
+  .related__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-4);
+  }
+  .related__link {
+    display: block;
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--color-border);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .related__link:hover {
+    border-top-color: var(--color-accent);
+  }
+  .related__post-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: var(--lh-snug);
+    margin: 0 0 var(--space-2) 0;
+    color: var(--color-fg);
+    text-wrap: pretty;
+  }
+  .related__meta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+</style>

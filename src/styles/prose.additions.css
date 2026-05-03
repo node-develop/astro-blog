@@ -1,0 +1,217 @@
+/**
+ * Phase 2 — prose styles.
+ *
+ * Add to `src/styles/prose.css` (append to existing file). These rules
+ * extend the existing `.prose` typography with:
+ *
+ *   1. Hover anchors on h2/h3/h4 (works with rehype-autolink-headings)
+ *   2. Side-note footnotes on wide viewports (≥ 1280px)
+ *   3. Code block filename caption (works with rehype-code-titles)
+ *   4. Smooth-scroll for in-doc anchor navigation
+ */
+
+/* ---------------------------------------------------------------- *\
+   1. Hover anchors
+\* ---------------------------------------------------------------- */
+
+.prose :is(h2, h3, h4) {
+  position: relative;
+  scroll-margin-top: calc(var(--header-h, 64px) + var(--space-4));
+}
+
+.prose .heading-anchor {
+  position: absolute;
+  left: -1.5em;
+  top: 0;
+  width: 1.5em;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 0.25em;
+  text-decoration: none;
+  color: var(--color-fg-subtle);
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.prose .heading-anchor__glyph {
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.prose :is(h2, h3, h4):hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+  opacity: 1;
+}
+.prose .heading-anchor:hover {
+  color: var(--color-accent);
+}
+.prose .heading-anchor:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* On narrow viewports the anchor would clip the gutter; show it inline
+   after the heading text instead. */
+@media (max-width: 720px) {
+  .prose .heading-anchor {
+    position: static;
+    width: auto;
+    height: auto;
+    margin-left: 0.4em;
+    opacity: 0.5;
+  }
+}
+
+/* ---------------------------------------------------------------- *\
+   2. Footnotes — side-notes on wide viewports
+\* ---------------------------------------------------------------- */
+
+/* In-text footnote reference: superscript sienna numeral */
+.prose .data-footnote-backref,
+.prose sup > a[href^="#user-content-fn-"],
+.prose sup > a[data-footnote-ref] {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  padding: 0 0.15em;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.prose sup > a[data-footnote-ref]:hover {
+  background: var(--color-accent-subtle);
+}
+
+/* Default footnote section (mobile / narrow): styled list at bottom */
+.prose .footnotes,
+.prose section[data-footnotes] {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-sm);
+  color: var(--color-fg-muted);
+}
+.prose .footnotes h2,
+.prose section[data-footnotes] h2 {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-fg-subtle);
+  margin: 0 0 var(--space-4) 0;
+}
+.prose .footnotes ol,
+.prose section[data-footnotes] ol {
+  padding-left: var(--space-5);
+}
+.prose .footnotes li,
+.prose section[data-footnotes] li {
+  margin-bottom: var(--space-3);
+  line-height: var(--lh-base);
+}
+
+/* Side-notes on wide viewports.
+   Layout assumption: the article content uses --content-max (≈ 680px)
+   inside a wider container. We need >= 1280px so the side-rail (≈ 240px
+   wide, gap ≈ 32px) doesn't push content. Adjust min-width if your
+   PostLayout uses a different shell.
+
+   Implementation: each <li id="user-content-fn-N"> floats out into the
+   right margin via `position: absolute; left: 100%`. PostLayout must
+   wrap the <article class="post"> in `position: relative` (it already
+   is), and the footnotes section becomes a positioned overlay. */
+@media (min-width: 1280px) {
+  .prose section[data-footnotes] {
+    /* Make the section invisible as a "section"; we'll re-render its
+       items as side-notes. */
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .prose section[data-footnotes] h2,
+  .prose section[data-footnotes] ol {
+    /* The original list still exists for screen readers / fallback,
+       but visually we project each item to the margin. */
+  }
+  .prose section[data-footnotes] h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .prose section[data-footnotes] ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .prose section[data-footnotes] ol li {
+    /* Will be repositioned by JS to align with the matching ref. */
+    position: absolute;
+    left: calc(var(--content-max, 680px) + var(--space-5));
+    width: 220px;
+    margin: 0;
+    padding: var(--space-2) 0 var(--space-2) var(--space-3);
+    border-left: 2px solid var(--color-accent);
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-base);
+    color: var(--color-fg-muted);
+  }
+  .prose section[data-footnotes] ol li p {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+  }
+  .prose section[data-footnotes] ol li .data-footnote-backref {
+    display: none; /* hide ↩ on the side-note variant */
+  }
+}
+
+/* ---------------------------------------------------------------- *\
+   3. Code block filename caption (rehype-code-titles)
+\* ---------------------------------------------------------------- */
+
+.prose .rehype-code-title {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--color-fg-subtle);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  margin-top: var(--space-5);
+  margin-bottom: 0;
+}
+/* When a code-title precedes a <pre>, square the top corners. */
+.prose .rehype-code-title + pre {
+  border-top-left-radius: 0;
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------- *\
+   4. Smooth scroll for in-doc anchors
+\* ---------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
