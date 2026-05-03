@@ -1,0 +1,46 @@
+---
+/**
+ * Course landing route (EN). RU twin at /src/pages/courses/[course]/index.astro.
+ *
+ * EN courses live under `<course>/en/_index`; the slug for the URL is the
+ * leading directory segment (e.g. `claude-code-guide`), not the full id.
+ */
+import { getCollection, type CollectionEntry } from "astro:content";
+import CourseLayout from "~/layouts/CourseLayout.astro";
+
+export async function getStaticPaths() {
+  const enCoursePathToSlug = (id: string): string => id.replace(/\/en\/?_index$/, "");
+
+  const allCourses = await getCollection(
+    "course",
+    (c: CollectionEntry<"course">) => c.data.locale === "en",
+  );
+  const allLessons = await getCollection(
+    "lesson",
+    (l: CollectionEntry<"lesson">) => l.data.locale === "en",
+  );
+
+  return allCourses.map((course: CollectionEntry<"course">) => {
+    const courseSlug = enCoursePathToSlug(course.id);
+    const lessons = allLessons
+      .filter((l: CollectionEntry<"lesson">) => l.id.startsWith(`${courseSlug}/en/`))
+      .sort((a: CollectionEntry<"lesson">, b: CollectionEntry<"lesson">) => {
+        const ao = a.data.order ?? parseInt(a.id.match(/(\d+)/)?.[1] ?? "0", 10);
+        const bo = b.data.order ?? parseInt(b.id.match(/(\d+)/)?.[1] ?? "0", 10);
+        return ao - bo;
+      });
+
+    return {
+      params: { course: courseSlug },
+      props: { course, lessons },
+    };
+  });
+}
+
+const { course, lessons } = Astro.props as {
+  course: CollectionEntry<"course">;
+  lessons: CollectionEntry<"lesson">[];
+};
+---
+
+<CourseLayout course={course} lessons={lessons} />

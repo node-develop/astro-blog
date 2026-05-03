@@ -1,15 +1,22 @@
 ---
 /**
- * Lesson route example.
+ * Lesson route (RU). EN twin lives at /src/pages/en/courses/[course]/[lesson].astro.
  *
- * Drop at: src/pages/courses/[course]/[lesson].astro
+ * Filters by `course.data.locale === "ru"` so the EN course (which lives
+ * under `claude-code-guide/en/_index`) is handled by the EN page only.
  */
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import LessonLayout from "~/layouts/LessonLayout.astro";
 
 export async function getStaticPaths() {
-  const allCourses = await getCollection("course");
-  const allLessons = await getCollection("lesson");
+  const allCourses = await getCollection(
+    "course",
+    (c: CollectionEntry<"course">) => c.data.locale !== "en",
+  );
+  const allLessons = await getCollection(
+    "lesson",
+    (l: CollectionEntry<"lesson">) => l.data.locale !== "en",
+  );
 
   const paths: Array<{
     params: { course: string; lesson: string };
@@ -63,6 +70,12 @@ const { course, lesson, prev, next, index, total } = Astro.props as {
 const { Content } = await render(lesson);
 ---
 
-<LessonLayout course={course} lesson={lesson} prev={prev} next={next} index={index} total={total}>
-  <Content />
-</LessonLayout>
+<LessonLayout
+  course={course}
+  lesson={lesson}
+  prev={prev}
+  next={next}
+  index={index}
+  total={total}
+  Content={Content}
+/>

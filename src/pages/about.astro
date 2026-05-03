@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Avatar from "~/components/Avatar.astro";
 import { getEntry, render } from "astro:content";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
@@ -29,6 +30,7 @@ const webPageNode: GraphNode = buildWebPageNode({
 >
   <SiteSidebar slot="sidebar" />
   <article class="prose">
+    <Avatar size="lg" />
     <Content />
   </article>
 </BaseLayout>

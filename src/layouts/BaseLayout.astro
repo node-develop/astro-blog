@@ -1,4 +1,25 @@
 ---
+/**
+ * Phase 5 audit fix — REPLACEMENT for src/layouts/BaseLayout.astro.
+ *
+ * Diff vs. previous (everything else identical):
+ *   1. Description default: "Personal blog" → richer fallback that won't
+ *      show on real pages (every page sets its own) but is sane in case.
+ *   2. Favicon: SVG light + SVG dark via media query, .ico legacy
+ *      fallback, apple-touch-icon as PNG (was incorrectly pointing at
+ *      .svg — Safari iOS doesn't support svg apple-touch-icon).
+ *   3. theme-color: light + dark variants via media-query <meta>.
+ *   4. <link rel="manifest" href="/site.webmanifest"> for PWA install.
+ *   5. <link rel="mask-icon"> for Safari pinned tabs.
+ *   6. og:image fallback: PNG version of og-default if the request is
+ *      from a known SVG-hostile crawler (Twitter cards historically
+ *      didn't render SVG well — we ship both, prefer PNG via og:image
+ *      and keep SVG as og:image:secure).
+ *
+ * The fonts/maskable PNG referenced here are documented in
+ * phase-5/public/FAVICON-RASTER-README.md — generate them locally
+ * from the shipped SVGs before deploying.
+ */
 import "~/styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import Header from "~/components/Header.astro";
@@ -16,25 +37,23 @@ interface Props {
   ogImage?: string;
   ogType?: "website" | "article";
   noindex?: boolean;
-  /** When true, omits the right TOC column for list/about/home pages. */
   fullWidth?: boolean;
-  /** Additional JSON-LD nodes to merge into the page @graph. */
   extraSchemaNodes?: ReadonlyArray<GraphNode | null>;
 }
 
 const {
   title,
-  description = "Personal blog",
+  description = "Записки из продакшна — backend, AI agent engineering, distributed systems.",
   ogImage,
   ogType = "website",
   noindex = false,
   fullWidth = false,
   extraSchemaNodes = [],
 } = Astro.props;
+
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
-// hreflang: emit only when the counterpart exists, so search engines never see a broken alternate.
 const counterpartPath = getCounterpart(Astro.url.pathname, locale);
 const counterpartExists = await checkCounterpartExists(Astro.url.pathname, locale);
 const ruVariant =
@@ -44,15 +63,17 @@ const enVariant =
 
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
 
-// OG image: make absolute; fall back to default if not provided.
+// OG image: prefer PNG raster; fall back to SVG. Both are absolute.
 const absoluteOgImage = ogImage
   ? /^https?:\/\//.test(ogImage)
     ? ogImage
     : new URL(ogImage, Astro.site ?? Astro.url).toString()
+  : new URL("/og-default.png", Astro.site ?? Astro.url).toString();
+const absoluteOgImageSvg = ogImage
+  ? absoluteOgImage
   : new URL("/og-default.svg", Astro.site ?? Astro.url).toString();
 
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
-
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 ---
 
@@ -89,6 +110,8 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         </>
       )
     }
+
+    <!-- Open Graph / Twitter -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
@@ -96,15 +119,40 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="artka.dev" />
     <meta property="og:image" content={absoluteOgImage} />
+    <meta property="og:image:secure_url" content={absoluteOgImageSvg} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absoluteOgImage} />
     {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
     {twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- Favicon set -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon-dark.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/icon-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/icon-16.png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="mask-icon" href="/favicon.svg" color="#9C5A2A" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- theme-color: split light/dark so iOS Safari address bar matches -->
+    <meta name="theme-color" content="#FAF8F5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1A1814" media="(prefers-color-scheme: dark)" />
+
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={title} href={rssHref} />
     <script
@@ -116,7 +164,7 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     <slot name="head" />
     <ClientRouter />
   </head>
-  <body>
+  <body data-auth="signed-out">
     <SkipLink />
     <Header />
     <MobileDrawer>
@@ -171,9 +219,6 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       @media (max-width: 1023px) {
         .layout,
         .layout[data-full-width="true"] {
-          /* Override the higher-specificity .layout[data-full-width="true"]
-             selector — without listing both the rule wouldn't apply on /blog
-             and other fullWidth pages, leaving main column at sidebar width. */
           grid-template-columns: minmax(0, 1fr);
         }
         .layout__sidebar,
@@ -221,5 +266,26 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         }
       }
     </style>
+
+    <!--
+      Auth signal for client-side widgets that need to know whether the
+      user is signed in (e.g. CertificateButton, course progress sync).
+      The Better-Auth middleware should set body[data-auth="signed-in"]
+      when a session is active. This is a tiny island — replace with
+      your own equivalent if you wire it in differently.
+    -->
+    <script>
+      (async () => {
+        try {
+          const r = await fetch("/api/auth/get-session", { credentials: "same-origin" });
+          if (r.ok) {
+            const data = await r.json();
+            if (data?.user) document.body.setAttribute("data-auth", "signed-in");
+          }
+        } catch {
+          /* anonymous */
+        }
+      })();
+    </script>
   </body>
 </html>

@@ -1,0 +1,84 @@
+---
+/**
+ * Lesson route (EN). RU twin at /src/pages/courses/[course]/[lesson].astro.
+ *
+ * EN courses live at `<course>/en/_index`, lessons at `<course>/en/<NN>-<slug>`.
+ * URL is `/en/courses/<course>/<NN>-<slug>` — same shape as RU minus the
+ * locale prefix supplied by Astro's i18n routing.
+ */
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import LessonLayout from "~/layouts/LessonLayout.astro";
+
+export async function getStaticPaths() {
+  const enCoursePathToSlug = (id: string): string => id.replace(/\/en\/?_index$/, "");
+
+  const allCourses = await getCollection(
+    "course",
+    (c: CollectionEntry<"course">) => c.data.locale === "en",
+  );
+  const allLessons = await getCollection(
+    "lesson",
+    (l: CollectionEntry<"lesson">) => l.data.locale === "en",
+  );
+
+  const paths: Array<{
+    params: { course: string; lesson: string };
+    props: {
+      course: CollectionEntry<"course">;
+      lesson: CollectionEntry<"lesson">;
+      prev?: CollectionEntry<"lesson">;
+      next?: CollectionEntry<"lesson">;
+      index: number;
+      total: number;
+    };
+  }> = [];
+
+  for (const course of allCourses) {
+    const courseSlug = enCoursePathToSlug(course.id);
+    const lessons = allLessons
+      .filter((l: CollectionEntry<"lesson">) => l.id.startsWith(`${courseSlug}/en/`))
+      .sort((a: CollectionEntry<"lesson">, b: CollectionEntry<"lesson">) => {
+        const ao = a.data.order ?? parseInt(a.id.match(/(\d+)/)?.[1] ?? "0", 10);
+        const bo = b.data.order ?? parseInt(b.id.match(/(\d+)/)?.[1] ?? "0", 10);
+        return ao - bo;
+      });
+
+    lessons.forEach((lesson: CollectionEntry<"lesson">, i: number) => {
+      const lessonSlug = lesson.id.replace(/^.*\//, "");
+      paths.push({
+        params: { course: courseSlug, lesson: lessonSlug },
+        props: {
+          course,
+          lesson,
+          prev: i > 0 ? lessons[i - 1] : undefined,
+          next: i < lessons.length - 1 ? lessons[i + 1] : undefined,
+          index: i + 1,
+          total: lessons.length,
+        },
+      });
+    });
+  }
+
+  return paths;
+}
+
+const { course, lesson, prev, next, index, total } = Astro.props as {
+  course: CollectionEntry<"course">;
+  lesson: CollectionEntry<"lesson">;
+  prev?: CollectionEntry<"lesson">;
+  next?: CollectionEntry<"lesson">;
+  index: number;
+  total: number;
+};
+const { Content } = await render(lesson);
+---
+
+<LessonLayout
+  course={course}
+  lesson={lesson}
+  prev={prev}
+  next={next}
+  index={index}
+  total={total}
+  Content={Content}
+/>

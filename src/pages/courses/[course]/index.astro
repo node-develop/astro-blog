@@ -1,20 +1,20 @@
 ---
 /**
- * Course landing route example.
- *
- * Drop at: src/pages/courses/[course]/index.astro
- *
- * Resolves the course `_index` entry + ordered lessons inside the
- * course directory.
+ * Course landing route (RU). EN twin at /src/pages/en/courses/[course]/index.astro.
  */
 import { getCollection, type CollectionEntry } from "astro:content";
 import CourseLayout from "~/layouts/CourseLayout.astro";
 
 export async function getStaticPaths() {
-  const allCourses = await getCollection("course");
-  const allLessons = await getCollection("lesson");
+  const allCourses = await getCollection(
+    "course",
+    (c: CollectionEntry<"course">) => c.data.locale !== "en",
+  );
+  const allLessons = await getCollection(
+    "lesson",
+    (l: CollectionEntry<"lesson">) => l.data.locale !== "en",
+  );
 
-  // Each course entry id is `<course-slug>/_index.md` — strip suffix.
   return allCourses.map((course: CollectionEntry<"course">) => {
     const courseSlug = course.id.replace(/\/?_index$/, "");
     const lessons = allLessons

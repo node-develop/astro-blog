@@ -1,0 +1,214 @@
+---
+/**
+ * Phase 5 — CodeChallenge MDX component.
+ *
+ * Renders a code prompt + textarea + "Run" button. On submit, posts to
+ * `/api/check` with { challengeId, code, language }. The server runs
+ * the check (LLM-validated against the rubric in the lesson frontmatter
+ * or hard-coded test cases), returns { pass, feedback, score? }.
+ *
+ * Usage in a lesson MDX:
+ *
+ *   <CodeChallenge
+ *     id="hooks-pre-tool-use-guard"
+ *     language="bash"
+ *     starter={`#!/bin/bash\n# Block rm -rf /\n`}
+ *     prompt="Допишите hook, который ловит опасные bash-команды до выполнения."
+ *     successCriteria="Hook должен exit с кодом 2 при rm -rf /, иначе exit 0."
+ *   />
+ *
+ * The component is interactive — keep it small. No live execution
+ * happens in the browser; the server arbitrates pass/fail.
+ */
+interface Props {
+  id: string;
+  language?: string;
+  starter?: string;
+  prompt: string;
+  successCriteria?: string;
+  /** Maximum characters the user can submit. */
+  maxLen?: number;
+}
+
+const { id, language = "text", starter = "", prompt, successCriteria, maxLen = 2000 } = Astro.props;
+
+const labelLang = language.toUpperCase();
+---
+
+<div class="challenge" data-challenge-id={id} data-challenge-lang={language}>
+  <header class="challenge__header">
+    <span class="challenge__lang">{labelLang}</span>
+    <span class="challenge__label">УПРАЖНЕНИЕ</span>
+  </header>
+  <p class="challenge__prompt">{prompt}</p>
+  {
+    successCriteria && (
+      <p class="challenge__criteria">
+        <strong>Критерий зачёта:</strong> {successCriteria}
+      </p>
+    )
+  }
+  <textarea
+    class="challenge__editor"
+    spellcheck="false"
+    rows="10"
+    maxlength={maxLen}
+    aria-label={`Поле для ответа: ${prompt.slice(0, 60)}`}>{starter}</textarea
+  >
+  <div class="challenge__actions">
+    <button type="button" class="challenge__run" data-challenge-run>Проверить</button>
+    <span class="challenge__status" aria-live="polite" data-challenge-status></span>
+  </div>
+  <div class="challenge__feedback" data-challenge-feedback hidden></div>
+</div>
+
+<style>
+  .challenge {
+    margin: var(--space-6) 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-subtle);
+  }
+  .challenge__header {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    margin-bottom: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .challenge__lang {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .challenge__label {
+    color: var(--color-fg-subtle);
+  }
+  .challenge__prompt {
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    margin: 0 0 var(--space-3) 0;
+    text-wrap: pretty;
+  }
+  .challenge__criteria {
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-4) 0;
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--color-accent);
+  }
+  .challenge__editor {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .challenge__editor:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-accent), transparent 75%);
+  }
+  .challenge__actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin-top: var(--space-3);
+  }
+  .challenge__run {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .challenge__run:hover {
+    background: var(--color-accent-hover);
+  }
+  .challenge__run[disabled] {
+    opacity: 0.5;
+    cursor: wait;
+  }
+  .challenge__status {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+  }
+  .challenge__status[data-state="pass"] {
+    color: var(--color-success, #2d6a3d);
+  }
+  .challenge__status[data-state="fail"] {
+    color: var(--color-error, #b33a3a);
+  }
+  .challenge__feedback {
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    text-wrap: pretty;
+  }
+</style>
+
+<script>
+  function initChallenges(): void {
+    const els = document.querySelectorAll<HTMLElement>("[data-challenge-id]");
+    els.forEach((el) => {
+      if (el.dataset.bound === "1") return;
+      el.dataset.bound = "1";
+      const id = el.dataset.challengeId ?? "";
+      const lang = el.dataset.challengeLang ?? "text";
+      const editor = el.querySelector<HTMLTextAreaElement>(".challenge__editor");
+      const runBtn = el.querySelector<HTMLButtonElement>("[data-challenge-run]");
+      const statusEl = el.querySelector<HTMLElement>("[data-challenge-status]");
+      const fbEl = el.querySelector<HTMLElement>("[data-challenge-feedback]");
+      if (!editor || !runBtn || !statusEl || !fbEl) return;
+
+      runBtn.addEventListener("click", async () => {
+        runBtn.disabled = true;
+        statusEl.textContent = "Проверяю…";
+        statusEl.removeAttribute("data-state");
+        fbEl.hidden = true;
+        try {
+          const r = await fetch("/api/check", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ challengeId: id, code: editor.value, language: lang }),
+          });
+          const data = (await r.json()) as { pass: boolean; feedback: string };
+          statusEl.textContent = data.pass ? "Зачёт" : "Не зачёт";
+          statusEl.dataset.state = data.pass ? "pass" : "fail";
+          fbEl.textContent = data.feedback;
+          fbEl.hidden = false;
+        } catch {
+          statusEl.textContent = "Ошибка сети";
+          statusEl.dataset.state = "fail";
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+    });
+  }
+  document.addEventListener("astro:page-load", initChallenges);
+</script>

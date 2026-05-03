@@ -13,6 +13,7 @@
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { mdxComponents } from "~/components/mdx";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -21,9 +22,12 @@ interface Props {
   next?: CollectionEntry<"lesson">;
   index: number; // 1-based
   total: number;
+  /** Astro Content component returned by `entry.render()`. Optional fallback to slot. */
+  Content?: unknown;
 }
 
-const { course, lesson, prev, next, index, total } = Astro.props;
+const { course, lesson, prev, next, index, total, Content } = Astro.props;
+const ContentComponent = Content as unknown as (props: { components?: unknown }) => unknown;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const localePrefix = locale === "en" ? "/en" : "";
 const courseSlug = course.id.replace(/\/?_index$/, "");
@@ -84,7 +88,7 @@ const labels =
     </header>
 
     <section class="lesson__body prose">
-      <slot />
+      {Content ? <ContentComponent components={mdxComponents} /> : <slot />}
     </section>
 
     <aside class="lesson__toolbar" aria-label="Lesson controls">
@@ -294,11 +298,13 @@ const labels =
 <script>
   import {
     getCourse,
-    markComplete,
+    markCompleteAsync,
+    markIncompleteAsync,
     setLastVisited,
+    syncFromServer,
     toggleBookmark,
-    unmarkComplete,
   } from "~/lib/courses/progress";
+  import { initLessonAutoComplete } from "~/lib/courses/auto-complete";
 
   function init(): void {
     const root = document.querySelector<HTMLElement>(".lesson[data-course-slug]");
@@ -350,13 +356,18 @@ const labels =
     });
     completeBtn?.addEventListener("click", () => {
       const state = getCourse(courseSlug);
-      if (state.completed.includes(lessonSlug)) unmarkComplete(courseSlug, lessonSlug);
-      else markComplete(courseSlug, lessonSlug);
+      const promise = state.completed.includes(lessonSlug)
+        ? markIncompleteAsync(courseSlug, lessonSlug)
+        : markCompleteAsync(courseSlug, lessonSlug, { source: "manual" });
+      void promise.then(render);
       render();
     });
 
     render();
     window.addEventListener("course-progress:change", render);
+
+    void syncFromServer(courseSlug);
+    initLessonAutoComplete();
   }
 
   document.addEventListener("astro:page-load", init);

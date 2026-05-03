@@ -152,6 +152,36 @@ export const mediaAssets = pgTable(
   (t) => ({ uploadedAtIdx: index("media_assets_uploaded_at_idx").on(t.uploadedAt) }),
 );
 
+/**
+ * Course progress — one row per (user, course, lesson) completion.
+ * Anonymous users keep using localStorage; only authenticated sessions
+ * round-trip to this table.
+ */
+export const courseProgress = pgTable(
+  "course_progress",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    courseSlug: text("course_slug").notNull(),
+    lessonSlug: text("lesson_slug").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * "auto"   → IntersectionObserver + dwell-timer fired
+     * "manual" → user pressed "Mark complete"
+     * "import" → backfill from prior localStorage state
+     */
+    source: text("source", { enum: ["auto", "manual", "import"] })
+      .notNull()
+      .default("manual"),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.courseSlug, t.lessonSlug] }),
+    userCourseIdx: index("course_progress_user_course_idx").on(t.userId, t.courseSlug),
+    courseIdx: index("course_progress_course_idx").on(t.courseSlug),
+  }),
+);
+
 // ── Type aliases ──────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -165,5 +195,8 @@ export type NewPostRevision = typeof postRevisions.$inferInsert;
 
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 export type NewMediaAsset = typeof mediaAssets.$inferInsert;
+
+export type CourseProgressRow = typeof courseProgress.$inferSelect;
+export type NewCourseProgressRow = typeof courseProgress.$inferInsert;
 
 export { primaryKey };

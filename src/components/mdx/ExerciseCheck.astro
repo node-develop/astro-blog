@@ -1,0 +1,399 @@
+---
+/**
+ * <ExerciseCheck>: lightweight self-check inside a lesson.
+ *
+ * Two variants, controlled by props:
+ *   - kind="multi-choice" (default) — radio buttons. `options[].correct`
+ *     marks the right answer. On submit: green/red highlighting +
+ *     explanation if provided.
+ *   - kind="free-form" — short text input + expected-answer regex.
+ *     Plain client-side check (no LLM). For LLM-graded coding tasks
+ *     use <CodeChallenge>.
+ *
+ * Persists per-question state in sessionStorage so a user doesn't lose
+ * their answers when they navigate away within the lesson.
+ *
+ * Usage:
+ *   <ExerciseCheck
+ *     id="lesson-01-q1"
+ *     question="Who executes tool calls in Claude Code?"
+ *     options={[
+ *       { label: "The model itself", correct: false, hint: "The model decides what to call, but doesn't run anything." },
+ *       { label: "The harness (CLI)", correct: true },
+ *       { label: "The MCP server", correct: false },
+ *     ]}
+ *     explanation="The model emits tool_use; the harness executes it and returns tool_result. This is the agent loop."
+ *   />
+ *
+ *   <ExerciseCheck
+ *     id="lesson-02-q1"
+ *     kind="free-form"
+ *     question="Which command shows current context window utilisation?"
+ *     answer="/context"
+ *     answerRegex="^/?context$"
+ *   />
+ */
+interface Option {
+  label: string;
+  correct?: boolean;
+  hint?: string;
+}
+
+interface Props {
+  id: string;
+  question: string;
+  kind?: "multi-choice" | "free-form";
+  options?: ReadonlyArray<Option>;
+  answer?: string;
+  answerRegex?: string;
+  explanation?: string;
+}
+
+const {
+  id,
+  question,
+  kind = "multi-choice",
+  options = [],
+  answer,
+  answerRegex,
+  explanation,
+} = Astro.props;
+
+if (kind === "multi-choice" && options.length === 0) {
+  throw new Error(`<ExerciseCheck id="${id}">: multi-choice requires options[].`);
+}
+if (kind === "free-form" && !answer && !answerRegex) {
+  throw new Error(`<ExerciseCheck id="${id}">: free-form requires answer or answerRegex.`);
+}
+
+const correctIdx = options.findIndex((o) => o.correct);
+---
+
+<form
+  class="exercise"
+  data-exercise-id={id}
+  data-exercise-kind={kind}
+  data-correct-idx={correctIdx >= 0 ? String(correctIdx) : undefined}
+  data-answer={answer}
+  data-answer-regex={answerRegex}
+>
+  <p class="exercise__label">CHECK</p>
+  <p class="exercise__question">{question}</p>
+
+  {
+    kind === "multi-choice" && (
+      <ul class="exercise__options">
+        {options.map((opt, i) => (
+          <li>
+            <label class="exercise__option">
+              <input type="radio" name={`exercise-${id}`} value={String(i)} />
+              <span class="exercise__option-label">{opt.label}</span>
+              {opt.hint && (
+                <span class="exercise__option-hint" data-option-hint hidden>
+                  {opt.hint}
+                </span>
+              )}
+            </label>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {
+    kind === "free-form" && (
+      <input
+        type="text"
+        class="exercise__input"
+        name={`exercise-${id}`}
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Your answer…"
+      />
+    )
+  }
+
+  <div class="exercise__row">
+    <button type="submit" class="exercise__submit">Check</button>
+    <button type="button" class="exercise__reset" data-action="reset">Reset</button>
+    <span class="exercise__verdict" data-verdict aria-live="polite"></span>
+  </div>
+
+  {
+    explanation && (
+      <p class="exercise__explanation" data-explanation hidden>
+        {explanation}
+      </p>
+    )
+  }
+</form>
+
+<style>
+  .exercise {
+    margin: var(--space-6) 0;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+  .exercise__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .exercise__question {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    color: var(--color-fg);
+    margin: 0 0 var(--space-3) 0;
+    line-height: var(--lh-snug);
+  }
+  .exercise__options {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-3) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .exercise__option {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-2);
+    align-items: start;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .exercise__option:hover {
+    border-color: var(--color-fg-subtle);
+  }
+  .exercise__option input[type="radio"] {
+    accent-color: var(--color-accent);
+    margin-top: 4px;
+  }
+  .exercise__option-label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: var(--lh-snug);
+    color: var(--color-fg);
+  }
+  .exercise__option-hint {
+    grid-column: 2;
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    margin-top: 4px;
+  }
+  .exercise[data-state="answered"]
+    .exercise__option:has(input:checked):not(.exercise__option--correct) {
+    border-color: oklch(0.55 0.18 25);
+    background: oklch(0.97 0.03 25 / 0.4);
+  }
+  [data-theme="dark"]
+    .exercise[data-state="answered"]
+    .exercise__option:has(input:checked):not(.exercise__option--correct) {
+    background: oklch(0.25 0.07 25 / 0.4);
+  }
+  .exercise[data-state="answered"] .exercise__option--correct {
+    border-color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+  .exercise[data-state="answered"] .exercise__option--correct .exercise__option-label::after {
+    content: " ✓";
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .exercise__input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    margin: 0 0 var(--space-3) 0;
+  }
+  .exercise__input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+  .exercise[data-state="correct"] .exercise__input {
+    border-color: var(--color-accent);
+  }
+  .exercise[data-state="incorrect"] .exercise__input {
+    border-color: oklch(0.55 0.18 25);
+  }
+
+  .exercise__row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .exercise__submit,
+  .exercise__reset {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .exercise__submit {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+  .exercise__submit:hover {
+    background: var(--color-accent-hover);
+  }
+  .exercise__reset:hover {
+    border-color: var(--color-fg-subtle);
+  }
+
+  .exercise__verdict {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .exercise[data-state="correct"] .exercise__verdict {
+    color: var(--color-accent);
+  }
+  .exercise[data-state="incorrect"] .exercise__verdict,
+  .exercise[data-state="answered"]:not([data-state-correct="true"]) .exercise__verdict {
+    color: oklch(0.55 0.18 25);
+  }
+
+  .exercise__explanation {
+    margin: var(--space-3) 0 0 0;
+    padding: var(--space-3) var(--space-4);
+    border-left: 2px solid var(--color-accent);
+    background: var(--color-bg);
+    font-family: var(--font-serif);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    color: var(--color-fg);
+  }
+</style>
+
+<script>
+  function init(): void {
+    const forms = document.querySelectorAll<HTMLFormElement>(".exercise[data-exercise-id]");
+    forms.forEach((form) => {
+      if (form.dataset.bound === "1") return;
+      form.dataset.bound = "1";
+
+      const id = form.dataset.exerciseId ?? "";
+      const kind = form.dataset.exerciseKind ?? "multi-choice";
+      const verdict = form.querySelector<HTMLElement>("[data-verdict]");
+      const explanationEl = form.querySelector<HTMLElement>("[data-explanation]");
+      const storageKey = `artka-exercise-${id}`;
+
+      const restore = (): void => {
+        try {
+          const saved = sessionStorage.getItem(storageKey);
+          if (!saved) return;
+          const parsed = JSON.parse(saved) as { value: string; correct: boolean };
+          if (kind === "multi-choice") {
+            const radio = form.querySelector<HTMLInputElement>(
+              `input[type="radio"][value="${parsed.value}"]`,
+            );
+            if (radio) radio.checked = true;
+          } else {
+            const input = form.querySelector<HTMLInputElement>(".exercise__input");
+            if (input) input.value = parsed.value;
+          }
+          applyVerdict(parsed.correct);
+        } catch {
+          /* ignore corrupted state */
+        }
+      };
+
+      const applyVerdict = (correct: boolean): void => {
+        form.dataset.state = correct ? "correct" : "incorrect";
+        form.dataset.stateCorrect = String(correct);
+        if (verdict) verdict.textContent = correct ? "Correct" : "Not quite";
+
+        if (kind === "multi-choice") {
+          const correctIdx = form.dataset.correctIdx;
+          form.dataset.state = "answered";
+          form.querySelectorAll<HTMLLIElement>(".exercise__options li").forEach((li, i) => {
+            const opt = li.querySelector<HTMLElement>(".exercise__option");
+            if (!opt) return;
+            opt.classList.toggle("exercise__option--correct", String(i) === correctIdx);
+            const hint = li.querySelector<HTMLElement>("[data-option-hint]");
+            if (hint)
+              hint.hidden = !li.querySelector<HTMLInputElement>("input")?.checked || correct;
+          });
+        }
+
+        if (explanationEl)
+          explanationEl.hidden = !correct && kind === "multi-choice" ? false : !correct;
+        // Show explanation on any answered state (correct or wrong, MC); on free-form only when correct
+        if (explanationEl) {
+          explanationEl.hidden = kind === "multi-choice" ? false : !correct;
+        }
+      };
+
+      form.addEventListener("submit", (ev) => {
+        ev.preventDefault();
+        if (kind === "multi-choice") {
+          const checked = form.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+          if (!checked) return;
+          const idx = checked.value;
+          const correctIdx = form.dataset.correctIdx ?? "";
+          const correct = idx === correctIdx;
+          sessionStorage.setItem(storageKey, JSON.stringify({ value: idx, correct }));
+          applyVerdict(correct);
+        } else {
+          const input = form.querySelector<HTMLInputElement>(".exercise__input");
+          if (!input) return;
+          const value = input.value.trim();
+          const expected = form.dataset.answer ?? "";
+          const regex = form.dataset.answerRegex;
+          const correct = regex
+            ? new RegExp(regex, "i").test(value)
+            : value.localeCompare(expected, undefined, { sensitivity: "accent" }) === 0;
+          sessionStorage.setItem(storageKey, JSON.stringify({ value, correct }));
+          applyVerdict(correct);
+        }
+      });
+
+      form
+        .querySelector<HTMLButtonElement>('[data-action="reset"]')
+        ?.addEventListener("click", () => {
+          sessionStorage.removeItem(storageKey);
+          form.reset();
+          delete form.dataset.state;
+          delete form.dataset.stateCorrect;
+          if (verdict) verdict.textContent = "";
+          if (explanationEl) explanationEl.hidden = true;
+          form.querySelectorAll<HTMLElement>(".exercise__option").forEach((opt) => {
+            opt.classList.remove("exercise__option--correct");
+          });
+        });
+
+      restore();
+    });
+  }
+
+  document.addEventListener("astro:page-load", init);
+</script>

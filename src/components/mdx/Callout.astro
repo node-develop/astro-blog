@@ -1,0 +1,123 @@
+---
+/**
+ * <Callout type="info|tip|warn|danger" title?>: typographic callout block.
+ *
+ * Visual variants follow the existing eyebrow/border pattern:
+ *   - info: neutral, fg-muted left rule
+ *   - tip: accent (sienna), used for "do it like this"
+ *   - warn: amber, used for "be careful here"
+ *   - danger: red, used for "this WILL break"
+ *
+ * No emoji or icon by default — keeps the editorial tone of the blog.
+ * Pass `icon="✓"` etc. on the prop if a glyph is needed for a specific call.
+ *
+ * Usage in MDX:
+ *   <Callout type="warn" title="Watch the cache">
+ *     Editing system.md invalidates the cached prefix.
+ *   </Callout>
+ */
+type CalloutType = "info" | "tip" | "warn" | "danger";
+
+interface Props {
+  type?: CalloutType;
+  title?: string;
+  icon?: string;
+}
+
+const { type = "info", title, icon } = Astro.props;
+
+const labelByType: Record<CalloutType, string> = {
+  info: "NOTE",
+  tip: "TIP",
+  warn: "HEADS UP",
+  danger: "WARNING",
+};
+---
+
+<aside
+  class={`callout callout--${type}`}
+  role={type === "warn" || type === "danger" ? "alert" : undefined}
+>
+  <p class="callout__label">
+    {
+      icon && (
+        <span class="callout__icon" aria-hidden="true">
+          {icon}
+        </span>
+      )
+    }
+    {title ?? labelByType[type]}
+  </p>
+  <div class="callout__body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    margin: var(--space-5) 0;
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-4);
+    border-left: 2px solid var(--callout-rule, var(--color-border));
+    background: var(--callout-bg, transparent);
+  }
+  .callout__label {
+    display: inline-flex;
+    gap: var(--space-2);
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--callout-rule, var(--color-fg-muted));
+    margin: 0 0 var(--space-2) 0;
+  }
+  .callout__icon {
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+  .callout__body {
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    color: var(--color-fg);
+  }
+  .callout__body :global(p) {
+    margin: 0 0 var(--space-2) 0;
+  }
+  .callout__body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .callout__body :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  .callout--info {
+    --callout-rule: var(--color-fg-subtle);
+  }
+  .callout--tip {
+    --callout-rule: var(--color-accent);
+    --callout-bg: var(--color-accent-subtle);
+  }
+  .callout--warn {
+    --callout-rule: oklch(0.7 0.13 70);
+    --callout-bg: oklch(0.97 0.04 80 / 0.5);
+  }
+  [data-theme="dark"] .callout--warn {
+    --callout-bg: oklch(0.25 0.06 70 / 0.4);
+  }
+  .callout--danger {
+    --callout-rule: oklch(0.55 0.18 25);
+    --callout-bg: oklch(0.97 0.03 25 / 0.5);
+  }
+  [data-theme="dark"] .callout--danger {
+    --callout-bg: oklch(0.25 0.07 25 / 0.4);
+  }
+
+  @media (max-width: 600px) {
+    .callout {
+      padding: var(--space-2) var(--space-3);
+    }
+  }
+</style>

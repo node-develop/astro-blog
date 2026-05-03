@@ -1,0 +1,91 @@
+---
+/**
+ * <Diagram caption?>: figure wrapper for diagrams.
+ *
+ * Pairs naturally with rehype-mermaid (already configured) — wrap a
+ * mermaid fence in <Diagram> to add a caption, sequence number, and
+ * proper <figure>/<figcaption> semantics.
+ *
+ * Usage in MDX:
+ *   <Diagram caption="Agent loop with tool dispatch" id="fig-1">
+ *     ```mermaid
+ *     sequenceDiagram
+ *       …
+ *     ```
+ *   </Diagram>
+ *
+ * Counter is page-local; <figcaption> renders "Fig. <n> · <caption>"
+ * (or just the number if no caption is given).
+ */
+interface Props {
+  caption?: string;
+  id?: string;
+}
+
+const { caption, id } = Astro.props;
+---
+
+<figure class="diagram" id={id}>
+  <div class="diagram__canvas">
+    <slot />
+  </div>
+  {
+    caption && (
+      <figcaption class="diagram__caption">
+        <span class="diagram__num" data-diagram-num />
+        <span>{caption}</span>
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .diagram {
+    margin: var(--space-6) 0;
+    padding: 0;
+  }
+  .diagram__canvas {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    padding: var(--space-4);
+    overflow-x: auto;
+  }
+  .diagram__canvas :global(svg) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .diagram__canvas :global(pre) {
+    margin: 0;
+    background: transparent;
+  }
+  .diagram__caption {
+    margin: var(--space-3) 0 0 0;
+    padding: 0 var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    display: flex;
+    gap: var(--space-2);
+    text-wrap: pretty;
+  }
+  .diagram__num {
+    color: var(--color-accent);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+  // Page-local figure counter — runs on every page-load (View Transitions safe).
+  document.addEventListener("astro:page-load", () => {
+    const figs = document.querySelectorAll<HTMLElement>(".diagram .diagram__num");
+    figs.forEach((el, i) => {
+      el.textContent = `FIG. ${String(i + 1).padStart(2, "0")}`;
+    });
+  });
+</script>

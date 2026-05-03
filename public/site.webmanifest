@@ -1,0 +1,35 @@
+{
+  "name": "artka.dev",
+  "short_name": "artka",
+  "description": "Записки из продакшна — backend, AI agent engineering, distributed systems.",
+  "start_url": "/",
+  "display": "minimal-ui",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    }
+  ]
+}

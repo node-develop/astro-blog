@@ -1,0 +1,104 @@
+---
+/**
+ * <CertificateButton course={courseSlug} totalLessons={N} />
+ *
+ * Renders a "Get certificate" button on the course landing page when
+ * the user is signed in and has 100% progress. Hidden otherwise; the
+ * progress meter handles the messaging.
+ *
+ * The button is a plain <a download> link to the certificate endpoint —
+ * no JS required for the happy path. A small client script adds two
+ * niceties:
+ *   1. Hides itself if the user is signed out (data-auth flag).
+ *   2. Live-updates visibility when the progress event fires (so it
+ *      appears the moment the last lesson is completed without reload).
+ */
+interface Props {
+  course: string;
+  totalLessons: number;
+}
+const { course, totalLessons } = Astro.props;
+---
+
+<div
+  class="certificate"
+  data-certificate-course={course}
+  data-certificate-total={String(totalLessons)}
+  hidden
+>
+  <p class="certificate__label">CERTIFICATE OF COMPLETION</p>
+  <p class="certificate__copy">
+    Вы прошли все {totalLessons} уроков. Сертификат выдаётся в&nbsp;виде PNG&nbsp;1600×1100, подходит
+    для&nbsp;печати на&nbsp;A4.
+  </p>
+  <a
+    class="certificate__cta"
+    href={`/courses/${course}/certificate.png`}
+    download={`${course}-certificate.png`}
+  >
+    Скачать сертификат
+  </a>
+</div>
+
+<style>
+  .certificate {
+    margin: var(--space-6) 0;
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent-subtle);
+    border-radius: var(--radius-md);
+  }
+  .certificate__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .certificate__copy {
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    margin: 0 0 var(--space-3) 0;
+    color: var(--color-fg);
+    text-wrap: pretty;
+  }
+  .certificate__cta {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: var(--color-bg);
+    text-decoration: none;
+    border: 1px solid var(--color-accent);
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .certificate__cta:hover {
+    background: var(--color-accent-hover);
+  }
+</style>
+
+<script>
+  import { getCourse, onProgressChange } from "~/lib/courses/progress";
+
+  function update(el: HTMLElement): void {
+    const slug = el.dataset.certificateCourse ?? "";
+    const total = parseInt(el.dataset.certificateTotal ?? "0", 10);
+    const signedIn = document.querySelector('body[data-auth="signed-in"]') !== null;
+    const completed = getCourse(slug).completed.length;
+    el.hidden = !(signedIn && total > 0 && completed >= total);
+  }
+
+  function init(): void {
+    const els = document.querySelectorAll<HTMLElement>("[data-certificate-course]");
+    els.forEach((el) => update(el));
+    onProgressChange(() => els.forEach((el) => update(el)));
+  }
+  document.addEventListener("astro:page-load", init);
+</script>

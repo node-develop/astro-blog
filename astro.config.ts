@@ -88,6 +88,30 @@ export default defineConfig({
       redirectToDefaultLocale: false,
     },
   },
+  // Permanent redirects from the prior /blog locations of the
+  // claude-code-guide series to the course-lesson layout. Browsers
+  // and search engines treat these as 301s.
+  redirects: Object.fromEntries(
+    [
+      "01-introduction",
+      "02-context-and-cache",
+      "03-claude-md",
+      "04-skills",
+      "05-hooks",
+      "06-mcp",
+      "07-plugins",
+      "08-tool-calls-and-loop",
+      "09-subagents",
+      "10-agent-teams",
+      "11-models-and-pricing",
+      "12-travel-agent-blueprint",
+      "13-best-practices",
+      "14-claims-verification",
+    ].flatMap((slug) => [
+      [`/blog/${slug}`, `/courses/claude-code-guide/${slug}`],
+      [`/en/blog/${slug}`, `/en/courses/claude-code-guide/${slug}`],
+    ]),
+  ),
   integrations: [
     mdx({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],

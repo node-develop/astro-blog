@@ -64,5 +64,11 @@
   "tags.archiveDescription": "aa3312a26add926450d19617ee2b3e253516504837eadefd85c71340a862ba8f",
   "tags.archiveEmptyRu": "ecad2ef65c8088413a65e8595371226e4cae595febdfa1d61aaa73897201720d",
   "tags.archiveEmptyEn": "70b054b0c6d27ed9f5a92b90e09bd72798fec063ca7f5511e632420672dff239",
-  "tags.backToIndex": "25ba0f242ec52263eee451bc1c22d42c781eeed675b1ef1a24bdc179e8483139"
+  "tags.backToIndex": "25ba0f242ec52263eee451bc1c22d42c781eeed675b1ef1a24bdc179e8483139",
+  "theme.toggle.aria": "3a100f9610650ed31a79926df5d677e983df7c93a1d1f0ddd275edee94859605",
+  "drawer.close": "a7a4033657e89fc91b2c512f19a15d0f3c11a113b23192193db9063e2283f908",
+  "drawer.title": "122f7176502656be29238539a0ab2ec556d57fb4fe533ebc3bfea292520a407d",
+  "nav.primary": "8fff0bba4454d28d6acd28aee587187982a6e69ee8f21b96c9cd8c899d0aa942",
+  "nav.home": "d328e53dc4561e099c85d45d26fea5d20aac5ffc2b949a0388eb794e30db40cb",
+  "nav.blog": "c31cdbd07e6cc3a2d6686bd342dc144f273e82226b5c17b60037114524adcdaf"
 }

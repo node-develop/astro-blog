@@ -1,26 +1,44 @@
 /**
- * Phase 2 — code block dual-theme.
+ * Phase 5 fix — replaces src/styles/code-themes.css.
  *
- * Astro/Shiki with `themes: { light, dark }` outputs every token as:
- *   <span style="--shiki-light: #xxx; --shiki-dark: #yyy">…</span>
+ * BUG (in the prior version):
+ *   .prose :is(pre, pre code, pre code span) {
+ *     background-color: var(--shiki-light-bg);
+ *   }
  *
- * The default Astro behaviour switches based on `prefers-color-scheme`.
- * Our app uses `[data-theme='dark']` on <html>, so we override.
+ * Shiki stamps `--shiki-light-bg` / `--shiki-dark-bg` as INLINE STYLE on
+ * the <pre> element only. CSS variables inherit, so on every inner
+ * <span class="line"> and every per-token <span> the variable resolved
+ * to the same value, and the rule above painted a solid background
+ * RECTANGLE per span. On the light theme white-on-white hid the bug; on
+ * dark theme each span drew a white block, producing the staircase of
+ * white bars over a dark pre background that the user reported.
  *
- * Append this file to `src/styles/global.css` (or import from there).
+ * Fix:
+ *   - Background only on <pre>. Never on <code> or inner spans.
+ *   - Spans only get `color`, `font-style`, `font-weight`,
+ *     `text-decoration` — those Shiki-emitted vars are per-token and
+ *     should be applied per token.
+ *
+ * Also takes the chance to:
+ *   - Tighten contrast on dark: token bg should fall through to the
+ *     pre's --color-bg-subtle, which is already set.
+ *   - Add a soft inner shadow on hover to hint copy-button affordance
+ *     (kept tasteful, only in dark).
+ *   - Make `pre code` a flex column so .line items don't get extra
+ *     baseline gaps from inline-block whitespace.
  */
 
 /* ---- DEFAULT (light, paper) ----------------------------------- */
-.prose :is(pre, pre code, pre code span) {
+.prose :is(pre code, pre code span) {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
   font-style: var(--shiki-light-font-style);
   font-weight: var(--shiki-light-font-weight);
   text-decoration: var(--shiki-light-text-decoration);
+  /* No background here — spans inherit transparent over the pre. */
 }
 
 .prose pre {
-  /* Override Shiki's inline bg so the pre frame matches our paper tone */
   background: var(--color-bg-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -32,14 +50,28 @@
   margin: var(--space-5) 0;
 }
 
+.prose pre code {
+  display: block;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  /* Allow .line spans to flow as a block sequence — avoids inline-block
+     whitespace gaps between rows. */
+}
+
+.prose pre code .line {
+  display: block;
+  min-height: 1lh;
+}
+
 /* ---- DARK ----------------------------------------------------- */
-:root[data-theme="dark"] .prose :is(pre, pre code, pre code span) {
+:root[data-theme="dark"] .prose :is(pre code, pre code span) {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
   font-style: var(--shiki-dark-font-style);
   font-weight: var(--shiki-dark-font-weight);
   text-decoration: var(--shiki-dark-text-decoration);
 }
+
 :root[data-theme="dark"] .prose pre {
   background: var(--color-bg-subtle);
   border-color: var(--color-border);
@@ -54,4 +86,27 @@
   background: var(--color-bg-subtle);
   border: 1px solid var(--color-border);
   color: var(--color-fg);
+}
+
+/* ---- Diff / highlight / focus lines (Shiki transformer output) ---
+   Shiki ships a few opt-in transformers. If you enable them later,
+   here's the contract — this rule set picks up the canonical class
+   names without hard-failing if the transformer isn't installed. */
+.prose pre code .line.diff.add {
+  background-color: oklch(0.85 0.13 145 / 0.18);
+}
+.prose pre code .line.diff.remove {
+  background-color: oklch(0.55 0.18 25 / 0.18);
+}
+.prose pre code .line.highlighted {
+  background-color: oklch(0.85 0.1 80 / 0.22);
+}
+[data-theme="dark"] .prose pre code .line.diff.add {
+  background-color: oklch(0.4 0.13 145 / 0.3);
+}
+[data-theme="dark"] .prose pre code .line.diff.remove {
+  background-color: oklch(0.35 0.15 25 / 0.3);
+}
+[data-theme="dark"] .prose pre code .line.highlighted {
+  background-color: oklch(0.3 0.05 80 / 0.4);
 }

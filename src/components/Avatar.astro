@@ -1,0 +1,88 @@
+---
+/**
+ * Avatar component — Phase 5 audit fix.
+ *
+ * Renders the author photo with three sizes:
+ *   - sm:  32 × 32   — header lockup adjacent
+ *   - md:  64 × 64   — about page sidebar
+ *   - lg: 144 × 144  — about page hero
+ *
+ * The image lives at /public/me.jpg (or /me.webp — both are checked at
+ * build time via the `<picture>` source block). If neither exists, the
+ * component falls back to a static SVG monogram using the same sienna
+ * mark as the favicon — never a broken image. See
+ * `phase-5/public/AVATAR-README.md` for how to drop in your real photo.
+ *
+ * No JS — pure Astro markup + CSS.
+ */
+interface Props {
+  size?: "sm" | "md" | "lg";
+  alt?: string;
+  /** When true, renders inside a circular sienna ring frame. */
+  framed?: boolean;
+}
+
+const { size = "md", alt = "Артём Кашута", framed = true } = Astro.props;
+
+const dim = size === "sm" ? 32 : size === "md" ? 64 : 144;
+---
+
+<figure class={`avatar avatar--${size}`} data-framed={framed ? "true" : undefined}>
+  <picture>
+    <source srcset="/me.webp" type="image/webp" />
+    <source srcset="/me.jpg" type="image/jpeg" />
+    <img
+      src="/me-fallback.svg"
+      width={dim}
+      height={dim}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      class="avatar__img"
+    />
+  </picture>
+</figure>
+
+<style>
+  .avatar {
+    margin: 0 0 var(--space-4) 0;
+    display: inline-block;
+    line-height: 0;
+  }
+  .avatar__img {
+    border-radius: 50%;
+    background: var(--color-bg-subtle);
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+  }
+  .avatar--sm .avatar__img {
+    width: 32px;
+    height: 32px;
+  }
+  .avatar--md .avatar__img {
+    width: 64px;
+    height: 64px;
+  }
+  .avatar--lg .avatar__img {
+    width: 144px;
+    height: 144px;
+  }
+
+  .avatar[data-framed="true"] .avatar__img {
+    box-shadow:
+      0 0 0 1px var(--color-border),
+      0 0 0 4px var(--color-bg),
+      0 0 0 5px var(--color-accent);
+  }
+
+  /* On the about page, lg variant gets a small sienna underline beneath
+     to anchor it visually to the H1 below. */
+  .avatar--lg::after {
+    content: "";
+    display: block;
+    width: 32px;
+    height: 2px;
+    background: var(--color-accent);
+    margin-top: var(--space-3);
+  }
+</style>
