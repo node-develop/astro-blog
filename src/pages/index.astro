@@ -11,6 +11,7 @@ const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const latest = posts.slice(0, 3);
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 ---
 
@@ -27,6 +28,15 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
     </p>
     <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
   </section>
+
+  <aside class="course-card">
+    <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
+    <h2 class="course-card__title">
+      <a href={courseHref}>{t(locale, "home.courseTitle")}</a>
+    </h2>
+    <p class="course-card__lede">{t(locale, "home.courseLede")}</p>
+    <a href={courseHref} class="course-card__cta">{t(locale, "home.courseCta")}</a>
+  </aside>
 
   <section class="latest">
     <h2 class="latest__label">{t(locale, "home.latestLabel")}</h2>
@@ -87,6 +97,57 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
       padding-bottom: 1px;
     }
     .hero__cta:hover {
+      color: var(--color-accent-hover);
+    }
+
+    .course-card {
+      max-width: 720px;
+      margin-top: var(--space-7);
+      padding: var(--space-5) var(--space-6);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      background: var(--color-accent-subtle);
+    }
+    .course-card__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-accent);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .course-card__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-xl);
+      font-weight: 500;
+      line-height: var(--lh-tight);
+      letter-spacing: var(--tracking-tight);
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+    }
+    .course-card__title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .course-card__title a:hover {
+      color: var(--color-accent);
+    }
+    .course-card__lede {
+      margin: 0 0 var(--space-3) 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+      text-wrap: pretty;
+    }
+    .course-card__cta {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--color-accent);
+      padding-bottom: 1px;
+    }
+    .course-card__cta:hover {
       color: var(--color-accent-hover);
     }
 

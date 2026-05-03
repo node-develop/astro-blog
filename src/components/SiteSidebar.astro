@@ -1,10 +1,11 @@
 ---
+import { getCollection, type CollectionEntry } from "astro:content";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 interface Props {
-  /** Slug of the currently-displayed post, if any — used for active highlight. */
+  /** Slug of the currently-displayed entry (post or lesson), if any. */
   activeSlug?: string;
 }
 
@@ -12,15 +13,36 @@ const { activeSlug } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 
-// Strip the "en/" collection-id prefix so the URL slug is bare on both sides;
-// the route prefix is added by `blogPrefix` below.
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+const coursePrefix = locale === "en" ? "/en/courses" : "/courses";
 
-// Split into "guide series" (numeric slugs) and "other" so the sidebar can
-// group them visually — matches the structure of the existing content.
+// Course lessons (filtered by locale) — used to render the "Guide" section.
+const allLessons = await getCollection("lesson");
+const courseSlug = "claude-code-guide";
+const lessonPathPrefix = locale === "en" ? `${courseSlug}/en/` : `${courseSlug}/`;
+const series = allLessons
+  .filter((l: CollectionEntry<"lesson">) => {
+    if (!l.id.startsWith(lessonPathPrefix)) return false;
+    if (locale === "ru" && l.id.startsWith(`${courseSlug}/en/`)) return false;
+    return true;
+  })
+  .sort((a: CollectionEntry<"lesson">, b: CollectionEntry<"lesson">) => {
+    const ao = a.data.order ?? parseInt(a.id.match(/(\d+)/)?.[1] ?? "0", 10);
+    const bo = b.data.order ?? parseInt(b.id.match(/(\d+)/)?.[1] ?? "0", 10);
+    return ao - bo;
+  });
+
+const courseLandingHref = `${coursePrefix}/${courseSlug}`;
+const lessonShortSlug = (lesson: CollectionEntry<"lesson">): string =>
+  lesson.id.split("/").pop() ?? lesson.id;
+const lessonOrder = (lesson: CollectionEntry<"lesson">): number =>
+  lesson.data.order ?? parseInt(lesson.id.match(/(\d+)/)?.[1] ?? "0", 10);
+const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
+  `${courseLandingHref}/${lessonShortSlug(lesson)}`;
+
+// Remaining standalone blog posts.
 const NUMERIC_SLUG = /^\d{2}[-_]/;
-const series = posts.filter((p: PostWithMeta) => NUMERIC_SLUG.test(bareSlug(p.entry.id)));
 const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.entry.id)));
 ---
 
@@ -28,24 +50,24 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
   {
     series.length > 0 && (
       <section class="sidebar__section">
-        <h2 class="sidebar__label">{t(locale, "sidebar.guide")}</h2>
+        <h2 class="sidebar__label">
+          <a href={courseLandingHref} class="sidebar__label-link">
+            {t(locale, "sidebar.guide")}
+          </a>
+        </h2>
         <ol class="sidebar__list" reversed={false}>
-          {series.map((p: PostWithMeta) => {
-            const slug = bareSlug(p.entry.id);
-            const isActive = slug === activeSlug;
-            return (
-              <li>
-                <a
-                  href={`${blogPrefix}/${slug}`}
-                  class="sidebar__link"
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  <span class="sidebar__num">{String(p.meta.order).padStart(2, "0")}</span>
-                  <span class="sidebar__title">{p.entry.data.title}</span>
-                </a>
-              </li>
-            );
-          })}
+          {series.map((lesson: CollectionEntry<"lesson">) => (
+            <li>
+              <a
+                href={lessonHref(lesson)}
+                class="sidebar__link"
+                aria-current={lessonShortSlug(lesson) === activeSlug ? "page" : undefined}
+              >
+                <span class="sidebar__num">{String(lessonOrder(lesson)).padStart(2, "0")}</span>
+                <span class="sidebar__title">{lesson.data.title}</span>
+              </a>
+            </li>
+          ))}
         </ol>
       </section>
     )
@@ -92,6 +114,18 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
     margin: 0 0 var(--space-3) 0;
     font-weight: 500;
   }
+  .sidebar__label-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .sidebar__label-link:hover {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+  }
   .sidebar__list {
     list-style: none;
     padding: 0;
@@ -102,10 +136,6 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
   }
   .sidebar__link {
     display: grid;
-    /* Default: single column for "Other posts" links that don't render
-       a numeric prefix. Without this, the lone .sidebar__title inherited
-       the 22px first track from the series rule and got clipped to a
-       few characters on both mobile and desktop, RU and EN. */
     grid-template-columns: 1fr;
     gap: var(--space-2);
     align-items: baseline;
@@ -117,9 +147,6 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-  /* Series links carry a `<span class="sidebar__num">` prefix; widen the
-     grid only for those. :has() is supported in all evergreen browsers
-     (Chrome 105+, Safari 15.4+, Firefox 121+). */
   .sidebar__link:has(.sidebar__num) {
     grid-template-columns: 22px 1fr;
   }
