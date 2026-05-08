@@ -79,6 +79,7 @@ const absoluteOgImage = ogImage
 
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
+const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
 ---
 
 <!doctype html>
@@ -168,6 +169,12 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       type="application/rss+xml"
       title={t(locale, "site.feedTitle")}
       href={rssHref}
+    />
+    <link
+      rel="alternate"
+      type="application/feed+json"
+      title={t(locale, "site.feedTitle")}
+      href={jsonFeedHref}
     />
     <script
       is:inline
