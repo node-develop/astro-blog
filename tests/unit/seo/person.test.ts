@@ -4,14 +4,17 @@ import { safeJsonLd } from "~/lib/seo/json-ld";
 
 describe("person source of truth", () => {
   it("exposes required fields", () => {
-    expect(person.name).toBe("Артём Кашута");
+    expect(person.name).toBe("Artyom Kashuta");
+    expect(person.alternateName).toBe("Артём Кашута");
     expect(person.url).toBe("https://artka.dev/about");
     expect(person.image).toMatch(/^https?:\/\//);
+    expect(person.image).toMatch(/\.(png|jpg|webp)$/i);
     expect(person.jobTitle).toBeTruthy();
     expect(person.description.length).toBeGreaterThan(40);
     expect(Array.isArray(person.knowsAbout)).toBe(true);
     expect(person.knowsAbout.length).toBeGreaterThanOrEqual(3);
     expect(Array.isArray(person.sameAs)).toBe(true);
+    expect(person.sameAs.length).toBeGreaterThanOrEqual(3);
     expect(person.email).toMatch(/@/);
   });
 });

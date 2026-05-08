@@ -121,6 +121,5 @@ export const person: PersonProfile = {
     "Backend & distributed systems",
     "Event-sourced microservices",
     "Observability & SRE",
-    "Developer tooling",
   ],
 };

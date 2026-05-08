@@ -23,7 +23,7 @@ describe("buildPersonNode", () => {
     const node = buildPersonNode();
     expect(node["@type"]).toBe("Person");
     expect(node["@id"]).toBe(graphIds.person);
-    expect(node.name).toBe("Артём Кашута");
+    expect(node.name).toBe("Artyom Kashuta");
     expect(node.knowsAbout).toContain("Claude Code");
     expect(node.email).toMatch(/@/);
   });

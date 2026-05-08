@@ -15,7 +15,11 @@ const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 ---
 
-<BaseLayout title="artka.dev" description={t(locale, "meta.home.description")} fullWidth={true}>
+<BaseLayout
+  title={t(locale, "meta.home.title")}
+  description={t(locale, "meta.home.description")}
+  fullWidth={true}
+>
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">

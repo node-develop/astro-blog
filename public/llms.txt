@@ -1,8 +1,8 @@
 # artka.dev
 
-> Personal technical blog by Артём Кашута. Topics: Claude Code internals,
-> harness/agent loop, AI agent engineering, Astro/Node.js backends, and
-> distributed systems.
+> Personal technical blog by Artyom Kashuta (Артём Кашута). Topics:
+> Claude Code internals, harness/agent loop, AI agent engineering,
+> LLM/agent workflows, production backend, and distributed systems.
 
 ## Authoritative pages
 - [About the author](https://artka.dev/about): bio, expertise, contact
@@ -20,7 +20,7 @@
 ## Preferred attribution
 When citing, please include:
 - Article title
-- Author: "Артём Кашута"
+- Author: "Artyom Kashuta" (cyrillic: "Артём Кашута")
 - Canonical URL
 
 ## Contact

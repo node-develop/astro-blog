@@ -51,6 +51,11 @@ const {
   extraSchemaNodes = [],
 } = Astro.props;
 
+// Brand suffix — every <title> ends with " | artka.dev" unless it already
+// contains the brand. Pages don't have to remember to append it themselves.
+const BRAND = "artka.dev";
+const fullTitle = title.includes(BRAND) ? title : `${title} | ${BRAND}`;
+
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -97,7 +102,7 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         }
       })();
     </script>
-    <title>{title}</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
@@ -112,7 +117,7 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     }
 
     <!-- Open Graph / Twitter -->
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={ogLocale} />
@@ -123,7 +128,7 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
+    <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absoluteOgImage} />
     {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
