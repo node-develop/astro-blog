@@ -43,7 +43,9 @@ export const buildOrganizationNode = () => ({
   url: SITE,
   logo: {
     "@type": "ImageObject",
-    url: `${SITE}/favicon.svg`,
+    url: `${SITE}/icon-512.png`,
+    width: 512,
+    height: 512,
   },
   founder: { "@id": graphIds.person },
 });
