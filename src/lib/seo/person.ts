@@ -1,7 +1,9 @@
 // Single source of truth for the site author identity. Edit this file when the
-// owner provides additional sameAs URLs or a square avatar (>= 512x512 PNG).
-// Plan 2 added: notableWork, yearsExperience, techStack, expertiseAreas — kept in
-// sync with markdown copy under src/content/site/.
+// owner's role/profile changes or when adding additional sameAs URLs.
+//
+// Profile pulled from CV (2026-05) — primary role is AI engineering and backend,
+// not Astro. Astro is just the framework powering this blog. Don't add it to
+// jobTitle/description/knowsAbout for SEO purposes.
 
 export interface NotableWorkItem {
   readonly title: string;
@@ -11,6 +13,7 @@ export interface NotableWorkItem {
 
 export interface PersonProfile {
   readonly name: string;
+  readonly alternateName: string;
   readonly url: string;
   readonly image: string;
   readonly jobTitle: string;
@@ -27,61 +30,97 @@ export interface PersonProfile {
 const SITE = "https://artka.dev";
 
 export const person: PersonProfile = {
-  name: "Артём Кашута",
+  name: "Artyom Kashuta",
+  alternateName: "Артём Кашута",
   url: `${SITE}/about`,
-  // TODO(owner): replace with a square ≥ 512×512 PNG (spec open-question #5).
-  image: `${SITE}/og-default.svg`,
-  jobTitle: "Software engineer · backend & AI agent engineering",
+  image: `${SITE}/avatar-512.png`,
+  jobTitle: "Full-stack & AI engineer · LLM/agent workflows · backend",
   description:
-    "Backend инженер и AI-agent engineer. Пишу про Claude Code, harness/agent loop, Astro/Node.js и распределённые системы.",
+    "Full-stack and AI engineer with 5+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
   knowsAbout: [
     "Claude Code",
     "AI agent engineering",
-    "Node.js",
+    "LangGraph",
+    "LangChain",
+    "LangSmith",
+    "OpenAI API",
+    "Anthropic API",
+    "Gemini API",
+    "RAG",
+    "Embeddings",
+    "Vector search",
+    "Hybrid search",
+    "Python",
+    "FastAPI",
     "TypeScript",
-    "Astro",
+    "Node.js",
+    "Fastify",
+    "gRPC",
+    "Apache Kafka",
+    "PostgreSQL",
+    "Redis",
+    "AWS EKS",
+    "Kubernetes",
+    "OpenTelemetry",
     "Distributed systems",
-    "DevOps",
+    "Backend architecture",
   ],
-  // TODO(owner): add LinkedIn / GitHub / X URLs (spec open-question #2).
-  sameAs: [],
+  sameAs: [
+    "https://github.com/node-develop",
+    "https://www.linkedin.com/in/artem-kashuta/",
+    "https://x.com/artkadev",
+    "https://t.me/akv6020",
+  ],
   email: "a@artka.dev",
 
   notableWork: [
     {
-      title: "Claude Code Guide (RU, 14 частей)",
-      url: `${SITE}/blog`,
+      title: "Claude Code Guide (RU, 14 lessons)",
+      url: `${SITE}/courses/claude-code-guide`,
       description:
-        "Серия про harness/agent loop, context, skills, hooks, MCP, subagents и антипаттерны Claude Code.",
+        "A 14-lesson series on Claude Code internals — harness, agent loop, context, skills, hooks, MCP, subagents, models, and antipatterns.",
     },
     {
-      title: "artka.dev — этот блог",
+      title: "artka.dev — personal blog",
       url: SITE,
-      description: "Astro 5 + Postgres + Drizzle, билингв RU/EN, SSG-острова под админку.",
-    },
-    {
-      title: "AI agent engineering writeups",
-      url: `${SITE}/blog`,
       description:
-        "Постмортемы и разборы агентских систем: tool design, evaluation, harness и production failure modes.",
+        "Notes on AI agent engineering, Claude Code, LLM pipelines, and production backend in Russian and English.",
     },
   ],
-  yearsExperience: 10,
+  yearsExperience: 5,
   techStack: [
+    "Python",
     "TypeScript",
     "Node.js",
-    "Astro",
+    "FastAPI",
+    "Fastify",
     "PostgreSQL",
-    "Drizzle ORM",
+    "Redis",
+    "Apache Kafka",
+    "gRPC",
+    "GraphQL",
+    "AWS EKS",
+    "Kubernetes",
     "Docker",
     "GitHub Actions",
+    "GitLab CI/CD",
+    "OpenTelemetry",
+    "Prometheus",
+    "Grafana",
     "Claude Code",
+    "Cursor",
     "Anthropic SDK",
+    "OpenAI SDK",
+    "LangGraph",
+    "LangChain",
+    "LangSmith",
   ],
   expertiseAreas: [
     "AI agent engineering",
+    "LLM evaluation & tracing",
     "Backend & distributed systems",
+    "Event-sourced microservices",
+    "Observability & SRE",
     "Developer tooling",
-    "DevOps & deploy automation",
   ],
 };
