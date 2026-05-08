@@ -67,16 +67,15 @@ const enVariant =
   locale === "en" ? canonical : new URL(counterpartPath, Astro.site ?? Astro.url).toString();
 
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
+const ogLocaleAlternate = locale === "ru" ? "en_US" : "ru_RU";
 
-// OG image: prefer PNG raster; fall back to SVG. Both are absolute.
+// OG image: always PNG raster. SVG fallback used to live on og:image:secure_url
+// but Twitter/Facebook reject SVG previews — see SEO audit 2026-05-08, claim #10.
 const absoluteOgImage = ogImage
   ? /^https?:\/\//.test(ogImage)
     ? ogImage
     : new URL(ogImage, Astro.site ?? Astro.url).toString()
   : new URL("/og-default.png", Astro.site ?? Astro.url).toString();
-const absoluteOgImageSvg = ogImage
-  ? absoluteOgImage
-  : new URL("/og-default.svg", Astro.site ?? Astro.url).toString();
 
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
@@ -109,22 +108,27 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     {
       counterpartExists && (
         <>
-          <link rel="alternate" hreflang="ru" href={ruVariant} />
-          <link rel="alternate" hreflang="en" href={enVariant} />
+          <link rel="alternate" hreflang="ru-RU" href={ruVariant} />
+          <link rel="alternate" hreflang="en-US" href={enVariant} />
           <link rel="alternate" hreflang="x-default" href={ruVariant} />
         </>
       )
     }
+
+    <!-- Preconnect to analytics origin so the deferred Plausible script
+         doesn't pay a fresh DNS+TLS handshake on first run. No crossorigin
+         flag because the script is loaded as a normal (non-CORS) request. -->
+    <link rel="preconnect" href="https://plausible.io" />
 
     <!-- Open Graph / Twitter -->
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={ogLocale} />
+    {counterpartExists && <meta property="og:locale:alternate" content={ogLocaleAlternate} />}
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="artka.dev" />
     <meta property="og:image" content={absoluteOgImage} />
-    <meta property="og:image:secure_url" content={absoluteOgImageSvg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -280,7 +284,12 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       your own equivalent if you wire it in differently.
     -->
     <script>
-      (async () => {
+      // Auth probe is deferred to idle so it never competes with FCP/TTI.
+      // Anonymous visitors pay a wasted request otherwise. UI islands that
+      // gate on body[data-auth="signed-in"] (CertificateButton, course
+      // progress) should render a skeleton until the attribute appears,
+      // not assume it's there on first paint.
+      const probeAuth = async () => {
         try {
           const r = await fetch("/api/auth/get-session", { credentials: "same-origin" });
           if (r.ok) {
@@ -290,7 +299,13 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         } catch {
           /* anonymous */
         }
-      })();
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(probeAuth, { timeout: 2000 });
+      } else {
+        // Safari < 17 fallback. setTimeout(0) yields after the current task.
+        setTimeout(probeAuth, 0);
+      }
     </script>
   </body>
 </html>
