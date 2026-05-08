@@ -50,11 +50,11 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
   {
     series.length > 0 && (
       <section class="sidebar__section">
-        <h2 class="sidebar__label">
+        <h3 class="sidebar__label">
           <a href={courseLandingHref} class="sidebar__label-link">
             {t(locale, "sidebar.guide")}
           </a>
-        </h2>
+        </h3>
         <ol class="sidebar__list" reversed={false}>
           {series.map((lesson: CollectionEntry<"lesson">) => (
             <li>
@@ -75,7 +75,7 @@ const extras = posts.filter((p: PostWithMeta) => !NUMERIC_SLUG.test(bareSlug(p.e
   {
     extras.length > 0 && (
       <section class="sidebar__section">
-        <h2 class="sidebar__label">{t(locale, "sidebar.other")}</h2>
+        <h3 class="sidebar__label">{t(locale, "sidebar.other")}</h3>
         <ul class="sidebar__list">
           {extras.map((p: PostWithMeta) => {
             const slug = bareSlug(p.entry.id);

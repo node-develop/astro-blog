@@ -36,12 +36,12 @@ const tagline = locale === "en" ? "notes from production" : "записки из
 
 <header class="site-header" role="banner" data-site-header>
   <div class="site-header__inner">
-    <a href={homeHref} class="site-header__brand" aria-label={t(locale, "nav.posts")}>
+    <a href={homeHref} class="site-header__brand" aria-label={t(locale, "nav.home")}>
       <span class="site-header__lockup">artka.dev</span>
       <span class="site-header__tagline">{tagline}</span>
     </a>
 
-    <nav class="site-header__nav" aria-label={t(locale, "nav.posts")}>
+    <nav class="site-header__nav" aria-label={t(locale, "nav.primary")}>
       <a href={blogHref} aria-current={isActive("/blog") ? "page" : undefined}
         >{t(locale, "nav.posts")}</a
       >
