@@ -3,7 +3,7 @@ title: "robots.txt in the age of AI crawlers: GPTBot, ClaudeBot, PerplexityBot â
 description: >-
   In 2026, robots.txt is not 'forbid all bots' and not 'allow everything', but a policy for each of 9+ named agents.
   Real template, decision table, and pitfalls.
-pubDate: 2026-05-02
+pubDate: 2026-05-01
 tags:
   - seo
   - ai-crawlers

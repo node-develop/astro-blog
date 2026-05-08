@@ -3,7 +3,7 @@ title: "Mermaid → SVG via Playwright at build time: cold start, cache, and SSG
 description: >-
   Real measurements from an Astro blog with 32 Mermaid diagrams: cold build 11.6s, warm 6.3s. Where the cache is, what
   Playwright does, why alternatives are worse.
-pubDate: 2026-05-02
+pubDate: 2026-04-30
 tags:
   - build-tooling
   - astro
