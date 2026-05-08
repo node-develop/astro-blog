@@ -1,0 +1,148 @@
+---
+/**
+ * Author identity card on the home page.
+ *
+ * Renders 64×64 avatar + name + jobTitle + 1-line bio + social links
+ * pulled from src/lib/seo/person.ts. Names a public anchor (id="me") so
+ * external links can deep-link to it.
+ *
+ * Social labels are derived from the URL host so person.sameAs stays
+ * the single source of truth — no parallel array of icons to maintain.
+ */
+import { person } from "~/lib/seo/person";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const aboutHref = locale === "en" ? "/en/about" : "/about";
+
+const socialLabel = (url: string): string => {
+  const host = new URL(url).hostname.replace(/^www\./, "");
+  if (host.endsWith("github.com")) return "GitHub";
+  if (host.endsWith("linkedin.com")) return "LinkedIn";
+  if (host === "x.com" || host === "twitter.com") return "X";
+  if (host === "t.me" || host === "telegram.me") return "Telegram";
+  if (host.endsWith("mastodon.social") || host.includes("mastodon")) return "Mastodon";
+  return host;
+};
+---
+
+<section class="home-author" aria-labelledby="home-author-name" id="me">
+  <a href={aboutHref} class="home-author__avatar" aria-hidden="true" tabindex="-1">
+    <img src={person.image} alt="" width="64" height="64" loading="lazy" decoding="async" />
+  </a>
+  <div class="home-author__body">
+    <p class="home-author__label">{t(locale, "home.author.label")}</p>
+    <p class="home-author__name" id="home-author-name">
+      <a href={aboutHref}>{person.name}</a>
+    </p>
+    <p class="home-author__role">{person.jobTitle}</p>
+    <p class="home-author__bio">{t(locale, "home.author.bio")}</p>
+    <ul class="home-author__links" aria-label={t(locale, "home.author.linksAria")}>
+      {
+        person.sameAs.map((url) => (
+          <li>
+            <a href={url} rel="me noopener" target="_blank">
+              {socialLabel(url)}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .home-author {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    max-width: 720px;
+    padding: var(--space-5) 0;
+    margin-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .home-author__avatar {
+    line-height: 0;
+    display: inline-block;
+  }
+  .home-author__avatar img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    object-fit: cover;
+    display: block;
+  }
+  .home-author__body {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .home-author__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0;
+  }
+  .home-author__name {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    margin: 0;
+  }
+  .home-author__name a {
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+  .home-author__name a:hover {
+    color: var(--color-accent);
+  }
+  .home-author__role {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+  .home-author__bio {
+    color: var(--color-fg-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    margin: var(--space-2) 0 0 0;
+    text-wrap: pretty;
+  }
+  .home-author__links {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-2) 0 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+  }
+  .home-author__links a {
+    color: var(--color-accent);
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    padding-bottom: 1px;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .home-author__links a:hover {
+    border-bottom-color: var(--color-accent);
+  }
+  @media (max-width: 600px) {
+    .home-author {
+      grid-template-columns: 48px 1fr;
+      gap: var(--space-3);
+    }
+    .home-author__avatar img {
+      width: 48px;
+      height: 48px;
+    }
+  }
+</style>

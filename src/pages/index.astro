@@ -3,6 +3,7 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
@@ -32,6 +33,8 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
     </p>
     <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
   </section>
+
+  <HomeAuthorCard />
 
   <aside class="course-card">
     <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
