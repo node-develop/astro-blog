@@ -30,6 +30,7 @@ import Analytics from "~/components/Analytics.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
+import { person } from "~/lib/seo/person";
 
 interface Props {
   title: string;
@@ -80,6 +81,33 @@ const absoluteOgImage = ogImage
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
+
+const localePrefix = locale === "en" ? "/en" : "";
+const footerLinks = {
+  about: [
+    { href: `${localePrefix}/about`, key: "nav.about" },
+    { href: `${localePrefix}/now`, key: "nav.now" },
+    { href: `${localePrefix}/uses`, key: "nav.uses" },
+    { href: `${localePrefix}/projects`, key: "nav.projects" },
+  ],
+  read: [
+    { href: `${localePrefix}/blog`, key: "nav.posts" },
+    { href: `${localePrefix}/courses/claude-code-guide`, key: "footer.link.course" },
+    { href: `${localePrefix}/tags`, key: "footer.link.tags" },
+    { href: rssHref, key: "footer.link.rss" },
+    { href: jsonFeedHref, key: "footer.link.json" },
+  ],
+} as const;
+
+const socialLabel = (url: string): string => {
+  const host = new URL(url).hostname.replace(/^www\./, "");
+  if (host.endsWith("github.com")) return "GitHub";
+  if (host.endsWith("linkedin.com")) return "LinkedIn";
+  if (host === "x.com" || host === "twitter.com") return "X";
+  if (host === "t.me" || host === "telegram.me") return "Telegram";
+  if (host.includes("mastodon")) return "Mastodon";
+  return host;
+};
 ---
 
 <!doctype html>
@@ -204,8 +232,53 @@ const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
     </div>
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <p>© {new Date().getFullYear()} — artka.dev</p>
-        <p class="site-footer__meta">{t(locale, "footer.meta")}</p>
+        <nav class="site-footer__cols" aria-label="Footer">
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.about")}</h2>
+            <ul>
+              {
+                footerLinks.about.map((l) => (
+                  <li>
+                    <a href={l.href}>{t(locale, l.key)}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.read")}</h2>
+            <ul>
+              {
+                footerLinks.read.map((l) => (
+                  <li>
+                    <a href={l.href}>{t(locale, l.key)}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.connect")}</h2>
+            <ul>
+              {
+                person.sameAs.map((url) => (
+                  <li>
+                    <a href={url} rel="me noopener" target="_blank">
+                      {socialLabel(url)}
+                    </a>
+                  </li>
+                ))
+              }
+              <li>
+                <a href={`mailto:${person.email}`} rel="me">{t(locale, "footer.link.email")}</a>
+              </li>
+            </ul>
+          </section>
+        </nav>
+        <div class="site-footer__legal">
+          <p>© {new Date().getFullYear()} — artka.dev</p>
+          <p class="site-footer__meta">{t(locale, "footer.meta")}</p>
+        </div>
       </div>
     </footer>
 
@@ -265,25 +338,74 @@ const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
       .site-footer__inner {
         max-width: var(--content-max);
         margin: 0 auto;
-        padding: var(--space-5);
+        padding: var(--space-6) var(--space-5);
         font-size: var(--fs-sm);
         color: var(--color-fg-muted);
         display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+      }
+      .site-footer__cols {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-6);
+      }
+      .site-footer__col ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+      .site-footer__col li a {
+        color: var(--color-fg-muted);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: color var(--dur-fast) var(--ease-out);
+      }
+      .site-footer__col li a:hover {
+        color: var(--color-accent);
+        border-bottom-color: var(--color-accent);
+      }
+      .site-footer__heading {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        text-transform: uppercase;
+        letter-spacing: var(--tracking-wide);
+        color: var(--color-fg-subtle);
+        font-weight: 500;
+        margin: 0 0 var(--space-3) 0;
+      }
+      .site-footer__legal {
+        display: flex;
         justify-content: space-between;
         gap: var(--space-4);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border);
+        font-size: var(--fs-xs);
       }
       .site-footer__meta {
         font-family: var(--font-mono);
-        font-size: var(--fs-xs);
         letter-spacing: var(--tracking-wide);
         text-transform: uppercase;
+        margin: 0;
       }
-      @media (max-width: 600px) {
-        .site-footer__inner {
+      @media (max-width: 768px) {
+        .site-footer__cols {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-5);
+        }
+      }
+      @media (max-width: 480px) {
+        .site-footer__cols {
+          grid-template-columns: 1fr;
+          gap: var(--space-4);
+        }
+        .site-footer__legal {
           flex-direction: column;
           align-items: flex-start;
           gap: var(--space-2);
-          padding: var(--space-4);
         }
       }
     </style>
