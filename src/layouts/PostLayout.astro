@@ -51,11 +51,14 @@ const bodyText = post.body ?? "";
 const readingTime = getReadingTime({ text: bodyText, locale });
 
 const siteBase = Astro.site?.toString() ?? "https://artka.dev";
+// BlogPosting.image must be a raster (Schema.org / Google Rich Results
+// reject SVG). Fallback to /og-default.png, matching the BaseLayout
+// og:image fallback. Per-post cover (when set) wins.
 const absoluteCover = coverUrl
   ? /^https?:\/\//.test(coverUrl)
     ? coverUrl
     : new URL(coverUrl, siteBase).toString()
-  : new URL("/og-default.svg", siteBase).toString();
+  : new URL("/og-default.png", siteBase).toString();
 
 const excerpt = extractArticleBody(post.body ?? "", 800);
 
