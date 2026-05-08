@@ -1,8 +1,8 @@
 ---
 title: "robots.txt in the age of AI crawlers: GPTBot, ClaudeBot, PerplexityBot — reality 2026"
 description: >-
-  In 2026, robots.txt is not 'forbid all bots' and not 'allow everything', but a policy for each of 9+ named agents.
-  Real template, decision table, and pitfalls.
+  In 2026, robots.txt is not 'forbid all bots' or 'allow everything', but a policy for each of 9+ named agents. Real
+  template, decision table, and pitfalls.
 pubDate: 2026-05-01
 tags:
   - seo
@@ -47,13 +47,13 @@ faq:
       No. robots.txt is a public hint to well-behaved bots, not access control. Any bot can ignore it. Private routes
       must be protected by authentication (middleware, session check), and only additionally — noted in robots.txt to
       save crawl budget for compliant bots and avoid exposing URL patterns in SERP.
-  - question: How often should you review robots.txt?
+  - question: How often should robots.txt be reviewed?
     answer: >-
       Every 6 months and after each incident. The composition of AI crawlers changes rapidly: in 2024 there was no
       OAI-SearchBot, in 2025 Perplexity-User appeared separately from PerplexityBot, in 2026 Anthropic introduced
       Claude-Web in addition to ClaudeBot. A six-month audit cycle covers the natural drift speed of the ecosystem.
 lang: en
-sourceHash: 45c4fbbcfce80b4191709338944c5dfc5f21d9baf426f07f994ea27656bc316a
+sourceHash: 605232348c32e3b14ce403808c6ddb2cccd62199dd7d70dadc977dbcbad66d27
 manuallyEdited: false
 ---
 
@@ -116,7 +116,7 @@ flowchart TB
   end
 ```
 
-Three classes = three separate decisions. No need to discuss "a robot in general" — you need to discuss "GPTBot on /blog/."
+Three classes = three separate decisions. You don't need to discuss "a robot in general" — you need to discuss "GPTBot on /blog/."
 
 ---
 
@@ -151,10 +151,10 @@ The most "transparent" class: a user of your site (or someone who specifically w
 For this site:
 
 - All 9 bots — `Allow: /` (open public blog, goal is distribution).
-- For all — `Disallow: /admin/`, `/api/`, `/login` (private namespaces, see §5).
+- All of them — `Disallow: /admin/`, `/api/`, `/login` (private namespaces, see §5).
 - No special restrictions on individual posts or tags.
 
-This is a decision for a personal tech-blog with the goal of "increasing reach of expertise." For commercial content, I would choose differently.
+This is a decision for a personal tech-blog with the goal of "increasing the reach of expertise." For commercial content, I would choose differently.
 
 ---
 
@@ -231,28 +231,28 @@ Sitemap: https://artka.dev/sitemap-index.xml
 
 A few notes on the structure:
 
-1. **Explicit blocks even for identical policy.** It might seem like 9 identical blocks are a duplicate that could be collapsed into `User-agent: *`. But that's not the case: the robots.txt specification builds a match table by "most specific User-Agent," and if tomorrow you need to change policy for one bot — you already have its named block and don't need to remember which bot you want to single out from the wildcard. Duplication is the cost of per-bot policy.
-2. **Comment with review date.** `# robots.txt — last reviewed 2026-05-02` — the only line that answers the question "is this file fresh?" Without a date, you'll forever wonder if you need to add a new bot.
+1. **Explicit blocks even for identical policies.** It might seem like 9 identical blocks are a duplicate that could be collapsed into `User-agent: *`. But that's not the case: the robots.txt specification builds a match table by "most specific User-Agent," and if tomorrow you need to change the policy for one bot — you already have its named block and don't need to remember which bot you want to single out from the wildcard. Duplication is the cost of per-bot policy.
+2. **Comment with review date.** `# robots.txt — last reviewed 2026-05-02` is the only line that answers the question "is this file fresh?" Without a date, you'll forever wonder if it's time to add a new bot.
 3. **`Sitemap:` at the end.** One URL to the index sitemap. If you have localization — the sitemap-index links to per-locale files.
 4. **No BOM, LF line endings.** Astro in SSG mode will copy the file from `public/` as-is; edit in plain UTF-8.
 
 This template works for a personal blog. For other use cases:
 
 - **Closed paid-content site:** replace `Allow: /` with `Disallow: /` for GPTBot, ClaudeBot, Google-Extended (training). Keep `Allow: /` for on-demand: ChatGPT-User, Claude-Web, Perplexity-User.
-- **Documentation site that wants in LLM responses:** keep all 9 on `Allow`, add rich `llms.txt` (see §6).
+- **Documentation site that wants to be in LLM responses:** keep all 9 on `Allow`, add rich `llms.txt` (see §6).
 - **B2B SaaS landing:** usually a standard wildcard is enough — no need to specifically name AI-bots, the policy is the same as for Googlebot.
 
 ---
 
-## 5. Disallow-namespaces are more important than per-bot decisions
+## 5. Disallow-namespaces are more important than decisions for a specific bot
 
-`/admin/`, `/api/`, `/login` — three namespaces that fall under Disallow in all 10 blocks (9 named + wildcard). This choice is worked out separately from bots and is more important than them.
+`/admin/`, `/api/`, `/login` are three namespaces that fall under Disallow in all 10 blocks (9 named + wildcard). This choice is worked out separately from the bots and is more important than them.
 
 **Why this is more important than any per-bot decision:**
 
 1. **A mistake here is a leak.** If a crawler bypasses `/admin/users.json` and gets a 200 OK with real data — that's an incident, not an SEO problem. If it indexes `/blog/` without your permission — that's not upsetting.
-2. **robots.txt is a public hint, not auth.** Any bot can ignore Disallow. So `/admin/` must be closed by middleware regardless of robots.txt. The robots.txt entry only saves crawl budget for obedient bots and doesn't keep the admin URL structure out of SERP.
-3. **Collapsing namespaces is not an optimization.** The temptation: "why three lines if all three are private?" Answer: so when you add a fourth namespace (`/dashboard/`), you have an obvious pattern.
+2. **robots.txt is a public hint, not auth.** Any bot can ignore Disallow. So `/admin/` should be closed by middleware regardless of robots.txt. The robots.txt entry only saves crawl budget for obedient bots and doesn't keep the admin URL structure out of SERP.
+3. **Collapsing namespaces is not an optimization.** The temptation: "why three lines if all three are private?" Answer: so that when you add a fourth namespace (`/dashboard/`), you have an obvious pattern.
 
 Verification that namespace-deny actually works:
 
@@ -270,7 +270,7 @@ That's why the correct order of work is to set up auth first, and only then add 
 
 ## 6. `llms.txt` and `llms-full.txt` — a separate contract
 
-If robots.txt answers "where can I go?", then `llms.txt` answers "what will I find here?" It's an AI-README — a Markdown file with a site description, links to authoritative pages, and preferred attribution.
+If robots.txt answers "where can I go?", then `llms.txt` answers "what will I find here?" It's an AI-README — a Markdown file with a description of the site, links to authoritative pages, and preferred attribution.
 
 The real `public/llms.txt` of the site:
 
@@ -309,17 +309,17 @@ When citing, please include:
 a@artka.dev
 ```
 
-This is **not robots.txt in a new wrapper**. Differences:
+This is **not robots.txt in a new wrapper**. The differences:
 
-| Aspect          | robots.txt                           | llms.txt                             |
-| --------------- | ------------------------------------ | ------------------------------------ |
-| Purpose         | Access policy                        | Content description and attribution  |
-| Format          | Plain text, special syntax           | Markdown                             |
-| Who reads       | Crawler before entering              | LLM when forming response            |
-| What regulates  | Allow/Disallow by paths              | Entry point to authoritative content |
-| Standardization | Robots Exclusion Protocol (RFC 9309) | llmstxt.org convention (de facto)    |
+| Aspect            | robots.txt                           | llms.txt                             |
+| ----------------- | ------------------------------------ | ------------------------------------ |
+| Purpose           | Access policy                        | Content description and attribution  |
+| Format            | Plain text, special syntax           | Markdown                             |
+| Who reads         | Crawler before entering              | LLM when forming a response          |
+| What it regulates | Allow/Disallow by paths              | Entry point to authoritative content |
+| Standardization   | Robots Exclusion Protocol (RFC 9309) | llmstxt.org convention (de facto)    |
 
-Besides `llms.txt`, the site has `/llms-full.txt` — a dynamically generated endpoint that outputs a full digest of all posts in plain text. Implementation is a short API route in Astro 5:
+Besides `llms.txt`, the site has `/llms-full.txt` — a dynamically generated endpoint that outputs a full digest of all posts in plain text. The implementation is a short API route in Astro 5:
 
 ```ts
 // src/pages/llms-full.txt.ts (фрагмент)
@@ -360,11 +360,11 @@ In principle: `llms.txt` is small and stable, `llms-full.txt` is long and automa
 
 A list of things robots.txt doesn't do, and how to close them.
 
-**robots.txt doesn't block bots that don't read it.** Solution — IP-block at the CDN or WAF level. Cloudflare has a ruleset that catches User-Agent patterns and rate-limits suspicious traffic; AWS WAF and Fastly have similar. This is a tool against bots that ignore robots.txt — that is, against all "bad actors."
+**robots.txt doesn't block bots that don't read it.** The solution is IP-blocking at the CDN or WAF level. Cloudflare has a ruleset that catches User-Agent patterns and rate-limits suspicious traffic; AWS WAF and Fastly have similar. This is a tool against bots that ignore robots.txt — that is, against all "bad actors."
 
-**robots.txt doesn't declare usage policy.** It says "where can I go," but not "can I quote," "can I train," "do I need attribution." That's the job of Terms of Service on a separate page of the site. ToS is legally weightier than robots.txt (though both are conventions until a court precedent).
+**robots.txt doesn't declare usage policy.** It says "where you can go," but not "can you quote," "can you train," "do you need attribution." That's the job of Terms of Service on a separate page of the site. ToS is legally weightier than robots.txt (though both are conventions until a court precedent).
 
-**robots.txt doesn't audit who actually came.** To understand if GPTBot actually visits you, you need to look at logs. Cloudflare AI Audit (available since 2024 for a domain on Cloudflare) gives a built-in report on AI-crawlers — counters for each, frequency, share. Without a CDN — you'll have to parse access logs yourself: GoAccess, Loki, or just `grep -i 'gptbot\|claudebot\|perplexitybot' access.log`.
+**robots.txt doesn't audit who actually came.** To understand if GPTBot is visiting you, you need to look at the logs. Cloudflare AI Audit (available since 2024 for a domain on Cloudflare) provides a built-in report on AI-crawlers — counters for each, frequency, share. Without a CDN — you'll have to parse access logs yourself: GoAccess, Loki, or just `grep -i 'gptbot\|claudebot\|perplexitybot' access.log`.
 
 **meta-tags `noai`/`noimageai` are not a standard.** Anthropic and OpenAI as of 2026 don't mention these meta-tags in public documentation as a respected signal. This was an Adobe and DeviantArt initiative from 2023, which took root mainly in graphics. For text, you can't rely on it; if you use it — use it as an additional signal, not the main one.
 
@@ -393,7 +393,7 @@ done
 ```
 
 **4. Review access logs for bots with unusual User-Agent.**
-If someone comes with an empty UA or a pattern like `Mozilla/5.0 (compatible; XYZBot/1.0; ...)` that's not on your list — evaluate and make a decision. (owner to fill: as of publication, access-log aggregation setup is in progress; in the next review — break down top-20 UA strings for the quarter.)
+If someone is visiting with an empty UA or a pattern like `Mozilla/5.0 (compatible; XYZBot/1.0; ...)` that's not on your list — evaluate and make a decision. (owner to fill: at the time of publication, access-log aggregation setup is in progress; in the next review — break down the top-20 UA strings for the quarter.)
 
 **5. Update the date in the comment.**
 `# robots.txt — last reviewed 2026-05-02` → new date. This is the only human-readable proof of freshness. And a commit with a message like `chore(seo): robots.txt 2026-Q4 review` will leave a trace in history for the next iteration.
@@ -402,6 +402,6 @@ If someone comes with an empty UA or a pattern like `Mozilla/5.0 (compatible; XY
 
 ## Summary
 
-robots.txt in 2026 is not "one block and forget," but a small DSL where for each of 9+ named AI-agents you make a conscious choice: training (GPTBot, ClaudeBot, Google-Extended), search/answer (OAI-SearchBot, PerplexityBot), on-demand (ChatGPT-User, Claude-Web, Perplexity-User, anthropic-ai). namespace-deny for `/admin/`, `/api/`, `/login` is a separate and more important story that only works paired with middleware authentication. `llms.txt` and `llms-full.txt` are a parallel contract: they describe content and preferred attribution, not access.
+robots.txt in 2026 is not "one block and forget," but a small DSL where for each of 9+ named AI-agents you make a conscious choice: training (GPTBot, ClaudeBot, Google-Extended), search/answer (OAI-SearchBot, PerplexityBot), on-demand (ChatGPT-User, Claude-Web, Perplexity-User, anthropic-ai). Namespace-deny for `/admin/`, `/api/`, `/login` is a separate and more important story that only works paired with middleware authentication. `llms.txt` and `llms-full.txt` are a parallel contract: they describe content and preferred attribution, not access.
 
-The starting point is the real template from §4. You can copy it, change policy for specific bots, and review it every six months.
+The starting point is the real template from §4. You can copy it, change the policy for specific bots, and review it every six months.
