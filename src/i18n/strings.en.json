@@ -59,6 +59,7 @@
   "home.author.label": "Author",
   "home.author.bio": "Full-stack & AI engineer. 5+ years in backend and distributed systems. Currently digging into Claude Code, LangGraph, and production AI agents.",
   "home.author.linksAria": "Author profile links",
+  "breadcrumbs.aria": "Breadcrumbs",
   "footer.section.about": "About",
   "footer.section.read": "Read",
   "footer.section.connect": "Connect",

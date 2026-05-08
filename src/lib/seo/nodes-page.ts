@@ -72,15 +72,48 @@ export const buildBreadcrumbListNode = (input: BreadcrumbInput) => {
   };
 };
 
+export interface BreadcrumbItem {
+  readonly name: string;
+  readonly url?: string;
+}
+
+export interface BreadcrumbsInput {
+  readonly canonical: string;
+  readonly items: ReadonlyArray<BreadcrumbItem>;
+}
+
+// Generic BreadcrumbList builder — supersedes buildBreadcrumbListNode (which is
+// post-specific and hardcodes the three-step Home → Blog → title shape).
+// Keep BOTH symbols exported so PostLayout's existing call site doesn't move.
+export const buildBreadcrumbsNode = (input: BreadcrumbsInput) => ({
+  "@type": "BreadcrumbList",
+  "@id": `${input.canonical}#breadcrumbs`,
+  itemListElement: input.items.map((item, idx) => {
+    const node: Record<string, unknown> = {
+      "@type": "ListItem",
+      position: idx + 1,
+      name: item.name,
+    };
+    if (item.url) node.item = item.url;
+    return node;
+  }),
+});
+
+export type WebPageType = "WebPage" | "CollectionPage" | "ItemPage" | "AboutPage";
+
 export interface WebPageInput {
   readonly locale: Locale;
   readonly canonical: string;
   readonly name: string;
   readonly description: string;
+  readonly type?: WebPageType;
+  readonly primaryImageOfPage?: string;
+  readonly dateModified?: Date | null;
+  readonly breadcrumbId?: string;
 }
 
 export const buildWebPageNode = (input: WebPageInput) => ({
-  "@type": "WebPage",
+  "@type": input.type ?? "WebPage",
   "@id": `${input.canonical}#webpage`,
   url: input.canonical,
   name: input.name,
@@ -88,6 +121,11 @@ export const buildWebPageNode = (input: WebPageInput) => ({
   inLanguage: inLang(input.locale),
   isPartOf: { "@id": graphIds.website },
   about: { "@id": graphIds.person },
+  ...(input.primaryImageOfPage
+    ? { primaryImageOfPage: { "@type": "ImageObject", url: input.primaryImageOfPage } }
+    : {}),
+  ...(input.dateModified ? { dateModified: input.dateModified.toISOString() } : {}),
+  ...(input.breadcrumbId ? { breadcrumb: { "@id": input.breadcrumbId } } : {}),
 });
 
 export interface FaqItem {

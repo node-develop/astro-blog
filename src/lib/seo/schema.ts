@@ -36,8 +36,11 @@ export { safeJsonLd } from "./json-ld";
 export {
   buildBlogPostingNode,
   buildBreadcrumbListNode,
+  buildBreadcrumbsNode,
   buildWebPageNode,
   buildFaqPageNode,
+  type BreadcrumbItem,
+  type WebPageType,
 } from "./nodes-page";
 export { buildBlogNode } from "./nodes-global";
 export { extractArticleBody, countWords } from "./article-body";

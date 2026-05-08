@@ -1,0 +1,90 @@
+---
+/**
+ * Visible breadcrumbs nav. Pairs with the BreadcrumbList JSON-LD that the
+ * page should also emit via extraSchemaNodes — this component renders the
+ * UI only.
+ *
+ * Items are { name, href? }. The last item is the current page and should
+ * not have an href (matches Schema.org BreadcrumbList semantics where the
+ * trailing item has no `item` URL).
+ */
+export interface BreadcrumbItem {
+  readonly name: string;
+  readonly href?: string;
+}
+
+interface Props {
+  items: ReadonlyArray<BreadcrumbItem>;
+  ariaLabel?: string;
+}
+
+const { items, ariaLabel = "Breadcrumbs" } = Astro.props;
+---
+
+<nav class="breadcrumbs" aria-label={ariaLabel}>
+  <ol class="breadcrumbs__list">
+    {
+      items.map((item, idx) => {
+        const isLast = idx === items.length - 1;
+        return (
+          <li class="breadcrumbs__item">
+            {item.href && !isLast ? (
+              <a class="breadcrumbs__link" href={item.href}>
+                {item.name}
+              </a>
+            ) : (
+              <span class="breadcrumbs__current" aria-current={isLast ? "page" : undefined}>
+                {item.name}
+              </span>
+            )}
+            {!isLast && (
+              <span class="breadcrumbs__sep" aria-hidden="true">
+                /
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumbs {
+    margin: 0 0 var(--space-4) 0;
+  }
+  .breadcrumbs__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+  }
+  .breadcrumbs__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .breadcrumbs__link {
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .breadcrumbs__link:hover {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-fg);
+  }
+  .breadcrumbs__current {
+    color: var(--color-fg);
+  }
+  .breadcrumbs__sep {
+    color: var(--color-fg-subtle);
+  }
+</style>

@@ -25,7 +25,12 @@ describe.each([
   });
 
   it("uses BreadcrumbList linking back to /tags index", () => {
-    expect(source).toMatch(/"@type":\s*"BreadcrumbList"/);
+    // Source emits the BreadcrumbList via buildBreadcrumbsNode (the
+    // canonical builder in src/lib/seo/nodes-page.ts) and references
+    // /tags as the second crumb, before the leaf tag label.
+    expect(source).toMatch(/buildBreadcrumbsNode/);
+    expect(source).toMatch(/\/tags/);
+    expect(source).toMatch(/"tags\.title"/);
   });
 
   it(`includes a localized empty-state for slugs missing in ${locale}`, () => {
