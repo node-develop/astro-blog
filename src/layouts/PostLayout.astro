@@ -11,6 +11,7 @@ import Comments from "~/components/Comments.astro";
 import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import { person } from "~/lib/seo/person";
 import { resolveTagLabel } from "~/lib/content/tags";
 import tagsRu from "~/i18n/tags.ru.json";
 import tagsEn from "~/i18n/tags.en.json";
@@ -86,6 +87,16 @@ const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 const primaryTag = tags?.[0] ?? "—";
 const pubYear = pubDate.getFullYear();
 const pagefindFilter = `tag:${primaryTag}, date:${pubYear}`;
+
+const aboutHref = locale === "en" ? "/en/about" : "/about";
+const formattedPubDate = pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+const formattedUpdatedDate = updatedDate
+  ? updatedDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US")
+  : null;
 ---
 
 <BaseLayout
@@ -114,32 +125,30 @@ const pagefindFilter = `tag:${primaryTag}, date:${pubYear}`;
     data-pagefind-meta={`title:${title}`}
   >
     <header class="post__header">
-      <p class="post__eyebrow">
-        <time datetime={pubDate.toISOString()}>
-          {
-            pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-          }
-        </time>
-        <span aria-hidden="true">·</span>
-        <span>{formatReadingTime(readingTime, locale)}</span>
+      <h1 class="post__title" transition:name={`post-title-${slug}`}>{title}</h1>
+      {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
+      <div class="post__byline" itemscope itemtype="https://schema.org/Person">
+        <a href={aboutHref} class="post__byline-avatar" aria-hidden="true" tabindex="-1">
+          <img src={person.image} alt="" width="32" height="32" loading="lazy" decoding="async" />
+        </a>
+        <a href={aboutHref} class="post__byline-name" itemprop="name">{person.name}</a>
+        <span class="post__byline-sep" aria-hidden="true">·</span>
+        <time datetime={pubDate.toISOString()} class="post__byline-date">{formattedPubDate}</time>
+        <span class="post__byline-sep" aria-hidden="true">·</span>
+        <span class="post__byline-reading">{formatReadingTime(readingTime, locale)}</span>
         {
-          updatedDate && (
+          formattedUpdatedDate && (
             <>
-              <span aria-hidden="true">·</span>
-              <span>
-                {t(locale, "post.updated").toLowerCase()}{" "}
-                {updatedDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US")}
+              <span class="post__byline-sep" aria-hidden="true">
+                ·
+              </span>
+              <span class="post__byline-updated">
+                {t(locale, "post.updated").toLowerCase()} {formattedUpdatedDate}
               </span>
             </>
           )
         }
-      </p>
-      <h1 class="post__title" transition:name={`post-title-${slug}`}>{title}</h1>
-      {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
+      </div>
       {
         tags.length > 0 && (
           <ul class="post__tags" aria-label={t(locale, "post.tags")}>
@@ -197,16 +206,46 @@ const pagefindFilter = `tag:${primaryTag}, date:${pubYear}`;
       padding-bottom: var(--space-5);
       border-bottom: 1px solid var(--color-border);
     }
-    .post__eyebrow {
+    .post__byline {
       display: flex;
+      flex-wrap: wrap;
       gap: var(--space-2);
       align-items: center;
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
-      text-transform: uppercase;
       letter-spacing: var(--tracking-wide);
       color: var(--color-fg-muted);
-      margin: 0 0 var(--space-3) 0;
+      margin: var(--space-4) 0 0 0;
+    }
+    .post__byline-avatar {
+      line-height: 0;
+      display: inline-block;
+    }
+    .post__byline-avatar img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-subtle);
+      object-fit: cover;
+      display: block;
+    }
+    .post__byline-name {
+      color: var(--color-fg);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .post__byline-name:hover {
+      color: var(--color-accent);
+    }
+    .post__byline-sep {
+      color: var(--color-fg-subtle);
+    }
+    .post__byline-date,
+    .post__byline-reading,
+    .post__byline-updated {
+      color: var(--color-fg-muted);
+      text-transform: uppercase;
     }
     .post__title {
       font-family: var(--font-serif);
