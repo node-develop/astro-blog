@@ -216,9 +216,13 @@ const socialLabel = (url: string): string => {
   <body data-auth="signed-out">
     <SkipLink />
     <Header />
-    <MobileDrawer>
-      <slot name="sidebar" />
-    </MobileDrawer>
+    <!--
+      MobileDrawer is self-contained: it carries its own primary nav and does
+      not declare a <slot/> for children, so any nested content is dropped by
+      Astro at render time. The drawer is intentionally separate from the
+      desktop sidebar to keep mobile navigation editorial-clean.
+    -->
+    <MobileDrawer />
     <div class="layout" data-full-width={fullWidth}>
       <aside class="layout__sidebar" aria-label={t(locale, "sidebar.aria")}>
         <slot name="sidebar" />
