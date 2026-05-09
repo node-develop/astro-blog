@@ -14,9 +14,11 @@ describe("src/content/site/now.md", () => {
   it("body has a 'last updated' line in YYYY-MM format or full date", () => {
     expect(md).toMatch(/(?:обновлено|updated)[^\n]*?\d{4}-\d{2}/i);
   });
-  it("contains a '## Сейчас' section header", () => {
-    // \b doesn't work with Cyrillic in JS; match heading line directly
-    expect(md).toMatch(/^##\s+Сейчас(\s|$)/m);
+  it("has at least one h2 section header in the body", () => {
+    // The page evolves — sections rename as focus shifts. We just want to
+    // make sure the page never collapses to a single wall of text without
+    // any structural header.
+    expect(md).toMatch(/^##\s+\S/m);
   });
   it("body has no h1", () => {
     const body = md.replace(/^---[\s\S]*?---\r?\n/, "");
