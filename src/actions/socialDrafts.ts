@@ -11,6 +11,10 @@ import { stringifyError } from "~/lib/social/errors.js";
 import { runPipeline } from "~/lib/social/pipeline.js";
 import type { SocialChannel } from "~/lib/social/types.js";
 import { logger as log } from "~/lib/logger";
+import { postTweet, postThread } from "~/lib/social/clients/x.js";
+import { postShare } from "~/lib/social/clients/linkedin.js";
+import { sendMessage as tgSend } from "~/lib/social/clients/telegram.js";
+import { withRetry } from "~/lib/social/retry.js";
 
 // ── Terminal statuses that must never be superseded or re-inserted ────────────
 
@@ -155,6 +159,93 @@ export const generateHandler = async (
   return { ok: true, channels: channelsToUse };
 };
 
+// ── Send a single row by channel — wrapped in withRetry for 5xx/429 ──────────
+
+type SendResult = ReturnType<typeof postTweet>;
+
+const sendByChannel = (row: typeof socialPosts.$inferSelect): SendResult => {
+  const fn = async () => {
+    if (row.channel === "x_en") {
+      if (row.threadTail && row.threadTail.length > 0) {
+        return postThread([row.body, ...row.threadTail]);
+      }
+      return postTweet({ text: row.body });
+    }
+    if (row.channel === "li_en") return postShare({ text: row.body });
+    return tgSend({ text: row.body, mediaUrl: row.mediaUrl });
+  };
+  return withRetry(fn, { maxAttempts: 3, baseDelayMs: 2000 });
+};
+
+// ── Publish handler ──────────────────────────────────────────────────────────
+
+const hasBlockNote = (notes: unknown): boolean =>
+  Array.isArray(notes) && notes.some((n) => (n as { severity?: string }).severity === "block");
+
+export type PublishInput = { id: string; force: boolean };
+export type PublishResult = { ok: true; url: string } | { ok: false; error: string };
+
+export const publishHandler = async (
+  { id, force }: PublishInput,
+  ctx: ActionAPIContext,
+): Promise<PublishResult> => {
+  assertAdmin(ctx.locals.user as { role?: string | null } | null);
+
+  // Atomic pending → sending
+  const [row] = await db
+    .update(socialPosts)
+    .set({
+      status: "sending",
+      approvedById: (ctx.locals.user as { id?: string } | null)?.id ?? null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")))
+    .returning();
+
+  if (!row) {
+    throw new ActionError({ code: "CONFLICT", message: "Draft is not pending" });
+  }
+
+  if (!force && hasBlockNote(row.criticAnnotations)) {
+    // Roll back to pending
+    await db
+      .update(socialPosts)
+      .set({ status: "pending", updatedAt: new Date() })
+      .where(eq(socialPosts.id, id));
+    throw new ActionError({
+      code: "BAD_REQUEST",
+      message: "block-level critic notes; resubmit with force=true",
+    });
+  }
+
+  const result = await sendByChannel(row);
+
+  if (result.ok) {
+    await db
+      .update(socialPosts)
+      .set({
+        status: "sent",
+        externalId: result.value.id,
+        externalUrl: result.value.url,
+        sentAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(socialPosts.id, id));
+    return { ok: true, url: result.value.url };
+  }
+
+  await db
+    .update(socialPosts)
+    .set({
+      status: "failed",
+      errorMessage: stringifyError(result.error),
+      retryCount: row.retryCount + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(socialPosts.id, id));
+  return { ok: false, error: stringifyError(result.error) };
+};
+
 // ── Action ────────────────────────────────────────────────────────────────────
 
 export const socialDrafts = {
@@ -166,5 +257,14 @@ export const socialDrafts = {
       channels: z.array(z.enum(["x_en", "li_en", "tg_ru"])).optional(),
     }),
     handler: async (input, ctx) => generateHandler(input, ctx),
+  }),
+  publish: defineAction({
+    accept: "json",
+    input: z.object({
+      id: z.string().uuid(),
+      force: z.boolean().default(false),
+    }),
+    handler: async (input, ctx) =>
+      publishHandler({ id: input.id, force: input.force ?? false }, ctx),
   }),
 };
