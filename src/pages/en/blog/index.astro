@@ -21,6 +21,7 @@ const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogNode = buildBlogNode(locale);
 const tagsHrefBase = "/en/tags";
@@ -75,6 +76,12 @@ const webPageNode = buildWebPageNode({
       <h1 class="list__title">{t(locale, "blog.title")}</h1>
     </header>
 
+    <a href={courseHref} class="list__course-banner">
+      <span class="list__course-label">{t(locale, "blog.courseBannerLabel")}</span>
+      <span class="list__course-title">{t(locale, "blog.courseBannerTitle")}</span>
+      <span class="list__course-cta">{t(locale, "blog.courseBannerCta")}</span>
+    </a>
+
     {
       allTags.length > 0 && (
         <div class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
@@ -89,10 +96,13 @@ const webPageNode = buildWebPageNode({
 
     <ul class="list__posts">
       {
-        posts.map((p: PostWithMeta) => (
+        posts.map((p: PostWithMeta, idx: number) => (
           <li class="list__item">
             <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="list__link">
-              <span class="list__num">{String(p.meta.order).padStart(2, "0")}</span>
+              {/* See RU twin for rationale — visible-list position, not
+                  p.meta.order (DB curatorial field that defaults to
+                  MAX_SAFE_INTEGER for un-backfilled rows). */}
+              <span class="list__num">{String(idx + 1).padStart(2, "0")}</span>
               <span class="list__body">
                 <h2 class="list__post-title" transition:name={`post-title-${bareSlug(p.entry.id)}`}>
                   {p.entry.data.title}
@@ -137,6 +147,48 @@ const webPageNode = buildWebPageNode({
       margin: 0;
       color: var(--color-fg);
       letter-spacing: var(--tracking-tight);
+    }
+    .list__course-banner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: var(--space-4);
+      align-items: baseline;
+      padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-5);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      background: var(--color-accent-subtle);
+      text-decoration: none;
+      transition: background var(--dur-fast) var(--ease-out);
+    }
+    .list__course-banner:hover {
+      background: color-mix(in oklch, var(--color-accent), transparent 80%);
+    }
+    .list__course-label {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-accent);
+      font-weight: 600;
+    }
+    .list__course-title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-base);
+      color: var(--color-fg);
+      line-height: var(--lh-snug);
+    }
+    .list__course-cta {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--color-accent);
+      white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .list__course-banner {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+      }
     }
     .list__tags {
       display: flex;

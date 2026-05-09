@@ -12,12 +12,23 @@
  *   1. Hides itself if the user is signed out (data-auth flag).
  *   2. Live-updates visibility when the progress event fires (so it
  *      appears the moment the last lesson is completed without reload).
+ *
+ * Locale is read from the URL so the same component renders Russian
+ * copy on /courses/* and English on /en/courses/*.
  */
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
+
 interface Props {
   course: string;
   totalLessons: number;
 }
 const { course, totalLessons } = Astro.props;
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const localePrefix = locale === "en" ? "/en" : "";
+const copy = t(locale, "certificate.copy").replace("{count}", String(totalLessons));
+const certificateHref = `${localePrefix}/courses/${course}/certificate.png`;
 ---
 
 <div
@@ -26,17 +37,10 @@ const { course, totalLessons } = Astro.props;
   data-certificate-total={String(totalLessons)}
   hidden
 >
-  <p class="certificate__label">CERTIFICATE OF COMPLETION</p>
-  <p class="certificate__copy">
-    Вы прошли все {totalLessons} уроков. Сертификат выдаётся в&nbsp;виде PNG&nbsp;1600×1100, подходит
-    для&nbsp;печати на&nbsp;A4.
-  </p>
-  <a
-    class="certificate__cta"
-    href={`/courses/${course}/certificate.png`}
-    download={`${course}-certificate.png`}
-  >
-    Скачать сертификат
+  <p class="certificate__label">{t(locale, "certificate.label")}</p>
+  <p class="certificate__copy">{copy}</p>
+  <a class="certificate__cta" href={certificateHref} download={`${course}-certificate.png`}>
+    {t(locale, "certificate.download")}
   </a>
 </div>
 

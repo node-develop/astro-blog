@@ -97,10 +97,14 @@ const webPageNode = buildWebPageNode({
 
     <ul class="list__posts">
       {
-        posts.map((p: PostWithMeta) => (
+        posts.map((p: PostWithMeta, idx: number) => (
           <li class="list__item">
             <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="list__link">
-              <span class="list__num">{String(p.meta.order).padStart(2, "0")}</span>
+              {/* Position in the visible list, not p.meta.order — the latter is
+                  a DB curatorial field that defaults to MAX_SAFE_INTEGER for
+                  posts without a posts_meta row, rendering as a 16-digit
+                  overflow on narrow viewports. */}
+              <span class="list__num">{String(idx + 1).padStart(2, "0")}</span>
               <span class="list__body">
                 <h2 class="list__post-title" transition:name={`post-title-${bareSlug(p.entry.id)}`}>
                   {p.entry.data.title}

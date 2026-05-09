@@ -31,7 +31,11 @@ const { course, lessons } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const blogPrefix = locale === "en" ? "/en" : "";
 
-const courseSlug = course.id.replace(/\/?_index$/, "");
+// Strip both the trailing `/_index` and any `/en` segment in front of it.
+// EN courses live at `<course>/en/_index` (where `<course>` is the URL slug);
+// without dropping `/en` we'd build lesson hrefs like `/en/courses/<course>/en/<lesson>`
+// — a path the EN lesson route doesn't generate, hence the 404.
+const courseSlug = course.id.replace(/(?:\/en)?\/_index$/, "");
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
   `${blogPrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
 

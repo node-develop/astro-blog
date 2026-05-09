@@ -94,10 +94,14 @@ const webPageNode = buildWebPageNode({
         <p class="tag-archive__empty">{t("ru", "tags.archiveEmptyRu")}</p>
       ) : (
         <ul class="tag-archive__posts">
-          {matches.map((p) => (
+          {matches.map((p, idx) => (
             <li class="tag-archive__item">
               <a href={`/blog/${bareSlug(p.entry.id)}`} class="tag-archive__link">
-                <span class="tag-archive__num">{String(p.meta.order).padStart(2, "0")}</span>
+                {/* Position in the visible archive, not p.meta.order — the latter
+                    is a curatorial DB field that defaults to MAX_SAFE_INTEGER for
+                    posts without a posts_meta row, which would render as a
+                    16-digit overflow on narrow viewports. */}
+                <span class="tag-archive__num">{String(idx + 1).padStart(2, "0")}</span>
                 <span class="tag-archive__body">
                   <h2 class="tag-archive__post-title">{p.entry.data.title}</h2>
                   <p class="tag-archive__post-desc">{p.entry.data.description}</p>
