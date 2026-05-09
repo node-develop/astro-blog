@@ -277,10 +277,30 @@ const translateSiteFile = async (
   const rawData = yaml.load(fenceMatch[1]) as Record<string, unknown>;
   const body = source.slice(fenceMatch[0].length).replace(/^\s*\n/, "");
 
-  // Translate the title (and any other string fields present)
+  // Translate all string-typed frontmatter fields (typeof guard handles
+  // about/now/uses transparently — they simply lack the home-only keys).
+  const SITE_STRING_FIELDS = [
+    "title",
+    "description",
+    "heroEyebrow",
+    "heroTitle",
+    "heroLede",
+    "heroCta",
+    "courseEyebrow",
+    "courseTitle",
+    "courseLede",
+    "courseCta",
+    "latestLabel",
+    "authorLabel",
+    "authorBio",
+    "authorLinksAria",
+    "metaTitle",
+    "metaDescription",
+  ] as const;
   const fmStrings: Record<string, string> = {};
-  if (typeof rawData["title"] === "string") fmStrings["title"] = rawData["title"];
-  if (typeof rawData["description"] === "string") fmStrings["description"] = rawData["description"];
+  for (const field of SITE_STRING_FIELDS) {
+    if (typeof rawData[field] === "string") fmStrings[field] = rawData[field] as string;
+  }
 
   const fmTranslated =
     Object.keys(fmStrings).length > 0
