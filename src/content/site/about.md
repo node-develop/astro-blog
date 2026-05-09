@@ -1,26 +1,25 @@
 ---
 title: Обо мне
-description: "Artyom Kashuta — full-stack & AI engineer. 5+ лет в backend, distributed systems и LLM/agent workflows. Python, TypeScript, LangGraph, Claude Code."
 ---
 
 ## Кто я
 
-Artyom Kashuta. Full-stack и AI-инженер. **5+ лет вожу production-системы** — API,
+Artyom Kashuta. Full-stack и AI-инженер. **7+ лет вожу production-системы** — API,
 data-пайплайны, LLM/agent workflows и cloud-инфра. Работаю удалённо.
 
-**Сейчас:** AI Automation Engineer (контракт) в [TaxDome](https://taxdome.com) —
+**Сейчас:** AI Automation Engineer в [TaxDome](https://taxdome.com) —
 проектирую и поставляю end-to-end LLM/agent workflows на Python и TypeScript,
 ставлю eval-системы и retrieval-пайплайны над внутренними документами и CRM-данными.
 
 **До этого:** Staff Engineer и Team Lead в 9RED (ex. Pari) — техлидил cross-domain
-архитектуру Wallet и sportsbook/casino-интеграций на **>15 000 MAU** и **700 RPS на
+архитектуру платформы и множества API-интеграций на **>15 000 MAU** и **700 RPS на
 инстанс**.
 
 ## Чем занимаюсь
 
-- **AI agent engineering.** End-to-end workflows на LangGraph, LangChain и n8n.
+- **AI agent engineering.** End-to-end workflows на LangGraph, LangChain и LangSmith стеке.
   Прямые вызовы OpenAI / Anthropic / Gemini APIs там, где нужно тонкое управление
-  токенами и латенси. Eval-системы и prompt-regression-suites через LangSmith
+  токенами и латенси и кэшем. Eval-системы и prompt-regression-suites через LangSmith
   traces, structured outputs и golden-датасеты — чтобы качество агентов не
   деградировало с эволюцией промптов и моделей.
 - **Retrieval & RAG.** Chunking, embeddings, hybrid search, reranking над
