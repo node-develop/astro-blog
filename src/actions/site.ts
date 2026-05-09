@@ -17,6 +17,12 @@ export const site = {
       body: z.string().default(""),
     }),
     handler: async ({ slug, title, body }, context) => {
+      if (slug === "home") {
+        throw new ActionError({
+          code: "BAD_REQUEST",
+          message: "Use home.update for the home page",
+        });
+      }
       assertAdmin(context.locals.user as { role?: string | null } | null);
 
       const fm = `---\n${dump({ title })}---\n\n${body}`;
