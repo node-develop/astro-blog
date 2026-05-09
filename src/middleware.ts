@@ -27,4 +27,43 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-export const onRequest = sequence(i18nRootRedirect, authContext, adminGuard);
+/**
+ * Defense-in-depth response headers. None of these change behaviour for the
+ * normal user; they shrink the blast radius if an XSS, clickjacking, or
+ * MIME-confusion bug ever lands on the site.
+ *
+ * CSP runs in Report-Only mode first. After observing the browser console
+ * for legitimate inline-script violations (theme bootstrap, Plausible, etc.)
+ * we promote it to enforcing.
+ */
+const CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  // Inline scripts are needed for the theme bootstrap and Plausible loader.
+  // Tighten to 'strict-dynamic' + nonces in a follow-up if we ever need it.
+  "script-src 'self' 'unsafe-inline' https://plausible.io",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self' data:",
+  "frame-src https://giscus.app",
+  "connect-src 'self' https://plausible.io https://giscus.app",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+const securityHeaders = defineMiddleware(async (context, next) => {
+  const response = await next();
+  // Avoid mutating immutable streamed responses (rare, but safe-guard).
+  try {
+    response.headers.set("X-Frame-Options", "SAMEORIGIN");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    response.headers.set("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY);
+  } catch {
+    /* immutable response — skip */
+  }
+  return response;
+});
+
+export const onRequest = sequence(i18nRootRedirect, authContext, adminGuard, securityHeaders);

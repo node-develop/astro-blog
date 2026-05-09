@@ -2,6 +2,18 @@
 # pre-commit: lint только изменённых файлов + быстрый typecheck
 set -e
 
+# Refuse to stage secret-bearing .env files even if .gitignore ever drifts.
+# Whitelist .env.example as the documented template.
+staged_env=$(git diff --cached --name-only --diff-filter=ACMR \
+  | grep -E '(^|/)\.env(\.[A-Za-z0-9_-]+)?$' \
+  | grep -v -E '(^|/)\.env\.example$' || true)
+if [ -n "$staged_env" ]; then
+  echo "✗ Refusing to commit .env file(s):"
+  echo "$staged_env" | sed 's/^/    /'
+  echo "  Use .env.example for templates and keep real secrets out of git."
+  exit 1
+fi
+
 echo "▶ lint-staged (eslint --fix + prettier on staged files)"
 pnpm exec lint-staged
 

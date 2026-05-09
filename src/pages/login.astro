@@ -1,9 +1,14 @@
 ---
 export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import { safeNext } from "~/lib/auth/safe-next";
 
 if (Astro.locals.user) return Astro.redirect("/admin");
-const next = Astro.url.searchParams.get("next") ?? "/admin";
+// Validate ?next=... server-side: reject anything that would bounce the user
+// to a third-party origin (CWE-601 open redirect). The same `next` is rendered
+// into both the form and the GitHub OAuth callback button below, so a single
+// sanitisation here covers both flows.
+const next = safeNext(Astro.url.searchParams.get("next"));
 const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
 ---
 
