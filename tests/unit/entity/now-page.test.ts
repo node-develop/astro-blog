@@ -14,9 +14,9 @@ describe.each([
   it("loads 'now' from site collection", () => {
     expect(src).toMatch(/getEntry\(["']site["'],\s*[^)]*now[^)]*\)/);
   });
-  it("emits WebPage via extraSchemaNodes", () => {
-    expect(src).toMatch(/buildWebPageNode/);
-    expect(src).toMatch(/extraSchemaNodes=\{\[[^\]]*webPageNode[^\]]*\]\}/);
+  it("emits WebPage + breadcrumbs via buildLandingNodes", () => {
+    expect(src).toMatch(/buildLandingNodes/);
+    expect(src).toMatch(/extraSchemaNodes=\{nodes\}/);
   });
   it("uses fullWidth", () => expect(src).toMatch(/fullWidth=\{true\}/));
 });

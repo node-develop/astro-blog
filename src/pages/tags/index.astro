@@ -7,6 +7,7 @@ import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/
 import { t } from "~/i18n";
 import tagsRu from "~/i18n/tags.ru.json";
 import { buildWebPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = "ru" as const;
 const ru = await getOrderedPosts({ locale: "ru" });
@@ -27,6 +28,9 @@ const breadcrumbsNode = buildBreadcrumbsNode({
   items: breadcrumbItems,
 }) as GraphNode;
 
+const ogImagePath = landingOgPath("tags", locale);
+const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
+
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
@@ -34,6 +38,7 @@ const webPageNode = buildWebPageNode({
   description,
   type: "CollectionPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
+  primaryImageOfPage,
 }) as GraphNode;
 
 const rows = slugs.map((slug) => ({
@@ -46,6 +51,7 @@ const rows = slugs.map((slug) => ({
 <BaseLayout
   title={title}
   description={description}
+  ogImage={ogImagePath}
   fullWidth={true}
   extraSchemaNodes={[webPageNode, breadcrumbsNode]}
 >

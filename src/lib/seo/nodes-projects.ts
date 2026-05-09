@@ -8,6 +8,7 @@ export interface CollectionPageInput {
   readonly name: string;
   readonly description: string;
   readonly itemUrls: ReadonlyArray<string>;
+  readonly primaryImageOfPage?: string;
 }
 
 export const buildCollectionPageNode = (input: CollectionPageInput) => ({
@@ -20,6 +21,9 @@ export const buildCollectionPageNode = (input: CollectionPageInput) => ({
   isPartOf: { "@id": graphIds.website },
   author: { "@id": graphIds.person },
   hasPart: input.itemUrls.map((u) => ({ "@id": `${u}#creativework` })),
+  ...(input.primaryImageOfPage
+    ? { primaryImageOfPage: { "@type": "ImageObject", url: input.primaryImageOfPage } }
+    : {}),
 });
 
 export interface CreativeWorkInput {

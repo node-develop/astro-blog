@@ -12,7 +12,10 @@
  */
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
+import { buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import { mdxComponents } from "~/components/mdx";
 
 interface Props {
@@ -36,6 +39,35 @@ const lessonSlug = lesson.id.replace(/^.*\//, "");
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
   `${localePrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
 const courseHref = `${localePrefix}/courses/${courseSlug}`;
+
+const siteBase = Astro.site?.toString() ?? "https://artka.dev";
+const canonical = new URL(Astro.url.pathname, siteBase).toString();
+const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+const courseAbs = new URL(courseHref, siteBase).toString();
+
+// Title template per SEO-W: "{N}. {lesson.title} — {course.title}".
+// BaseLayout's smart-suffix appends " | artka.dev".
+const pageTitle = `${index}. ${lesson.data.title} — ${course.data.title}`;
+
+const breadcrumbItems = [
+  { name: t(locale, "nav.home"), href: homeAbs },
+  { name: course.data.title, href: courseAbs },
+  { name: lesson.data.title },
+] as const;
+
+const breadcrumbsNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: lesson.data.title,
+  description: lesson.data.blurb ?? course.data.blurb,
+  type: "ItemPage",
+  breadcrumbId: `${canonical}#breadcrumbs`,
+}) as GraphNode;
 
 const labels =
   locale === "en"
@@ -61,11 +93,13 @@ const labels =
       };
 ---
 
-<BaseLayout title={`${lesson.data.title} — ${course.data.title}`} description={lesson.data.blurb}>
+<BaseLayout
+  title={pageTitle}
+  description={lesson.data.blurb}
+  extraSchemaNodes={[breadcrumbsNode, webPageNode]}
+>
   <article class="lesson" data-course-slug={courseSlug} data-lesson-slug={lessonSlug}>
-    <nav class="lesson__breadcrumb">
-      <a href={courseHref} class="lesson__back">← {labels.back}</a>
-    </nav>
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
 
     <header class="lesson__head">
       <p class="lesson__eyebrow">

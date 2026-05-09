@@ -1,0 +1,130 @@
+---
+/**
+ * Topic hub on the home page (SEO-19).
+ *
+ * Surfaces the top-N tags (by post count) as kickable chips so first-time
+ * visitors discover the major topic clusters in one click. Anchored to
+ * /tags/<slug> archive routes, which already render with a CollectionPage
+ * JSON-LD node and a visible breadcrumb.
+ */
+import { groupPostsByTag, resolveTagLabel } from "~/lib/content/tags";
+import { getOrderedPosts } from "~/lib/content/loader";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+import tagsRu from "~/i18n/tags.ru.json";
+import tagsEn from "~/i18n/tags.en.json";
+
+interface Props {
+  /** Cap. Default 5 keeps the row tight and avoids tag-cloud drift. */
+  limit?: number;
+}
+
+const { limit = 5 } = Astro.props;
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const posts = await getOrderedPosts({ locale });
+const grouped = groupPostsByTag(posts);
+const dict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const tagsHrefBase = locale === "en" ? "/en/tags" : "/tags";
+
+const topTags = [...grouped.entries()]
+  .map(([slug, items]) => ({
+    slug,
+    count: items.length,
+    label: resolveTagLabel(slug, locale, dict),
+  }))
+  .sort((a, b) => b.count - a.count)
+  .slice(0, limit);
+---
+
+{
+  topTags.length > 0 && (
+    <section class="topics" aria-labelledby="topics-label">
+      <h3 class="topics__label" id="topics-label">
+        {t(locale, "tags.title")}
+      </h3>
+      <ul class="topics__list" aria-label={t(locale, "tags.title")}>
+        {topTags.map((tag) => (
+          <li>
+            <a class="topics__chip" href={`${tagsHrefBase}/${tag.slug}`}>
+              <span class="topics__chip-label">#{tag.label}</span>
+              <span class="topics__chip-count">{tag.count}</span>
+            </a>
+          </li>
+        ))}
+        <li class="topics__all">
+          <a class="topics__all-link" href={tagsHrefBase}>
+            {t(locale, "footer.link.tags")} →
+          </a>
+        </li>
+      </ul>
+    </section>
+  )
+}
+
+<style>
+  .topics {
+    max-width: 720px;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+  .topics__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    font-weight: 500;
+    margin: 0 0 var(--space-3) 0;
+  }
+  .topics__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .topics__chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-fg);
+    text-decoration: none;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .topics__chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent-hover);
+  }
+  .topics__chip-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .topics__chip-count {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  .topics__all {
+    align-self: center;
+  }
+  .topics__all-link {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-accent);
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    padding: var(--space-1) var(--space-2);
+  }
+  .topics__all-link:hover {
+    border-bottom-color: var(--color-accent);
+  }
+</style>

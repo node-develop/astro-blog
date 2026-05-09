@@ -4,10 +4,12 @@ export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
+import HomeTopics from "~/components/HomeTopics.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
@@ -22,6 +24,9 @@ const latestModified = posts.reduce<Date | null>((acc, p) => {
   return acc && acc.getTime() > d.getTime() ? acc : d;
 }, null);
 
+const ogImagePath = landingOgPath("home", locale);
+const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
+
 // Home is a WebPage, not a CollectionPage — it's a landing with hero +
 // author card + flagship course + 3 most-recent posts, not a paginated
 // archive. dateModified tracks freshness off the latest post.
@@ -31,7 +36,7 @@ const webPageNode = buildWebPageNode({
   name: t(locale, "meta.home.title"),
   description: t(locale, "meta.home.description"),
   type: "WebPage",
-  primaryImageOfPage: new URL("/og-default.png", Astro.site ?? Astro.url).toString(),
+  primaryImageOfPage,
   dateModified: latestModified,
 }) as GraphNode;
 ---
@@ -39,6 +44,7 @@ const webPageNode = buildWebPageNode({
 <BaseLayout
   title={t(locale, "meta.home.title")}
   description={t(locale, "meta.home.description")}
+  ogImage={ogImagePath}
   fullWidth={true}
   extraSchemaNodes={[webPageNode]}
 >
@@ -56,6 +62,8 @@ const webPageNode = buildWebPageNode({
   </section>
 
   <HomeAuthorCard />
+
+  <HomeTopics />
 
   <aside class="course-card">
     <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
