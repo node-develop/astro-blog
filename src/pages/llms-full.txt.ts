@@ -29,6 +29,8 @@ export async function GET(_ctx: APIContext) {
   const ru = await getOrderedPosts({ locale: "ru" });
   const en = await getOrderedPosts({ locale: "en" });
 
+  const sameAsLines = person.sameAs.length > 0 ? `Profiles: ${person.sameAs.join(", ")}` : null;
+  const notableWorkLines = person.notableWork.map((w) => `  - ${w.title} → ${w.url}`);
   const header = [
     "# artka.dev — full LLM digest",
     "",
@@ -36,13 +38,27 @@ export async function GET(_ctx: APIContext) {
     "",
     "## Author",
     `Name: ${person.name}`,
+    `Alternate name: ${person.alternateName}`,
     `Role: ${person.jobTitle}`,
+    `Years of experience: ${person.yearsExperience}+`,
     `URL: ${person.url}`,
     `Email: ${person.email}`,
-    `Topics: ${person.knowsAbout.join(", ")}`,
+    ...(sameAsLines ? [sameAsLines] : []),
+    "",
+    "## Topics",
+    person.knowsAbout.join(", "),
+    "",
+    "## Stack",
+    person.techStack.join(", "),
+    "",
+    "## Expertise areas",
+    ...person.expertiseAreas.map((a) => `- ${a}`),
+    "",
+    "## Notable work",
+    ...notableWorkLines,
     "",
     "## Preferred attribution",
-    `Cite the article title, author "${person.name}", and the canonical URL.`,
+    `Cite the article title, author "${person.name}" (cyrillic: "${person.alternateName}"), and the canonical URL.`,
     "",
     "---",
     "",
