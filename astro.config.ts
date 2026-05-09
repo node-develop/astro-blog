@@ -88,11 +88,27 @@ export default defineConfig({
       redirectToDefaultLocale: false,
     },
   },
-  // Permanent redirects from the prior /blog locations of the
-  // claude-code-guide series to the course-lesson layout. Browsers
-  // and search engines treat these as 301s.
-  redirects: Object.fromEntries(
-    [
+  // Permanent redirects (Astro emits 301s + a static fallback at build).
+  //
+  // Three families:
+  //
+  //   1. /blog/<slug>(/) → /courses/claude-code-guide/<slug>
+  //      The claude-code-guide series previously lived under /blog/ before
+  //      the course-lesson layout existed. We list both with and without
+  //      trailing slash because Astro's `redirects` matches keys exactly,
+  //      and Search Console reported the slash-suffixed variants as 404.
+  //
+  //   2. Removed posts → /blog
+  //      A handful of older drafts (igaming-architecture, event-sourcing-kafka,
+  //      scaling-node-microservices) were unpublished. Send their URLs back
+  //      to the blog index instead of returning 404.
+  //
+  //   3. Misc legacy roots → closest live page
+  //      One-off paths surfaced in Search Console (`/02-context-and-cache`
+  //      from a pre-/blog era, `/igaming`, `/privacy`) that have no modern
+  //      counterpart. Redirect to the closest live page rather than 404.
+  redirects: (() => {
+    const courseSlugs = [
       "01-introduction",
       "02-context-and-cache",
       "03-claude-md",
@@ -107,11 +123,41 @@ export default defineConfig({
       "12-travel-agent-blueprint",
       "13-best-practices",
       "14-claims-verification",
-    ].flatMap((slug) => [
+    ];
+    const removedPosts = [
+      "igaming-architecture",
+      "event-sourcing-kafka",
+      "scaling-node-microservices",
+    ];
+    const blogToCourseRu = courseSlugs.flatMap((slug) => [
       [`/blog/${slug}`, `/courses/claude-code-guide/${slug}`],
+      [`/blog/${slug}/`, `/courses/claude-code-guide/${slug}`],
+    ]);
+    const blogToCourseEn = courseSlugs.flatMap((slug) => [
       [`/en/blog/${slug}`, `/en/courses/claude-code-guide/${slug}`],
-    ]),
-  ),
+      [`/en/blog/${slug}/`, `/en/courses/claude-code-guide/${slug}`],
+    ]);
+    const removedPostsRedirects = removedPosts.flatMap((slug) => [
+      [`/blog/${slug}`, "/blog"],
+      [`/blog/${slug}/`, "/blog"],
+      [`/en/blog/${slug}`, "/en/blog"],
+      [`/en/blog/${slug}/`, "/en/blog"],
+    ]);
+    const legacyMisc: ReadonlyArray<[string, string]> = [
+      ["/02-context-and-cache", "/courses/claude-code-guide/02-context-and-cache"],
+      ["/02-context-and-cache/", "/courses/claude-code-guide/02-context-and-cache"],
+      ["/igaming", "/"],
+      ["/igaming/", "/"],
+      ["/privacy", "/"],
+      ["/privacy/", "/"],
+    ];
+    return Object.fromEntries([
+      ...blogToCourseRu,
+      ...blogToCourseEn,
+      ...removedPostsRedirects,
+      ...legacyMisc,
+    ]);
+  })(),
   integrations: [
     mdx({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
