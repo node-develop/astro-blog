@@ -1,0 +1,59 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import HomeEditor from "~/components/admin/HomeEditor";
+import { getEntry } from "astro:content";
+import type { HomeData } from "~/components/admin/HomeEditor";
+
+// Auth is handled by middleware for all /admin/* routes.
+
+const ruEntry = await getEntry("site", "home");
+const enEntry = await getEntry("site", "en/home");
+
+// home.md may not exist yet if backender hasn't created it.
+// Degrade gracefully with empty objects so the editor still renders.
+const ruData: HomeData = ruEntry?.data ?? {};
+const enData: HomeData | null = enEntry?.data ?? null;
+const enManuallyEdited = enEntry?.data.manuallyEdited === true;
+---
+
+<AdminLayout title="Главная страница">
+  <header class="admin-page-header">
+    <h1>Главная страница</h1>
+    <div class="admin-page-header__meta">
+      <code>site/home</code>
+      <a href="/admin/site">← Все страницы</a>
+    </div>
+  </header>
+
+  <HomeEditor client:load ru={ruData} en={enData} enManuallyEdited={enManuallyEdited} />
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-5);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .admin-page-header__meta {
+    display: flex;
+    gap: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+  .admin-page-header__meta a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .admin-page-header__meta a:hover {
+    text-decoration: underline;
+  }
+</style>
