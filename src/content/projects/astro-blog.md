@@ -1,10 +1,10 @@
 ---
 title: artka.dev (этот блог)
-description: "Личный сайт и блог. Astro 5 SSG + динамическая админка, билингв RU/EN, рендер Mermaid и LaTeX в build-time."
-role: "Solo: design, backend, frontend, deploy"
+description: "Личный сайт и блог. Astro 5 SSG + динамическая админка, билингв RU/EN, рендер Mermaid и LaTeX на build-time, полная JSON-LD граф-разметка."
+role: "Solo: design, backend, frontend, SEO, deploy"
 status: active
 pubDate: 2026-04-15
-updatedDate: 2026-05-02
+updatedDate: 2026-05-09
 featured: true
 stack:
   - Astro 5
@@ -20,9 +20,10 @@ stack:
   - Dokploy
 outcomes:
   - "SSG-первый сайт с on-demand островами для админки и SSR-only маршрутами для авторизации."
-  - "Билингв RU/EN с pipeline'ом перевода через Claude Haiku 4.5 и per-key hash tracking; CI-гвард `pnpm translate:check`."
-  - "Структурированные данные одним `@graph` (Person/Organization/WebSite/Blog/BlogPosting) с articleBody-excerpt'ом для LLM-цитирования."
-  - "Build-time рендер Mermaid через Playwright (SSR-safe SVG) и LaTeX через KaTeX."
+  - "Билингв RU/EN с pipeline'ом перевода через Claude Haiku 4.5 и per-key hash tracking; CI-гвард `pnpm translate:check` блокирует пуш с дрейфом."
+  - "Полная JSON-LD `@graph`-разметка (Person/Organization/WebSite/Blog/BlogPosting/BreadcrumbList/WebPage/CollectionPage/ItemPage) с articleBody-excerpt'ом для LLM-цитирования; per-page OG через Satori для каждого landing."
+  - "Build-time рендер Mermaid через Playwright (SSR-safe SVG) и LaTeX через KaTeX — нулевой клиентский JS на статических страницах."
+  - "Курс-плеер поверх content collections: прогресс в Postgres + Better-Auth, авто-complete по dwell-time, on-demand PNG-сертификаты, per-course RSS."
   - "Деплой: GHCR + Dokploy webhook; миграции при старте контейнера."
 links:
   - label: GitHub
@@ -46,9 +47,12 @@ links:
 ## Что узнал
 
 - Astro 5 i18n с `prefixDefaultLocale: false` отлично работает, если RU — источник правды и EN получают `/en/`-префикс.
-- Mermaid через `rehype-mermaid` (Playwright) даёт SSR-safe SVG, без клиентского JS.
-- Bilingual translation pipeline через Claude Haiku 4.5 окупается уже на 5–10 постах.
+- Mermaid через `rehype-mermaid` (Playwright) даёт SSR-safe SVG, без клиентского JS — но 32 диаграммы добавляют 5–10 секунд cold-start билда.
+- Bilingual translation pipeline через Claude Haiku 4.5 окупается уже на 5–10 постах. Per-key hash tracking предотвращает re-translation неизменённого контента.
+- Единый JSON-LD `@graph` со стабильными `@id` и cross-references — гораздо более «citable» сигнал для LLM-краулеров, чем разрозненные inline-блоки.
+- Smart-suffix в title (`{title} | artka.dev`) на уровне layout снимает с авторов страниц обязанность помнить про бренд — и это на десятки CTR-процентов сильнее, чем просто goодый title.
 
 ## Что дальше
 
-Spec на v2: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`. Превращаю блог в LLM-citable knowledge node — entity-страницы (то, что вы читаете), retrieval frontmatter, MDX-компоненты.
+Постмортемы с production-инцидентов агентских систем, второй курс про
+production-ready agent loops, open-source нескольких MCP-серверов. См. [/now](/now).

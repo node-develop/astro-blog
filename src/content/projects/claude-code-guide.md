@@ -4,7 +4,7 @@ description: "Серия из четырнадцати статей про ус�
 role: "Author, editor, translator (RU → EN)"
 status: maintained
 pubDate: 2026-04-01
-updatedDate: 2026-04-27
+updatedDate: 2026-05-09
 featured: true
 stack:
   - Markdown / MDX
