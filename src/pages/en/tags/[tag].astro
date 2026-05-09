@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
 import { t } from "~/i18n";
 import tagsEn from "~/i18n/tags.en.json";
-import { graphIds } from "~/lib/seo/schema";
+import { graphIds, buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import type { GetStaticPaths } from "astro";
 
 export const getStaticPaths = (async () => {
@@ -49,25 +50,37 @@ const blogNode = {
   })),
 };
 
-const breadcrumbNode = {
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/en/` },
-    { "@type": "ListItem", position: 2, name: t("en", "tags.title"), item: `${SITE}/en/tags` },
-    { "@type": "ListItem", position: 3, name: label },
-  ],
-};
+const breadcrumbItems = [
+  { name: t("en", "nav.home"), href: `${SITE}/en/` },
+  { name: t("en", "tags.title"), href: `${SITE}/en/tags` },
+  { name: label },
+] as const;
+
+const breadcrumbNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
+const webPageNode = buildWebPageNode({
+  locale: "en",
+  canonical,
+  name: title,
+  description,
+  type: "CollectionPage",
+  breadcrumbId: `${canonical}#breadcrumbs`,
+}) as GraphNode;
 ---
 
 <BaseLayout
   title={title}
   description={description}
   fullWidth={true}
-  extraSchemaNodes={[blogNode, breadcrumbNode]}
+  extraSchemaNodes={[blogNode, breadcrumbNode, webPageNode]}
 >
   <SiteSidebar slot="sidebar" />
 
   <section class="tag-archive">
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t("en", "breadcrumbs.aria")} />
     <header class="tag-archive__header">
       <p class="tag-archive__eyebrow">
         <a href="/en/tags">{t("en", "tags.backToIndex")}</a>

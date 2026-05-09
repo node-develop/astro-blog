@@ -14,7 +14,7 @@ faq:
     answer: "mermaid-cli (@mermaid-js/mermaid-cli) — это тонкая обёртка над puppeteer, которая каждый запуск спавнит свой Chromium. У него нет интеграции с rehype/markdown-pipeline: вам надо вручную extract'ить блоки из markdown, рендерить, вставлять обратно. На 32 диаграммы это 32 отдельных запуска Chromium вместо одного, что добавляет десятки секунд. rehype-mermaid через mermaid-isomorphic держит один browser-context на весь билд."
   - question: "Когда стоит выбрать client-side mermaid вместо билд-тайма?"
     answer: "Три случая. Первый — пользователь редактирует диаграмму в рантайме (например, документация-as-code с live preview). Второй — диаграммы генерируются динамически из БД на каждый запрос (тогда ни кэш, ни билд не помогут). Третий — у вас Vercel/Netlify free tier с лимитом на build minutes, и +10 секунд за билд критичнее, чем +700 KB JS у пользователя. Во всех остальных кейсах билд-тайм выигрывает."
-pubDate: 2026-05-02
+pubDate: 2026-04-30
 tags: ["build-tooling", "astro"]
 cover: "/og-default.svg"
 coverAlt: "сравнительный график холодного и тёплого билда с Playwright"

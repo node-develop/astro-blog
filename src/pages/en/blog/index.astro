@@ -3,10 +3,16 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
-import { buildBlogNode } from "~/lib/seo/schema";
+import {
+  buildBlogNode,
+  buildBreadcrumbsNode,
+  buildWebPageNode,
+  type GraphNode,
+} from "~/lib/seo/schema";
 import { resolveTagLabel } from "~/lib/content/tags";
 import tagsEn from "~/i18n/tags.en.json";
 
@@ -18,17 +24,46 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogNode = buildBlogNode(locale);
 const tagsHrefBase = "/en/tags";
 const dict = tagsEn as Record<string, string>;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const homeAbs = new URL("/en/", Astro.site ?? Astro.url).toString();
+
+const breadcrumbItems = [
+  { name: t(locale, "nav.home"), href: homeAbs },
+  { name: t(locale, "blog.title") },
+] as const;
+
+const breadcrumbsNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
+const latestModified = posts.reduce<Date | null>((acc, p) => {
+  const d = p.entry.data.pubDate;
+  return acc && acc.getTime() > d.getTime() ? acc : d;
+}, null);
+
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: t(locale, "blog.title"),
+  description: t(locale, "blog.description"),
+  type: "CollectionPage",
+  dateModified: latestModified,
+  breadcrumbId: `${canonical}#breadcrumbs`,
+}) as GraphNode;
 ---
 
 <BaseLayout
   title={t(locale, "blog.title")}
   description={t(locale, "blog.description")}
   fullWidth={true}
-  extraSchemaNodes={[blogNode]}
+  extraSchemaNodes={[blogNode, breadcrumbsNode, webPageNode]}
 >
   <SiteSidebar slot="sidebar" />
 
   <section class="list">
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="list__header">
       <p class="list__eyebrow">{t(locale, "blog.eyebrow")}</p>
       <h1 class="list__title">{t(locale, "blog.title")}</h1>

@@ -3,9 +3,11 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
+import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
@@ -13,9 +15,33 @@ const latest = posts.slice(0, 3);
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const latestModified = posts.reduce<Date | null>((acc, p) => {
+  const d = p.entry.data.pubDate;
+  return acc && acc.getTime() > d.getTime() ? acc : d;
+}, null);
+
+// Home is a WebPage, not a CollectionPage — it's a landing with hero +
+// author card + flagship course + 3 most-recent posts, not a paginated
+// archive. dateModified tracks freshness off the latest post.
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: t(locale, "meta.home.title"),
+  description: t(locale, "meta.home.description"),
+  type: "WebPage",
+  primaryImageOfPage: new URL("/og-default.png", Astro.site ?? Astro.url).toString(),
+  dateModified: latestModified,
+}) as GraphNode;
 ---
 
-<BaseLayout title="artka.dev" description={t(locale, "meta.home.description")} fullWidth={true}>
+<BaseLayout
+  title={t(locale, "meta.home.title")}
+  description={t(locale, "meta.home.description")}
+  fullWidth={true}
+  extraSchemaNodes={[webPageNode]}
+>
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">
@@ -29,6 +55,8 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
     <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
   </section>
 
+  <HomeAuthorCard />
+
   <aside class="course-card">
     <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
     <h2 class="course-card__title">
@@ -38,8 +66,8 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
     <a href={courseHref} class="course-card__cta">{t(locale, "home.courseCta")}</a>
   </aside>
 
-  <section class="latest">
-    <h2 class="latest__label">{t(locale, "home.latestLabel")}</h2>
+  <section class="latest" aria-labelledby="latest-label">
+    <h3 class="latest__label" id="latest-label">{t(locale, "home.latestLabel")}</h3>
     <ul class="latest__list">
       {
         latest.map((p) => (

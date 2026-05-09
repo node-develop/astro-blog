@@ -30,6 +30,7 @@ import Analytics from "~/components/Analytics.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
+import { person } from "~/lib/seo/person";
 
 interface Props {
   title: string;
@@ -51,6 +52,11 @@ const {
   extraSchemaNodes = [],
 } = Astro.props;
 
+// Brand suffix — every <title> ends with " | artka.dev" unless it already
+// contains the brand. Pages don't have to remember to append it themselves.
+const BRAND = "artka.dev";
+const fullTitle = title.includes(BRAND) ? title : `${title} | ${BRAND}`;
+
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
@@ -62,19 +68,46 @@ const enVariant =
   locale === "en" ? canonical : new URL(counterpartPath, Astro.site ?? Astro.url).toString();
 
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
+const ogLocaleAlternate = locale === "ru" ? "en_US" : "ru_RU";
 
-// OG image: prefer PNG raster; fall back to SVG. Both are absolute.
+// OG image: always PNG raster. SVG fallback used to live on og:image:secure_url
+// but Twitter/Facebook reject SVG previews — see SEO audit 2026-05-08, claim #10.
 const absoluteOgImage = ogImage
   ? /^https?:\/\//.test(ogImage)
     ? ogImage
     : new URL(ogImage, Astro.site ?? Astro.url).toString()
   : new URL("/og-default.png", Astro.site ?? Astro.url).toString();
-const absoluteOgImageSvg = ogImage
-  ? absoluteOgImage
-  : new URL("/og-default.svg", Astro.site ?? Astro.url).toString();
 
 const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
+const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
+
+const localePrefix = locale === "en" ? "/en" : "";
+const footerLinks = {
+  about: [
+    { href: `${localePrefix}/about`, key: "nav.about" },
+    { href: `${localePrefix}/now`, key: "nav.now" },
+    { href: `${localePrefix}/uses`, key: "nav.uses" },
+    { href: `${localePrefix}/projects`, key: "nav.projects" },
+  ],
+  read: [
+    { href: `${localePrefix}/blog`, key: "nav.posts" },
+    { href: `${localePrefix}/courses/claude-code-guide`, key: "footer.link.course" },
+    { href: `${localePrefix}/tags`, key: "footer.link.tags" },
+    { href: rssHref, key: "footer.link.rss" },
+    { href: jsonFeedHref, key: "footer.link.json" },
+  ],
+} as const;
+
+const socialLabel = (url: string): string => {
+  const host = new URL(url).hostname.replace(/^www\./, "");
+  if (host.endsWith("github.com")) return "GitHub";
+  if (host.endsWith("linkedin.com")) return "LinkedIn";
+  if (host === "x.com" || host === "twitter.com") return "X";
+  if (host === "t.me" || host === "telegram.me") return "Telegram";
+  if (host.includes("mastodon")) return "Mastodon";
+  return host;
+};
 ---
 
 <!doctype html>
@@ -97,33 +130,38 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         }
       })();
     </script>
-    <title>{title}</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
     {
       counterpartExists && (
         <>
-          <link rel="alternate" hreflang="ru" href={ruVariant} />
-          <link rel="alternate" hreflang="en" href={enVariant} />
+          <link rel="alternate" hreflang="ru-RU" href={ruVariant} />
+          <link rel="alternate" hreflang="en-US" href={enVariant} />
           <link rel="alternate" hreflang="x-default" href={ruVariant} />
         </>
       )
     }
 
+    <!-- Preconnect to analytics origin so the deferred Plausible script
+         doesn't pay a fresh DNS+TLS handshake on first run. No crossorigin
+         flag because the script is loaded as a normal (non-CORS) request. -->
+    <link rel="preconnect" href="https://plausible.io" />
+
     <!-- Open Graph / Twitter -->
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={ogLocale} />
+    {counterpartExists && <meta property="og:locale:alternate" content={ogLocaleAlternate} />}
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="artka.dev" />
     <meta property="og:image" content={absoluteOgImage} />
-    <meta property="og:image:secure_url" content={absoluteOgImageSvg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
+    <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absoluteOgImage} />
     {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
@@ -154,7 +192,18 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     <meta name="theme-color" content="#1A1814" media="(prefers-color-scheme: dark)" />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={title} href={rssHref} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={t(locale, "site.feedTitle")}
+      href={rssHref}
+    />
+    <link
+      rel="alternate"
+      type="application/feed+json"
+      title={t(locale, "site.feedTitle")}
+      href={jsonFeedHref}
+    />
     <script
       is:inline
       type="application/ld+json"
@@ -167,9 +216,13 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
   <body data-auth="signed-out">
     <SkipLink />
     <Header />
-    <MobileDrawer>
-      <slot name="sidebar" />
-    </MobileDrawer>
+    <!--
+      MobileDrawer is self-contained: it carries its own primary nav and does
+      not declare a <slot/> for children, so any nested content is dropped by
+      Astro at render time. The drawer is intentionally separate from the
+      desktop sidebar to keep mobile navigation editorial-clean.
+    -->
+    <MobileDrawer />
     <div class="layout" data-full-width={fullWidth}>
       <aside class="layout__sidebar" aria-label={t(locale, "sidebar.aria")}>
         <slot name="sidebar" />
@@ -183,8 +236,53 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
     </div>
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <p>© {new Date().getFullYear()} — artka.dev</p>
-        <p class="site-footer__meta">{t(locale, "footer.meta")}</p>
+        <nav class="site-footer__cols" aria-label="Footer">
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.about")}</h2>
+            <ul>
+              {
+                footerLinks.about.map((l) => (
+                  <li>
+                    <a href={l.href}>{t(locale, l.key)}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.read")}</h2>
+            <ul>
+              {
+                footerLinks.read.map((l) => (
+                  <li>
+                    <a href={l.href}>{t(locale, l.key)}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+          <section class="site-footer__col">
+            <h2 class="site-footer__heading">{t(locale, "footer.section.connect")}</h2>
+            <ul>
+              {
+                person.sameAs.map((url) => (
+                  <li>
+                    <a href={url} rel="me noopener" target="_blank">
+                      {socialLabel(url)}
+                    </a>
+                  </li>
+                ))
+              }
+              <li>
+                <a href={`mailto:${person.email}`} rel="me">{t(locale, "footer.link.email")}</a>
+              </li>
+            </ul>
+          </section>
+        </nav>
+        <div class="site-footer__legal">
+          <p>© {new Date().getFullYear()} — artka.dev</p>
+          <p class="site-footer__meta">{t(locale, "footer.meta")}</p>
+        </div>
       </div>
     </footer>
 
@@ -244,25 +342,74 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       .site-footer__inner {
         max-width: var(--content-max);
         margin: 0 auto;
-        padding: var(--space-5);
+        padding: var(--space-6) var(--space-5);
         font-size: var(--fs-sm);
         color: var(--color-fg-muted);
         display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+      }
+      .site-footer__cols {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-6);
+      }
+      .site-footer__col ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+      .site-footer__col li a {
+        color: var(--color-fg-muted);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: color var(--dur-fast) var(--ease-out);
+      }
+      .site-footer__col li a:hover {
+        color: var(--color-accent);
+        border-bottom-color: var(--color-accent);
+      }
+      .site-footer__heading {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        text-transform: uppercase;
+        letter-spacing: var(--tracking-wide);
+        color: var(--color-fg-subtle);
+        font-weight: 500;
+        margin: 0 0 var(--space-3) 0;
+      }
+      .site-footer__legal {
+        display: flex;
         justify-content: space-between;
         gap: var(--space-4);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border);
+        font-size: var(--fs-xs);
       }
       .site-footer__meta {
         font-family: var(--font-mono);
-        font-size: var(--fs-xs);
         letter-spacing: var(--tracking-wide);
         text-transform: uppercase;
+        margin: 0;
       }
-      @media (max-width: 600px) {
-        .site-footer__inner {
+      @media (max-width: 768px) {
+        .site-footer__cols {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-5);
+        }
+      }
+      @media (max-width: 480px) {
+        .site-footer__cols {
+          grid-template-columns: 1fr;
+          gap: var(--space-4);
+        }
+        .site-footer__legal {
           flex-direction: column;
           align-items: flex-start;
           gap: var(--space-2);
-          padding: var(--space-4);
         }
       }
     </style>
@@ -275,7 +422,12 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
       your own equivalent if you wire it in differently.
     -->
     <script>
-      (async () => {
+      // Auth probe is deferred to idle so it never competes with FCP/TTI.
+      // Anonymous visitors pay a wasted request otherwise. UI islands that
+      // gate on body[data-auth="signed-in"] (CertificateButton, course
+      // progress) should render a skeleton until the attribute appears,
+      // not assume it's there on first paint.
+      const probeAuth = async () => {
         try {
           const r = await fetch("/api/auth/get-session", { credentials: "same-origin" });
           if (r.ok) {
@@ -285,7 +437,13 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
         } catch {
           /* anonymous */
         }
-      })();
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(probeAuth, { timeout: 2000 });
+      } else {
+        // Safari < 17 fallback. setTimeout(0) yields after the current task.
+        setTimeout(probeAuth, 0);
+      }
     </script>
   </body>
 </html>

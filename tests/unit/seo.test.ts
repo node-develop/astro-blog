@@ -78,19 +78,22 @@ describe("SEO: PostLayout meta", () => {
 });
 
 describe("SEO: RSS feeds", () => {
-  it("RU rss includes content, author, categories, language", async () => {
-    const src = await read("src/pages/rss.xml.ts");
+  it("shared feed builder includes content, author, categories, both languages", async () => {
+    const src = await read("src/lib/feeds/build-rss.ts");
     expect(src).toMatch(/MarkdownIt/);
     expect(src).toMatch(/content:.*parser\.render/);
     expect(src).toMatch(/author:/);
     expect(src).toMatch(/categories:/);
-    expect(src).toMatch(/<language>ru-RU<\/language>/);
+    expect(src).toMatch(/<language>\$\{lang\}<\/language>/);
+    expect(src).toMatch(/locale === "ru" \? "ru-RU" : "en-US"/);
+    expect(src).toMatch(/\/en\/blog/);
   });
 
-  it("EN rss uses en-US locale", async () => {
-    const src = await read("src/pages/en/rss.xml.ts");
-    expect(src).toMatch(/<language>en-US<\/language>/);
-    expect(src).toMatch(/\/en\/blog\//);
+  it("RU and EN rss endpoints both delegate to the shared builder", async () => {
+    const ru = await read("src/pages/rss.xml.ts");
+    const en = await read("src/pages/en/rss.xml.ts");
+    expect(ru).toMatch(/buildRssFeed.*locale: "ru"/s);
+    expect(en).toMatch(/buildRssFeed.*locale: "en"/s);
   });
 });
 

@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
 import { t } from "~/i18n";
 import tagsRu from "~/i18n/tags.ru.json";
-import { buildWebPageNode } from "~/lib/seo/schema";
+import { buildWebPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
 
 const locale = "ru" as const;
 const ru = await getOrderedPosts({ locale: "ru" });
@@ -15,15 +16,25 @@ const grouped = groupPostsByTag(ru); // RU page counts RU posts only
 const dict = tagsRu as Record<string, string>;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const homeAbs = new URL("/", Astro.site ?? Astro.url).toString();
 const title = t(locale, "tags.title");
 const description = t(locale, "tags.description");
+
+const breadcrumbItems = [{ name: t(locale, "nav.home"), href: homeAbs }, { name: title }] as const;
+
+const breadcrumbsNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
 
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
   name: title,
   description,
-});
+  type: "CollectionPage",
+  breadcrumbId: `${canonical}#breadcrumbs`,
+}) as GraphNode;
 
 const rows = slugs.map((slug) => ({
   slug,
@@ -36,11 +47,12 @@ const rows = slugs.map((slug) => ({
   title={title}
   description={description}
   fullWidth={true}
-  extraSchemaNodes={[webPageNode]}
+  extraSchemaNodes={[webPageNode, breadcrumbsNode]}
 >
   <SiteSidebar slot="sidebar" />
 
   <section class="tags-index">
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="tags-index__header">
       <p class="tags-index__eyebrow">{t(locale, "tags.eyebrow")}</p>
       <h1 class="tags-index__title">{title}</h1>
