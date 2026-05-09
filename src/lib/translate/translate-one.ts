@@ -93,7 +93,26 @@ const SCHEMAS: Record<TranslateCollection, CollectionSchema> = {
     skipDrafts: true,
   },
   site: {
-    stringFields: ["title", "description"],
+    stringFields: [
+      "title",
+      "description",
+      // Home page fields — the typeof v === "string" guard in collectStringFields
+      // means these are silently skipped for about/now/uses where they are absent.
+      "heroEyebrow",
+      "heroTitle",
+      "heroLede",
+      "heroCta",
+      "courseEyebrow",
+      "courseTitle",
+      "courseLede",
+      "courseCta",
+      "latestLabel",
+      "authorLabel",
+      "authorBio",
+      "authorLinksAria",
+      "metaTitle",
+      "metaDescription",
+    ],
     arrayFields: [],
     skipDrafts: false,
   },

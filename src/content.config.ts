@@ -48,6 +48,21 @@ const site = defineCollection({
     description: z.string().min(10).max(200).optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
+    // Home page fields (only present in home.md / en/home.md)
+    heroEyebrow: z.string().optional(),
+    heroTitle: z.string().optional(),
+    heroLede: z.string().optional(),
+    heroCta: z.string().optional(),
+    courseEyebrow: z.string().optional(),
+    courseTitle: z.string().optional(),
+    courseLede: z.string().optional(),
+    courseCta: z.string().optional(),
+    latestLabel: z.string().optional(),
+    authorLabel: z.string().optional(),
+    authorBio: z.string().optional(),
+    authorLinksAria: z.string().optional(),
+    metaTitle: z.string().optional(),
+    metaDescription: z.string().optional(),
   }),
 });
 
