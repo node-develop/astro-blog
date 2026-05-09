@@ -9,7 +9,8 @@ import { socialPosts } from "~/lib/db/schema";
 import { CRITIC_MODEL, EDITOR_MODEL, WRITER_MODEL, isSocialEnabled } from "~/lib/social/config.js";
 import { stringifyError } from "~/lib/social/errors.js";
 import { runPipeline } from "~/lib/social/pipeline.js";
-import type { SocialChannel } from "~/lib/social/types.js";
+import { runCritic } from "~/lib/social/critic.js";
+import type { CriticNote, SocialChannel } from "~/lib/social/types.js";
 import { logger as log } from "~/lib/logger";
 import { postTweet, postThread } from "~/lib/social/clients/x.js";
 import { postShare } from "~/lib/social/clients/linkedin.js";
@@ -246,6 +247,106 @@ export const publishHandler = async (
   return { ok: false, error: stringifyError(result.error) };
 };
 
+// ── Save (update body / threadTail of pending row) ────────────────────────────
+
+export type SaveInput = { id: string; body: string; threadTail?: string[] | undefined };
+
+export const saveHandler = async (
+  { id, body, threadTail }: SaveInput,
+  ctx: ActionAPIContext,
+): Promise<{ ok: true }> => {
+  assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  await db
+    .update(socialPosts)
+    .set({
+      body,
+      threadTail: threadTail ?? null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")));
+  return { ok: true };
+};
+
+// ── Skip (mark pending row as skipped) ────────────────────────────────────────
+
+export type SkipInput = { id: string; reason?: string | undefined };
+
+export const skipHandler = async (
+  { id, reason }: SkipInput,
+  ctx: ActionAPIContext,
+): Promise<{ ok: true }> => {
+  assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  await db
+    .update(socialPosts)
+    .set({
+      status: "skipped",
+      errorMessage: reason ?? null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")));
+  return { ok: true };
+};
+
+// ── Recheck (re-run Critic, update annotations) ──────────────────────────────
+
+export type RecheckInput = { id: string };
+export type RecheckResult = { ok: true; annotations: CriticNote[] };
+
+export const recheckHandler = async (
+  { id }: RecheckInput,
+  ctx: ActionAPIContext,
+): Promise<RecheckResult> => {
+  assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  const [row] = await db.select().from(socialPosts).where(eq(socialPosts.id, id));
+  if (!row) throw new ActionError({ code: "NOT_FOUND", message: "draft not found" });
+
+  const article = await loadArticle(row.postSlug);
+  const annotations = await runCritic(article, [
+    {
+      channel: row.channel,
+      draft: {
+        body: row.body,
+        ...(row.threadTail != null ? { threadTail: row.threadTail } : {}),
+        mediaUrl: row.mediaUrl,
+      },
+    },
+  ]);
+  const channelNotes: CriticNote[] = (annotations[row.channel] ?? []) as CriticNote[];
+
+  await db
+    .update(socialPosts)
+    .set({
+      criticAnnotations: channelNotes,
+      criticModel: CRITIC_MODEL,
+      updatedAt: new Date(),
+    })
+    .where(eq(socialPosts.id, id));
+
+  return { ok: true, annotations: channelNotes };
+};
+
+// ── Regenerate (supersede + invoke generate) ─────────────────────────────────
+
+export type RegenerateInput = { slug: string; collection: "posts" };
+
+export const regenerateHandler = async (
+  { slug, collection }: RegenerateInput,
+  ctx: ActionAPIContext,
+): Promise<GenerateResult> => {
+  assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  await db
+    .update(socialPosts)
+    .set({ status: "superseded", updatedAt: new Date() })
+    .where(
+      and(
+        eq(socialPosts.postCollection, collection),
+        eq(socialPosts.postSlug, slug),
+        notInArray(socialPosts.status, [...TERMINAL_STATUSES]),
+      ),
+    );
+  return generateHandler({ slug, collection }, ctx);
+};
+
 // ── Action ────────────────────────────────────────────────────────────────────
 
 export const socialDrafts = {
@@ -266,5 +367,35 @@ export const socialDrafts = {
     }),
     handler: async (input, ctx) =>
       publishHandler({ id: input.id, force: input.force ?? false }, ctx),
+  }),
+  save: defineAction({
+    accept: "json",
+    input: z.object({
+      id: z.string().uuid(),
+      body: z.string(),
+      threadTail: z.array(z.string()).optional(),
+    }),
+    handler: async (input, ctx) => saveHandler(input, ctx),
+  }),
+  skip: defineAction({
+    accept: "json",
+    input: z.object({
+      id: z.string().uuid(),
+      reason: z.string().optional(),
+    }),
+    handler: async (input, ctx) => skipHandler(input, ctx),
+  }),
+  recheck: defineAction({
+    accept: "json",
+    input: z.object({ id: z.string().uuid() }),
+    handler: async (input, ctx) => recheckHandler(input, ctx),
+  }),
+  regenerate: defineAction({
+    accept: "json",
+    input: z.object({
+      slug: z.string().min(1),
+      collection: z.literal("posts").default("posts"),
+    }),
+    handler: async (input, ctx) => regenerateHandler(input, ctx),
   }),
 };
