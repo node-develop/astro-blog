@@ -32,6 +32,9 @@
     "translate:check": "tsx scripts/translate-check.ts",
     "social:auth:x": "tsx scripts/social-auth-x.ts",
     "social:auth:linkedin": "tsx scripts/social-auth-linkedin.ts",
+    "social:recover": "tsx scripts/social-recover.ts",
+    "social:smoke": "tsx scripts/social-smoke.ts",
+    "voice:draft": "tsx scripts/voice-draft.ts",
     "prepare": "husky"
   },
   "lint-staged": {
