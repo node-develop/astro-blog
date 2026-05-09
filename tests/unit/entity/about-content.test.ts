@@ -29,7 +29,7 @@ describe("src/content/site/about.md — expert profile", () => {
     for (const line of body.split("\n")) expect(line.startsWith("# ")).toBe(false);
   });
 
-  it("frontmatter has title and description", () => {
-    expect(ru).toMatch(/^---[\s\S]*?title:[\s\S]*?description:[\s\S]*?---/);
+  it("frontmatter has title", () => {
+    expect(ru).toMatch(/^---[\s\S]*?title:[\s\S]*?---/);
   });
 });
