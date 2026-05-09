@@ -1,0 +1,18 @@
+{
+  "id": "msg_test_li_en",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-haiku-4-5-20251001",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_test_li",
+      "name": "emit_draft",
+      "input": {
+        "body": "This post was drafted with Claude and edited by hand.\n\nFor three months I ran a custom in-memory job queue for a side project. It mostly worked — until it didn't.\n\nThe rebuild took half a Saturday. Postgres outbox + SKIP LOCKED replaced 200 lines of cron + node-schedule with five tables and two SELECTs.\n\nHere is what the schema actually looks like:\n\n  CREATE TABLE outbox_jobs (\n    id         BIGSERIAL PRIMARY KEY,\n    queue      TEXT NOT NULL,\n    payload    JSONB NOT NULL,\n    status     TEXT NOT NULL DEFAULT 'pending',\n    run_after  TIMESTAMPTZ NOT NULL DEFAULT now(),\n    created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n  );\n\nThe worker grabs a batch with:\n\n  SELECT * FROM outbox_jobs\n  WHERE status = 'pending' AND run_after <= now()\n  ORDER BY run_after\n  LIMIT 10\n  FOR UPDATE SKIP LOCKED;\n\nThat is it. No broker. No container. No deployment ticket.\n\nWhat I learned:\n\n- 'Lightweight' usually means 'I haven't hit the failure mode yet'.\n- Postgres locks are not scary; they are a feature. SKIP LOCKED was added in 9.5 and most engineers I know still haven't tried it.\n- Reaching for Redis is a reflex; reaching for the database you already have is a habit worth building.\n- At-least-once delivery is free when your INSERT and your business mutation share a transaction.\n- Visibility into stuck jobs is a single SELECT away, not a dashboard login.\n\nFull write-up with the exact schema, migration, and a benchmark comparing latency at 10k jobs/min:\n\nartka.dev/blog/multi-agent-postgres\n\n#Postgres #FunctionalTypeScript #DevTooling #AIEngineering #SideProject"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "usage": { "input_tokens": 5000, "output_tokens": 600, "cache_read_input_tokens": 4200 }
+}

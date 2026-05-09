@@ -1,9 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { readFile, access } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import yaml from "js-yaml";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const read = (rel: string) => readFile(`${root}${rel}`, "utf8");
+
+const readFrontmatterValue = (md: string, key: string): string => {
+  const m = /^---\n([\s\S]+?)\n---/.exec(md);
+  if (!m) return "";
+  const fm = yaml.load(m[1]!) as Record<string, unknown> | null;
+  const v = fm?.[key];
+  return typeof v === "string" ? v : "";
+};
 const exists = async (rel: string) => {
   try {
     await access(`${root}${rel}`);
@@ -111,16 +120,16 @@ describe("SEO: i18n descriptions", () => {
 
   it("home.md frontmatter has metaDescription (RU)", async () => {
     const md = await read("src/content/site/home.md");
-    const m = /metaDescription:\s*([^\n]+)/.exec(md);
-    expect(m?.[1]).toBeTruthy();
-    expect((m![1]! ?? "").length).toBeGreaterThan(20);
+    const value = readFrontmatterValue(md, "metaDescription");
+    expect(value).toBeTruthy();
+    expect(value.length).toBeGreaterThan(20);
   });
 
   it("en/home.md frontmatter has metaDescription in English (no Cyrillic)", async () => {
     const md = await read("src/content/site/en/home.md");
-    const m = /metaDescription:\s*([^\n]+)/.exec(md);
-    expect(m?.[1]).toBeTruthy();
-    expect(m![1]!).not.toMatch(/[а-яА-ЯёЁ]/);
+    const value = readFrontmatterValue(md, "metaDescription");
+    expect(value).toBeTruthy();
+    expect(value).not.toMatch(/[а-яА-ЯёЁ]/);
   });
 });
 

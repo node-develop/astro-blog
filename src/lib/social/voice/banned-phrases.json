@@ -1,0 +1,78 @@
+{
+  "en": {
+    "phrases": [
+      "delve",
+      "delving",
+      "leverage",
+      "in today's fast-paced",
+      "navigate the complexities",
+      "in conclusion",
+      "it's important to note",
+      "robust solution",
+      "transformative",
+      "game-changer",
+      "game changer",
+      "cutting-edge",
+      "best practices",
+      "elevate",
+      "embark on",
+      "harness the power",
+      "underscore",
+      "tapestry",
+      "intricate",
+      "meticulous",
+      "ever-evolving",
+      "stand the test of time",
+      "let's dive in",
+      "as we look ahead",
+      "synergy",
+      "groundbreaking",
+      "revolutionary",
+      "seamless integration",
+      "unlock the potential",
+      "in the realm of",
+      "shed light on",
+      "🚀 Excited to share",
+      "🚀 Thrilled to announce",
+      "I'm excited to announce"
+    ],
+    "patterns": [
+      ["It's not (just )?\\w+, it's \\w+", "AI 'not X, it's Y' parallel"],
+      ["not only \\w+ but also \\w+", "'not only ... but also' overuse"]
+    ]
+  },
+  "ru": {
+    "phrases": [
+      "погружаться",
+      "погрузиться",
+      "погружение",
+      "в стремительно меняющемся мире",
+      "в современном мире",
+      "в эпоху",
+      "ключевой аспект",
+      "стоит отметить",
+      "однако стоит отметить",
+      "стоит признать",
+      "более того",
+      "таким образом",
+      "в конечном итоге",
+      "стоит подчеркнуть",
+      "трансформирует",
+      "переосмысливает",
+      "революционный",
+      "революционирует",
+      "беспрецедентный",
+      "под ключ",
+      "в режиме реального времени",
+      "комплексное решение",
+      "синергия",
+      "🚀 Рад поделиться",
+      "💡 Делюсь мыслями",
+      "✨ С удовольствием"
+    ],
+    "patterns": [
+      ["(?:не\\s+)просто\\s+\\w+,\\s*а\\s+\\w+", "RU 'не просто X, а Y' штамп"],
+      ["Это\\s+(?:позволяет|даёт\\s+возможность)", "пассивно-канцелярский оборот"]
+    ]
+  }
+}

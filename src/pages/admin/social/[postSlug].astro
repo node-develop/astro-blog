@@ -1,0 +1,91 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import { db } from "~/lib/db";
+import { socialPosts } from "~/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import type { CriticNote } from "~/lib/social/types";
+import DraftCard, { type DraftRow } from "~/components/admin/DraftCard";
+
+const { postSlug } = Astro.params;
+if (!postSlug) return Astro.redirect("/admin/social");
+
+const rows = await db
+  .select()
+  .from(socialPosts)
+  .where(and(eq(socialPosts.postSlug, postSlug), eq(socialPosts.postCollection, "posts")))
+  .orderBy(socialPosts.channel);
+
+if (rows.length === 0) return Astro.redirect("/admin/social");
+---
+
+<AdminLayout title={`Social drafts: ${postSlug}`}>
+  <header class="detail-page-header">
+    <a href="/admin/social" class="detail-back">← Back to all batches</a>
+    <h1 class="detail-title">/posts/{postSlug}</h1>
+    <p class="detail-meta">
+      {rows.length} draft{rows.length === 1 ? "" : "s"} · last updated
+      <time datetime={new Date(rows[0]!.updatedAt).toISOString()}>
+        {new Date(rows[0]!.updatedAt).toLocaleString("ru-RU")}
+      </time>
+    </p>
+  </header>
+
+  <div class="draft-list">
+    {
+      rows.map((row) => {
+        const draftRow: DraftRow = {
+          id: row.id,
+          channel: row.channel as DraftRow["channel"],
+          status: row.status as DraftRow["status"],
+          body: row.body,
+          threadTail: row.threadTail as string[] | null,
+          mediaUrl: row.mediaUrl,
+          criticAnnotations: row.criticAnnotations as
+            | import("~/lib/social/types").CriticNote[]
+            | null,
+          externalUrl: row.externalUrl,
+          errorMessage: row.errorMessage,
+        };
+        return <DraftCard client:load row={draftRow} />;
+      })
+    }
+  </div>
+</AdminLayout>
+
+<style>
+  .detail-page-header {
+    margin-bottom: var(--space-6);
+  }
+
+  .detail-back {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+  }
+  .detail-back:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .detail-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: var(--space-2) 0 var(--space-1);
+  }
+
+  .detail-meta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .draft-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+</style>

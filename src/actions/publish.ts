@@ -17,6 +17,9 @@ import { relative, isAbsolute } from "node:path";
 import { resolveCollectionPaths, type TranslateCollection } from "~/lib/translate/site-config";
 import { publishToGitHub, getRemoteFileContent } from "~/lib/git/github-publisher";
 import { assertAdmin } from "./_auth";
+import { isSocialEnabled } from "~/lib/social/config";
+import { generateHandler as generateSocialDrafts } from "./socialDrafts.js";
+import { logger as log } from "~/lib/logger";
 
 interface RepoConfig {
   readonly token: string;
@@ -120,6 +123,16 @@ export const publish = {
           message,
           files: dirty.map((f) => ({ path: f.path, content: f.content })),
         });
+
+        // Best-effort hook: kick off social draft generation. Do not fail the
+        // publish if generation kickoff errors — admin can re-trigger from /admin/social.
+        if (isSocialEnabled() && input.collection === "posts") {
+          try {
+            await generateSocialDrafts({ slug: input.slug, collection: "posts" }, context);
+          } catch (err) {
+            log.warn({ mod: "social", slug: input.slug, err }, "generate kickoff failed");
+          }
+        }
 
         return {
           ok: true as const,

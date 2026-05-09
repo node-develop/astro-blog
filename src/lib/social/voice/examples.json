@@ -1,0 +1,42 @@
+{
+  "x_en": [
+    {
+      "article_excerpt": "Three weeks of cron-based queue, then I switched to Postgres SELECT FOR UPDATE SKIP LOCKED. Five tables, zero new infra.",
+      "ideal_draft": {
+        "type": "single",
+        "body": "I spent three weeks building a 'lightweight' cron queue before realising Postgres SKIP LOCKED would have shipped on day one.\n\nFive tables, two SELECTs, zero new infra.\n\nWhy I'd pick it over Redis for any side-project →\nartka.dev/blog/multi-agent-postgres"
+      }
+    },
+    {
+      "article_excerpt": "Building voice profiles for AI editor: hand-curated few-shots beat random sampling because of cache stability.",
+      "ideal_draft": {
+        "type": "thread",
+        "parts": [
+          "Random few-shot sampling kills your prompt cache.",
+          "I learned this the boring way — debugging $40 of Anthropic spend that should have been $4.",
+          "If your few-shot examples rotate, every call is a cache miss.",
+          "Hand-curate 3-5 stable examples. Pin them. Cache them.",
+          "The 'random for diversity' instinct is wrong here — diversity comes from the user's article, not the prompt prefix.",
+          "Net effect on my voice editor pipeline: $1/mo instead of $10, and zero quality regression.",
+          "Full write-up: artka.dev/blog/voice-card-cache"
+        ]
+      }
+    }
+  ],
+  "li_en": [
+    {
+      "article_excerpt": "Three weeks of cron-based queue, then switched to Postgres SELECT FOR UPDATE SKIP LOCKED.",
+      "ideal_draft": {
+        "body": "This post was drafted with Claude and edited by hand.\n\nFor three months I ran a custom in-memory job queue for a side project. It mostly worked — until it didn't.\n\nThe rebuild took half a Saturday. Postgres outbox + SKIP LOCKED replaced 200 lines of cron + node-schedule with five tables and two SELECTs.\n\nWhat I learned:\n\n- 'Lightweight' usually means 'I haven't hit the failure mode yet'.\n- Postgres locks are not scary; they are a feature. SKIP LOCKED was added in 9.5 and most engineers I know still haven't tried it.\n- Reaching for Redis is a reflex; reaching for the database you already have is a habit worth building.\n\nFull write-up with the exact schema and a benchmark: artka.dev/blog/multi-agent-postgres\n\n#Postgres #FunctionalTypeScript #DevTooling #AIEngineering #SideProject"
+      }
+    }
+  ],
+  "tg_ru": [
+    {
+      "article_excerpt": "Три недели я писал свою «лёгкую» очередь на cron. Потом перешёл на Postgres SKIP LOCKED.",
+      "ideal_draft": {
+        "body": "🛢️ **Postgres вместо Redis под очередь**\n\nТри недели я писал свою «лёгкую» очередь на cron \\+ node\\-schedule\\. Потом понял, что Postgres c `SELECT FOR UPDATE SKIP LOCKED` решает то же самое за одну транзакцию\\.\n\nПять таблиц, две SELECT'а, ноль внешней инфры\\.\n\n→ artka\\.dev/blog/multi\\-agent\\-postgres"
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
   integer,
   pgEnum,
   jsonb,
@@ -12,6 +13,8 @@ import {
   primaryKey,
   customType,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import type { CriticNote } from "~/lib/social/types";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -182,6 +185,59 @@ export const courseProgress = pgTable(
   }),
 );
 
+// ── Social autopost outbox ────────────────────────────────────
+
+export const socialChannel = pgEnum("social_channel", ["x_en", "li_en", "tg_ru"]);
+export const socialStatus = pgEnum("social_status", [
+  "generating",
+  "pending",
+  "sending",
+  "sent",
+  "failed",
+  "superseded",
+  "skipped",
+]);
+
+export const socialPosts = pgTable(
+  "social_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postCollection: text("post_collection").notNull(),
+    postSlug: text("post_slug").notNull(),
+    channel: socialChannel("channel").notNull(),
+    status: socialStatus("status").notNull().default("generating"),
+
+    body: text("body").notNull().default(""),
+    threadTail: jsonb("thread_tail").$type<string[] | null>(),
+    mediaUrl: text("media_url"),
+
+    criticAnnotations: jsonb("critic_annotations").$type<CriticNote[] | null>(),
+
+    generationModel: text("generation_model"),
+    editorModel: text("editor_model"),
+    criticModel: text("critic_model"),
+    sourceHash: text("source_hash").notNull(),
+
+    externalId: text("external_id"),
+    externalUrl: text("external_url"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    errorMessage: text("error_message"),
+    retryCount: integer("retry_count").notNull().default(0),
+
+    createdById: uuid("created_by_id").references(() => users.id),
+    approvedById: uuid("approved_by_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: index("ix_social_post_slug").on(t.postCollection, t.postSlug),
+    statusIdx: index("ix_social_status").on(t.status),
+    activePerChannel: uniqueIndex("ux_social_active_per_channel")
+      .on(t.postCollection, t.postSlug, t.channel)
+      .where(sql`status NOT IN ('superseded', 'skipped', 'failed')`),
+  }),
+);
+
 // ── Type aliases ──────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -198,5 +254,8 @@ export type NewMediaAsset = typeof mediaAssets.$inferInsert;
 
 export type CourseProgressRow = typeof courseProgress.$inferSelect;
 export type NewCourseProgressRow = typeof courseProgress.$inferInsert;
+
+export type SocialPost = typeof socialPosts.$inferSelect;
+export type NewSocialPost = typeof socialPosts.$inferInsert;
 
 export { primaryKey };
