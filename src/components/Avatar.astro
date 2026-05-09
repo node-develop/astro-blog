@@ -1,20 +1,22 @@
 ---
 /**
- * Avatar component — Phase 5 audit fix.
+ * Avatar component.
  *
- * Renders the author photo with three sizes:
+ * Renders the author photo at one of three semantic sizes:
  *   - sm:  32 × 32   — header lockup adjacent
  *   - md:  64 × 64   — about page sidebar
  *   - lg: 144 × 144  — about page hero
  *
- * The image lives at /public/me.jpg (or /me.webp — both are checked at
- * build time via the `<picture>` source block). If neither exists, the
- * component falls back to a static SVG monogram using the same sienna
- * mark as the favicon — never a broken image. See
- * `phase-5/public/AVATAR-README.md` for how to drop in your real photo.
+ * Image source is the single canonical Person.image
+ * (/public/avatar-512.png — 512 × 500, PNG, ≥112×112 raster as Google
+ * Rich Results requires for Person.image). When the owner ships a
+ * higher-quality photo or an additional WebP/AVIF variant, swap it
+ * in here and the rest of the site picks it up automatically.
  *
- * No JS — pure Astro markup + CSS.
+ * No JS, just CSS for the framed-circle treatment.
  */
+import { person } from "~/lib/seo/person";
+
 interface Props {
   size?: "sm" | "md" | "lg";
   alt?: string;
@@ -22,25 +24,24 @@ interface Props {
   framed?: boolean;
 }
 
-const { size = "md", alt = "Артём Кашута", framed = true } = Astro.props;
+const { size = "md", alt = person.name, framed = true } = Astro.props;
 
 const dim = size === "sm" ? 32 : size === "md" ? 64 : 144;
+// On the lg variant we want a sharp render at 2× — browsers will pick
+// the right dimension; the source is 512 px so this is well within range.
+const eager = size === "lg";
 ---
 
 <figure class={`avatar avatar--${size}`} data-framed={framed ? "true" : undefined}>
-  <picture>
-    <source srcset="/me.webp" type="image/webp" />
-    <source srcset="/me.jpg" type="image/jpeg" />
-    <img
-      src="/me-fallback.svg"
-      width={dim}
-      height={dim}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      class="avatar__img"
-    />
-  </picture>
+  <img
+    src={person.image}
+    width={dim}
+    height={dim}
+    alt={alt}
+    loading={eager ? "eager" : "lazy"}
+    decoding="async"
+    class="avatar__img"
+  />
 </figure>
 
 <style>
