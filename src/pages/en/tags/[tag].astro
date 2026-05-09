@@ -94,10 +94,12 @@ const webPageNode = buildWebPageNode({
         <p class="tag-archive__empty">{t("en", "tags.archiveEmptyEn")}</p>
       ) : (
         <ul class="tag-archive__posts">
-          {matches.map((p) => (
+          {matches.map((p, idx) => (
             <li class="tag-archive__item">
               <a href={`/en/blog/${bareSlug(p.entry.id)}`} class="tag-archive__link">
-                <span class="tag-archive__num">{String(p.meta.order).padStart(2, "0")}</span>
+                {/* See RU twin for rationale — visible-list position, not
+                    p.meta.order (DB curatorial field). */}
+                <span class="tag-archive__num">{String(idx + 1).padStart(2, "0")}</span>
                 <span class="tag-archive__body">
                   <h2 class="tag-archive__post-title">{p.entry.data.title}</h2>
                   <p class="tag-archive__post-desc">{p.entry.data.description}</p>

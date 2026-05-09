@@ -33,7 +33,10 @@ const { course, lesson, prev, next, index, total, Content } = Astro.props;
 const ContentComponent = Content as unknown as (props: { components?: unknown }) => unknown;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const localePrefix = locale === "en" ? "/en" : "";
-const courseSlug = course.id.replace(/\/?_index$/, "");
+// Same regex as CourseLayout — drop both `/_index` and any `/en` segment,
+// so that the back-to-course breadcrumb for an EN lesson points at
+// `/en/courses/<course>` (not `/en/courses/<course>/en`).
+const courseSlug = course.id.replace(/(?:\/en)?\/_index$/, "");
 const lessonSlug = lesson.id.replace(/^.*\//, "");
 
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
