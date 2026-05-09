@@ -4,6 +4,7 @@ export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
+import HomeTopics from "~/components/HomeTopics.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
@@ -56,6 +57,8 @@ const webPageNode = buildWebPageNode({
   </section>
 
   <HomeAuthorCard />
+
+  <HomeTopics />
 
   <aside class="course-card">
     <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
