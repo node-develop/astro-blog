@@ -1,0 +1,281 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import { db } from "~/lib/db";
+import { socialPosts } from "~/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import type { CriticNote } from "~/lib/social/types";
+
+const { postSlug } = Astro.params;
+if (!postSlug) return Astro.redirect("/admin/social");
+
+const rows = await db
+  .select()
+  .from(socialPosts)
+  .where(and(eq(socialPosts.postSlug, postSlug), eq(socialPosts.postCollection, "posts")))
+  .orderBy(socialPosts.channel);
+
+if (rows.length === 0) return Astro.redirect("/admin/social");
+
+const channelLabel: Record<string, string> = {
+  x_en: "X (English)",
+  li_en: "LinkedIn (English)",
+  tg_ru: "Telegram (Russian)",
+};
+---
+
+<AdminLayout title={`Social drafts: ${postSlug}`}>
+  <header class="detail-page-header">
+    <a href="/admin/social" class="detail-back">← Back to all batches</a>
+    <h1 class="detail-title">/posts/{postSlug}</h1>
+    <p class="detail-meta">
+      {rows.length} draft{rows.length === 1 ? "" : "s"} · last updated
+      <time datetime={new Date(rows[0]!.updatedAt).toISOString()}>
+        {new Date(rows[0]!.updatedAt).toLocaleString("ru-RU")}
+      </time>
+    </p>
+  </header>
+
+  <div class="draft-list">
+    {
+      rows.map((row) => {
+        const annotations = row.criticAnnotations as CriticNote[] | null;
+        const tail = row.threadTail as string[] | null;
+        return (
+          <article class="draft-card" data-channel={row.channel} data-row-id={row.id}>
+            <header class="draft-card__header">
+              <span class="draft-card__channel">
+                {channelLabel[row.channel] ?? row.channel}
+                <span class={`badge badge--${row.status}`}>{row.status}</span>
+              </span>
+              <span class="draft-card__chars">{row.body.length} chars</span>
+            </header>
+
+            {row.status === "generating" ? (
+              <p class="draft-card__generating">Generating draft… reload in a few seconds.</p>
+            ) : (
+              <pre class="draft-card__body">{row.body}</pre>
+            )}
+
+            {tail && tail.length > 0 && (
+              <div class="draft-card__thread">
+                <p class="draft-card__thread-label">
+                  + {tail.length} more tweet{tail.length === 1 ? "" : "s"} in thread
+                </p>
+                {tail.map((part, i) => (
+                  <pre class="draft-card__thread-part">
+                    {i + 2}/{tail.length + 1}: {part}
+                  </pre>
+                ))}
+              </div>
+            )}
+
+            {annotations && annotations.length > 0 && (
+              <ul class="draft-card__annotations">
+                {annotations.map((n) => (
+                  <li class={`annotation annotation--${n.severity}`}>
+                    {n.severity === "block" ? "⛔" : "⚠"} {n.kind}: {n.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {row.externalUrl && (
+              <p class="draft-card__external">
+                Sent:{" "}
+                <a href={row.externalUrl} target="_blank" rel="noreferrer" class="draft-card__link">
+                  {row.externalUrl}
+                </a>
+              </p>
+            )}
+
+            {row.errorMessage && <p class="draft-card__error">Error: {row.errorMessage}</p>}
+
+            {/* DraftCard React island will replace this static markup in Task 29 */}
+          </article>
+        );
+      })
+    }
+  </div>
+</AdminLayout>
+
+<style>
+  .detail-page-header {
+    margin-bottom: var(--space-6);
+  }
+
+  .detail-back {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+  }
+  .detail-back:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .detail-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: var(--space-2) 0 var(--space-1);
+  }
+
+  .detail-meta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .draft-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .draft-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-bg);
+  }
+
+  .draft-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .draft-card__channel {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .draft-card__chars {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    white-space: nowrap;
+  }
+
+  .draft-card__body {
+    white-space: pre-wrap;
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    color: var(--color-fg);
+    margin: 0;
+  }
+
+  .draft-card__generating {
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .draft-card__thread {
+    margin-top: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .draft-card__thread-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .draft-card__thread-part {
+    white-space: pre-wrap;
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    color: var(--color-fg);
+    margin: 0;
+    padding-left: var(--space-4);
+    border-left: 2px solid var(--color-border);
+  }
+
+  .draft-card__annotations {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .annotation {
+    font-size: var(--fs-sm);
+  }
+
+  .annotation--block {
+    color: var(--color-danger, crimson);
+  }
+
+  .annotation--warn {
+    color: var(--color-warning, goldenrod);
+  }
+
+  .draft-card__external {
+    margin: var(--space-3) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .draft-card__link {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .draft-card__error {
+    margin: var(--space-3) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-danger, crimson);
+  }
+
+  /* status badges — reuse same palette as list page */
+  .badge {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .badge--generating {
+    background: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
+    color: var(--color-warning, #b45309);
+  }
+  .badge--pending {
+    background: color-mix(in srgb, var(--color-info, #3b82f6) 15%, transparent);
+    color: var(--color-info, #1d4ed8);
+  }
+  .badge--sending {
+    background: color-mix(in srgb, var(--color-info, #3b82f6) 20%, transparent);
+    color: var(--color-info, #1d4ed8);
+  }
+  .badge--sent {
+    background: color-mix(in srgb, var(--color-success, #10b981) 15%, transparent);
+    color: var(--color-success, #065f46);
+  }
+  .badge--failed {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 15%, transparent);
+    color: var(--color-danger, #991b1b);
+  }
+  .badge--superseded {
+    background: color-mix(in srgb, var(--color-fg-muted) 12%, transparent);
+    color: var(--color-fg-muted);
+  }
+  .badge--skipped {
+    background: color-mix(in srgb, var(--color-fg-muted) 12%, transparent);
+    color: var(--color-fg-muted);
+  }
+</style>
