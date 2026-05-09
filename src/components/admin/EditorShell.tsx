@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { actions } from "astro:actions";
 import FrontmatterForm, { type FrontmatterInput } from "./FrontmatterForm";
 import PostEditor from "./PostEditor";
+import PublishBar, { maybeAutoTranslate } from "./PublishBar";
 
 interface Props {
   readonly slug: string | null;
@@ -58,6 +59,8 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
       return;
     }
     setStatus("saved");
+    // Fire-and-forget auto-translate if the author opted in via PublishBar.
+    void maybeAutoTranslate("posts", slug);
     setTimeout(() => setStatus("idle"), 1200);
   }
 
@@ -100,6 +103,9 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
           </span>
         )}
       </div>
+      {propsSlug !== null && (
+        <PublishBar collection="posts" slug={propsSlug} disabled={status === "saving"} />
+      )}
 
       <style>{`
         .editor-shell { display: flex; flex-direction: column; gap: var(--space-5); }

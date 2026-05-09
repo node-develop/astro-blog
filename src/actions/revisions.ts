@@ -4,12 +4,7 @@ import { listRevisionsBySlug, getRevision, appendRevision } from "~/lib/db/repo/
 import { serializeFrontmatter, type Frontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { POSTS_DIR } from "~/lib/fs/paths";
-
-function assertAdmin(user: { role?: string | null } | null | undefined): void {
-  if (!user || (user.role !== "admin" && user.role !== "editor")) {
-    throw new ActionError({ code: "FORBIDDEN", message: "Admins only" });
-  }
-}
+import { assertAdmin } from "./_auth";
 
 export const revisions = {
   list: defineAction({

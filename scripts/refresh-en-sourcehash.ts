@@ -1,8 +1,8 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { sha256 } from "./lib/hash";
-import { PATHS } from "./lib/site-config";
+import { sha256 } from "../src/lib/translate/hash";
+import { PATHS } from "../src/lib/translate/site-config";
 
 const main = async (): Promise<void> => {
   const ruFiles = (await readdir(PATHS.postsDir)).filter(
