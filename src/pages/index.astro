@@ -7,7 +7,8 @@ import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import HomeTopics from "~/components/HomeTopics.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
-import { t } from "~/i18n";
+import { getEntry } from "astro:content";
+import { homeFrontmatterSchema } from "~/lib/content/home-schema";
 import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
 
@@ -18,6 +19,9 @@ const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 
+const homeEntry = await getEntry("site", "home");
+const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
+
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 const latestModified = posts.reduce<Date | null>((acc, p) => {
   const d = p.entry.data.pubDate;
@@ -27,14 +31,11 @@ const latestModified = posts.reduce<Date | null>((acc, p) => {
 const ogImagePath = landingOgPath("home", locale);
 const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
 
-// Home is a WebPage, not a CollectionPage — it's a landing with hero +
-// author card + flagship course + 3 most-recent posts, not a paginated
-// archive. dateModified tracks freshness off the latest post.
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
-  name: t(locale, "meta.home.title"),
-  description: t(locale, "meta.home.description"),
+  name: data.metaTitle ?? "",
+  description: data.metaDescription ?? "",
   type: "WebPage",
   primaryImageOfPage,
   dateModified: latestModified,
@@ -42,8 +43,8 @@ const webPageNode = buildWebPageNode({
 ---
 
 <BaseLayout
-  title={t(locale, "meta.home.title")}
-  description={t(locale, "meta.home.description")}
+  title={data.metaTitle ?? ""}
+  description={data.metaDescription ?? ""}
   ogImage={ogImagePath}
   fullWidth={true}
   extraSchemaNodes={[webPageNode]}
@@ -51,31 +52,45 @@ const webPageNode = buildWebPageNode({
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">
-    <p class="hero__eyebrow">{t(locale, "home.eyebrow")}</p>
+    {data.heroEyebrow && <p class="hero__eyebrow">{data.heroEyebrow}</p>}
     <h1 class="hero__title">
-      {t(locale, "home.heroTitle")}
+      {data.heroTitle}
     </h1>
-    <p class="hero__lede">
-      {t(locale, "home.heroLede")}
-    </p>
-    <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
+    {data.heroLede && <p class="hero__lede">{data.heroLede}</p>}
+    {
+      data.heroCta && (
+        <a href={blogHref} class="hero__cta">
+          {data.heroCta}
+        </a>
+      )
+    }
   </section>
 
-  <HomeAuthorCard />
+  <HomeAuthorCard
+    label={data.authorLabel ?? ""}
+    bio={data.authorBio ?? ""}
+    linksAria={data.authorLinksAria ?? ""}
+  />
 
   <HomeTopics />
 
   <aside class="course-card">
-    <p class="course-card__eyebrow">{t(locale, "home.courseEyebrow")}</p>
+    {data.courseEyebrow && <p class="course-card__eyebrow">{data.courseEyebrow}</p>}
     <h2 class="course-card__title">
-      <a href={courseHref}>{t(locale, "home.courseTitle")}</a>
+      <a href={courseHref}>{data.courseTitle}</a>
     </h2>
-    <p class="course-card__lede">{t(locale, "home.courseLede")}</p>
-    <a href={courseHref} class="course-card__cta">{t(locale, "home.courseCta")}</a>
+    {data.courseLede && <p class="course-card__lede">{data.courseLede}</p>}
+    {
+      data.courseCta && (
+        <a href={courseHref} class="course-card__cta">
+          {data.courseCta}
+        </a>
+      )
+    }
   </aside>
 
   <section class="latest" aria-labelledby="latest-label">
-    <h3 class="latest__label" id="latest-label">{t(locale, "home.latestLabel")}</h3>
+    <h3 class="latest__label" id="latest-label">{data.latestLabel}</h3>
     <ul class="latest__list">
       {
         latest.map((p) => (

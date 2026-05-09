@@ -8,10 +8,20 @@
  *
  * Social labels are derived from the URL host so person.sameAs stays
  * the single source of truth — no parallel array of icons to maintain.
+ *
+ * Props come from home.md frontmatter (authorLabel, authorBio,
+ * authorLinksAria) — required, no t() fallback per plan step 15 / M-1.
  */
 import { person } from "~/lib/seo/person";
-import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  label: string;
+  bio: string;
+  linksAria: string;
+}
+
+const { label, bio, linksAria } = Astro.props;
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const aboutHref = locale === "en" ? "/en/about" : "/about";
@@ -32,13 +42,13 @@ const socialLabel = (url: string): string => {
     <img src={person.image} alt="" width="64" height="64" loading="lazy" decoding="async" />
   </a>
   <div class="home-author__body">
-    <p class="home-author__label">{t(locale, "home.author.label")}</p>
+    <p class="home-author__label">{label}</p>
     <p class="home-author__name" id="home-author-name">
       <a href={aboutHref}>{person.name}</a>
     </p>
     <p class="home-author__role">{person.jobTitle}</p>
-    <p class="home-author__bio">{t(locale, "home.author.bio")}</p>
-    <ul class="home-author__links" aria-label={t(locale, "home.author.linksAria")}>
+    <p class="home-author__bio">{bio}</p>
+    <ul class="home-author__links" aria-label={linksAria}>
       {
         person.sameAs.map((url) => (
           <li>

@@ -3,33 +3,94 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
+import HomeTopics from "~/components/HomeTopics.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
-import { t } from "~/i18n";
+import { getEntry } from "astro:content";
+import { homeFrontmatterSchema } from "~/lib/content/home-schema";
+import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const latest = posts.slice(0, 3);
-const blogHref = locale === "en" ? "/en/blog" : "/blog";
+const blogHref = "/en/blog";
+const courseHref = "/en/courses/claude-code-guide";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
+
+const homeEntry = await getEntry("site", "en/home");
+const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const latestModified = posts.reduce<Date | null>((acc, p) => {
+  const d = p.entry.data.pubDate;
+  return acc && acc.getTime() > d.getTime() ? acc : d;
+}, null);
+
+const ogImagePath = landingOgPath("home", locale);
+const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
+
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: data.metaTitle ?? "",
+  description: data.metaDescription ?? "",
+  type: "WebPage",
+  primaryImageOfPage,
+  dateModified: latestModified,
+}) as GraphNode;
 ---
 
-<BaseLayout title="artka.dev" description={t(locale, "meta.home.description")} fullWidth={true}>
+<BaseLayout
+  title={data.metaTitle ?? ""}
+  description={data.metaDescription ?? ""}
+  ogImage={ogImagePath}
+  fullWidth={true}
+  extraSchemaNodes={[webPageNode]}
+>
   <SiteSidebar slot="sidebar" />
 
   <section class="hero">
-    <p class="hero__eyebrow">{t(locale, "home.eyebrow")}</p>
+    {data.heroEyebrow && <p class="hero__eyebrow">{data.heroEyebrow}</p>}
     <h1 class="hero__title">
-      {t(locale, "home.heroTitle")}
+      {data.heroTitle}
     </h1>
-    <p class="hero__lede">
-      {t(locale, "home.heroLede")}
-    </p>
-    <a href={blogHref} class="hero__cta">{t(locale, "home.cta")}</a>
+    {data.heroLede && <p class="hero__lede">{data.heroLede}</p>}
+    {
+      data.heroCta && (
+        <a href={blogHref} class="hero__cta">
+          {data.heroCta}
+        </a>
+      )
+    }
   </section>
 
-  <section class="latest">
-    <h2 class="latest__label">{t(locale, "home.latestLabel")}</h2>
+  <HomeAuthorCard
+    label={data.authorLabel ?? ""}
+    bio={data.authorBio ?? ""}
+    linksAria={data.authorLinksAria ?? ""}
+  />
+
+  <HomeTopics />
+
+  <aside class="course-card">
+    {data.courseEyebrow && <p class="course-card__eyebrow">{data.courseEyebrow}</p>}
+    <h2 class="course-card__title">
+      <a href={courseHref}>{data.courseTitle}</a>
+    </h2>
+    {data.courseLede && <p class="course-card__lede">{data.courseLede}</p>}
+    {
+      data.courseCta && (
+        <a href={courseHref} class="course-card__cta">
+          {data.courseCta}
+        </a>
+      )
+    }
+  </aside>
+
+  <section class="latest" aria-labelledby="latest-label">
+    <h3 class="latest__label" id="latest-label">{data.latestLabel}</h3>
     <ul class="latest__list">
       {
         latest.map((p) => (
@@ -37,7 +98,7 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
             <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="latest__link">
               <span class="latest__title">{p.entry.data.title}</span>
               <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
-                {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+                {p.entry.data.pubDate.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                 })}
@@ -87,6 +148,57 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
       padding-bottom: 1px;
     }
     .hero__cta:hover {
+      color: var(--color-accent-hover);
+    }
+
+    .course-card {
+      max-width: 720px;
+      margin-top: var(--space-7);
+      padding: var(--space-5) var(--space-6);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      background: var(--color-accent-subtle);
+    }
+    .course-card__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-accent);
+      margin: 0 0 var(--space-2) 0;
+    }
+    .course-card__title {
+      font-family: var(--font-serif);
+      font-size: var(--fs-xl);
+      font-weight: 500;
+      line-height: var(--lh-tight);
+      letter-spacing: var(--tracking-tight);
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-fg);
+    }
+    .course-card__title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .course-card__title a:hover {
+      color: var(--color-accent);
+    }
+    .course-card__lede {
+      margin: 0 0 var(--space-3) 0;
+      color: var(--color-fg-muted);
+      line-height: var(--lh-normal);
+      text-wrap: pretty;
+    }
+    .course-card__cta {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--color-accent);
+      padding-bottom: 1px;
+    }
+    .course-card__cta:hover {
       color: var(--color-accent-hover);
     }
 
