@@ -72,9 +72,14 @@ export const buildBreadcrumbListNode = (input: BreadcrumbInput) => {
   };
 };
 
+// Single source of truth: the visible <Breadcrumbs> component and the
+// JSON-LD builder share the same item shape. Field name is `href` to
+// match the visible-component prop and how every call-site already
+// constructs its trail. The trailing item (current page) typically has
+// no `href` — Schema.org allows the last ListItem to omit `item`.
 export interface BreadcrumbItem {
   readonly name: string;
-  readonly url?: string;
+  readonly href?: string;
 }
 
 export interface BreadcrumbsInput {
@@ -94,7 +99,7 @@ export const buildBreadcrumbsNode = (input: BreadcrumbsInput) => ({
       position: idx + 1,
       name: item.name,
     };
-    if (item.url) node.item = item.url;
+    if (item.href) node.item = item.href;
     return node;
   }),
 });
