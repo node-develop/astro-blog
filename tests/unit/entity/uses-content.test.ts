@@ -8,14 +8,21 @@ describe("src/content/site/uses.md", () => {
   it("exists", () => expect(existsSync(path)).toBe(true));
   const md = existsSync(path) ? readFileSync(path, "utf8") : "";
 
-  const required = [
-    "## Редактор",
-    "## Бэкенд",
-    "## Инфра",
-    "## Наблюдаемость",
-    "## AI-инструменты",
+  // Section names rename as the toolchain evolves ("Бэкенд" splits into
+  // "Backend"+"Data"; "AI-инструменты" → "AI / LLM"; etc.). Test the
+  // structural shape — at least 5 h2 sections covering these topic areas
+  // — instead of pinning exact wording.
+  const requiredTopicPatterns: ReadonlyArray<RegExp> = [
+    /^##\s+(Редактор|Редакторы|IDE|Editor)/im,
+    /^##\s+(Бэкенд|Backend)/im,
+    /^##\s+(Cloud|Инфра|Кубер|Kubernetes)/im,
+    /^##\s+(Observability|Наблюдаемость|Telemetry)/im,
+    /^##\s+(AI|LLM)/im,
   ];
-  it.each(required)("has section %s", (h) => expect(md).toContain(h));
+  it.each(requiredTopicPatterns.map((r) => r.source))("has a section matching %s", (src) => {
+    const re = new RegExp(src, "im");
+    expect(md).toMatch(re);
+  });
 
   it("declares specific versions for ≥ 5 tools", () => {
     const m = md.match(/[A-Z][a-zA-Z.+]+\s+\d+(\.\d+)?/g) ?? [];
