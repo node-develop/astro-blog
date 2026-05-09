@@ -16,7 +16,10 @@
  */
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
+import { buildBreadcrumbsNode, buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -30,6 +33,31 @@ const blogPrefix = locale === "en" ? "/en" : "";
 const courseSlug = course.id.replace(/\/?_index$/, "");
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
   `${blogPrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
+
+const siteBase = Astro.site?.toString() ?? "https://artka.dev";
+const canonical = new URL(Astro.url.pathname, siteBase).toString();
+const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+
+const breadcrumbItems = [
+  { name: t(locale, "nav.home"), href: homeAbs },
+  { name: t(locale, "breadcrumbs.courses") },
+  { name: course.data.title },
+] as const;
+
+const breadcrumbsNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
+const lessonUrls = lessons.map((l) => new URL(lessonHref(l), siteBase).toString());
+
+const collectionNode = buildCollectionPageNode({
+  locale,
+  canonical,
+  name: course.data.title,
+  description: course.data.blurb,
+  itemUrls: lessonUrls,
+}) as GraphNode;
 
 const labels =
   locale === "en"
@@ -47,8 +75,13 @@ const labels =
       };
 ---
 
-<BaseLayout title={course.data.title} description={course.data.blurb}>
+<BaseLayout
+  title={course.data.title}
+  description={course.data.blurb}
+  extraSchemaNodes={[breadcrumbsNode, collectionNode]}
+>
   <article class="course" data-course-slug={courseSlug}>
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="course__hero">
       <p class="course__eyebrow">
         <span class="course__rule" aria-hidden="true"></span>

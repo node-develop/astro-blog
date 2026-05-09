@@ -14,8 +14,8 @@ describe.each([
   it("loads 'uses' from site collection", () => {
     expect(src).toMatch(/getEntry\(["']site["'],\s*[^)]*uses[^)]*\)/);
   });
-  it("emits WebPage via extraSchemaNodes", () => {
-    expect(src).toMatch(/buildWebPageNode/);
-    expect(src).toMatch(/extraSchemaNodes=\{\[[^\]]*webPageNode[^\]]*\]\}/);
+  it("emits WebPage + breadcrumbs via buildLandingNodes", () => {
+    expect(src).toMatch(/buildLandingNodes/);
+    expect(src).toMatch(/extraSchemaNodes=\{nodes\}/);
   });
 });

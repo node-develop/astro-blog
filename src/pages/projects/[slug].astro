@@ -1,10 +1,16 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t, type Locale } from "~/i18n";
-import { buildCreativeWorkNode, buildBreadcrumbListNode, type GraphNode } from "~/lib/seo/schema";
+import {
+  buildCreativeWorkNode,
+  buildBreadcrumbsNode,
+  buildWebPageNode,
+  type GraphNode,
+} from "~/lib/seo/schema";
 
 type Project = CollectionEntry<"projects">;
 
@@ -23,6 +29,15 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const locale: Locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const siteBase = Astro.site?.toString() ?? "https://artka.dev";
+const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+const projectsAbs = new URL(locale === "en" ? "/en/projects" : "/projects", siteBase).toString();
+
+const breadcrumbItems = [
+  { name: t(locale, "nav.home"), href: homeAbs },
+  { name: t(locale, "projects.title"), href: projectsAbs },
+  { name: entry.data.title },
+] as const;
 
 const creativeWorkNode: GraphNode = buildCreativeWorkNode({
   locale,
@@ -36,11 +51,20 @@ const creativeWorkNode: GraphNode = buildCreativeWorkNode({
   url: canonical,
 }) as GraphNode;
 
-const breadcrumbNode: GraphNode = buildBreadcrumbListNode({
+const breadcrumbNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
+const webPageNode = buildWebPageNode({
   locale,
-  blogIndexLabel: t(locale, "projects.title"),
-  title: entry.data.title,
-});
+  canonical,
+  name: entry.data.title,
+  description: entry.data.description,
+  type: "ItemPage",
+  breadcrumbId: `${canonical}#breadcrumbs`,
+  ...(entry.data.updatedDate ? { dateModified: entry.data.updatedDate } : {}),
+}) as GraphNode;
 
 const statusLabel = t(locale, `projects.status.${entry.data.status}` as Parameters<typeof t>[1]);
 ---
@@ -49,11 +73,12 @@ const statusLabel = t(locale, `projects.status.${entry.data.status}` as Paramete
   title={entry.data.title}
   description={entry.data.description}
   ogType="article"
-  extraSchemaNodes={[creativeWorkNode, breadcrumbNode]}
+  extraSchemaNodes={[creativeWorkNode, breadcrumbNode, webPageNode]}
 >
   <SiteSidebar slot="sidebar" />
 
   <article class="project">
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="project__header">
       <p class="project__eyebrow">
         <span>{t(locale, "projects.eyebrow")}</span>

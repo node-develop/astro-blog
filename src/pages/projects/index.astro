@@ -1,10 +1,11 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t, type Locale } from "~/i18n";
-import { buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
+import { buildCollectionPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
 
 const locale: Locale = getLocaleFromPath(Astro.url.pathname);
 const allProjects = await getCollection("projects", (e: CollectionEntry<"projects">) =>
@@ -22,6 +23,12 @@ const itemUrls = projects.map((p) =>
   new URL(`${projectsHref}/${bareSlug(p.id)}`, siteBase).toString(),
 );
 const canonical = new URL(Astro.url.pathname, siteBase).toString();
+const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+
+const breadcrumbItems = [
+  { name: t(locale, "nav.home"), href: homeAbs },
+  { name: t(locale, "projects.title") },
+] as const;
 
 const collectionNode: GraphNode = buildCollectionPageNode({
   locale,
@@ -31,6 +38,11 @@ const collectionNode: GraphNode = buildCollectionPageNode({
   itemUrls,
 });
 
+const breadcrumbsNode = buildBreadcrumbsNode({
+  canonical,
+  items: breadcrumbItems,
+}) as GraphNode;
+
 const statusLabel = (s: "active" | "maintained" | "archived"): string =>
   t(locale, `projects.status.${s}` as Parameters<typeof t>[1]);
 ---
@@ -39,11 +51,12 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
   title={t(locale, "projects.title")}
   description={t(locale, "meta.projects.description")}
   fullWidth={true}
-  extraSchemaNodes={[collectionNode]}
+  extraSchemaNodes={[collectionNode, breadcrumbsNode]}
 >
   <SiteSidebar slot="sidebar" />
 
   <section class="projects">
+    <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="projects__header">
       <p class="projects__eyebrow">{t(locale, "projects.eyebrow")}</p>
       <h1 class="projects__title">{t(locale, "projects.title")}</h1>

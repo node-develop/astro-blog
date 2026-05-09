@@ -9,13 +9,19 @@ describe.each([
   ["ru", ru],
   ["en", en],
 ])("/%s/about page wires WebPage JSON-LD", (_l, src) => {
-  it("imports buildWebPageNode from ~/lib/seo/schema", () => {
+  it("imports buildLandingNodes from ~/lib/seo/schema", () => {
+    // After SEO-V the about page builds breadcrumbs + WebPage(AboutPage)
+    // through the buildLandingNodes helper instead of calling
+    // buildWebPageNode directly.
     expect(src).toMatch(
-      /import\s*\{[^}]*buildWebPageNode[^}]*\}\s+from\s+["']~\/lib\/seo\/schema["']/,
+      /import\s*\{[^}]*buildLandingNodes[^}]*\}\s+from\s+["']~\/lib\/seo\/schema["']/,
     );
   });
-  it("passes the WebPage node through extraSchemaNodes", () => {
-    expect(src).toMatch(/extraSchemaNodes=\{\[[^\]]*webPageNode[^\]]*\]\}/);
+  it("declares the AboutPage type so the WebPage subtype is correct", () => {
+    expect(src).toMatch(/type:\s*["']AboutPage["']/);
+  });
+  it("passes the helper output through extraSchemaNodes", () => {
+    expect(src).toMatch(/extraSchemaNodes=\{nodes\}/);
   });
   it("uses canonical and getLocaleFromPath", () => {
     expect(src).toMatch(/const\s+canonical\s*=/);

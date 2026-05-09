@@ -15,9 +15,10 @@ describe.each([
   it("loads projects collection filtered by locale", () => {
     expect(src).toMatch(/getCollection\(["']projects["']/);
   });
-  it("emits CollectionPage via extraSchemaNodes", () => {
+  it("emits CollectionPage and BreadcrumbList via extraSchemaNodes", () => {
     expect(src).toMatch(/buildCollectionPageNode/);
-    expect(src).toMatch(/extraSchemaNodes=\{\[collectionNode\]\}/);
+    expect(src).toMatch(/buildBreadcrumbsNode/);
+    expect(src).toMatch(/extraSchemaNodes=\{\[collectionNode,\s*breadcrumbsNode\]\}/);
   });
   it("uses fullWidth", () => expect(src).toMatch(/fullWidth=\{true\}/));
   it("imports from ~/lib/seo/schema", () => {
