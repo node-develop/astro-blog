@@ -126,6 +126,7 @@
     "eslint-plugin-functional": "^9.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "msw": "^2.14.5",
     "playwright": "^1.55.0",
     "prettier": "^3.5.3",
     "prettier-plugin-astro": "^0.14.1",
