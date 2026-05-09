@@ -13,6 +13,7 @@ import {
   buildWebPageNode,
   type GraphNode,
 } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 import { resolveTagLabel } from "~/lib/content/tags";
 import tagsRu from "~/i18n/tags.ru.json";
 
@@ -45,6 +46,9 @@ const latestModified = posts.reduce<Date | null>((acc, p) => {
   return acc && acc.getTime() > d.getTime() ? acc : d;
 }, null);
 
+const ogImagePath = landingOgPath("blog", locale);
+const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
+
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
@@ -53,12 +57,14 @@ const webPageNode = buildWebPageNode({
   type: "CollectionPage",
   dateModified: latestModified,
   breadcrumbId: `${canonical}#breadcrumbs`,
+  primaryImageOfPage,
 }) as GraphNode;
 ---
 
 <BaseLayout
   title={t(locale, "blog.title")}
   description={t(locale, "blog.description")}
+  ogImage={ogImagePath}
   fullWidth={true}
   extraSchemaNodes={[blogNode, breadcrumbsNode, webPageNode]}
 >

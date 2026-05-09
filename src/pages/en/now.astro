@@ -6,6 +6,7 @@ import { getEntry, render } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildLandingNodes } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const entry = await getEntry("site", locale === "en" ? "en/now" : "now");
@@ -21,18 +22,23 @@ const breadcrumbItems = [
   { name: t(locale, "nav.now") },
 ] as const;
 
+const ogImagePath = landingOgPath("now", locale);
+const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
+
 const nodes = buildLandingNodes({
   locale,
   canonical,
   name: entry.data.title,
   description,
   breadcrumb: breadcrumbItems,
+  primaryImageOfPage,
 });
 ---
 
 <BaseLayout
   title={entry.data.title}
   description={description}
+  ogImage={ogImagePath}
   fullWidth={true}
   extraSchemaNodes={nodes}
 >

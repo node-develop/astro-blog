@@ -20,6 +20,7 @@ import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildBreadcrumbsNode, buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -78,6 +79,7 @@ const labels =
 <BaseLayout
   title={course.data.title}
   description={course.data.blurb}
+  {...courseSlug === "claude-code-guide" ? { ogImage: landingOgPath("course-ccg", locale) } : {}}
   extraSchemaNodes={[breadcrumbsNode, collectionNode]}
 >
   <article class="course" data-course-slug={courseSlug}>

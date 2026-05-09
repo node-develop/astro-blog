@@ -6,6 +6,7 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t, type Locale } from "~/i18n";
 import { buildCollectionPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
+import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale: Locale = getLocaleFromPath(Astro.url.pathname);
 const allProjects = await getCollection("projects", (e: CollectionEntry<"projects">) =>
@@ -50,6 +51,7 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
 <BaseLayout
   title={t(locale, "projects.title")}
   description={t(locale, "meta.projects.description")}
+  ogImage={landingOgPath("projects", locale)}
   fullWidth={true}
   extraSchemaNodes={[collectionNode, breadcrumbsNode]}
 >
