@@ -186,11 +186,18 @@ const hasBlockNote = (notes: unknown): boolean =>
 export type PublishInput = { id: string; force: boolean };
 export type PublishResult = { ok: true; url: string } | { ok: false; error: string };
 
+const requireSocialEnabled = (): void => {
+  if (!isSocialEnabled()) {
+    throw new ActionError({ code: "FORBIDDEN", message: "social autopost is disabled" });
+  }
+};
+
 export const publishHandler = async (
   { id, force }: PublishInput,
   ctx: ActionAPIContext,
 ): Promise<PublishResult> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  requireSocialEnabled();
 
   // Atomic pending → sending
   const [row] = await db
@@ -256,6 +263,7 @@ export const saveHandler = async (
   ctx: ActionAPIContext,
 ): Promise<{ ok: true }> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  requireSocialEnabled();
   await db
     .update(socialPosts)
     .set({
@@ -276,6 +284,7 @@ export const skipHandler = async (
   ctx: ActionAPIContext,
 ): Promise<{ ok: true }> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  requireSocialEnabled();
   await db
     .update(socialPosts)
     .set({
@@ -297,6 +306,7 @@ export const recheckHandler = async (
   ctx: ActionAPIContext,
 ): Promise<RecheckResult> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  requireSocialEnabled();
   const [row] = await db.select().from(socialPosts).where(eq(socialPosts.id, id));
   if (!row) throw new ActionError({ code: "NOT_FOUND", message: "draft not found" });
 
@@ -334,6 +344,7 @@ export const regenerateHandler = async (
   ctx: ActionAPIContext,
 ): Promise<GenerateResult> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
+  requireSocialEnabled();
   await db
     .update(socialPosts)
     .set({ status: "superseded", updatedAt: new Date() })

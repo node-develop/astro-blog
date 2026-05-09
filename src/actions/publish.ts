@@ -19,6 +19,7 @@ import { publishToGitHub, getRemoteFileContent } from "~/lib/git/github-publishe
 import { assertAdmin } from "./_auth";
 import { isSocialEnabled } from "~/lib/social/config";
 import { generateHandler as generateSocialDrafts } from "./socialDrafts.js";
+import { logger as log } from "~/lib/logger";
 
 interface RepoConfig {
   readonly token: string;
@@ -129,7 +130,7 @@ export const publish = {
           try {
             await generateSocialDrafts({ slug: input.slug, collection: "posts" }, context);
           } catch (err) {
-            console.warn("[social] generate kickoff failed", err);
+            log.warn({ mod: "social", slug: input.slug, err }, "generate kickoff failed");
           }
         }
 

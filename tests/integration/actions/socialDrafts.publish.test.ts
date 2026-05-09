@@ -30,6 +30,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  process.env.SOCIAL_DRAFTS_ENABLED = "true";
   await env.db.delete(socialPosts).where(eq(socialPosts.postSlug, TEST_SLUG));
   await env.db
     .insert(users)
@@ -138,5 +139,20 @@ describe("socialDrafts.publish", () => {
     const [after] = await env.db.select().from(socialPosts).where(eq(socialPosts.id, row.id));
     expect(after?.status).toBe("failed");
     expect(after?.errorMessage).toContain("422");
+  });
+
+  it("rejects with FORBIDDEN when feature flag is off", async () => {
+    process.env.SOCIAL_DRAFTS_ENABLED = "false";
+    const row = await insertPending("x_en");
+    const { publishHandler, saveHandler, skipHandler, recheckHandler } =
+      await import("~/actions/socialDrafts");
+    await expect(publishHandler({ id: row.id, force: false }, mockCtx())).rejects.toThrow(
+      /FORBIDDEN|disabled/i,
+    );
+    await expect(saveHandler({ id: row.id, body: "x" }, mockCtx())).rejects.toThrow(
+      /FORBIDDEN|disabled/i,
+    );
+    await expect(skipHandler({ id: row.id }, mockCtx())).rejects.toThrow(/FORBIDDEN|disabled/i);
+    await expect(recheckHandler({ id: row.id }, mockCtx())).rejects.toThrow(/FORBIDDEN|disabled/i);
   });
 });

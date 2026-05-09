@@ -80,4 +80,20 @@ describe("sendMessage", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error.kind).toBe("policy");
   });
+
+  it("builds /c/<id> URL for private numeric channel id", async () => {
+    process.env.TELEGRAM_CHANNEL_ID = "-1001234567890";
+    const { sendMessage } = await import("~/lib/social/clients/telegram");
+    const r = await sendMessage({ text: "hello" });
+    if (r.ok) expect(r.value.url).toBe("https://t.me/c/1234567890/42");
+    process.env.TELEGRAM_CHANNEL_ID = "@artka_blog"; // restore
+  });
+
+  it("returns empty URL for unsupported channel id form", async () => {
+    process.env.TELEGRAM_CHANNEL_ID = "12345"; // neither @username nor -100…
+    const { sendMessage } = await import("~/lib/social/clients/telegram");
+    const r = await sendMessage({ text: "hello" });
+    if (r.ok) expect(r.value.url).toBe("");
+    process.env.TELEGRAM_CHANNEL_ID = "@artka_blog"; // restore
+  });
 });

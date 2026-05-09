@@ -3,9 +3,17 @@ import type { Result } from "../errors.js";
 
 const apiBase = (): string => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN ?? ""}`;
 
-const channelHandle = (): string => {
+/**
+ * Build the public t.me URL for a posted message. Two channel-id forms:
+ *   "@username"          → https://t.me/username/<msgId>
+ *   "-100xxxxxxxxxx"     → https://t.me/c/xxxxxxxxxx/<msgId>  (private channel)
+ *   numeric chat id (-x) → no public URL; return empty (externalId still saved).
+ */
+const buildPostUrl = (messageId: string): string => {
   const id = process.env.TELEGRAM_CHANNEL_ID ?? "";
-  return id.startsWith("@") ? id.slice(1) : id;
+  if (id.startsWith("@")) return `https://t.me/${id.slice(1)}/${messageId}`;
+  if (id.startsWith("-100")) return `https://t.me/c/${id.slice(4)}/${messageId}`;
+  return "";
 };
 
 type TgResp =
@@ -61,6 +69,6 @@ export const sendMessage = async (opts: {
   const id = String(json.result.message_id);
   return ok({
     id,
-    url: `https://t.me/${channelHandle()}/${id}`,
+    url: buildPostUrl(id),
   });
 };
