@@ -1,0 +1,166 @@
+---
+export const prerender = false;
+
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import { db } from "~/lib/db";
+import { socialPosts } from "~/lib/db/schema";
+import { sql } from "drizzle-orm";
+
+const batches = await db
+  .select({
+    slug: socialPosts.postSlug,
+    collection: socialPosts.postCollection,
+    totalCount: sql<number>`count(*)::int`,
+    pendingCount: sql<number>`count(*) filter (where status = 'pending')::int`,
+    generatingCount: sql<number>`count(*) filter (where status = 'generating')::int`,
+    sentCount: sql<number>`count(*) filter (where status = 'sent')::int`,
+    failedCount: sql<number>`count(*) filter (where status = 'failed')::int`,
+    lastUpdated: sql<Date>`max(updated_at)`,
+  })
+  .from(socialPosts)
+  .groupBy(socialPosts.postSlug, socialPosts.postCollection)
+  .orderBy(sql`max(updated_at) desc`);
+---
+
+<AdminLayout title="Social drafts">
+  <header class="admin-page-header">
+    <h1>Social drafts</h1>
+    <span class="admin-page-count">
+      {batches.length} batch{batches.length === 1 ? "" : "es"}
+    </span>
+  </header>
+
+  {
+    batches.length === 0 ? (
+      <p class="social-empty">Пока нет черновиков. Опубликуй пост — они появятся сами.</p>
+    ) : (
+      <ul class="social-list">
+        {batches.map((b) => (
+          <li class="social-item">
+            <div class="social-item__top">
+              <a href={`/admin/social/${b.slug}`} class="social-item__slug">
+                /{b.collection}/{b.slug}
+              </a>
+              <time class="social-item__time" datetime={new Date(b.lastUpdated).toISOString()}>
+                {new Date(b.lastUpdated).toLocaleString("ru-RU")}
+              </time>
+            </div>
+            <div class="social-item__badges">
+              {b.generatingCount > 0 && (
+                <span class="badge badge--generating">generating: {b.generatingCount}</span>
+              )}
+              {b.pendingCount > 0 && (
+                <span class="badge badge--pending">pending: {b.pendingCount}</span>
+              )}
+              {b.sentCount > 0 && <span class="badge badge--sent">sent: {b.sentCount}</span>}
+              {b.failedCount > 0 && (
+                <span class="badge badge--failed">failed: {b.failedCount}</span>
+              )}
+              <span class="badge badge--total">total: {b.totalCount}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-6);
+  }
+  .admin-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    margin: 0;
+  }
+  .admin-page-count {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .social-empty {
+    color: var(--color-fg-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .social-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .social-item {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-bg);
+  }
+
+  .social-item__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+  }
+
+  .social-item__slug {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+  .social-item__slug:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .social-item__time {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    white-space: nowrap;
+  }
+
+  .social-item__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .badge--generating {
+    background: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
+    color: var(--color-warning, #b45309);
+  }
+  .badge--pending {
+    background: color-mix(in srgb, var(--color-info, #3b82f6) 15%, transparent);
+    color: var(--color-info, #1d4ed8);
+  }
+  .badge--sent {
+    background: color-mix(in srgb, var(--color-success, #10b981) 15%, transparent);
+    color: var(--color-success, #065f46);
+  }
+  .badge--failed {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 15%, transparent);
+    color: var(--color-danger, #991b1b);
+  }
+  .badge--total {
+    background: color-mix(in srgb, var(--color-fg-muted) 12%, transparent);
+    color: var(--color-fg-muted);
+  }
+</style>
