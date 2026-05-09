@@ -14,6 +14,7 @@ import {
   customType,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { CriticNote } from "~/lib/social/types";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -210,7 +211,7 @@ export const socialPosts = pgTable(
     threadTail: jsonb("thread_tail").$type<string[] | null>(),
     mediaUrl: text("media_url"),
 
-    criticAnnotations: jsonb("critic_annotations"),
+    criticAnnotations: jsonb("critic_annotations").$type<CriticNote[] | null>(),
 
     generationModel: text("generation_model"),
     editorModel: text("editor_model"),
