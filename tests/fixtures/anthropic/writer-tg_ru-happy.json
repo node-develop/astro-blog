@@ -1,0 +1,18 @@
+{
+  "id": "msg_test_tg_ru",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-haiku-4-5-20251001",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_test_tg",
+      "name": "emit_draft",
+      "input": {
+        "body": "🛢️ **Postgres вместо Redis под очередь**\n\nТри недели я писал свою «лёгкую» очередь на cron \\+ node\\-schedule\\. Потом понял, что Postgres c `SELECT FOR UPDATE SKIP LOCKED` решает то же самое за одну транзакцию\\.\n\nПять таблиц, две SELECT'а, ноль внешней инфры\\.\n\n→ artka\\.dev/blog/multi\\-agent\\-postgres"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "usage": { "input_tokens": 3500, "output_tokens": 200 }
+}
