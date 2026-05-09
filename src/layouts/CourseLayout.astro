@@ -52,12 +52,20 @@ const breadcrumbsNode = buildBreadcrumbsNode({
 
 const lessonUrls = lessons.map((l) => new URL(lessonHref(l), siteBase).toString());
 
+// Hardcoded knowledge that the only course we own today is the Claude Code
+// Guide. When a second course ships, expose `ogSlug` from course frontmatter
+// instead.
+const isCcg = courseSlug === "claude-code-guide";
+const ogImagePath = isCcg ? landingOgPath("course-ccg", locale) : undefined;
+const primaryImageOfPage = ogImagePath ? new URL(ogImagePath, siteBase).toString() : undefined;
+
 const collectionNode = buildCollectionPageNode({
   locale,
   canonical,
   name: course.data.title,
   description: course.data.blurb,
   itemUrls: lessonUrls,
+  ...(primaryImageOfPage ? { primaryImageOfPage } : {}),
 }) as GraphNode;
 
 const labels =
@@ -79,7 +87,7 @@ const labels =
 <BaseLayout
   title={course.data.title}
   description={course.data.blurb}
-  {...courseSlug === "claude-code-guide" ? { ogImage: landingOgPath("course-ccg", locale) } : {}}
+  {...ogImagePath ? { ogImage: ogImagePath } : {}}
   extraSchemaNodes={[breadcrumbsNode, collectionNode]}
 >
   <article class="course" data-course-slug={courseSlug}>
