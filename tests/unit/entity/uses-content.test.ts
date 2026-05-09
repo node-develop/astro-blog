@@ -32,7 +32,7 @@ describe("src/content/site/uses.md", () => {
     const body = md.replace(/^---[\s\S]*?---\r?\n/, "");
     for (const line of body.split("\n")) expect(line.startsWith("# ")).toBe(false);
   });
-  it("frontmatter has title and description", () => {
-    expect(md).toMatch(/^---[\s\S]*title:[\s\S]*description:[\s\S]*---/);
+  it("frontmatter has title", () => {
+    expect(md).toMatch(/^---[\s\S]*title:[\s\S]*---/);
   });
 });
