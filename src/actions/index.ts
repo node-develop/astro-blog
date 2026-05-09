@@ -6,6 +6,7 @@ import { home } from "./home";
 import { courseProgress } from "./course-progress";
 import { translate } from "./translate";
 import { publish } from "./publish";
+import { socialDrafts } from "./socialDrafts";
 
 export const server = {
   posts,
@@ -16,4 +17,5 @@ export const server = {
   courseProgress,
   translate,
   publish,
+  socialDrafts,
 };
