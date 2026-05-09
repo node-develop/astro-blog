@@ -1,6 +1,5 @@
 ---
 title: Что я использую
-description: "Публичный toolkit: редактор, бэкенд-стек, AI-инструменты, инфраструктура и наблюдаемость — то же, чем я пользуюсь на работе и в пет-проектах."
 ---
 
 > Снимок на 2026-05-09. Версии указываю там, где они влияют на воспроизводимость.
@@ -17,8 +16,7 @@ description: "Публичный toolkit: редактор, бэкенд-сте�
 - **Claude Code (CLI)** — daily driver для крупных задач. Запускается из любого
   репо, контекст из `CLAUDE.md`. WebStorm/PyCharm + Claude Code — два режима
   работы: ручной хирургический и агентный батч-режим.
-- **Helix** — терминальный редактор для быстрых правок.
-- **JetBrains Mono Variable** — шрифт.
+- **TMUX** — терминальный редактор для быстрых правок.
 
 ## AI / LLM
 
@@ -35,11 +33,11 @@ description: "Публичный toolkit: редактор, бэкенд-сте�
 - **LangChain** — базовые примитивы (chains, prompts, output parsers, retrievers).
 - **LangSmith** — traces, eval-датасеты, regression suites. Без него agent quality
   деградирует незаметно с каждой подкруткой промпта.
-- **n8n, Make** — glue для интеграций и автоматизации, где не нужен полноценный
+- **n8n, Make** — простые решения для интеграций и автоматизации, где не нужен полноценный
   service.
 - **MCP-серверы** — GitNexus (граф кода), llm-wiki (личная wiki), computer-use
   (когда нужно). Подключаются через `.mcp.json`.
-- **Skill / agent / hook system** — тонкая настройка Claude Code под этот репо:
+- **Skill / agent / hook system** — тонкая настройка Claude Code под каждый репо:
   см. `.claude/`. Pre-tool hooks, custom skills, subagents для параллельных задач.
 
 ## Backend
@@ -58,7 +56,6 @@ description: "Публичный toolkit: редактор, бэкенд-сте�
   на админке + course progress sync.
 - **Zod 4** — все DTO и валидация на TypeScript-стеке.
 - **Drizzle ORM + drizzle-kit** — schema-first в TypeScript, миграции в SQL.
-- **Postgres.js** — драйвер. Прямее и быстрее `pg`.
 
 ## Data
 
