@@ -2,9 +2,9 @@ import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { load as parseYaml } from "js-yaml";
-import { sha256 } from "./lib/hash";
-import { detectDrift, isFixtureSlug, type FileState } from "./lib/sync-check";
-import { PATHS } from "./lib/site-config";
+import { sha256 } from "../src/lib/translate/hash";
+import { detectDrift, isFixtureSlug, type FileState } from "../src/lib/translate/sync-check";
+import { PATHS } from "../src/lib/translate/site-config";
 
 interface FrontmatterPeek {
   readonly draft?: boolean;

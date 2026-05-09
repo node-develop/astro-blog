@@ -3,6 +3,8 @@ import { revisions } from "./revisions";
 import { media } from "./media";
 import { site } from "./site";
 import { courseProgress } from "./course-progress";
+import { translate } from "./translate";
+import { publish } from "./publish";
 
 export const server = {
   posts,
@@ -10,4 +12,6 @@ export const server = {
   media,
   site,
   courseProgress,
+  translate,
+  publish,
 };

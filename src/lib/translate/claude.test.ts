@@ -7,7 +7,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
   })),
 }));
 
-import { translateProse, translateStrings } from "./claude-translate";
+import { translateProse, translateStrings } from "./claude";
 
 beforeEach(() => createMock.mockReset());
 

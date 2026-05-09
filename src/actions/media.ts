@@ -4,15 +4,10 @@ import probeSync from "probe-image-size/sync.js";
 import { writeMediaToPublic } from "~/lib/fs/media-writer";
 import { UPLOADS_DIR } from "~/lib/fs/paths";
 import { recordMediaAsset, listMedia, deleteMediaAsset } from "~/lib/db/repo/media";
+import { assertAdmin } from "./_auth";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/avif", "image/gif"]);
-
-function assertAdmin(user: { role?: string | null } | null | undefined): void {
-  if (!user || (user.role !== "admin" && user.role !== "editor")) {
-    throw new ActionError({ code: "FORBIDDEN", message: "Admins only" });
-  }
-}
 
 export const media = {
   list: defineAction({

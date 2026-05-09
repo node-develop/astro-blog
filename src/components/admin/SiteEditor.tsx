@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { actions } from "astro:actions";
 import PostEditor from "./PostEditor";
+import PublishBar, { maybeAutoTranslate } from "./PublishBar";
 
 interface Props {
   readonly slug: string;
@@ -23,6 +24,7 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
       return;
     }
     setStatus("saved");
+    void maybeAutoTranslate("site", slug);
     setTimeout(() => setStatus("idle"), 1200);
   };
 
@@ -56,9 +58,7 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
           </span>
         )}
       </div>
-      <p className="site-editor__note">
-        После сохранения запусти <code>pnpm translate</code>, чтобы обновить EN-версию.
-      </p>
+      <PublishBar collection="site" slug={slug} disabled={status === "saving"} />
 
       <style>{`
         .site-editor__title-input {

@@ -8,12 +8,12 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { config as dotenv } from "dotenv";
 import yaml from "js-yaml";
-import { sha256 } from "./lib/hash";
-import { extractProse, reassemble } from "./lib/extract-prose";
-import { translateProse, translateStrings } from "./lib/claude-translate";
-import { decideAction } from "./lib/decide-action";
-import { PATHS } from "./lib/site-config";
-import { isFixtureSlug } from "./lib/sync-check";
+import { sha256 } from "../src/lib/translate/hash";
+import { extractProse, reassemble } from "../src/lib/translate/extract-prose";
+import { translateProse, translateStrings } from "../src/lib/translate/claude";
+import { decideAction } from "../src/lib/translate/decide-action";
+import { PATHS } from "../src/lib/translate/site-config";
+import { isFixtureSlug } from "../src/lib/translate/sync-check";
 import { parseFrontmatter } from "../src/lib/content/frontmatter";
 import type { Frontmatter } from "../src/lib/content/frontmatter";
 

@@ -1,4 +1,4 @@
-import { defineAction, ActionError } from "astro:actions";
+import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { eq } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
@@ -16,12 +16,7 @@ import { serializeFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { POSTS_DIR, resolveSafe } from "~/lib/fs/paths";
 import { schedulePagefindRebuild } from "~/lib/search/pagefind-rebuild";
-
-function assertAdmin(user: { role?: string | null } | null | undefined): void {
-  if (!user || (user.role !== "admin" && user.role !== "editor")) {
-    throw new ActionError({ code: "FORBIDDEN", message: "Admins only" });
-  }
-}
+import { assertAdmin } from "./_auth";
 
 export const posts = {
   reorder: defineAction({
