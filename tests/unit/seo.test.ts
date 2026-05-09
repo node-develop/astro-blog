@@ -98,23 +98,29 @@ describe("SEO: RSS feeds", () => {
 });
 
 describe("SEO: i18n descriptions", () => {
-  it("RU strings include meta descriptions", async () => {
+  it("RU strings include meta.about description", async () => {
     const json = JSON.parse(await read("src/i18n/strings.ru.json"));
-    expect(json["meta.home.description"]).toBeTruthy();
-    expect(json["meta.about.description"]).toBeTruthy();
-    expect(json["meta.home.description"].length).toBeGreaterThan(20);
-  });
-
-  it("EN strings include meta descriptions", async () => {
-    const json = JSON.parse(await read("src/i18n/strings.en.json"));
-    expect(json["meta.home.description"]).toBeTruthy();
     expect(json["meta.about.description"]).toBeTruthy();
   });
 
-  it("EN home description is in English (no Cyrillic)", async () => {
+  it("EN strings include meta.about description in English (no Cyrillic)", async () => {
     const json = JSON.parse(await read("src/i18n/strings.en.json"));
-    expect(json["meta.home.description"]).not.toMatch(/[а-яА-ЯёЁ]/);
+    expect(json["meta.about.description"]).toBeTruthy();
     expect(json["meta.about.description"]).not.toMatch(/[а-яА-ЯёЁ]/);
+  });
+
+  it("home.md frontmatter has metaDescription (RU)", async () => {
+    const md = await read("src/content/site/home.md");
+    const m = /metaDescription:\s*([^\n]+)/.exec(md);
+    expect(m?.[1]).toBeTruthy();
+    expect((m![1]! ?? "").length).toBeGreaterThan(20);
+  });
+
+  it("en/home.md frontmatter has metaDescription in English (no Cyrillic)", async () => {
+    const md = await read("src/content/site/en/home.md");
+    const m = /metaDescription:\s*([^\n]+)/.exec(md);
+    expect(m?.[1]).toBeTruthy();
+    expect(m![1]!).not.toMatch(/[а-яА-ЯёЁ]/);
   });
 });
 
