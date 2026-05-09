@@ -107,6 +107,18 @@ Plan: `docs/superpowers/plans/2026-04-27-bilingual-ru-en.md`
 Spec: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`
 Plan: `docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md`
 
+## Главная страница (`/` и `/en/`)
+
+Контент главной редактируется только через `/admin/home`. Источник истины — `src/content/site/home.md` (RU) и `src/content/site/en/home.md` (EN). 14 полей frontmatter (heroTitle, heroLede, courseTitle, authorBio, metaTitle, metaDescription, …) — см. `src/lib/content/home-schema.ts`.
+
+- Ключи `home.*` и `meta.home.*` удалены из `strings.{ru,en}.json` — не возвращайте их. `tags.title` остаётся в strings (используется в `/tags`).
+- Прямой URL `/admin/site/home` → 308 → `/admin/home`. Action `site.update` бросает `BAD_REQUEST` для slug=home — пиши через `home.update`.
+- EN-сохранение в админке безусловно ставит `manuallyEdited:true` (server-side). Auto-translate из RU при `manuallyEdited:true` показывает toast «⚠️ EN защищён вручную»; для перезаписи используй кнопку ⟳ Force в PublishBar.
+- `/` рендерится SSR (`prerender = false`); если потребуется снять нагрузку — переключить на SSG + `repository_dispatch` после `publish.one` (Plan B в плане ниже).
+- Опциональный pre-deploy perf-чек: `pnpm build && pnpm preview` + `npx autocannon -d 30 -c 10 http://localhost:4321/`. Сравнить p95 до/после миграции.
+
+Plan: `docs/superpowers/plans/2026-05-09-home-page-admin-editor.md`
+
 ## Запреты
 
 - `class` / `extends` / `this` в прикладном коде.
@@ -137,7 +149,7 @@ Plan: `docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md`
 
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **astro-blog** (1672 symbols, 1989 relationships, 5 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **astro-blog** (3843 symbols, 4604 relationships, 37 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
