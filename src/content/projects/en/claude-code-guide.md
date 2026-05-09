@@ -6,7 +6,7 @@ description: >-
 role: Author, editor, translator (RU → EN)
 status: maintained
 pubDate: 2026-04-01T00:00:00.000Z
-updatedDate: 2026-04-27T00:00:00.000Z
+updatedDate: 2026-05-09T00:00:00.000Z
 featured: true
 stack:
   - Markdown / MDX
@@ -22,7 +22,7 @@ links:
     url: https://artka.dev/blog
   - label: Index (EN)
     url: https://artka.dev/en/blog
-sourceHash: a5d23fcf5a4b0d4f42c9f043672c78cd63c139b485a42753510f0d38a94a6897
+sourceHash: 2bb5c55e8389efcfc60b85d411a95a0643a3941a129bbfadbec0b298014e89dc
 manuallyEdited: false
 ---
 

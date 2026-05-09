@@ -7,7 +7,7 @@
   "home.latestLabel": "191ee628767f962ff21c787914f1ee137045eb89fb166db781305992f62c9336",
   "home.heroTitle": "b85c628223d267550e55563f90b479621c1f146345b5bff7d30e3fd2aae41afd",
   "home.heroLede": "79cda49cfe75858068dc12b4131b11666505a19aad9b36cb9baa38432d0905f5",
-  "sidebar.guide": "be268bd1244790cf4af7c6c1f14270bc97c7d1a1861737dd60f85af1dc65e488",
+  "sidebar.guide": "d06a2bd4b82925d1f24a95ea860c26bf266ebea3d092834063debaf3d0aae2db",
   "sidebar.other": "63f0502096e2975ff8418dc372980c5557a07c742bf142f2897c3110101b7fc4",
   "sidebar.aria": "1b97e12a754c83ce9cf6c74a51bbf598d9be032d4ef3fa5f4be977963b0a941a",
   "post.toc": "15efcfe5319fcc99fc415fc8e1050b2429be75bf28e35e90a6e5412fc52e713f",
@@ -93,5 +93,6 @@
   "footer.link.course": "d0fefc7df1cbfb6c2eb1f4a9098926a54367539fd0b3b9de4bf7fb9a2dd866b7",
   "footer.link.rss": "3bcf9f2bf07261cf5b1c7b72e8b006666acb662b93c7a572ef352ed9edb21a8b",
   "footer.link.json": "7cb791c5c848ea2d028ecf8edcabb85519e67067b0ad114629d36ea025b717e3",
-  "footer.link.email": "969ccbd3cf6300ecd5c880459d81ae9027df7517563184a1b8b15282db230621"
+  "footer.link.email": "969ccbd3cf6300ecd5c880459d81ae9027df7517563184a1b8b15282db230621",
+  "breadcrumbs.courses": "0a168ca185552ba715e79cb6a625705fe1b8af7553a2b861e0a38499e03e351a"
 }
