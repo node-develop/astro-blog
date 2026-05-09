@@ -1,6 +1,6 @@
 ---
 title: Обо мне
-description: "Artyom Kashuta — full-stack & AI engineer. 5+ лет в backend, distributed systems и LLM/agent workflows. Платформы на 700 RPS / 15k MAU, миграция 20+ микросервисов на gRPC (−32% latency)."
+description: "Artyom Kashuta — full-stack & AI engineer. 5+ лет в backend, distributed systems и LLM/agent workflows. Python, TypeScript, LangGraph, Claude Code."
 ---
 
 ## Кто я
