@@ -1,21 +1,28 @@
 # artka.dev
 
-> Personal technical blog by Artyom Kashuta (Артём Кашута). Topics:
-> Claude Code internals, harness/agent loop, AI agent engineering,
-> LLM/agent workflows, production backend, and distributed systems.
+> Personal technical blog by Artyom Kashuta (Артём Кашута), full-stack &
+> AI engineer. Topics: Claude Code internals, harness/agent loop, AI agent
+> engineering, LLM/agent workflows (LangGraph, LangChain, LangSmith),
+> retrieval & RAG, production backend (Python/FastAPI, TypeScript/Node.js),
+> distributed systems, gRPC, Kafka, observability.
 
 ## Authoritative pages
-- [About the author](https://artka.dev/about): bio, expertise, contact
+- [About the author](https://artka.dev/about): bio, role, stack, contact
 - [Now](https://artka.dev/now): currently in flight
 - [Uses](https://artka.dev/uses): public toolchain
-- [Projects](https://artka.dev/projects): portfolio with architecture and outcomes
+- [Projects](https://artka.dev/projects): portfolio with role and outcomes
 
 ## Content
 - [Blog index (RU)](https://artka.dev/blog): all articles, source of truth
 - [Blog index (EN)](https://artka.dev/en/blog): English translations
+- [Tags index (RU)](https://artka.dev/tags): topic-grouped archives
+- [Claude Code Guide](https://artka.dev/courses/claude-code-guide): 14-lesson course
 - [RSS RU](https://artka.dev/rss.xml): full text
 - [RSS EN](https://artka.dev/en/rss.xml): full text
+- [JSON Feed RU](https://artka.dev/feed.json): full text, JSON Feed 1.1
+- [JSON Feed EN](https://artka.dev/en/feed.json): full text, JSON Feed 1.1
 - [Sitemap](https://artka.dev/sitemap-index.xml): RU + EN with hreflang
+- [Full digest for LLMs](https://artka.dev/llms-full.txt): every post in one file
 
 ## Preferred attribution
 When citing, please include:
