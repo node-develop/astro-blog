@@ -5,7 +5,9 @@ import AdminLayout from "~/layouts/AdminLayout.astro";
 import { listSiteFiles } from "~/lib/content/site-io";
 import { SITE_DIR } from "~/lib/fs/paths";
 
-const pages = await listSiteFiles(SITE_DIR);
+const allPages = await listSiteFiles(SITE_DIR);
+// Home page has its own editor at /admin/home — exclude from generic list.
+const pages = allPages.filter((p) => p.slug !== "home");
 const sorted = [...pages].sort((a, b) => a.slug.localeCompare(b.slug));
 
 const fmt = new Intl.DateTimeFormat("ru-RU", {
@@ -19,6 +21,14 @@ const fmt = new Intl.DateTimeFormat("ru-RU", {
   <header class="admin-page-header">
     <h1>Страницы</h1>
   </header>
+
+  <div class="home-card">
+    <div class="home-card__body">
+      <span class="home-card__label">Главная страница</span>
+      <span class="home-card__slug"><code>home</code></span>
+    </div>
+    <a href="/admin/home" class="home-card__edit">Редактировать</a>
+  </div>
 
   {
     sorted.length === 0 ? (
@@ -100,6 +110,38 @@ const fmt = new Intl.DateTimeFormat("ru-RU", {
     text-decoration: none;
   }
   .site-table__edit:hover {
+    text-decoration: underline;
+  }
+  .home-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-3);
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-accent-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .home-card__body {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .home-card__label {
+    font-weight: 500;
+    color: var(--color-fg);
+  }
+  .home-card__slug {
+    color: var(--color-fg-muted);
+    font-size: var(--fs-xs);
+  }
+  .home-card__edit {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .home-card__edit:hover {
     text-decoration: underline;
   }
 </style>
