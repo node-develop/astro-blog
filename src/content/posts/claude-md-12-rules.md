@@ -8,7 +8,7 @@ tags:
   - ai
   - claude code
   - promt-engineering
-draft: true
+draft: false
 coverAlt: 12 правил для CLAUDE.md — расширение январского шаблона Karpathy на failure modes 2026 года
 summary: >+
   Karpathy в январе сформулировал 4 правила для CLAUDE.md. К маю шаблон оброс 8 дополнительными - они закрывают failure
