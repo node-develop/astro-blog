@@ -1,10 +1,17 @@
 import React from "react";
 import TagInput from "./TagInput";
 import MediaPicker from "./MediaPicker";
+import FaqEditor, { type FaqItem } from "./FaqEditor";
 
 export interface FrontmatterInput {
   title: string;
   description: string;
+  /** TL;DR card (60..280). Empty string = "not set". */
+  summary: string;
+  /** Semantic keywords for retrieval (distinct from tag slugs). */
+  keywords: string[];
+  /** Optional FAQ rendered under the body and in JSON-LD FAQPage. */
+  faq: FaqItem[];
   pubDate: string; // yyyy-mm-dd
   updatedDate: string | null;
   tags: string[];
@@ -23,6 +30,10 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
     onChange({ ...value, [key]: v });
   }
 
+  const descBad = value.description.length > 0 && value.description.length > 200;
+  const summaryBad =
+    value.summary.length > 0 && (value.summary.length < 60 || value.summary.length > 280);
+
   return (
     <div className="fm-form">
       <label className="fm-form__field">
@@ -35,14 +46,37 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
         />
       </label>
       <label className="fm-form__field">
-        <span>Описание</span>
+        <span>
+          Описание <em className={descBad ? "is-bad" : ""}>{value.description.length} / 200</em>
+        </span>
         <textarea
           value={value.description}
           onChange={(e) => set("description", e.target.value)}
           rows={3}
-          maxLength={300}
+          maxLength={200}
         />
       </label>
+      <label className="fm-form__field">
+        <span>
+          TL;DR (summary){" "}
+          <em className={summaryBad ? "is-bad" : ""}>{value.summary.length} / 280</em>
+        </span>
+        <textarea
+          value={value.summary}
+          onChange={(e) => set("summary", e.target.value)}
+          rows={4}
+          maxLength={280}
+          placeholder="60–280 символов. Опционально, но обязательно для постов после 2026-05-02."
+        />
+      </label>
+      <div className="fm-form__field" role="group" aria-label="Ключевые слова (keywords)">
+        <span aria-hidden="true">Keywords (для семантического поиска)</span>
+        <TagInput value={value.keywords} onChange={(next) => set("keywords", next)} />
+      </div>
+      <div className="fm-form__field" role="group" aria-label="FAQ">
+        <span aria-hidden="true">FAQ</span>
+        <FaqEditor value={value.faq} onChange={(next) => set("faq", next)} />
+      </div>
       <div className="fm-form__row">
         <label className="fm-form__field">
           <span>Дата публикации</span>
@@ -93,7 +127,13 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
           font-family: var(--font-mono); font-size: var(--fs-xs);
           text-transform: uppercase; letter-spacing: var(--tracking-wide);
           color: var(--color-fg-muted);
+          display: flex; justify-content: space-between; align-items: baseline;
         }
+        .fm-form__field > span > em {
+          font-style: normal; color: var(--color-fg-muted);
+          text-transform: none; letter-spacing: 0;
+        }
+        .fm-form__field > span > em.is-bad { color: var(--color-danger); }
         .fm-form__field input[type="text"],
         .fm-form__field input[type="date"],
         .fm-form__field textarea {

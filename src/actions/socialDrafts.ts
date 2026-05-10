@@ -6,7 +6,13 @@ import { assertAdmin } from "./_auth.js";
 import { computeSourceHash, decideChannels, loadArticle } from "./_social.js";
 import { db } from "~/lib/db";
 import { socialPosts } from "~/lib/db/schema";
-import { CRITIC_MODEL, EDITOR_MODEL, WRITER_MODEL, isSocialEnabled } from "~/lib/social/config.js";
+import {
+  CRITIC_MODEL,
+  EDITOR_MODEL,
+  WRITER_MODEL,
+  isSocialEnabled,
+  validateSocialEnv,
+} from "~/lib/social/config.js";
 import { stringifyError } from "~/lib/social/errors.js";
 import { runPipeline } from "~/lib/social/pipeline.js";
 import { runCritic } from "~/lib/social/critic.js";
@@ -96,7 +102,14 @@ export const generateHandler = async (
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
 
   if (!isSocialEnabled()) {
+    log.warn({ mod: "social", slug }, "generate skipped: feature flag off");
     return { ok: false as const, reason: "feature flag off" };
+  }
+
+  const env = validateSocialEnv();
+  if (!env.ok) {
+    log.error({ mod: "social", slug, issues: env.issues }, "social env invalid");
+    return { ok: false as const, reason: `env invalid: ${env.issues.join("; ")}` };
   }
 
   const article = await loadArticle(slug, collection);
@@ -110,6 +123,27 @@ export const generateHandler = async (
     },
   });
   const channelsToUse: SocialChannel[] = channels ?? decideChannels(article);
+
+  // ── Idempotency guard: skip if non-terminal rows already exist for this exact
+  //    source hash. Prevents wasted LLM tokens on repeat clicks of Publish/Force.
+  const existing = await db
+    .select({ id: socialPosts.id })
+    .from(socialPosts)
+    .where(
+      and(
+        eq(socialPosts.postCollection, collection),
+        eq(socialPosts.postSlug, slug),
+        eq(socialPosts.sourceHash, sourceHash),
+        notInArray(socialPosts.status, ["failed", "superseded", "skipped"]),
+      ),
+    );
+  if (existing.length > 0) {
+    log.info(
+      { mod: "social", slug, existing: existing.length },
+      "kickoff skipped: same sourceHash already in flight or sent",
+    );
+    return { ok: true, channels: [] };
+  }
 
   // ── Transactional outbox: supersede stale rows + insert new generating rows
 
@@ -151,8 +185,12 @@ export const generateHandler = async (
   // ── Fire-and-forget pipeline — crashes are logged; rows stay in
   //    "generating" and a recovery cron will pick them up.
 
+  log.info({ mod: "social", slug, channels: channelsToUse }, "pipeline kickoff");
   void runPipeline({ article, channels: channelsToUse })
-    .then((out) => persistResults(collection, slug, sourceHash, out))
+    .then((out) => {
+      log.info({ mod: "social", slug, channels: Object.keys(out.drafts) }, "pipeline done");
+      return persistResults(collection, slug, sourceHash, out);
+    })
     .catch((err) =>
       log.error({ mod: "social", slug, err }, "pipeline crashed — rows left in generating"),
     );
@@ -198,6 +236,13 @@ export const publishHandler = async (
 ): Promise<PublishResult> => {
   assertAdmin(ctx.locals.user as { role?: string | null } | null);
   requireSocialEnabled();
+  const env = validateSocialEnv();
+  if (!env.ok) {
+    throw new ActionError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `social env invalid: ${env.issues.join("; ")}`,
+    });
+  }
 
   // Atomic pending → sending
   const [row] = await db

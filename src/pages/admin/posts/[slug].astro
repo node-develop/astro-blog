@@ -14,6 +14,11 @@ const initial = {
   frontmatter: {
     title: post.frontmatter.title,
     description: post.frontmatter.description,
+    summary: post.frontmatter.summary ?? "",
+    keywords: post.frontmatter.keywords ? [...post.frontmatter.keywords] : [],
+    faq: post.frontmatter.faq
+      ? post.frontmatter.faq.map((it) => ({ question: it.question, answer: it.answer }))
+      : [],
     pubDate: post.frontmatter.pubDate.toISOString().slice(0, 10),
     updatedDate: post.frontmatter.updatedDate
       ? post.frontmatter.updatedDate.toISOString().slice(0, 10)

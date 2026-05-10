@@ -94,5 +94,8 @@
   "footer.link.rss": "3bcf9f2bf07261cf5b1c7b72e8b006666acb662b93c7a572ef352ed9edb21a8b",
   "footer.link.json": "7cb791c5c848ea2d028ecf8edcabb85519e67067b0ad114629d36ea025b717e3",
   "footer.link.email": "969ccbd3cf6300ecd5c880459d81ae9027df7517563184a1b8b15282db230621",
-  "breadcrumbs.courses": "0a168ca185552ba715e79cb6a625705fe1b8af7553a2b861e0a38499e03e351a"
+  "breadcrumbs.courses": "0a168ca185552ba715e79cb6a625705fe1b8af7553a2b861e0a38499e03e351a",
+  "certificate.label": "9d924c5f2fcd8afdd0df9c7774931278ad843a2f59e5d5e8b90986b8b05728c3",
+  "certificate.copy": "348ff3be2d36eb20675eb3213279ba176c301c604c8c12e8c8709cf59b6d59da",
+  "certificate.download": "59a0ba0355b1eead805d1206a5e0bb7604c6d12210b69c866f87868af00817a2"
 }

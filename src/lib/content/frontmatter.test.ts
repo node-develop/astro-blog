@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter";
+import {
+  parseFrontmatter,
+  serializeFrontmatter,
+  stripLeadingFrontmatter,
+  type Frontmatter,
+} from "./frontmatter";
 
 describe("parseFrontmatter", () => {
   it("parses YAML block at top of file", () => {
@@ -56,5 +61,56 @@ describe("serializeFrontmatter", () => {
     };
     const text = serializeFrontmatter(fm, "");
     expect(text).toContain("pubDate: 2026-01-01");
+  });
+});
+
+describe("stripLeadingFrontmatter", () => {
+  it("returns body unchanged when no leading frontmatter present", () => {
+    const body = "## Heading\n\nParagraph.";
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe(body);
+    expect(out.hadFrontmatter).toBe(false);
+  });
+
+  it("strips a single leading YAML block and reports the flag", () => {
+    const body = [
+      "---",
+      'title: "Pasted"',
+      "tags: [a, b]",
+      "---",
+      "",
+      "Real body starts here.",
+    ].join("\n");
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe("Real body starts here.");
+    expect(out.hadFrontmatter).toBe(true);
+  });
+
+  it("does not strip a pseudo-block missing the closing fence", () => {
+    const body = "---\ntitle: not closed\n\nReal body.";
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe(body);
+    expect(out.hadFrontmatter).toBe(false);
+  });
+
+  it("does not strip a fenced block that is not at the very start", () => {
+    const body = "Intro paragraph.\n\n---\ntitle: x\n---\n\nMore.";
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe(body);
+    expect(out.hadFrontmatter).toBe(false);
+  });
+
+  it("tolerates a leading UTF-8 BOM", () => {
+    const body = "﻿---\ntitle: x\n---\n\nBody.";
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe("Body.");
+    expect(out.hadFrontmatter).toBe(true);
+  });
+
+  it("handles CRLF line endings", () => {
+    const body = "---\r\ntitle: x\r\n---\r\n\r\nBody line.";
+    const out = stripLeadingFrontmatter(body);
+    expect(out.body).toBe("Body line.");
+    expect(out.hadFrontmatter).toBe(true);
   });
 });
