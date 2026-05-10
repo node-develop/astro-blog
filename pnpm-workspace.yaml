@@ -3,5 +3,4 @@ packages:
   - "api"
   - "render"
   - "admin"
-  - "agents"
   - "packages/*"
