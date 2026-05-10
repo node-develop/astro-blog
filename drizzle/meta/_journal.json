@@ -43,6 +43,13 @@
       "when": 1778333447507,
       "tag": "0005_nebulous_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778442801233,
+      "tag": "0006_overjoyed_rogue",
+      "breakpoints": true
     }
   ]
 }

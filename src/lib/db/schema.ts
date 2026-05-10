@@ -12,6 +12,8 @@ import {
   serial,
   primaryKey,
   customType,
+  bigserial,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CriticNote } from "~/lib/social/types";
@@ -259,3 +261,183 @@ export type SocialPost = typeof socialPosts.$inferSelect;
 export type NewSocialPost = typeof socialPosts.$inferInsert;
 
 export { primaryKey };
+
+// ── Refactor v2: Postgres-as-CMS + agents ─────────────────────
+
+export const postKind = pgEnum("post_kind", ["post", "page", "project"]);
+export const postStatus = pgEnum("post_status", ["draft", "published", "unlisted", "archived"]);
+export const postLang = pgEnum("post_lang", ["ru", "en"]);
+
+export const agentJobStatus = pgEnum("agent_job_status", [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+export const agentRunStatus = pgEnum("agent_run_status", ["running", "completed", "failed"]);
+
+export const posts = pgTable(
+  "posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    lang: postLang("lang").notNull(),
+    kind: postKind("kind").notNull().default("post"),
+    status: postStatus("status").notNull().default("draft"),
+
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    summary: text("summary"),
+    keywords: text("keywords")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    faq: jsonb("faq").$type<{ question: string; answer: string }[] | null>(),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    cover: text("cover"),
+    coverAlt: text("cover_alt"),
+    author: text("author").notNull().default("Артём"),
+    pubDate: timestamp("pub_date", { withTimezone: true }).notNull(),
+    updatedDate: timestamp("updated_date", { withTimezone: true }),
+    extra: jsonb("extra")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+
+    bodyMd: text("body_md").notNull(),
+    bodyHtml: text("body_html"),
+    toc: jsonb("toc").$type<{ slug: string; depth: number; text: string }[] | null>(),
+    renderVersion: integer("render_version").notNull().default(0),
+    renderedAt: timestamp("rendered_at", { withTimezone: true }),
+
+    sourceHash: text("source_hash"),
+    manuallyEdited: boolean("manually_edited").notNull().default(false),
+
+    displayOrder: integer("display_order").notNull().default(0),
+    pinned: boolean("pinned").notNull().default(false),
+
+    searchVector: tsvector("search_vector"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugLangUx: uniqueIndex("posts_slug_lang_ux").on(t.slug, t.lang),
+    publishedIdx: index("posts_published_idx")
+      .on(t.lang, t.pubDate)
+      .where(sql`status = 'published'`),
+    searchIdx: index("posts_search_idx").using("gin", t.searchVector),
+    tagsIdx: index("posts_tags_idx").using("gin", t.tags),
+    kindStatusIdx: index("posts_kind_status_idx").on(t.kind, t.status, t.lang),
+  }),
+);
+
+export const agentJobs = pgTable(
+  "agent_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    payload: jsonb("payload").notNull(),
+    status: agentJobStatus("status").notNull().default("pending"),
+    priority: integer("priority").notNull().default(0),
+    runAfter: timestamp("run_after", { withTimezone: true }).notNull().defaultNow(),
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(3),
+    lastError: text("last_error"),
+    idempotencyKey: text("idempotency_key"),
+    createdById: uuid("created_by_id").references(() => users.id, { onDelete: "restrict" }),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+    claimedBy: text("claimed_by"),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pendingIdx: index("agent_jobs_pending_idx")
+      .on(t.priority, t.runAfter, t.createdAt)
+      .where(sql`status = 'pending'`),
+    kindIdx: index("agent_jobs_kind_idx").on(t.kind, t.createdAt),
+    idempotencyUx: uniqueIndex("agent_jobs_idempotency_ux").on(t.kind, t.idempotencyKey),
+  }),
+);
+
+export const agentRuns = pgTable(
+  "agent_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => agentJobs.id, { onDelete: "cascade" }),
+    attempt: integer("attempt").notNull(),
+    langgraphThreadId: text("langgraph_thread_id"),
+    langsmithTraceId: text("langsmith_trace_id"),
+    status: agentRunStatus("status").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    modelCalls: integer("model_calls").notNull().default(0),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    costUsd: numeric("cost_usd", { precision: 10, scale: 4 }).notNull().default("0"),
+    error: jsonb("error"),
+    finalOutput: jsonb("final_output"),
+  },
+  (t) => ({
+    jobAttemptUx: uniqueIndex("agent_runs_job_attempt_ux").on(t.jobId, t.attempt),
+    traceIdx: index("agent_runs_trace_idx").on(t.langsmithTraceId),
+  }),
+);
+
+export const agentArtifacts = pgTable(
+  "agent_artifacts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    runId: uuid("run_id")
+      .notNull()
+      .references(() => agentRuns.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    refTable: text("ref_table"),
+    refId: text("ref_id"),
+    content: jsonb("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    kindIdx: index("agent_artifacts_kind_idx").on(t.kind, t.createdAt),
+    refIdx: index("agent_artifacts_ref_idx").on(t.refTable, t.refId),
+  }),
+);
+
+export const agentEvents = pgTable(
+  "agent_events",
+  {
+    id: bigserial("id", { mode: "bigint" }).primaryKey(),
+    type: text("type").notNull(),
+    jobId: uuid("job_id"),
+    runId: uuid("run_id"),
+    payload: jsonb("payload").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    createdIdx: index("agent_events_created_idx").on(t.createdAt),
+    jobIdx: index("agent_events_job_idx").on(t.jobId),
+  }),
+);
+
+// ── New type aliases ──────────────────────────────────────────
+
+export type Post = typeof posts.$inferSelect;
+export type NewPost = typeof posts.$inferInsert;
+
+export type AgentJob = typeof agentJobs.$inferSelect;
+export type NewAgentJob = typeof agentJobs.$inferInsert;
+
+export type AgentRun = typeof agentRuns.$inferSelect;
+export type NewAgentRun = typeof agentRuns.$inferInsert;
+
+export type AgentArtifact = typeof agentArtifacts.$inferSelect;
+export type NewAgentArtifact = typeof agentArtifacts.$inferInsert;
+
+export type AgentEvent = typeof agentEvents.$inferSelect;
+export type NewAgentEvent = typeof agentEvents.$inferInsert;
