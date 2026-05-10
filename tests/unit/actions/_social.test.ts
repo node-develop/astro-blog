@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeSourceHash } from "~/actions/_social";
+import { computeSourceHash, loadArticle } from "~/actions/_social";
 
 describe("computeSourceHash", () => {
   it("is deterministic", () => {
@@ -28,5 +28,42 @@ describe("computeSourceHash", () => {
   it("returns hex string of length 64", () => {
     const h = computeSourceHash({ title: "T", body: "B", frontmatter: {} });
     expect(h).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("loadArticle", () => {
+  it("reads a real fixture and returns correct shape", async () => {
+    const article = await loadArticle("local-coding-agent");
+
+    expect(article.slug).toBe("local-coding-agent");
+    expect(article.collection).toBe("posts");
+    expect(article.title.length).toBeGreaterThan(0);
+    expect(article.body.length).toBeGreaterThan(0);
+    expect(article.lang).toBe("ru");
+    expect(article.pubDate).toBeInstanceOf(Date);
+    expect(Array.isArray(article.tags)).toBe(true);
+    expect(article.sourceUrl).toBe("https://artka.dev/blog/local-coding-agent");
+  });
+
+  it("populates hasEnTwin:true for local-coding-agent (EN twin exists)", async () => {
+    const article = await loadArticle("local-coding-agent");
+    expect(article.hasEnTwin).toBe(true);
+  });
+
+  it("populates hasEnTwin:false for a post without EN twin", async () => {
+    // claude.md has no EN twin in src/content/posts/en/
+    const article = await loadArticle("claude");
+    expect(article.hasEnTwin).toBe(false);
+  });
+
+  it("throws article not found for a non-existent slug", async () => {
+    await expect(loadArticle("this-slug-does-not-exist-xyz")).rejects.toThrow(
+      "article not found: posts/this-slug-does-not-exist-xyz",
+    );
+  });
+
+  it("accepts collection param without breaking (signature compatibility)", async () => {
+    const article = await loadArticle("local-coding-agent", "posts");
+    expect(article.slug).toBe("local-coding-agent");
   });
 });
