@@ -17,6 +17,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # ---------- builder ----------
 FROM base AS builder
 ARG SITE_URL=https://artka.dev
+ARG GIT_SHA=unknown
+ARG BUILT_AT=unknown
 ENV SITE_URL=$SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -30,10 +32,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # ---------- runner ----------
 FROM node:24-bookworm-slim AS runner
+ARG GIT_SHA=unknown
+ARG BUILT_AT=unknown
 WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    PORT=4321
+    PORT=4321 \
+    GIT_SHA=$GIT_SHA \
+    BUILT_AT=$BUILT_AT
 
 # Непривилегированный пользователь
 RUN groupadd -r astro && useradd -r -g astro astro
