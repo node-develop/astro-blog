@@ -3,7 +3,7 @@ title: "12 правил для CLAUDE.md: расширение Karpathy на о�
 description: >-
   Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
   agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
-pubDate: 2026-05-10T00:00:00.000Z
+pubDate: 2026-05-10
 tags:
   - ai
   - claude-code
@@ -50,11 +50,11 @@ faq:
       Anthropic SDK. Эффект тот же — модель меньше додумывает и больше озвучивает предположения. Правила 6 (бюджеты), 10
       (чекпойнты) и 12 (fail loud) полезны и без CLI-обвязки.
 lang: en
-sourceHash: 251a72b12d08913b88c33b5e798699491a1811be1e1a56142bb3e108dd5d404f
-manuallyEdited: false
+sourceHash: 07660cd4ad93b31d9b38e2ab5ed52708cccd60f9b4d74674d7e87502bd738457
+manuallyEdited: true
 ---
 
-> Over four months after Karpathy's January thread, the `CLAUDE.md` template grew from 4 rules to 12. I ran the expanded set on typical tasks from my blog and several work repos — the frequency of Claude Code silent errors drops noticeably. The eight added rules cover what didn't exist as a class of problems in January: long-running agent loops, cross-session flows, shallow tests, quiet failures instead of explicit errors. I opened my own `CLAUDE.md` for this blog — Karpathy's four original rules are already there in `Code Standards` and `Prohibitions`, the eight added ones aren't. I'm going through each one and figuring out where it makes sense to insert them.
+> Over four months after Karpathy's January thread, the `CLAUDE.md` template grew from 4 rules to 12. I ran the expanded set on typical tasks from my blog and several work repos — the frequency of silent Claude Code errors drops noticeably. The eight added rules cover what didn't exist as a class of problems in January: long-running agent loops, cross-session flows, shallow tests, quiet failures instead of explicit errors. I opened my own `CLAUDE.md` for this blog — Karpathy's four original rules are already there in `Code Standards` and `Prohibitions`, the eight added ones aren't. I'm going through each one and figuring out where it makes sense to insert them.
 
 ---
 
@@ -124,15 +124,15 @@ Frame: Claude is for classification, extraction, drafts, summarization. Not for 
 
 ### 4.2. Rule 6 — Token budgets are not advisory
 
-Without a budget, the loop drifts into a 50,000-token dump. Hard version: 4,000 per task, 30,000 per session. You approach the boundary — sum up and restart the session.
+Without a budget, the loop goes into a 50,000-token dump. Hard version: 4,000 per task, 30,000 per session. Approaching the boundary — sum up and restart the session.
 
 Typical case: 90-minute debugging session with the same 8 KB error message. By the end — re-proposing fixes you rejected 40 messages ago. The model happily iterates on a lost track. A budget would have killed the loop at minute 12.
 
 ### 4.3. Rule 7 — Surface conflicts, don't average them
 
-If the codebase has two error-handling patterns — try/catch and global boundary — Claude writes code that does both. Double handlers. Symptom: the error gets swallowed twice.
+If the codebase has two error handling patterns — try/catch and global boundary — Claude writes code that does both. Double handlers. Symptom: error gets swallowed twice.
 
-Rule: when there's a contradiction, pick one (the newer or more tested one), explain why, mark the second for cleanup. Averaged code that satisfies both rules — the worst possible.
+Rule: on conflict, pick one (newer or more tested), explain why, mark the second for cleanup. Averaged code that satisfies both rules — the worst possible.
 
 ### 4.4. Rule 8 — Read before you write
 
@@ -142,7 +142,7 @@ Frame: before adding code to a file — read the exports, the nearest calling co
 
 ### 4.5. Rule 9 — Tests verify intent, not just behavior
 
-A test `expect(getUserName()).toBe('John')` means nothing if the function returns a constant. Tests should fail when business logic changes, otherwise they're testing that the function exists, not that it's correct.
+A test `expect(getUserName()).toBe('John')` means nothing if the function returns a constant. Tests should fail when business logic changes, otherwise they're testing function existence, not correctness.
 
 Typical example: 12 tests on an auth function, all green, auth is broken in production. Tests checked that the function returns something, not that it returns the right value.
 
@@ -156,11 +156,11 @@ Rule: after each significant step — summarize what's done, what's verified, wh
 
 Claude introduces hooks into a codebase of class components. Technically works. Breaks the testing pattern built for `componentDidMount`. Half a day to delete and rewrite.
 
-Rule: inside a codebase, conformance matters more than taste. Disagreement — a separate conversation, not a silent fork. Snake_case vs camelCase, classes vs hooks — pick what's there, not what's better.
+Rule: inside a codebase, conformance matters more than taste. Disagreement — separate conversation, not silent fork. Snake_case vs camelCase, classes vs hooks — pick what's there, not what's better.
 
 ### 4.8. Rule 12 — Fail loud
 
-The most expensive errors are those that look like success. "Migration complete" when 14% of records were silently skipped. "Tests passed" when some were skipped. "Feature works" if an edge case you explicitly asked to check wasn't.
+The most expensive errors are those that look like success. "Migration complete" with 14% of records silently skipped. "Tests passed" when some were skipped. "Feature works" if you didn't check the edge case you explicitly asked to check.
 
 Rule: when uncertain — raise the question, don't hide it. Default to surfacing uncertainty, not concealing it.
 
@@ -168,12 +168,12 @@ Rule: when uncertain — raise the question, don't hide it. Default to surfacing
 
 ## 5. What doesn't work (what got filtered out)
 
-The template is valuable not just for what's in it, but for what was filtered out when trying to expand:
+The template is valuable not just for what's in it, but for what got filtered out when trying to expand:
 
-- **Rules from Reddit and X.** Most are rewordings of Karpathy or domain-specific ("always Tailwind"). Don't generalize.
+- **Rules from Reddit and X.** Most are reformulations of Karpathy or domain-specific ("always Tailwind"). Don't generalize.
 - **More than 12 rules.** On sets of 14+ rules, compliance drops: important points drown in noise. The 200-line ceiling (including stack, commands, prohibitions) is real.
 - **Tool-specific rules.** "Always use eslint" fails silently if eslint isn't installed. Better — capability-agnostic: "match the enforced style".
-- **Examples instead of rules.** One example eats ~10 rules' worth of context, and the model over-fits on specifics. Rules are abstract and portable.
+- **Examples instead of rules.** One example eats ~10 rules worth of context, and the model over-fits on specifics. Rules are abstract and portable.
 - **Soft language.** "Be careful", "think hard", "really focus" — compliance ~30%. Not testable. Replace with concrete imperatives: "state assumptions explicitly".
 - **Identity prompts.** "Be a senior engineer" doesn't work: the model already thinks it's a senior. The gap between "thinking" and "doing" closes with imperatives, not identity.
 
@@ -217,7 +217,7 @@ Discipline:
 
 1. **Don't exceed 200 lines total.** Counting stack, commands, prohibitions, rules. I'm at 191 now — adding four rules means exporting part of `Homepage` or GitNexus section to `@docs/...` via Claude Code @-import.
 2. **Each rule answers "what error does it prevent."** If it doesn't — delete it.
-3. **Capability-agnostic phrasing.** "Match the enforced style", not "use prettier".
+3. **Capability-agnostic formulations.** "Match the enforced style", not "use prettier".
 4. **Imperatives, not wishes.** "State assumptions explicitly", not "think carefully".
 5. **Test it.** Run a typical task before and after. No difference — the rule didn't work in your context, delete it.
 
@@ -227,9 +227,9 @@ Six rules tailored to real errors beat twelve generic ones.
 
 ## Conclusion
 
-Karpathy pinned three code-writing failure modes from January. Forrest Chang packed them into four rules, and the community grabbed the template. The expansion to 12 came from the Claude Code landscape changing by May: multi-step agents, hook cascades, skill conflicts, cross-session flows. Eight added rules cover new gaps without replacing the original ones.
+Karpathy fixed three code-writing failure modes from January. Forrest Chang packed them into four rules, and the community grabbed the template. The expansion to 12 came from the Claude Code landscape being different by May: multi-step agents, hook cascades, skill conflicts, cross-session flows. Eight added rules cover new gaps without replacing the original ones.
 
-`CLAUDE.md` isn't a wishlist, it's a behavioral contract against specific errors you've already seen. Someone else's template is useful as a starter. After that — filter it for your failure modes, not the other way around. Six rules precisely picked beat twelve copied ones.
+`CLAUDE.md` is not a wishlist, but a behavioral contract against specific errors you've already seen. Someone else's template is useful as a starter. After that — filter for your failure modes, not the other way around. Six carefully chosen rules beat twelve copied ones.
 
 ---
 
