@@ -10,6 +10,7 @@ export default [
       ".astro/**",
       "node_modules/**",
       "drizzle/**",
+      "packages/**",
       "playwright.config.ts",
       "vitest.config.ts",
       "eslint.config.js",
