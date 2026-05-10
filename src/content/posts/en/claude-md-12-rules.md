@@ -1,5 +1,5 @@
 ---
-title: '12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года'
+title: "12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года"
 description: >-
   Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
   agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
@@ -86,10 +86,10 @@ flowchart LR
 
 This is the foundation. Without it, any superstructure loses half its meaning.
 
-| #   | Rule                  | What it covers                                                                                         |
-| --- | --------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.              |
-| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                       |
+| #   | Rule                  | What it covers                                                                                           |
+| --- | --------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.               |
+| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                         |
 | 3   | Surgical Changes      | Touch only what's needed. Don't "improve" neighboring code, don't reformat what you weren't asked about. |
 | 4   | Goal-Driven Execution | Describe success criteria, not step-by-step instructions. Strong success-criteria let the model iterate. |
 
@@ -101,12 +101,12 @@ In my Astro blog's `CLAUDE.md`, these four are covered not as a separate section
 
 Four gaps I observe in real work:
 
-| Gap                        | What breaks                                                                                    | Which added rules cover it         |
-| -------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Long-running agent tasks   | Multi-step pipeline drifts, burns tokens, loses context                                        | 6 (budgets), 10 (checkpoints), 12 (loud) |
-| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages           | 11 (conventions), 7 (surface conflicts)  |
-| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic       | 9 (intent over behavior)           |
-| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe       | (not covered by 12 rules — separate)   |
+| Gap                        | What breaks                                                                               | Which added rules cover it               |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Long-running agent tasks   | Multi-step pipeline drifts, burns tokens, loses context                                   | 6 (budgets), 10 (checkpoints), 12 (loud) |
+| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages     | 11 (conventions), 7 (surface conflicts)  |
+| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic | 9 (intent over behavior)                 |
+| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe  | (not covered by 12 rules — separate)     |
 
 The last gap stays alive. Either you turn Simplicity on or off — there's no middle mode in `CLAUDE.md`.
 
