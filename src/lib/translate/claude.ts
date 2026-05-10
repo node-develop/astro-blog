@@ -1,6 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ProsePlaceholder } from "./extract-prose";
 import { checkLengths, truncateAtBoundary, type Limits, type Violation } from "./validate-lengths";
+import {
+  findStructuralMismatches,
+  formatMismatchSummary,
+  type StructuralMismatch,
+} from "./validate-structure";
 
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_RETRIES = 3;
@@ -12,10 +17,12 @@ const SYSTEM_PROMPT_PROSE = `You are a technical translator for a developer blog
 Rules:
 - Translate from {{SOURCE}} to {{TARGET}}
 - Preserve markdown formatting (bold, italic, links, lists, code spans, footnotes) exactly
+- Markdown markers come in pairs: every \`**\` opens AND closes a bold span; every \`\\\`\` opens AND closes a code span. ALWAYS emit the closing marker, even when the span ends with internal punctuation like \`."\`, \`?"\`, or \`)\` — internal punctuation does NOT close the marker
 - Preserve all proper nouns: "Claude Code", "Astro", "MCP", "Anthropic", model names like "Opus 4.7", "Sonnet 4.6"
 - Tone: technical, conversational, second-person ("you")
 - NEVER touch URLs inside markdown links — they have already been rewritten where needed
 - For Mermaid diagrams (placeholders with kind="mermaid"), only translate text inside [brackets], {braces}, and after colons in ("quoted strings"). NEVER touch arrows (-->, ---, ===, ==>, etc.), node IDs, or keywords (flowchart, subgraph, classDef, click, style, etc.)
+- If an input item has an "issue" field, your previous translation of that id was rejected for the reason given — produce a corrected translation that fixes the issue while keeping all markdown markers paired
 - Return a JSON array of {id, text} objects matching the input ids exactly. No commentary, no markdown fences around the JSON.`;
 
 const SYSTEM_PROMPT_STRINGS = `You are translating UI strings from {{SOURCE}} to {{TARGET}} for a developer blog.
@@ -61,12 +68,26 @@ export const translateProse = async (
 
   const client = new Anthropic({ apiKey: input.apiKey });
   const system = buildSystem(SYSTEM_PROMPT_PROSE, input.sourceLocale, input.targetLocale);
-  const userMsg = JSON.stringify(
-    input.placeholders.map((p) => ({ id: p.id, kind: p.kind, text: p.text })),
-  );
+
+  const accumulated = new Map<number, string>();
+  let pendingPlaceholders: readonly ProsePlaceholder[] = input.placeholders;
+  let pendingMismatches: readonly StructuralMismatch[] = [];
 
   let lastErr: unknown;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const userPayload = pendingPlaceholders.map((p) => {
+      const issue = pendingMismatches.find((m) => m.id === p.id);
+      if (!issue) return { id: p.id, kind: p.kind, text: p.text };
+      return {
+        id: p.id,
+        kind: p.kind,
+        text: p.text,
+        issue: `Previous translation had ${issue.translatedCount} '${issue.marker}' markers; source has ${issue.sourceCount}. Re-translate with all '${issue.marker}' markers preserved as pairs — internal punctuation like ." or ?" does NOT close the marker.`,
+      };
+    });
+    const userMsg = JSON.stringify(userPayload);
+
+    let parsed: { id: number; text: string }[];
     try {
       const res = await client.messages.create({
         model: MODEL,
@@ -78,17 +99,34 @@ export const translateProse = async (
       const block = res.content.find((c: { type: string }) => c.type === "text");
       if (!block || block.type !== "text") throw new Error("no text block in response");
       const rawText = stripJsonFences((block as { text: string }).text);
-      const parsed = JSON.parse(rawText) as {
-        id: number;
-        text: string;
-      }[];
-      return parsed;
+      parsed = JSON.parse(rawText) as { id: number; text: string }[];
     } catch (err) {
       lastErr = err;
-      if (attempt < MAX_RETRIES) await sleep(1000 * attempt);
+      if (attempt < MAX_RETRIES) {
+        await sleep(1000 * attempt);
+        continue;
+      }
+      throw err;
     }
+
+    for (const t of parsed) accumulated.set(t.id, t.text);
+
+    const fullSet = Array.from(accumulated, ([id, text]) => ({ id, text }));
+    const mismatches = findStructuralMismatches(input.placeholders, fullSet);
+    if (mismatches.length === 0) return fullSet;
+
+    if (attempt === MAX_RETRIES) {
+      throw new Error(
+        `Translator produced unbalanced markdown markers after ${MAX_RETRIES} attempts: ${formatMismatchSummary(mismatches)}`,
+      );
+    }
+
+    const failingIds = new Set(mismatches.map((m) => m.id));
+    pendingPlaceholders = input.placeholders.filter((p) => failingIds.has(p.id));
+    pendingMismatches = mismatches;
   }
-  throw lastErr;
+
+  throw lastErr ?? new Error("translateProse: exhausted retries without resolution");
 };
 
 export interface TranslateStringsInput {
