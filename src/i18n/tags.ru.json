@@ -5,5 +5,10 @@
   "ai-crawlers": "ai-crawlers",
   "astro": "astro",
   "schema-org": "schema-org",
-  "build-tooling": "build-tooling"
+  "build-tooling": "build-tooling",
+  "ai": "ai",
+  "local-inference": "local-inference",
+  "coding-agents": "coding-agents",
+  "deepseek": "deepseek",
+  "apple-silicon": "apple-silicon"
 }

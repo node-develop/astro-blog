@@ -12,11 +12,58 @@ import {
   searchPostsMeta,
 } from "~/lib/db/repo/posts-meta";
 import { appendRevision } from "~/lib/db/repo/revisions";
-import { serializeFrontmatter } from "~/lib/content/frontmatter";
+import { serializeFrontmatter, stripLeadingFrontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { POSTS_DIR, resolveSafe } from "~/lib/fs/paths";
 import { schedulePagefindRebuild } from "~/lib/search/pagefind-rebuild";
 import { assertAdmin } from "./_auth";
+
+/**
+ * Input schema for `posts.upsert`. Exported so unit tests can validate the
+ * contract without spinning up the full action handler (which would require
+ * mocking the DB, filesystem, and search index).
+ *
+ * Frontmatter limits are kept in sync with `src/content.config.ts` — a
+ * mismatch would let the admin form save a post that breaks the next build.
+ */
+export const postUpsertInput = z.object({
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/, "invalid slug"),
+  frontmatter: z.object({
+    title: z.string().min(3).max(120),
+    // Synced with the content-collection schema in `src/content.config.ts`.
+    description: z.string().min(10).max(200),
+    // Optional TL;DR card (60..280). Empty string "" is normalised to
+    // `undefined` so the form can post a blank textarea without a manual
+    // unset step.
+    summary: z
+      .string()
+      .max(280)
+      .optional()
+      .transform((v) => (v && v.length > 0 ? v : undefined))
+      .pipe(z.string().min(60).max(280).optional()),
+    keywords: z.array(z.string().min(1).max(80)).max(40).default([]),
+    faq: z
+      .array(
+        z.object({
+          question: z.string().min(5).max(200),
+          answer: z.string().min(20).max(2000),
+        }),
+      )
+      .max(20)
+      .optional(),
+    pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    cover: z.string().optional(),
+    coverAlt: z.string().optional(),
+  }),
+  body: z.string().default(""),
+});
 
 export const posts = {
   reorder: defineAction({
@@ -61,29 +108,19 @@ export const posts = {
   }),
 
   upsert: defineAction({
-    input: z.object({
-      slug: z
-        .string()
-        .min(1)
-        .max(100)
-        .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/, "invalid slug"),
-      frontmatter: z.object({
-        title: z.string().min(3).max(120),
-        description: z.string().min(10).max(300),
-        pubDate: z.coerce.date(),
-        updatedDate: z.coerce.date().optional(),
-        tags: z.array(z.string()).default([]),
-        draft: z.boolean().default(false),
-        cover: z.string().optional(),
-        coverAlt: z.string().optional(),
-      }),
-      body: z.string().default(""),
-    }),
+    input: postUpsertInput,
     handler: async (input, context) => {
       const user = context.locals.user as { id: string; role?: string | null } | null;
       assertAdmin(user);
 
       const meta = await ensureMeta(input.slug);
+
+      // Defense-in-depth: if the author pasted a full markdown file (with a
+      // YAML fence at the top) into the body textarea, strip the duplicate
+      // block before persisting. The form-level fields are authoritative.
+      const { body: cleanBody, hadFrontmatter } = stripLeadingFrontmatter(input.body);
+      const warnings: string[] = [];
+      if (hadFrontmatter) warnings.push("body_had_frontmatter");
 
       const fmObject = {
         title: input.frontmatter.title,
@@ -94,13 +131,19 @@ export const posts = {
         ...(input.frontmatter.updatedDate ? { updatedDate: input.frontmatter.updatedDate } : {}),
         ...(input.frontmatter.cover ? { cover: input.frontmatter.cover } : {}),
         ...(input.frontmatter.coverAlt ? { coverAlt: input.frontmatter.coverAlt } : {}),
+        ...(input.frontmatter.summary ? { summary: input.frontmatter.summary } : {}),
+        ...(input.frontmatter.keywords.length > 0 ? { keywords: input.frontmatter.keywords } : {}),
+        ...(input.frontmatter.faq && input.frontmatter.faq.length > 0
+          ? { faq: input.frontmatter.faq }
+          : {}),
       };
 
-      // Step 1: DB transaction — insert revision.
+      // Step 1: DB transaction — insert revision (clean body, so future
+      // rollbacks restore a sanitised file too).
       const revision = await appendRevision({
         slug: input.slug,
         frontmatter: fmObject,
-        body: input.body,
+        body: cleanBody,
         authorId: user!.id,
       });
 
@@ -108,17 +151,18 @@ export const posts = {
       await setSearchVector(input.slug, {
         title: input.frontmatter.title,
         tags: input.frontmatter.tags,
-        body: input.body,
+        body: cleanBody,
       });
 
       // Step 2: Serialize + atomic file write.
-      const serialized = serializeFrontmatter(fmObject, input.body);
+      const serialized = serializeFrontmatter(fmObject, cleanBody);
       try {
         await writePostAtomically(POSTS_DIR, input.slug, serialized);
       } catch (err) {
         return {
           ok: false as const,
           revisionId: revision.id,
+          warnings,
           error: `File write failed; revision ${revision.id} preserves the intended content.`,
         };
       }
@@ -126,7 +170,12 @@ export const posts = {
       // Step 3: Schedule pagefind rebuild (no-op if dist/ is missing).
       schedulePagefindRebuild(input.slug);
 
-      return { ok: true as const, revisionId: revision.id, order: meta.order };
+      return {
+        ok: true as const,
+        revisionId: revision.id,
+        order: meta.order,
+        warnings,
+      };
     },
   }),
 

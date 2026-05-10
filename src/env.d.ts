@@ -8,6 +8,11 @@ declare module "*.astro" {
   export default Component;
 }
 
+declare module "*?raw" {
+  const content: string;
+  export default content;
+}
+
 declare module "*?pagefind" {
   // Placeholder so TS treats this query-style import as a module.
   // The real Pagefind API is loaded at runtime from /pagefind/pagefind.js

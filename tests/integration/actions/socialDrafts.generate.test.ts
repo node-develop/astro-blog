@@ -5,6 +5,14 @@ import { socialPosts, users } from "~/lib/db/schema";
 
 // ── Module mocks (must be hoisted before any dynamic imports of the module) ──
 
+vi.mock("~/lib/social/config", async () => {
+  const actual = await vi.importActual<typeof import("~/lib/social/config")>("~/lib/social/config");
+  return {
+    ...actual,
+    validateSocialEnv: vi.fn().mockReturnValue({ ok: true, env: {} }),
+  };
+});
+
 vi.mock("~/lib/social/pipeline", () => ({
   runPipeline: vi.fn().mockResolvedValue({
     drafts: {

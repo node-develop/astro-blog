@@ -3,6 +3,14 @@ import { eq } from "drizzle-orm";
 import { bootTestDb, type TestDb } from "../setup";
 import { socialPosts, users } from "~/lib/db/schema";
 
+vi.mock("~/lib/social/config", async () => {
+  const actual = await vi.importActual<typeof import("~/lib/social/config")>("~/lib/social/config");
+  return {
+    ...actual,
+    validateSocialEnv: vi.fn().mockReturnValue({ ok: true, env: {} }),
+  };
+});
+
 vi.mock("~/lib/social/critic", async () => {
   const actual = await vi.importActual<typeof import("~/lib/social/critic")>("~/lib/social/critic");
   return {

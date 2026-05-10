@@ -4,6 +4,14 @@ import { bootTestDb, type TestDb } from "../setup";
 import { socialPosts, users } from "~/lib/db/schema";
 import { ok, err, transportError } from "~/lib/social/errors";
 
+vi.mock("~/lib/social/config", async () => {
+  const actual = await vi.importActual<typeof import("~/lib/social/config")>("~/lib/social/config");
+  return {
+    ...actual,
+    validateSocialEnv: vi.fn().mockReturnValue({ ok: true, env: {} }),
+  };
+});
+
 vi.mock("~/lib/social/clients/x", () => ({
   postTweet: vi.fn(),
   postThread: vi.fn(),

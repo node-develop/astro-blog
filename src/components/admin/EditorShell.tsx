@@ -18,8 +18,18 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
   const [body, setBody] = useState(initial.body);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const slugOk = /^[a-z0-9][a-z0-9-]*$/.test(slug);
+
+  function noticeFromWarnings(warnings: ReadonlyArray<string> | undefined): string | null {
+    if (!warnings || warnings.length === 0) return null;
+    const messages: string[] = [];
+    if (warnings.includes("body_had_frontmatter")) {
+      messages.push("⚠️ Я нашёл YAML-блок в начале тела и убрал его — поля переноси в форму выше.");
+    }
+    return messages.length === 0 ? null : messages.join(" ");
+  }
 
   async function save(): Promise<void> {
     if (!slugOk) {
@@ -29,6 +39,7 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
     }
     setStatus("saving");
     setErrorMsg(null);
+    setNotice(null);
     const payload = {
       slug,
       frontmatter: {
@@ -37,9 +48,14 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
         pubDate: new Date(frontmatter.pubDate),
         tags: frontmatter.tags,
         draft: frontmatter.draft,
+        keywords: frontmatter.keywords,
         ...(frontmatter.updatedDate ? { updatedDate: new Date(frontmatter.updatedDate) } : {}),
         ...(frontmatter.cover ? { cover: frontmatter.cover } : {}),
         ...(frontmatter.coverAlt ? { coverAlt: frontmatter.coverAlt } : {}),
+        ...(frontmatter.summary && frontmatter.summary.length > 0
+          ? { summary: frontmatter.summary }
+          : {}),
+        ...(frontmatter.faq.length > 0 ? { faq: frontmatter.faq } : {}),
       },
       body,
     };
@@ -54,6 +70,9 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
       setErrorMsg(result.data.error ?? "Не удалось сохранить");
       return;
     }
+    // Surface server-side warnings (e.g. body had its own frontmatter that we stripped).
+    const note = noticeFromWarnings(result.data.warnings);
+    if (note !== null) setNotice(note);
     if (propsSlug === null) {
       window.location.href = `/admin/posts/${encodeURIComponent(slug)}`;
       return;
@@ -103,6 +122,19 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
           </span>
         )}
       </div>
+      {notice && (
+        <div role="status" className="editor-shell__notice">
+          {notice}
+          <button
+            type="button"
+            aria-label="Закрыть уведомление"
+            onClick={() => setNotice(null)}
+            className="editor-shell__notice-close"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {propsSlug !== null && (
         <PublishBar collection="posts" slug={propsSlug} disabled={status === "saving"} />
       )}
@@ -132,6 +164,18 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
         .editor-shell__error {
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-danger);
+        }
+        .editor-shell__notice {
+          display: flex; justify-content: space-between; align-items: center;
+          gap: var(--space-3); padding: var(--space-3) var(--space-4);
+          background: var(--color-bg-elevated);
+          border: 1px solid var(--color-accent); border-radius: var(--radius-md);
+          font-family: var(--font-mono); font-size: var(--fs-xs);
+          color: var(--color-fg);
+        }
+        .editor-shell__notice-close {
+          background: transparent; border: none; cursor: pointer;
+          color: var(--color-fg-muted); font-size: 16px; line-height: 1;
         }
       `}</style>
     </div>

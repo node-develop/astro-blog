@@ -17,6 +17,30 @@ export interface Frontmatter {
 
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
+/**
+ * Detects and removes a leading YAML frontmatter block from a post body.
+ *
+ * Used by the admin upsert path as a defense-in-depth sanitiser: if the
+ * author pastes a full markdown file (with `---…---` at the top) into the
+ * body textarea, the form-level fields are still authoritative, but we strip
+ * the duplicate YAML block from the body before persisting so it doesn't
+ * leak into the rendered article as plain text.
+ *
+ * Strips a UTF-8 BOM at the head if present (common when copying from some
+ * editors). Returns `hadFrontmatter: true` when a fenced block was found and
+ * removed, so callers can surface a warning to the user.
+ */
+export function stripLeadingFrontmatter(body: string): {
+  readonly body: string;
+  readonly hadFrontmatter: boolean;
+} {
+  const noBom = body.replace(/^﻿/, "");
+  const m = FENCE.exec(noBom);
+  if (!m) return { body, hadFrontmatter: false };
+  const cleaned = noBom.slice(m[0].length).replace(/^\s*\n/, "");
+  return { body: cleaned, hadFrontmatter: true };
+}
+
 export function parseFrontmatter(raw: string): { frontmatter: Frontmatter; body: string } {
   const match = FENCE.exec(raw);
   if (!match || match[1] === undefined) {

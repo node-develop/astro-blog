@@ -1,9 +1,11 @@
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import type { SocialChannel } from "../types.js";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
+import profile from "./profile.md?raw";
+import xPolicy from "./policy/x.md?raw";
+import liPolicy from "./policy/linkedin.md?raw";
+import tgPolicy from "./policy/telegram.md?raw";
+import examplesJson from "./examples.json" with { type: "json" };
+import bannedJson from "./banned-phrases.json" with { type: "json" };
 
 export type VoiceCard = {
   profile: string;
@@ -26,54 +28,24 @@ export type BannedPhrases = {
   ru: { phrases: string[]; patterns: [string, string][] };
 };
 
-let memo: Promise<VoiceCard> | null = null;
-
-const POLICY_FILE: Record<SocialChannel, string> = {
-  x_en: "policy/x.md",
-  li_en: "policy/linkedin.md",
-  tg_ru: "policy/telegram.md",
+const card: VoiceCard = {
+  profile,
+  examples: examplesJson as VoiceExamples,
+  banned: bannedJson as BannedPhrases,
+  policy: { x_en: xPolicy, li_en: liPolicy, tg_ru: tgPolicy },
 };
 
-const load = async (): Promise<VoiceCard> => {
-  const [profile, examplesRaw, bannedRaw, x, li, tg] = await Promise.all([
-    readFile(join(HERE, "profile.md"), "utf8"),
-    readFile(join(HERE, "examples.json"), "utf8"),
-    readFile(join(HERE, "banned-phrases.json"), "utf8"),
-    readFile(join(HERE, POLICY_FILE.x_en), "utf8"),
-    readFile(join(HERE, POLICY_FILE.li_en), "utf8"),
-    readFile(join(HERE, POLICY_FILE.tg_ru), "utf8"),
-  ]);
-  return {
-    profile,
-    examples: JSON.parse(examplesRaw) as VoiceExamples,
-    banned: JSON.parse(bannedRaw) as BannedPhrases,
-    policy: { x_en: x, li_en: li, tg_ru: tg },
-  };
-};
-
-export const loadVoiceCard = (): Promise<VoiceCard> => {
-  if (!memo) memo = load();
-  return memo;
-};
+export const loadVoiceCard = (): Promise<VoiceCard> => Promise.resolve(card);
 
 export const getChannelExamples = async <C extends SocialChannel>(
   channel: C,
-): Promise<VoiceExamples[C]> => {
-  const { examples } = await loadVoiceCard();
-  return examples[channel];
-};
+): Promise<VoiceExamples[C]> => card.examples[channel];
 
-export const getBannedPhrases = async (): Promise<BannedPhrases> => {
-  const { banned } = await loadVoiceCard();
-  return banned;
-};
+export const getBannedPhrases = async (): Promise<BannedPhrases> => card.banned;
 
-export const getPolicy = async (channel: SocialChannel): Promise<string> => {
-  const { policy } = await loadVoiceCard();
-  return policy[channel];
-};
+export const getPolicy = async (channel: SocialChannel): Promise<string> => card.policy[channel];
 
-/** Test-only: clear memo. NOT exported through public index. */
+/** Test-only: no-op kept for backward compatibility with existing tests. */
 export const __resetForTest = (): void => {
-  memo = null;
+  // no-op — static imports are always resolved at bundle time; nothing to reset
 };

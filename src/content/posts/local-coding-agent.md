@@ -1,18 +1,16 @@
 ---
-title: Локальный coding agent на DeepSeek V4 Flash, который работает на MacBook
-description: >-
-  Создатель Redis за две недели написал инференс-движок только для одной модели — DeepSeek V4 Flash. 1M контекст, 26 t/s
-  на M3 Max, KV-кэш на диске. Как это запустить и подключить к Claude Code.
-pubDate: 2026-05-09
-updatedDate: 2026-05-09
-tags:
-  - ai
-  - local-inference
-  - coding-agents
-draft: false
-coverAlt: ds4 — локальный инференс-движок DeepSeek V4 Flash на Apple Metal
----
-
+title: "ds4 от antirez: локальный coding agent на DeepSeek V4 Flash, который работает на MacBook"
+description: "Создатель Redis за две недели написал инференс-движок только для одной модели — DeepSeek V4 Flash. 1M контекст, 26 t/s на M3 Max, KV-кэш на диске. Как это запустить и подключить к Claude Code."
+summary: "Antirez за две недели написал ds4 — движок на C+Metal только под DeepSeek V4 Flash. 284B MoE с 1M контекста влезает в 128 GB Mac за счёт 2-битного асимметричного кванта и KV-кэша на диске. Сервер OpenAI/Anthropic-совместим — рабочий локальный backend для Claude Code."
+keywords:
+  - "ds4"
+  - "antirez"
+  - "DeepSeek V4 Flash"
+  - "local inference"
+  - "Apple Metal"
+  - "coding agent"
+  - "Claude Code local backend"
+  - "vertical inference engine"
 faq:
   - question: "Зачем отдельный движок под одну модель, если есть llama.cpp?"
     answer: "Универсальные раннеры обязаны абстрагироваться: один и тот же код должен загрузить Llama, Qwen, DeepSeek, Mistral. Абстракция = компромисс. ds4 знает геометрию DeepSeek V4 Flash на уровне Metal-ядер, делает асимметричную 2-битную квантизацию (квантуются только MoE-эксперты, остальное в Q8), и валидирует логиты против официального API. Цена — узкая ставка на одну модель: появится V4.1 или V5 — нужно переписывать. Но для текущего поколения это даёт быстрый прирост, который универсальному раннеру технически недоступен."
@@ -51,12 +49,12 @@ Antirez посмотрел на это и сделал ставку, котор�
 
 Результаты, которые автор замерил сам:
 
-| Машина                     | Квант | Промпт       | Prefill        | Generation  |
-| -------------------------- | ----- | ------------ | -------------- | ----------- |
-| MacBook Pro M3 Max, 128 GB | q2    | короткий     | 58.52 t/s      | 26.68 t/s   |
-| MacBook Pro M3 Max, 128 GB | q2    | 11709 токенов| 250.11 t/s     | 21.47 t/s   |
-| Mac Studio M3 Ultra, 512 GB| q2    | короткий     | 84.43 t/s      | 36.86 t/s   |
-| Mac Studio M3 Ultra, 512 GB| q4    | 12018 токенов| 448.82 t/s     | 26.62 t/s   |
+| Машина                      | Квант | Промпт        | Prefill    | Generation |
+| --------------------------- | ----- | ------------- | ---------- | ---------- |
+| MacBook Pro M3 Max, 128 GB  | q2    | короткий      | 58.52 t/s  | 26.68 t/s  |
+| MacBook Pro M3 Max, 128 GB  | q2    | 11709 токенов | 250.11 t/s | 21.47 t/s  |
+| Mac Studio M3 Ultra, 512 GB | q2    | короткий      | 84.43 t/s  | 36.86 t/s  |
+| Mac Studio M3 Ultra, 512 GB | q4    | 12018 токенов | 448.82 t/s | 26.62 t/s  |
 
 26 токенов в секунду генерации — это не «можно посмотреть», это **рабочая скорость для coding-агента**, который пишет, читает файлы, вызывает инструменты. На длинном промпте генерация падает до 21 t/s, но за счёт KV-кэша на диске это окупается уже на третьем запросе той же сессии.
 
@@ -161,12 +159,12 @@ make
 
 Сервер слушает `127.0.0.1:8000`. Эндпоинты:
 
-| Endpoint                    | Протокол                           |
-| --------------------------- | ---------------------------------- |
-| `POST /v1/chat/completions` | OpenAI Chat Completions (+ tools)  |
-| `POST /v1/completions`      | OpenAI legacy completions          |
+| Endpoint                    | Протокол                             |
+| --------------------------- | ------------------------------------ |
+| `POST /v1/chat/completions` | OpenAI Chat Completions (+ tools)    |
+| `POST /v1/completions`      | OpenAI legacy completions            |
 | `POST /v1/messages`         | Anthropic Messages (для Claude Code) |
-| `GET /v1/models`            | список моделей                     |
+| `GET /v1/models`            | список моделей                       |
 
 Аутентификация по статичному API-ключу (по умолчанию принимается любой; в README рекомендуется `dsv4-local`).
 
@@ -265,14 +263,16 @@ opencode конфигурируется через `~/.config/opencode/opencode.
         "thinkingFormat": "deepseek",
         "requiresReasoningContentOnAssistantMessages": true
       },
-      "models": [{
-        "id": "deepseek-v4-flash",
-        "name": "DeepSeek V4 Flash (ds4.c local)",
-        "reasoning": true,
-        "contextWindow": 100000,
-        "maxTokens": 384000,
-        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-      }]
+      "models": [
+        {
+          "id": "deepseek-v4-flash",
+          "name": "DeepSeek V4 Flash (ds4.c local)",
+          "reasoning": true,
+          "contextWindow": 100000,
+          "maxTokens": 384000,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
     }
   }
 }

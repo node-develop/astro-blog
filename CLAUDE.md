@@ -149,7 +149,7 @@ Plan: `docs/superpowers/plans/2026-05-09-home-page-admin-editor.md`
 
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **astro-blog** (3843 symbols, 4604 relationships, 37 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **astro-blog** (4759 symbols, 5909 relationships, 79 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

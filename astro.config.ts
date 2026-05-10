@@ -6,12 +6,14 @@ import tailwindcss from "@tailwindcss/vite";
 import remarkMath from "remark-math";
 import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter-duplicates";
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
+import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeCodeTitles from "rehype-code-titles";
 import { autolinkOptions } from "./src/lib/markdown/autolink";
+import { externalLinkPolicy } from "./src/lib/markdown/external-links";
 import { shikiThemes } from "./src/lib/markdown/shiki";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
@@ -164,6 +166,9 @@ export default defineConfig({
       rehypePlugins: [
         rehypeSlug,
         [rehypeAutolinkHeadings, autolinkOptions],
+        // SEO: outbound links get rel="nofollow noopener noreferrer" + target="_blank".
+        // Internal links (artka.dev, /, #, mailto:, tel:) are left untouched.
+        [rehypeExternalLinks, externalLinkPolicy satisfies ExternalLinksOptions],
         rehypeCodeTitles,
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
@@ -181,6 +186,7 @@ export default defineConfig({
     rehypePlugins: [
       rehypeSlug,
       [rehypeAutolinkHeadings, autolinkOptions],
+      [rehypeExternalLinks, externalLinkPolicy satisfies ExternalLinksOptions],
       rehypeCodeTitles,
       rehypeKatex,
       [rehypeMermaid, { strategy: "img-svg", dark: true }],
