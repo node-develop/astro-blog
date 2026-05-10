@@ -50,3 +50,19 @@ public/pagefind
 .gitnexus
 src/content/posts/e2e-*.md
 src/content/posts/e2enew*.md
+
+# Workspace artifacts
+**/dist/
+**/.turbo/
+**/node_modules/
+
+# Python (для agents/)
+agents/.venv/
+agents/__pycache__/
+agents/**/__pycache__/
+agents/.pytest_cache/
+agents/uv.lock.bak
+**/*.pyc
+
+# Render service Playwright cache
+render/.playwright-cache/
