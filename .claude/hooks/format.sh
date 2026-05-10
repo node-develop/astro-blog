@@ -26,9 +26,14 @@ case "$FILE_PATH" in
     ;;
 esac
 
-# Run prettier if available (pnpm-managed), swallow errors — don't block the agent.
+# Run prettier if available (pnpm-managed). Don't block the agent (PostToolUse must
+# return 0), but DO surface failures on stderr so silent breakage is impossible.
 if command -v pnpm >/dev/null 2>&1 && [[ -f package.json ]]; then
-  pnpm exec prettier --write --log-level=error "$FILE_PATH" 2>/dev/null || true
+  if ! pnpm exec prettier --write --log-level=error "$FILE_PATH" >/tmp/format-hook.out 2>&1; then
+    echo "⚠ prettier failed on $FILE_PATH (exit $?). Agent will continue, but file is NOT formatted." >&2
+    sed 's/^/  prettier: /' /tmp/format-hook.out >&2 || true
+  fi
+  rm -f /tmp/format-hook.out
 fi
 
 exit 0

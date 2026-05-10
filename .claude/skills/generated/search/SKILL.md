@@ -9,9 +9,16 @@ description: "Skill for the Search area of astro-blog. 6 symbols across 5 files.
 
 ## When to Use
 
-- Working with code in `src/`
-- Understanding how schedulePagefindRebuild, searchNode, searchPostsMeta work
-- Modifying search-related functionality
+Invoke this skill when the task matches one of these patterns:
+
+- **Command palette UI** — bug, keyboard shortcut, result rendering, accessibility, or styling in `CommandPalette.tsx`. Client-side island.
+- **Pagefind rebuild orchestration** — adjust debouncing, scheduling, or invalidation in `schedulePagefindRebuild` / `runRebuild` (e.g. after publishing a post, after migration).
+- **Pagefind client/server bridge** — change how `loadPagefind` resolves the artifact, or how `searchNode` runs the query server-side (used in API routes / SSR).
+- **DB-backed metadata search** — modify `searchPostsMeta` (Postgres tsvector lookup against `posts_meta`). Pairs with the `content` skill (`buildSearchVectorSql`, `setSearchVector`).
+
+**Do NOT invoke** for adding new UI fields to the palette UX without changing search backends (that's `frontender`), for full-text vector backfill scripts (that's `content`), or for SEO/metadata work unrelated to search.
+
+**Fail-loud reminder:** if a rebuild silently swallows an error (pagefind binary missing, output dir unwritable), surface it — never let "search returned no results" mask a broken rebuild.
 
 ## Key Files
 

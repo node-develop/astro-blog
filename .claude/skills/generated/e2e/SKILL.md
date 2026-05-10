@@ -9,9 +9,13 @@ description: "Skill for the E2e area of astro-blog. 3 symbols across 1 files."
 
 ## When to Use
 
-- Working with code in `tests/`
-- Understanding how globalSetup work
-- Modifying e2e-related functionality
+Invoke this skill when the task matches one of these patterns:
+
+- **e2e tests fail at startup** complaining about missing pagefind artifacts — owned by `ensurePagefindArtifacts` and `lstatExistsSafe`.
+- **Changing the global pre-Playwright setup** — DB migrations, preview-server startup, fixtures. Edits land in `globalSetup`.
+- **Adding a new pre-flight step** before e2e (cache warmup, seed data) — extend `globalSetup`.
+
+**Do NOT invoke** for writing the tests themselves (that's `frontender`/`backender` plus Playwright docs), for unit tests (Vitest, not e2e), or for production builds.
 
 ## Key Files
 

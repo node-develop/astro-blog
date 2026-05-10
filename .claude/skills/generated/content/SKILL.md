@@ -9,9 +9,14 @@ description: "Skill for the Content area of astro-blog. 13 symbols across 6 file
 
 ## When to Use
 
-- Working with code in `src/`
-- Understanding how buildSearchVectorSql, readPostFromDisk, listPostFiles work
-- Modifying content-related functionality
+Invoke this skill when the task matches one of these patterns:
+
+- **Frontmatter parsing** — bug in `parseFrontmatter` / `serializeFrontmatter`, adding new field types (dates, arrays), edge cases in `coerceDate` / `toIsoDate`.
+- **Reading and listing posts** — `readPostFromDisk`, `listPostFiles`: filters, sort order, traversal of content directories.
+- **Ordering for render** — `getOrderedPosts`, `getPostWithMeta`, `sortWithMeta`, `defaultMetaFor`: changing sort logic on the home page, RSS, or tag archives.
+- **Search vector** — backfill via `scripts/backfill-search-vector.ts`, or changes to `buildSearchVectorSql` / `setSearchVector` (Postgres full-text search).
+
+**Do NOT invoke** for the search UI (use `search`), for writing posts to disk (`fs` — `writePostAtomically`), or for the admin frontmatter form (`admin`).
 
 ## Key Files
 

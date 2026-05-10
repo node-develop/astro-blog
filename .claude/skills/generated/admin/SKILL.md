@@ -9,9 +9,14 @@ description: "Skill for the Admin area of astro-blog. 10 symbols across 4 files.
 
 ## When to Use
 
-- Working with code in `src/`
-- Understanding how MediaUploader, handle, FrontmatterForm work
-- Modifying admin-related functionality
+Invoke this skill when the task matches one of these patterns:
+
+- **Post frontmatter form** — adding a new field to `FrontmatterForm.tsx`, changing validation, or syncing the form with the Zod schema in `src/content.config.ts`.
+- **Media upload UI** — bug or feature work in `MediaUploader.tsx` (drag-and-drop, progress, size/type limits). The server-side counterpart lives in the `fs` skill (`writeMediaToPublic`).
+- **Tag input** — behaviour of `TagInput.tsx`: comma/Enter commit, removal, deduplication.
+- **Revision history UI** — post revision list via `RevisionList.tsx`, restore-previous-version flow.
+
+**Do NOT invoke** for server-side actions (use `backender`), for `/admin/*` routing or middleware (`frontender` + middleware), or for the post content itself (`content` skill).
 
 ## Key Files
 

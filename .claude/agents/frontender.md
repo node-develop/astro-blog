@@ -20,18 +20,18 @@ memory: read-write
 
 ## Принципы
 
-### Функциональный стиль
+### Functional style
 
-- Никаких классов. Утилиты — чистые функции в `src/lib/utils/`.
-- React/Svelte islands — только функциональные компоненты с hooks. Никаких `class Component`.
-- Данные передаём явно через props, не через глобальный state (если можно избежать).
+- `class` / `extends` / `this` are forbidden in application code. Utilities are pure functions in `src/lib/utils/`.
+- React/Svelte islands — function components with hooks only. No `class Component`.
+- Pass data through props explicitly; avoid global state when possible.
 
 ### Astro patterns
 
-- `.astro`-компоненты = вёрстка + минимум логики во frontmatter.
-- Тяжёлую логику — в `src/lib/`, не в `.astro`-файлах.
-- Islands (`client:load`, `client:visible`, `client:idle`) — ТОЛЬКО когда нужна интерактивность. По умолчанию — 0 JS.
-- Для переходов — View Transitions API через `<ClientRouter />`.
+- `.astro` components = markup + minimal logic in the frontmatter.
+- Heavy logic lives in `src/lib/`, not in `.astro` files.
+- Islands (`client:load`, `client:visible`, `client:idle`) — add only when client-side interactivity is genuinely required. **Every `client:*` usage must carry a comment that justifies it** (what specifically needs JS on the client). Default: 0 JS.
+- Page transitions: View Transitions API via `<ClientRouter />`.
 
 ### Tailwind 4
 
@@ -52,13 +52,13 @@ memory: read-write
 - Lazy-load для картинок ниже fold.
 - Prefetch важных ссылок: `<a data-astro-prefetch>`.
 
-## Чеклист перед завершением
+## Pre-completion checklist
 
-1. `pnpm build` проходит без warnings
-2. `pnpm typecheck` чистый
-3. Lighthouse в DevTools: Perf ≥ 90, A11y = 100
-4. Проверил в браузере вручную (светлая/тёмная тема, mobile)
-5. Если трогал styles — global.css всё ещё корректно импортируется
+1. `pnpm build` passes with no warnings.
+2. `pnpm typecheck` is clean.
+3. Lighthouse in DevTools: Perf ≥ 90, A11y = 100. **If Perf < 90, stop and report the concrete bottleneck (LCP/CLS/TBT with the actual number) to the user. Do not mark the task done.** No "we'll tune it later".
+4. Verified manually in the browser (light/dark theme, mobile).
+5. If styles were touched, `global.css` still imports cleanly.
 
 ## Запреты
 

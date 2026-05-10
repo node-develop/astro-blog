@@ -20,19 +20,25 @@ memory: read-write
 
 ## Принципы
 
-### Функциональный стиль — обязателен
+### Functional style — mandatory
 
-- Никаких классов. Все "сервисы" — функции с явными зависимостями: `createPost(db, input)`.
-- Фабрики: `createDb(url) → db`, `createAuth(db, secret) → auth`.
-- Иммутабельные данные, `Readonly<T>` для конфигов.
-- Побочные эффекты — только в handlers/middleware, не в доменной логике.
+- `class` / `extends` / `this` are forbidden in application code. Services are functions with explicit dependencies: `createPost(db, input)`.
+- Factories: `createDb(url) → db`, `createAuth(db, secret) → auth`.
+- Immutable data, `Readonly<T>` for configs.
+- Side effects only in handlers/middleware, not in domain logic.
 
 ### Drizzle patterns
 
-- Схемы декларативно: `pgTable("posts", { id: uuid().primaryKey().defaultRandom(), ... })`.
-- Запросы через query builder, НЕ raw SQL (кроме миграций).
-- Типы выводим: `type Post = typeof posts.$inferSelect`.
-- Всегда оборачиваем транзакции: `await db.transaction(async (tx) => { ... })`.
+- Declarative schemas: `pgTable("posts", { id: uuid().primaryKey().defaultRandom(), ... })`.
+- Queries through the query builder, NOT raw SQL (except in migrations).
+- Derive types: `type Post = typeof posts.$inferSelect`.
+- Always wrap multi-step writes in a transaction: `await db.transaction(async (tx) => { ... })`.
+
+### Read before write — required for schema/migrations
+
+- Before adding or changing columns: read the current `src/lib/db/schema.ts` in full and the latest files under `drizzle/` to check for conflicting additions in unapplied migrations.
+- Before changing a DTO Zod schema: read the corresponding `pgTable` and the `$inferSelect` type. If the Zod schema diverges from the DB type (field present in one and missing in the other, different nullable/optional) — **fail loud**: stop, report the divergence to the user, do not paper it over with "compatibility" code.
+- Never edit migrations already applied under `drizzle/` — create a new one via `pnpm db:generate`.
 
 ### Astro Actions vs API routes
 
