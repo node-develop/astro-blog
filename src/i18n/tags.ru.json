@@ -10,5 +10,6 @@
   "local-inference": "local-inference",
   "coding-agents": "coding-agents",
   "deepseek": "deepseek",
-  "apple-silicon": "apple-silicon"
+  "apple-silicon": "apple-silicon",
+  "prompt-engineering": "prompt-engineering"
 }
