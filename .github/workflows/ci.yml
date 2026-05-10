@@ -25,6 +25,7 @@ jobs:
 
       - run: pnpm typecheck
 
-      - run: pnpm test
+      - name: Unit tests (integration tests require Postgres — run locally)
+        run: pnpm exec vitest run --exclude 'tests/integration/**'
 
       - run: pnpm lint
