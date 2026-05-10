@@ -21,11 +21,11 @@ faq:
 - question: "Why a separate engine for one model when llama.cpp exists?"
     answer: "Universal runners must abstract: the same code needs to load Llama, Qwen, DeepSeek, Mistral. Abstraction = compromise. ds4 knows DeepSeek V4 Flash geometry at the Metal-kernel level, does asymmetric 2-bit quantization (only MoE experts are quantized, the rest stays Q8), and validates logits against the official API. The price is a narrow bet on one model: if V4.1 or V5 appears, you need to rewrite. But for the current generation, this gives a speed boost that a universal runner technically can't achieve."
 - question: "What Mac do I actually need?"
-    answer: "Minimum: 128 GB unified memory and Apple Silicon (M3 Max or newer). On such hardware, 2-bit Q2 quants work (weight ~81 GB), 32K context, 26 t/s generation. For 4-bit quants and larger contexts, you need M3 Ultra with 256 GB+ (comfortably — 512 GB Mac Studio). On 64 GB MacBook nothing will run: the model won't fit in RAM."
+    answer: "Minimum: 128 GB unified memory and Apple Silicon (M3 Max or newer). On such hardware, 2-bit Q2 quantums work (weight ~81 GB), 32K context, 26 t/s generation. For 4-bit quantums and larger contexts, you need M3 Ultra with 256 GB+ (comfortably — 512 GB Mac Studio). On 64 GB MacBook nothing will run: the model won't fit in RAM."
 - question: "Can I run it on Linux/CUDA?"
     answer: "Not right now. The project is Metal-only, and the author honestly writes: 'I might add CUDA, but I'm not promising anything'. The CPU path exists only as a correctness check and currently crashes at the kernel level on macOS due to a virtual memory bug. If you don't have a Mac — ds4 isn't for you, look at vLLM/llama.cpp with DeepSeek V4 Flash GGUF."
 - question: "What is asymmetric quantization and why don't 2 bits kill quality?"
-    answer: "In standard 2-bit quantization, all weights are compressed to 2 bits — the model loses precision and often stops reliably calling tools. ds4 does it differently: only MoE up/gate (IQ2_XXS) and down (Q2_K) are quantized to 2 bits, which take up most of the weight. Shared experts, projections, and routing stay in Q8 — these are sensitive parts where precision loss is more expensive. In practice, 2-bit Q2 reliably works with coding agents, which is confirmed by tests against official API logits."
+    answer: "In regular 2-bit quantization, all weights are compressed to 2 bits — the model loses precision and often stops reliably calling tools. ds4 does it differently: only MoE up/gate (IQ2_XXS) and down (Q2_K) are quantized to 2 bits, which take up most of the weight. Shared experts, projections, and routing stay in Q8 — these are sensitive parts where precision loss is more expensive. In practice, 2-bit Q2 reliably works with coding agents, which is confirmed by tests against official API logits."
 - question: "Is disk KV cache just swapping?"
     answer: "No. The inference session state (KV checkpoint) is serialized to a file with SHA1 of token IDs as the key. When an agent client sends the next request with the same prefix (and Claude Code typically sends ~25K tokens of system prompt each time), the server doesn't do prefill from scratch — it restores the checkpoint from disk. This is the difference between '4 seconds to first token' and '60 seconds to first token' on a long prompt."
 - question: "How is this better than OpenAI/Anthropic API?"
@@ -63,7 +63,7 @@ Results that the author measured himself:
 | Mac Studio M3 Ultra, 512 GB| q2    | short        | 84.43 t/s      | 36.86 t/s   |
 | Mac Studio M3 Ultra, 512 GB| q4    | 12018 tokens | 448.82 t/s     | 26.62 t/s   |
 
-26 tokens per second of generation — this isn't 'you can take a look', this is **working speed for a coding agent** that writes, reads files, calls tools. On a long prompt, generation drops to 21 t/s, but thanks to disk KV cache this pays for itself by the third request in the same session.
+26 tokens per second of generation — this isn't 'you can take a look', this is **working speed for a coding agent** that writes, reads files, calls tools. On a long prompt, generation drops to 21 t/s, but thanks to disk KV cache this pays off by the third request in the same session.
 
 ---
 
@@ -73,9 +73,9 @@ I carefully read the README and `AGENT.md` of the repository, and below is the m
 
 ### 2.1. Asymmetric 2-bit quantization
 
-The standard approach to 2-bit quant is to crush everything down to 2 bits, and then the model starts hallucinating in tool calling, confusing arguments, and forgetting the schema. Antirez did it differently: **only MoE experts on the routed path are quantized** (`up`/`gate` in `IQ2_XXS`, `down` in `Q2_K`) — because they take up most of the weight (the model is 284B, and almost all of it is experts). Shared experts, projections, routing — stay in Q8. These are components where precision loss is expensive.
+The standard approach to 2-bit quantization is to crush everything down to 2 bits, and then the model starts hallucinating in tool calling, confusing arguments, and forgetting the schema. Antirez did it differently: **only MoE experts on the routed path are quantized** (`up`/`gate` in `IQ2_XXS`, `down` in `Q2_K`) — because they take up most of the weight (the model is 284B, and almost all of it is experts). Shared experts, projections, routing — stay in Q8. These are components where precision loss is expensive.
 
-Effect: 2-bit quant weighs 81 GB and fits in 128 GB unified memory of MacBook Pro M3 Max, while reliably working in coding agents (validated by tests against DeepSeek API official logits).
+Effect: 2-bit quantum weighs 81 GB and fits in 128 GB unified memory of MacBook Pro M3 Max, while reliably working in coding agents (validated by tests against DeepSeek API official logits).
 
 ### 2.2. KV cache as first-class disk citizen
 
@@ -85,7 +85,7 @@ Ds4 solves this head-on: after successful prefill, the session state (KV checkpo
 
 > The KV cache **is actually a first class disk citizen**. <…> Modern MacBooks have fast SSDs and compressed KV caches like the one of DeepSeek v4.
 
-In practice, this means the difference between '4 seconds to first token on repeat call' and '60 seconds'. The disk here is not swap under pressure, but logical storage: SSDs are fast enough, KV in DeepSeek V4 compresses well, and the characteristic 'same system prompt + changing tail' exactly describes how a coding agent works.
+In practice, this means the difference between '4 seconds to first token on repeat call' and '60 seconds'. The disk here is not swap under pressure, but logical storage: SSDs are fast enough, KV in DeepSeek V4 compresses well, and the characteristic 'same system prompt + changing tail' precisely describes how a coding agent works.
 
 ### 2.3. Metal-only and one model at a time
 
@@ -101,19 +101,19 @@ I plan to deploy this on **MacBook Pro M3 Max, 128 GB** (minimum viable configur
 
 Minimum requirements by my estimates:
 
-- macOS on a current version (the VM bug is in the CPU path, but Metal path is unaffected).
+- macOS on a current version (there's the same VM bug in the CPU path, but the Metal path is unaffected).
 - Apple Silicon with 128 GB+ unified memory. M3 Max or M3 Ultra.
 - ~100 GB free space: 81 GB the model itself Q2 + space for KV cache on disk. For Q4 quant — 256 GB+ RAM and ~150 GB on disk.
 - Xcode Command Line Tools (for clang/Metal headers).
-- ~30–60 minutes to download the model (depends on your connection).
+- ~30–60 minutes to download the model (depends on the channel).
 
-What might not be enough for beginners: 128 GB unified memory — this is the level of MBP M3 Max in top configuration or Mac Studio. On 64-GB Mac Q2 won't work: the model simply won't fit in RAM. This isn't 'slow', it's 'impossible'.
+What might not be enough for beginners: 128 GB unified memory — this is the level of MBP M3 Max in top configuration or Mac Studio. On 64-gigabyte Mac Q2 won't work: the model simply won't fit in RAM. This isn't 'slow', it's 'no way'.
 
 ---
 
 ## 4. Installation step by step
 
-The commands below are what I'll do on day one, based on README instructions. Where the description lacks specifics — I've added my own comments.
+The commands below are what I'll do on day one, based on the README instructions. Where the description lacks specifics — I've added my own comments.
 
 ### 4.1. Build
 
@@ -183,7 +183,7 @@ This is the part I dug into the topic for. All three methods below work simultan
 
 ### 5.1. Claude Code → Anthropic-compatible endpoint
 
-Claude Code can talk to any backend that exposes Anthropic Messages API. Create a wrapper `~/bin/claude-ds4`:
+Claude Code can talk to any backend that exposes the Anthropic Messages API. Create a wrapper `~/bin/claude-ds4`:
 
 ```bash
 #!/bin/sh
@@ -212,7 +212,7 @@ exec "$HOME/.local/bin/claude" "$@"
 
 > Claude Code may send a large initial prompt, often around 25k tokens, before it starts doing useful work. Keep `--kv-disk-dir` enabled.
 
-Without disk KV cache, cold-starting Claude Code will take a minute or more; with cache — after the first start, subsequent ones will restore from disk.
+Without disk KV cache, cold-starting Claude Code will take a minute or more; with cache — after the first startup, subsequent ones will restore from disk.
 
 ### 5.2. opencode
 
@@ -247,7 +247,7 @@ opencode is configured via `~/.config/opencode/opencode.json`:
 }
 ```
 
-`limit.context: 100000` must match the `--ctx` that `ds4-server` starts with — otherwise the server will truncate and opencode won't know about it and will send the next message expecting a non-working length.
+`limit.context: 100000` must match the `--ctx` with which `ds4-server` starts — otherwise the server will truncate and opencode won't know about it and will send the next message expecting a non-working length.
 
 ### 5.3. Pi (antirez's mini-agent)
 
@@ -291,15 +291,15 @@ If you use Pi — the format is slightly different, config in `~/.pi/agent/model
 
 Real limitations I'll run into and how to work around them.
 
-**Context window must be agreed everywhere.** Start the server with `--ctx 100000`, set `limit.context: 100000` in opencode, don't go beyond that in Claude Code's system prompt. If Claude Code's init-prompt is ~25K, you have 75K left for the project — realistically enough for a medium codebase, but not for huge repositories.
+**Context window must be agreed everywhere.** Start the server with `--ctx 100000`, set `limit.context: 100000` in opencode, don't go beyond that in Claude Code's system prompt. If Claude Code's init-prompt is ~25K, then 75K is left for the project — realistically enough for a medium codebase, but not for huge repositories.
 
-**Disk KV cache is 'tied' to the exact prefix.** Any edit to the system prompt, to `CLAUDE.md`, to the first messages — invalidates the checkpoint. This isn't a bug, it's by design: matching is by SHA1 of token IDs. If you often edit `CLAUDE.md`, expect cold starts. Solution — commit the system contract and don't edit it in every session.
+**Disk KV cache is 'tied' to the exact prefix.** Any edit to the system prompt, to `CLAUDE.md`, to the first messages — invalidates the checkpoint. This isn't a bug, it's by design: matching is done by SHA1 of token IDs. If you often edit `CLAUDE.md`, expect cold starts. Solution — commit the system contract and don't edit it in every session.
 
 **MTP/speculative decoding doesn't give a big win yet.** The README directly says: 'currently provides at most a slight speedup'. Don't count on doubling speed from MTP — the current implementation is correctness-gated and often triggers partial accept on complex prompts.
 
 **One live KV cache in memory.** The server currently doesn't batch independent requests. If two agents hit it simultaneously — the second waits for the first. This is a normal trade-off for a local single-user setup, but if you want parallel multi-tenancy on one Mac — ds4 isn't there yet.
 
-**CPU mode crashes on fresh macOS.** This is about the debug path, not prod (Metal-only is the main target), but if you habitually want to compare inference on CPU — don't: kernel panic, you'll need to reboot.
+**CPU mode crashes on fresh macOS.** This is about the debug path, not prod (Metal-only is the main target), but if you habitually want to compare inference on CPU — don't: kernel panic, you need to reboot.
 
 ---
 
@@ -321,13 +321,13 @@ And second. In the README antirez explicitly writes:
 
 > This software is developed with strong assistance from GPT 5.5 and with humans leading the ideas, testing, and debugging.
 
-Two weeks from forking `llama.cpp` to a production-ready narrow engine with server API — you can't do this without AI, and antirez says it straight. This switch — 'one person + AI = infrastructure for an entire model in two weeks' — is more interesting to me than the t/s numbers themselves.
+Two weeks from forking `llama.cpp` to a production-ready narrow engine with server API — you can't do this without AI, and antirez says it directly. This switch — 'one person + AI = infrastructure for an entire model in two weeks' — is more interesting to me than the t/s numbers themselves.
 
 ---
 
 ## Summary
 
-`ds4` from antirez is not 'yet another local inference'. It's a narrow bet: one engine, one model (DeepSeek V4 Flash), one hardware architecture (Apple Silicon with Metal), one scenario (coding agent). Thanks to asymmetric 2-bit quant, a 284B model fits in 128 GB MacBook, thanks to disk KV cache it works with agents that send 25K-token system prompts, thanks to OpenAI/Anthropic compatibility it connects to Claude Code, opencode, and Pi out of the box.
+`ds4` from antirez is not 'yet another local inference'. It's a narrow bet: one engine, one model (DeepSeek V4 Flash), one hardware architecture (Apple Silicon with Metal), one scenario (coding agent). Thanks to asymmetric 2-bit quantization, a 284B model fits in 128 GB MacBook, thanks to disk KV cache it works with agents that run 25K-token system prompts, thanks to OpenAI/Anthropic compatibility it connects to Claude Code, opencode, and Pi out of the box.
 
 If you have a Mac with 128 GB+ — this is a working local backend for serious commercial work with private code. If not — wait for DDR5 and unified memory on Linux/CUDA, or watch who next repeats this pattern for their 'model + hardware' combination.
 
