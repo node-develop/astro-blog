@@ -676,6 +676,89 @@ Healthchecks в Docker, Caddy access logs JSON, pg_stat_statements, LangSmith da
 - **Kind** — тип агента: `draft_from_url`, `translate`, `social_drafts`, `rss_monitor`, `daily_digest`, ...
 - **render_version** — int, bump при изменении rehype-pipeline для инвалидации `body_html`.
 
+## 13a. Staging deployment & production cutover
+
+**Цель:** разработка ведётся на ветке `refactor/postgres-cms-agents`, деплоится на **nltosql.com** (запасной домен), `artka.dev` продолжает жить на текущем стеке. Когда staging готов — переключаем DNS, забираем SEO с собой, не теряем ни одной публичной ссылки.
+
+### Принципы
+
+1. **Изоляция staging.** nltosql.com = полная копия архитектуры (postgres, api, render, frontend, admin, agents, caddy), но **отдельная БД** (не shared с прод). Это исключает кросс-влияние на artka.dev.
+2. **Закрыто для индексации на период разработки.** Любой ответ от nltosql.com — `X-Robots-Tag: noindex, nofollow`, `<meta name="robots" content="noindex,nofollow">`, `robots.txt = Disallow: /`. Контролируется одним env var `INDEXATION_ENABLED=false`.
+3. **URL-паритет.** Все existing public URLs на artka.dev должны работать на nltosql.com по тем же путям (`/`, `/blog/<slug>`, `/en/blog/<slug>`, `/about`, `/now`, `/uses`, `/projects`, `/projects/<slug>`, `/tags`, `/tags/<tag>`, `/rss.xml`, `/sitemap-index.xml`, `/sitemap-0.xml`, `/og-default.svg`, `/uploads/...`). Pre-cutover audit проверяет каждый.
+4. **SEO-метаданные сохраняются.** Canonical, OG, Twitter card, schema.org структуры — генерируются по тем же правилам. На staging canonical всегда указывает на свой домен (`https://nltosql.com/...`), на prod — на `https://artka.dev/...`. Это контролируется env var `SITE_URL`.
+5. **Redirect map.** Если в новой архитектуре какой-то URL изменится (например, был `/blog/X` стал `/posts/X` — НЕ планируется, но если случайно) — добавляем 301 redirect в Caddy/Astro middleware. Аудит: cross-check sitemap до/после.
+
+### Env-переменные, контролирующие поведение
+
+```
+# .env.staging (на сервере nltosql.com)
+SITE_URL=https://nltosql.com
+INDEXATION_ENABLED=false
+BETTER_AUTH_URL=https://api.nltosql.com
+COOKIE_DOMAIN=.nltosql.com
+
+# .env.production (на сервере artka.dev)
+SITE_URL=https://artka.dev
+INDEXATION_ENABLED=true
+BETTER_AUTH_URL=https://api.artka.dev
+COOKIE_DOMAIN=.artka.dev
+```
+
+Каждый сервис читает `SITE_URL` для построения canonical/OG/RSS URLs. `INDEXATION_ENABLED=false` включает noindex-режим во всех ответах:
+- **Astro middleware** — добавляет `X-Robots-Tag: noindex, nofollow` к каждому ответу, инжектит `<meta name="robots" content="noindex,nofollow">` в layout если `INDEXATION_ENABLED !== "true"`.
+- **`/robots.txt`** — endpoint в Astro возвращает `User-agent: *\nDisallow: /` если staging, иначе нормальный robots с allow + sitemap link.
+- **Caddy** — на staging Caddyfile глобальный `header X-Robots-Tag "noindex, nofollow"` для всех поддоменов.
+- **API responses** — Hono тоже выставляет header (на случай прямых ссылок на api.nltosql.com).
+
+### Cutover-процедура (2-3 часа в один заход)
+
+1. **Pre-cutover audit (1 ч):**
+   - Скрипт `scripts/url-parity-check.ts` — для каждого URL из текущего sitemap.xml на artka.dev делает GET nltosql.com/<path>, проверяет 200 + content-length > N + наличие правильного `<title>`. Любой 404 — блокер.
+   - Cross-check sitemap-index размер (количество URLs).
+   - Spot-check 10 random posts: открыть в браузере, сравнить content-bytes с прод (cosmetic differences ok, semantic — нет).
+   - GSC export: текущая Coverage report на artka.dev — чтобы было с чем сравнивать после cutover.
+
+2. **Финальный data-sync (если нужен):** на staging должна быть свежая копия prod-БД. Либо `pg_dump prod | pg_restore staging` за час до cutover, либо последний раз импортировать всю свежую markdown через `migrate-content-to-db` (если markdown ещё source истины на проде).
+
+3. **DNS swap:**
+   - Обновить A/AAAA `artka.dev` → IP сервера, где работает refactor stack (тот же что обслуживает nltosql.com, либо отдельный — решается на уровне infra).
+   - Обновить A/AAAA `api.artka.dev`, `admin.artka.dev` аналогично.
+   - TTL на DNS снизить за 24ч до cutover до 60 секунд, чтобы swap прошёл быстро.
+
+4. **Caddy reload с production env:**
+   - Сервер с refactor stack теперь обслуживает оба домена: artka.dev, api.artka.dev, admin.artka.dev. Caddy получает реальные TLS-сертификаты от Let's Encrypt по обоим доменам.
+   - `INDEXATION_ENABLED=true` теперь включён — noindex headers исчезают.
+   - Старый деплой artka.dev — оставляем работать ещё 24 часа на отдельном порту/IP как fallback (или просто остановлен).
+
+5. **Robots/Sitemap flip:**
+   - `https://artka.dev/robots.txt` теперь allow + sitemap link.
+   - Submit `sitemap-index.xml` в Google Search Console (re-fetch).
+   - В GSC сделать "Request indexing" для главных страниц (homepage, top 10 posts).
+
+6. **Cleanup nltosql.com:**
+   - **Variant A (рекомендую):** оставить nltosql.com как продолжающийся staging — будущие feature-ветки деплоятся туда, prod (artka.dev) только мерж из main.
+   - **Variant B:** освободить домен. Тогда добавить 301 redirect от `https://nltosql.com/*` → `https://artka.dev/*` в Caddy (на случай если кто-то запомнил staging URL).
+
+7. **48-часовой monitoring:**
+   - Caddy access logs: фильтр на 4xx/5xx, smoke по топ-10 URL'ов
+   - Plausible (если используется): сравнение трафика и bounce rate с baseline (последняя неделя до cutover)
+   - GSC Coverage report: убедиться что новые URLs индексируются, не появилось `Excluded → Not found (404)` всплеска
+   - Sentry/error logs: regressions ловить
+
+### Что точно НЕ меняется в URL-схеме
+
+URL-схема **байт-в-байт** копируется со старого Astro-сайта. Это означает:
+- Slug формат: `[a-z0-9][a-z0-9-]*` (тот же regex)
+- Routing: `/blog/<slug>`, `/en/blog/<slug>`, `/about`, `/now`, `/uses`, `/projects`, `/projects/<slug>`, `/tags`, `/tags/<tag>`, `/rss.xml`
+- 301-redirect map для legacy paths (см. `astro.config.ts:redirects`) — портируется в Caddy 1-в-1
+- OG image URLs (`/og-default.svg` или генерируемые) — те же пути
+
+### План в Plans
+
+- **Plan 1 Task NEW:** настроить staging-Caddyfile с noindex headers, env scaffolding (SITE_URL, INDEXATION_ENABLED, COOKIE_DOMAIN), robots.txt endpoint в Astro
+- **Plan 2 Task NEW:** Astro middleware применяет noindex headers + meta tag, canonical URL читает SITE_URL
+- **Plan 6 Task NEW:** Production cutover — pre-audit, DNS swap, robots flip, GSC re-submit, 48h monitoring
+
 ## 14. Out of scope (явный no-go)
 
 - Multi-tenant

@@ -1272,6 +1272,236 @@ EOF
 
 ---
 
+## Task 12: Production cutover (artka.dev DNS swap)
+
+Переезд с nltosql.com (staging) на artka.dev (production). Spec Section 13a + `docs/cutover-checklist.md` — описывают полную процедуру. Этот task — **executable steps, не ритуал**: каждый чекпоинт даёт falsifiable evidence.
+
+**Files:**
+- Create: `scripts/url-parity-check.ts` — pre-cutover audit
+- Modify: `docs/cutover-checklist.md` — отметить даты при выполнении
+
+- [ ] **Step 1: Создать `scripts/url-parity-check.ts`**
+
+Автоматическая проверка: для каждого URL из текущего sitemap артки.dev — GET nltosql.com/<path> и проверка status 200 + non-empty body.
+
+```typescript
+// scripts/url-parity-check.ts
+import { XMLParser } from "fast-xml-parser";
+
+const STAGING = process.env.STAGING_URL ?? "https://nltosql.com";
+const PROD_SITEMAP = process.env.PROD_SITEMAP_URL ?? "https://artka.dev/sitemap-index.xml";
+
+async function fetchSitemapUrls(sitemapUrl: string): Promise<string[]> {
+  const res = await fetch(sitemapUrl);
+  const xml = await res.text();
+  const parser = new XMLParser();
+  const parsed = parser.parse(xml);
+  const urls: string[] = [];
+  // Recursive walk: sitemap-index → sitemap → urls
+  if (parsed.sitemapindex?.sitemap) {
+    const sitemaps = Array.isArray(parsed.sitemapindex.sitemap)
+      ? parsed.sitemapindex.sitemap
+      : [parsed.sitemapindex.sitemap];
+    for (const sm of sitemaps) {
+      urls.push(...(await fetchSitemapUrls(sm.loc)));
+    }
+  }
+  if (parsed.urlset?.url) {
+    const items = Array.isArray(parsed.urlset.url) ? parsed.urlset.url : [parsed.urlset.url];
+    for (const u of items) urls.push(u.loc);
+  }
+  return urls;
+}
+
+async function main() {
+  const prodUrls = await fetchSitemapUrls(PROD_SITEMAP);
+  console.log(`[parity] checking ${prodUrls.length} URLs against ${STAGING}`);
+
+  const failures: { url: string; reason: string }[] = [];
+  for (const prodUrl of prodUrls) {
+    const path = new URL(prodUrl).pathname;
+    const stagingUrl = `${STAGING}${path}`;
+    try {
+      const res = await fetch(stagingUrl, {
+        method: "GET",
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) {
+        failures.push({ url: stagingUrl, reason: `status ${res.status}` });
+        continue;
+      }
+      const body = await res.text();
+      if (body.length < 500) {
+        failures.push({ url: stagingUrl, reason: `body too short: ${body.length} bytes` });
+      }
+    } catch (e) {
+      failures.push({ url: stagingUrl, reason: `fetch error: ${e}` });
+    }
+  }
+
+  if (failures.length === 0) {
+    console.log(`[parity] ALL ${prodUrls.length} URLs OK`);
+    process.exit(0);
+  } else {
+    console.error(`[parity] ${failures.length} failures:`);
+    for (const f of failures) console.error(`  ${f.url} — ${f.reason}`);
+    process.exit(1);
+  }
+}
+
+main().catch((e) => { console.error(e); process.exit(2); });
+```
+
+Add to `package.json`:
+```json
+"cutover:parity-check": "tsx scripts/url-parity-check.ts"
+```
+
+- [ ] **Step 2: T-24h prep — выполнить лично**
+
+Открыть `docs/cutover-checklist.md`, проставить дату/время T-24h. Выполнить:
+- DNS panel: TTL для `artka.dev`, `api.artka.dev`, `admin.artka.dev` → 60 секунд
+- `pg_dump prod_db | gzip > backups/pre-cutover-$(date +%Y%m%d).sql.gz` сохранить вне сервера
+- `curl https://artka.dev/sitemap-index.xml > _archive/sitemap-pre-cutover.xml`
+- Google Search Console → Coverage → Export. Сохранить.
+
+- [ ] **Step 3: T-1h pre-cutover audit**
+
+```bash
+PROD_SITEMAP_URL=https://artka.dev/sitemap-index.xml \
+  STAGING_URL=https://nltosql.com \
+  pnpm cutover:parity-check
+# expected: ALL N URLs OK
+```
+
+Если есть failures — фиксить ДО cutover. Каждый failure — это потенциальная 404 после переключения.
+
+Дополнительно:
+```bash
+# Confirm staging имеет noindex envelope
+curl -I https://nltosql.com/ | grep -i 'x-robots-tag'
+# expected: x-robots-tag: noindex, nofollow, noarchive
+
+curl https://nltosql.com/robots.txt
+# expected: User-agent: *\nDisallow: /
+```
+
+- [ ] **Step 4: T-0 cutover execution**
+
+На сервере где работает refactor stack:
+
+```bash
+# 1. Final data sync (если markdown ещё source истины на проде)
+pnpm db:migrate-content
+pnpm db:render-all
+
+# 2. Copy production env file
+cp infra/.env.production.example .env
+# Edit .env — заполнить реальные секреты ANTHROPIC_API_KEY, BETTER_AUTH_SECRET, postgres password
+
+# 3. Restart compose с production env
+docker compose down
+docker compose up -d
+sleep 30
+docker compose ps  # all healthy
+```
+
+DNS panel:
+- A/AAAA `artka.dev` → IP_OF_REFACTOR_SERVER
+- A/AAAA `api.artka.dev` → IP_OF_REFACTOR_SERVER
+- A/AAAA `admin.artka.dev` → IP_OF_REFACTOR_SERVER
+
+Caddy на сервере получит TLS-сертификаты для artka.dev (Let's Encrypt issue — несколько минут после первого хита).
+
+Verify:
+```bash
+# Wait for DNS propagation + Caddy issue cert (~5 min)
+sleep 300
+
+curl -I https://artka.dev/
+# expected: 200, NO x-robots-tag header (INDEXATION_ENABLED=true)
+
+curl https://artka.dev/robots.txt
+# expected: User-agent: *\nAllow: /\nSitemap: https://artka.dev/sitemap-index.xml
+
+curl -s https://artka.dev/sitemap-index.xml | grep -c '<loc>'
+# expected: count == baseline (из _archive/sitemap-pre-cutover.xml)
+
+curl -s https://artka.dev/blog/claude-md-12-rules | grep -i karpathy
+# expected: содержит контент поста
+```
+
+- [ ] **Step 5: T+30min verify (10 random посты)**
+
+```bash
+# Pull list of published RU posts
+docker exec astro-blog-postgres psql -U blog -d blog -c "
+SELECT slug FROM posts WHERE kind='post' AND lang='ru' AND status='published' ORDER BY random() LIMIT 10;
+" -A -t > random-posts.txt
+
+while read slug; do
+  url="https://artka.dev/blog/$slug"
+  status=$(curl -o /dev/null -s -w "%{http_code}" "$url")
+  echo "$status $url"
+done < random-posts.txt
+# expected: 10 lines of "200 https://artka.dev/blog/..."
+```
+
+OG metadata sanity на 3 random:
+```bash
+for slug in $(head -3 random-posts.txt); do
+  curl -s "https://artka.dev/blog/$slug" | grep -E 'og:url|og:image|canonical' | head -3
+done
+# expected: og:url + canonical всегда https://artka.dev/...
+```
+
+- [ ] **Step 6: T+1h SEO submit**
+
+В Google Search Console (`https://search.google.com/search-console`):
+1. Property → artka.dev → Sitemaps → Add `https://artka.dev/sitemap-index.xml` → Submit
+2. URL Inspection: insert `https://artka.dev/`, "Request Indexing"
+3. Same for top 3 posts (по traffic last 30d из старого Plausible)
+
+Verify в Plausible/analytics:
+- Real-time visitors на artka.dev появляются (DNS distrobuted)
+- 24h aggregate metrics не упали > 30% от baseline (можно сравнить через 24h)
+
+- [ ] **Step 7: T+24h-48h monitor**
+
+```bash
+# Каждые 6 часов:
+docker compose logs caddy --since 6h | grep -E ' 4[0-9]{2} | 5[0-9]{2} ' | head -20
+# expected: малое количество 4xx/5xx, преимущественно 404 на random scanner-боты
+```
+
+GSC через 24h:
+- Coverage report → Indexed pages — растёт
+- Coverage report → Excluded → Not found (404) — НЕ всплеск
+
+- [ ] **Step 8: T+48h decision на nltosql.com**
+
+Variant A (рекомендую): оставить nltosql.com как staging для будущих feature-веток. Не делать ничего.
+
+Variant B: освободить домен. Добавить в Caddy:
+```
+nltosql.com {
+    redir https://artka.dev{uri} permanent
+}
+```
+
+Закоммитить решение в Caddyfile + commit message "chore(infra): post-cutover decision on nltosql.com".
+
+- [ ] **Step 9: Mark cutover complete**
+
+В `docs/cutover-checklist.md` отметить все checkboxes как ✅ с timestamp. Commit:
+
+```bash
+git add docs/cutover-checklist.md
+git commit -m "chore(cutover): complete production cutover artka.dev → refactor stack"
+```
+
+---
+
 ## Self-review
 
 **Spec coverage** (Phases 8-10):

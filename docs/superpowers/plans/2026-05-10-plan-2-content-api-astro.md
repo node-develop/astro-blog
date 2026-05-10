@@ -2733,6 +2733,142 @@ git commit -m "feat(astro): switch to SSR from Hono API + disk-cache fallback"
 
 ---
 
+## Task 9a: Indexation envelope (noindex via env) + dynamic robots.txt + canonical via SITE_URL
+
+Astro frontend должен на staging вести себя как noindex-зомби, на проде — как обычный сайт. Управляется через env `INDEXATION_ENABLED` и `SITE_URL`. Caddy уже выставляет header (Plan 1 Task 8a) — здесь дублируем на уровне Astro для defense-in-depth + meta robots tag в layout.
+
+**Files:**
+- Modify: `src/middleware.ts`
+- Create: `src/pages/robots.txt.ts`
+- Modify: `src/layouts/BaseLayout.astro` (или эквивалент — найти главный layout с `<head>`)
+- Modify: `src/lib/seo.ts` или эквивалент — для построения canonical/OG URLs из SITE_URL
+
+- [ ] **Step 1: Update `src/middleware.ts`**
+
+В существующий middleware (после `/admin/*` 308 redirect из Plan 3 Task 8) добавить блок:
+
+```typescript
+// Indexation envelope for staging
+const indexationEnabled = import.meta.env.INDEXATION_ENABLED === "true";
+if (!indexationEnabled) {
+  context.response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+}
+```
+
+И в `context.locals` пробросить флаг для layout:
+
+```typescript
+context.locals.indexationEnabled = indexationEnabled;
+context.locals.siteUrl = import.meta.env.SITE_URL ?? "https://nltosql.com";
+```
+
+(declare module 'astro' interface ContextLocals — добавить indexationEnabled, siteUrl.)
+
+- [ ] **Step 2: Create dynamic `src/pages/robots.txt.ts`**
+
+```typescript
+// src/pages/robots.txt.ts
+import type { APIRoute } from "astro";
+
+export const prerender = false;
+
+export const GET: APIRoute = ({ url }) => {
+  const enabled = import.meta.env.INDEXATION_ENABLED === "true";
+  const siteUrl = import.meta.env.SITE_URL ?? url.origin;
+  const body = enabled
+    ? `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap-index.xml\n`
+    : `User-agent: *\nDisallow: /\n`;
+  return new Response(body, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+};
+```
+
+- [ ] **Step 3: Update главный layout (BaseLayout.astro или эквивалент)**
+
+В `<head>` добавить:
+
+```astro
+---
+const { indexationEnabled = false, siteUrl = "https://nltosql.com" } = Astro.locals as any;
+const canonical = new URL(Astro.url.pathname, siteUrl).toString();
+---
+<head>
+  ...
+  <link rel="canonical" href={canonical} />
+  {!indexationEnabled && <meta name="robots" content="noindex, nofollow, noarchive" />}
+  <meta property="og:url" content={canonical} />
+  ...
+</head>
+```
+
+`canonical` всегда строится из `SITE_URL` — на staging указывает на nltosql.com (но всё равно noindex), на prod — на artka.dev. Это означает: **никогда не указывать canonical=artka.dev на staging**, иначе Google посчитает staging копией prod (плохо для SEO).
+
+- [ ] **Step 4: Update API client base URL для prod**
+
+В `src/lib/api-client.ts`:
+
+```typescript
+const API_URL = process.env.API_URL
+  ?? (import.meta.env.SITE_URL?.includes("nltosql.com")
+       ? "http://api:3001"  // docker network
+       : "http://api:3001");
+```
+
+Для production cutover env переменная `API_URL=http://api:3001` остаётся одинаковой (внутренняя docker network). Всё работает через staging/prod swap без изменений в коде.
+
+- [ ] **Step 5: Update RSS feed**
+
+В `src/pages/rss.xml.ts` (если существует) или в новом эндпоинте — заменить hard-coded `artka.dev` на `import.meta.env.SITE_URL`. RSS на staging будет иметь `<link>nltosql.com/...</link>` (но с noindex headers это не индексируется).
+
+- [ ] **Step 6: Update sitemap**
+
+Если используется `@astrojs/sitemap` integration — passsite URL через config:
+
+```typescript
+// astro.config.ts
+import sitemap from "@astrojs/sitemap";
+export default defineConfig({
+  site: process.env.SITE_URL ?? "https://nltosql.com",
+  integrations: [sitemap({
+    filter: () => process.env.INDEXATION_ENABLED === "true",  // empty sitemap on staging
+  })],
+});
+```
+
+Если intergration не используется и sitemap генерируется руками в endpoint — заменить hardcoded URL на `import.meta.env.SITE_URL`.
+
+- [ ] **Step 7: Smoke test**
+
+```bash
+INDEXATION_ENABLED=false SITE_URL=https://nltosql.com pnpm dev &
+sleep 3
+curl -I http://localhost:4321/ | grep -i x-robots
+# expected: x-robots-tag: noindex, nofollow, noarchive
+curl http://localhost:4321/robots.txt
+# expected: User-agent: *\nDisallow: /
+curl -s http://localhost:4321/ | grep canonical
+# expected: <link rel="canonical" href="https://nltosql.com/" />
+kill %1
+
+INDEXATION_ENABLED=true SITE_URL=https://artka.dev pnpm dev &
+sleep 3
+curl -I http://localhost:4321/ | grep -i x-robots
+# expected: NO x-robots-tag header
+curl http://localhost:4321/robots.txt
+# expected: User-agent: *\nAllow: /\nSitemap: https://artka.dev/sitemap-index.xml
+kill %1
+```
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add src/middleware.ts src/pages/robots.txt.ts src/layouts/ src/lib/api-client.ts src/pages/rss.xml.ts astro.config.ts
+git commit -m "feat(seo): noindex envelope on staging, SITE_URL-aware canonical/RSS/sitemap"
+```
+
+---
+
 ## Task 10: Final verification — Plan 2 Done condition
 
 Spec done conditions (Phase 2-4):

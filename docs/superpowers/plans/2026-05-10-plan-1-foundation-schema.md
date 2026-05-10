@@ -1895,6 +1895,196 @@ git commit -m "ci: add per-service docker publish workflows with paths-filter"
 
 ---
 
+## Task 8a: Staging deploy на nltosql.com — Caddy + noindex envelope + cutover checklist
+
+Параллельный staging-деплой на nltosql.com во время разработки рефактора. Полностью закрыт для индексации (X-Robots-Tag + meta robots + robots.txt Disallow). artka.dev продолжает жить на текущем стеке. Cutover план — Plan 6.
+
+**Files:**
+- Modify: `infra/Caddyfile`
+- Create: `infra/.env.staging.example`
+- Create: `infra/.env.production.example`
+- Modify: `docker-compose.yml`
+- Create: `docs/cutover-checklist.md`
+
+- [ ] **Step 1: Update `infra/Caddyfile` — production + staging blocks**
+
+```caddy
+{
+    email dev@artka.dev
+}
+
+# ─── Production blocks (active after cutover) ─────────────────
+artka.dev {
+    reverse_proxy frontend:4321
+    @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
+    header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
+api.artka.dev {
+    reverse_proxy api:3001 {
+        flush_interval -1
+    }
+    @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
+    header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
+admin.artka.dev {
+    reverse_proxy admin:80
+    header X-Robots-Tag "noindex, nofollow, noarchive"   # admin всегда noindex
+}
+
+# ─── Staging blocks (active during refactor development) ──────
+nltosql.com, www.nltosql.com {
+    reverse_proxy frontend:4321
+    header X-Robots-Tag "noindex, nofollow, noarchive"   # hard noindex regardless of env
+    handle /robots.txt {
+        respond "User-agent: *\nDisallow: /\n" 200 {
+            close
+        }
+    }
+}
+
+api.nltosql.com {
+    reverse_proxy api:3001 {
+        flush_interval -1
+    }
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
+admin.nltosql.com {
+    reverse_proxy admin:80
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+}
+```
+
+Логика:
+- На `artka.dev` X-Robots-Tag условный — если `INDEXATION_ENABLED!=true`, индексация заблокирована (защита от ошибки).
+- На `nltosql.com` X-Robots-Tag всегда жёсткий — staging никогда не индексируется.
+- `nltosql.com/robots.txt` отдаётся самим Caddy с `Disallow: /` (не доходит до Astro). На artka.dev — Astro генерирует динамически (Plan 2 Task NEW).
+
+- [ ] **Step 2: Create `infra/.env.staging.example`**
+
+```bash
+# Staging server (nltosql.com) — refactor development
+INDEXATION_ENABLED=false
+SITE_URL=https://nltosql.com
+BETTER_AUTH_URL=https://api.nltosql.com
+COOKIE_DOMAIN=.nltosql.com
+LANGCHAIN_PROJECT=artka-blog-staging
+TAG=staging-latest
+
+POSTGRES_USER=blog
+POSTGRES_PASSWORD=__rotate_on_deploy__
+POSTGRES_DB=blog
+
+ANTHROPIC_API_KEY=__set__
+LANGSMITH_API_KEY=__set__
+BETTER_AUTH_SECRET=__rotate__
+GITHUB_CLIENT_ID=__staging_oauth_app__
+GITHUB_CLIENT_SECRET=__staging_oauth_app__
+```
+
+- [ ] **Step 3: Create `infra/.env.production.example`**
+
+```bash
+# Production server (artka.dev) — activates on cutover
+INDEXATION_ENABLED=true
+SITE_URL=https://artka.dev
+BETTER_AUTH_URL=https://api.artka.dev
+COOKIE_DOMAIN=.artka.dev
+LANGCHAIN_PROJECT=artka-blog
+TAG=v1.0.0
+
+POSTGRES_USER=blog
+POSTGRES_PASSWORD=__rotate__
+POSTGRES_DB=blog
+
+ANTHROPIC_API_KEY=__set__
+LANGSMITH_API_KEY=__set__
+BETTER_AUTH_SECRET=__rotate__
+GITHUB_CLIENT_ID=__prod_oauth_app__
+GITHUB_CLIENT_SECRET=__prod_oauth_app__
+```
+
+- [ ] **Step 4: Update `docker-compose.yml` env passthrough**
+
+Для каждого из сервисов api, render, frontend, admin, agents добавить в `environment` блок:
+
+```yaml
+environment:
+  INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
+  SITE_URL: ${SITE_URL:-https://nltosql.com}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://api.nltosql.com}
+  COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
+  # ... existing service-specific vars
+```
+
+`frontend` (Astro) считает `SITE_URL` для canonical/OG/RSS. `api` (Hono) считает `BETTER_AUTH_URL` + `COOKIE_DOMAIN` для Better-Auth. `agents` использует `LANGCHAIN_PROJECT`.
+
+Defaults в compose ставим на staging-значения — чтобы случайный `docker compose up` без env-файла не зашёл в prod-режим.
+
+- [ ] **Step 5: Create `docs/cutover-checklist.md`**
+
+Path: `/Users/izual/astro-blog/docs/cutover-checklist.md`
+
+```markdown
+# Production cutover checklist (artka.dev)
+
+См. spec Section 13a для полного описания стратегии.
+
+## T-24h: prep
+- [ ] DNS TTL для artka.dev, api.artka.dev, admin.artka.dev снижен до 60 сек
+- [ ] `pg_dump` свежей prod БД сохранён в безопасное место
+- [ ] Текущий sitemap.xml artka.dev сохранён в `_archive/sitemap-pre-cutover.xml`
+- [ ] GSC Coverage report экспортирован (baseline для diff)
+- [ ] Список published URLs из БД на staging спарcен с baseline sitemap
+
+## T-1h: pre-cutover audit
+- [ ] `pnpm tsx scripts/url-parity-check.ts` против https://nltosql.com — 0 failures
+- [ ] Spot-check 10 рандомных постов в браузере на staging vs production
+- [ ] Все Plan 1-6 done conditions зелёные
+- [ ] `curl -I https://nltosql.com/` → есть `X-Robots-Tag: noindex, nofollow`
+
+## T-0: cutover (≤30 мин)
+- [ ] `pg_restore` свежий prod-dump на staging БД (или re-run `migrate-content-to-db` если markdown ещё актуален)
+- [ ] Switch env на сервере с `infra/.env.staging` → `infra/.env.production` (см. infra/.env.production.example)
+- [ ] `docker compose down && docker compose up -d` — Caddy перевыпустит TLS на artka.dev/api.artka.dev/admin.artka.dev
+- [ ] DNS A/AAAA artka.dev, api.artka.dev, admin.artka.dev → IP cutover-сервера
+- [ ] `curl -I https://artka.dev/` → НЕТ `X-Robots-Tag`, статус 200
+- [ ] `curl https://artka.dev/robots.txt` → Allow + sitemap link
+- [ ] `curl https://artka.dev/sitemap-index.xml` → N URLs, N == baseline
+
+## T+30min: verify
+- [ ] 10 постов открываются на artka.dev по существующим URL (no 404)
+- [ ] RSS на /rss.xml — валидный XML с canonical URLs artka.dev
+- [ ] OG metadata 3 random посты совпадают с baseline (canonical, og:url, og:image)
+- [ ] /tags, /tags/<tag>, /projects, /about, /now, /uses — все 200
+
+## T+1h: SEO submit
+- [ ] GSC: re-fetch https://artka.dev/sitemap-index.xml
+- [ ] GSC: Request indexing для homepage + top 3 posts
+- [ ] Plausible/Analytics: traffic не упал
+
+## T+24h-48h: monitor
+- [ ] Caddy access logs: 4xx/5xx rate в норме
+- [ ] GSC Coverage: новые URLs появляются в Indexed, нет всплеска "Not found (404)"
+- [ ] Bounce rate в Plausible сравнимый с baseline
+- [ ] Decision: nltosql.com → continue as staging (Variant A) ИЛИ 301 → artka.dev (Variant B)
+
+## Rollback (если критично)
+- [ ] DNS A/AAAA artka.dev вернуть на старый сервер (TTL 60 сек — swap минуты)
+- [ ] Старый stack должен оставаться запущенным 24h после cutover как safety net
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add infra/Caddyfile infra/.env.staging.example infra/.env.production.example docker-compose.yml docs/cutover-checklist.md
+git commit -m "feat(infra): nltosql.com staging deploy with noindex envelope + cutover checklist"
+```
+
+---
+
 ## Task 9: Pg_notify integration test (Vitest + testcontainers)
 
 Доказываем, что триггеры работают: INSERT в agent_jobs → notification, INSERT/UPDATE в agent_runs → запись в agent_events.
