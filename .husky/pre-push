@@ -1,7 +1,10 @@
 #!/usr/bin/env sh
 # pre-push: полная проверка перед отправкой в remote.
-# CI выполняет только Docker build/push — все тесты и валидация здесь.
+# CI зеркалит lint+typecheck+test; запускаем те же шаги локально, чтобы push не валил CI.
 set -e
+
+echo "▶ lint (eslint + prettier)"
+pnpm lint
 
 echo "▶ typecheck (astro check + tsc)"
 pnpm typecheck

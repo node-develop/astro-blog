@@ -1,5 +1,5 @@
 ---
-title: '12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года'
+title: "12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года"
 description: >-
   Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
   agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
@@ -86,11 +86,11 @@ flowchart LR
 
 This is the foundation. Without it, any extension loses half its meaning.
 
-| #   | Rule               | What it covers                                                                                              |
-| --- | --------------------- | ---------------------------------------------------------------------------------------------------------- |
-| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.           |
-| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                        |
-| 3   | Surgical Changes      | Touch only what's needed. Don't "improve" neighboring code, don't reformat what you weren't asked about.            |
+| #   | Rule                  | What it covers                                                                                                  |
+| --- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.                      |
+| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                                |
+| 3   | Surgical Changes      | Touch only what's needed. Don't "improve" neighboring code, don't reformat what you weren't asked about.        |
 | 4   | Goal-Driven Execution | Describe success criteria, not step-by-step instructions. Strong success criteria let the model iterate itself. |
 
 In my Astro blog's `CLAUDE.md`, these four are covered not as a separate section, but through `Code Standards → Functional Style` (rules 2 and 3 — no classes, no extra abstractions) and `Prohibitions` (rule 3 — a "don't do" list). The rules themselves aren't duplicated as text, but their consequences land in the context.
@@ -101,12 +101,12 @@ In my Astro blog's `CLAUDE.md`, these four are covered not as a separate section
 
 Four gaps I observe in real work:
 
-| Gap                       | What breaks                                                                                         | Which added rules cover it    |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Gap                        | What breaks                                                                               | Which added rules cover it               |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------- |
 | Long-running agent tasks   | Multi-step pipeline drifts, burns tokens, loses context                                   | 6 (budgets), 10 (checkpoints), 12 (loud) |
-| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages              | 11 (conventions), 7 (surface conflicts)  |
-| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic  | 9 (intent over behavior)               |
-| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe | (not covered by 12 rules — separate)   |
+| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages     | 11 (conventions), 7 (surface conflicts)  |
+| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic | 9 (intent over behavior)                 |
+| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe  | (not covered by 12 rules — separate)     |
 
 The last gap stays alive. Either you turn Simplicity on or off — there's no middle mode in `CLAUDE.md`.
 
@@ -183,20 +183,20 @@ The template is valuable not just for what's in it, but for what was filtered ou
 
 I opened this blog's file (191 lines) and went through all 12 rules. Here's the picture:
 
-| Rule                | In my CLAUDE.md | Where                                                                |
-| ---------------------- | ---------------- | ------------------------------------------------------------------ |
-| 1. Think before coding | indirectly         | through `architect → critic` workflow in agent stack              |
-| 2. Simplicity          | yes               | `No classes`, `Immutability by default`                  |
-| 3. Surgical changes    | yes               | `Prohibitions` (deprecated `@astrojs/tailwind`, `node:*-alpine`, etc.) |
-| 4. Goal-driven         | indirectly         | through subagent structure, not as separate rule                    |
-| 5. Judgment-only       | no              |                                                                    |
-| 6. Token budgets       | no              |                                                                    |
-| 7. Surface conflicts   | no              |                                                                    |
-| 8. Read before write   | partially         | GitNexus section requires impact analysis before edits             |
-| 9. Test intent         | no              |                                                                    |
-| 10. Checkpoints        | no              |                                                                    |
-| 11. Match conventions  | yes               | `Code Standards → TypeScript / Astro / Git`                        |
-| 12. Fail loud          | no              |                                                                    |
+| Rule                   | In my CLAUDE.md | Where                                                                  |
+| ---------------------- | --------------- | ---------------------------------------------------------------------- |
+| 1. Think before coding | indirectly      | through `architect → critic` workflow in agent stack                   |
+| 2. Simplicity          | yes             | `No classes`, `Immutability by default`                                |
+| 3. Surgical changes    | yes             | `Prohibitions` (deprecated `@astrojs/tailwind`, `node:*-alpine`, etc.) |
+| 4. Goal-driven         | indirectly      | through subagent structure, not as separate rule                       |
+| 5. Judgment-only       | no              |                                                                        |
+| 6. Token budgets       | no              |                                                                        |
+| 7. Surface conflicts   | no              |                                                                        |
+| 8. Read before write   | partially       | GitNexus section requires impact analysis before edits                 |
+| 9. Test intent         | no              |                                                                        |
+| 10. Checkpoints        | no              |                                                                        |
+| 11. Match conventions  | yes             | `Code Standards → TypeScript / Astro / Git`                            |
+| 12. Fail loud          | no              |                                                                        |
 
 Result — four covered, two partial, six missing. The file is effectively Karpathy-level, without the 2026 extension.
 
@@ -216,7 +216,7 @@ Rule 7 is less acute for a single project. Rule 5 is covered by the fact that th
 Discipline:
 
 1. **Don't exceed 200 lines total.** Counting stack, commands, prohibitions, rules. I'm at 191 now — adding four rules means exporting part of `Homepage` or GitNexus section to `@docs/...` via Claude Code @-import.
-2. **Each rule answers "what error does it prevent." If it doesn't — delete it.
+2. **Each rule answers "what error does it prevent."** If it doesn't — delete it.
 3. **Capability-agnostic phrasing.** "Match the enforced style", not "use prettier".
 4. **Imperatives, not wishes.** "State assumptions explicitly", not "think carefully".
 5. **Test it.** Run a typical task before and after. No difference — the rule didn't work in your context, delete it.

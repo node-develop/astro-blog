@@ -1,5 +1,5 @@
 ---
-title: '12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года'
+title: "12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года"
 description: >-
   Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
   agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
