@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getCollection, type CollectionEntry } from "astro:content";
+import { parseFrontmatter } from "~/lib/content/frontmatter";
+import { POSTS_DIR } from "~/lib/fs/paths";
 import type { Article, SocialChannel } from "~/lib/social/types";
 
 export const computeSourceHash = (input: {
@@ -19,27 +21,37 @@ export const computeSourceHash = (input: {
 
 export const loadArticle = async (
   slug: string,
-  collection: "posts" = "posts",
+  _collection: "posts" = "posts",
 ): Promise<Article> => {
-  const entries = await getCollection(collection);
-  const entry = entries.find(
-    (e: CollectionEntry<"posts">) =>
-      e.id === slug || e.id === `${slug}.md` || e.id === `${slug}.mdx`,
-  );
-  if (!entry) throw new Error(`article not found: ${collection}/${slug}`);
-  const fm = entry.data as Record<string, unknown>;
-  const enPath = join(process.cwd(), `src/content/posts/en/${slug}.md`);
-  const enPathMdx = join(process.cwd(), `src/content/posts/en/${slug}.mdx`);
+  const mdPath = join(POSTS_DIR, `${slug}.md`);
+  const mdxPath = join(POSTS_DIR, `${slug}.mdx`);
+
+  let raw: string;
+  try {
+    raw = await readFile(mdPath, "utf8");
+  } catch {
+    try {
+      raw = await readFile(mdxPath, "utf8");
+    } catch {
+      throw new Error(`article not found: posts/${slug}`);
+    }
+  }
+
+  const { frontmatter: fm, body } = parseFrontmatter(raw);
+
+  const enPath = join(POSTS_DIR, `en/${slug}.md`);
+  const enPathMdx = join(POSTS_DIR, `en/${slug}.mdx`);
+
   return {
     collection: "posts",
     slug,
-    title: String(fm.title ?? ""),
-    summary: String(fm.summary ?? fm.description ?? ""),
-    body: (entry as { body?: string }).body ?? "",
-    tags: (Array.isArray(fm.tags) ? fm.tags.map(String) : []) as readonly string[],
-    pubDate: fm.pubDate instanceof Date ? fm.pubDate : new Date(),
-    cover: typeof fm.cover === "string" ? { src: fm.cover, alt: String(fm.coverAlt ?? "") } : null,
-    lang: ((fm.lang as string) ?? "ru") === "en" ? "en" : "ru",
+    title: fm.title,
+    summary: fm.summary ?? fm.description,
+    body,
+    tags: fm.tags as readonly string[],
+    pubDate: fm.pubDate,
+    cover: typeof fm.cover === "string" ? { src: fm.cover, alt: fm.coverAlt ?? "" } : null,
+    lang: "ru",
     sourceUrl: `https://artka.dev/blog/${slug}`,
     hasEnTwin: existsSync(enPath) || existsSync(enPathMdx),
   };

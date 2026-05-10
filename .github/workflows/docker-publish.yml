@@ -58,6 +58,8 @@ jobs:
           platforms: linux/amd64
           build-args: |
             SITE_URL=https://artka.dev
+            GIT_SHA=${{ github.sha }}
+            BUILT_AT=${{ github.event.head_commit.timestamp || github.run_started_at }}
 
       - name: Trigger Dokploy deploy
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
