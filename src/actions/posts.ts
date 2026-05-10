@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
 import { db } from "~/lib/db";
 import { postsMeta } from "~/lib/db/schema";
+import { POST_LIMITS } from "~/lib/content/limits";
 import {
   reorderMeta,
   ensureMeta,
@@ -33,24 +34,24 @@ export const postUpsertInput = z.object({
     .max(100)
     .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/, "invalid slug"),
   frontmatter: z.object({
-    title: z.string().min(3).max(120),
+    title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
     // Synced with the content-collection schema in `src/content.config.ts`.
-    description: z.string().min(10).max(200),
+    description: z.string().min(POST_LIMITS.description.min).max(POST_LIMITS.description.max),
     // Optional TL;DR card (60..280). Empty string "" is normalised to
     // `undefined` so the form can post a blank textarea without a manual
     // unset step.
     summary: z
       .string()
-      .max(280)
+      .max(POST_LIMITS.summary.max)
       .optional()
       .transform((v) => (v && v.length > 0 ? v : undefined))
-      .pipe(z.string().min(60).max(280).optional()),
+      .pipe(z.string().min(POST_LIMITS.summary.min).max(POST_LIMITS.summary.max).optional()),
     keywords: z.array(z.string().min(1).max(80)).max(40).default([]),
     faq: z
       .array(
         z.object({
-          question: z.string().min(5).max(200),
-          answer: z.string().min(20).max(2000),
+          question: z.string().min(POST_LIMITS.faqQuestion.min).max(POST_LIMITS.faqQuestion.max),
+          answer: z.string().min(POST_LIMITS.faqAnswer.min).max(POST_LIMITS.faqAnswer.max),
         }),
       )
       .max(20)

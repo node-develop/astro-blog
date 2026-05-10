@@ -16,6 +16,8 @@ import { PATHS } from "../src/lib/translate/site-config";
 import { isFixtureSlug } from "../src/lib/translate/sync-check";
 import { parseFrontmatter } from "../src/lib/content/frontmatter";
 import type { Frontmatter } from "../src/lib/content/frontmatter";
+import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "../src/lib/content/limits";
+import type { Limits } from "../src/lib/translate/validate-lengths";
 
 dotenv();
 
@@ -43,16 +45,9 @@ const serializeWithExtras = (
   extras: Record<string, unknown>,
   body: string,
 ): string => {
-  // Astro content schema enforces max 200 chars on description; truncate at word boundary.
-  const truncateDesc = (s: string): string => {
-    if (s.length <= 200) return s;
-    const cut = s.slice(0, 200).lastIndexOf(" ");
-    return s.slice(0, cut > 100 ? cut : 200);
-  };
-
   const obj: Record<string, unknown> = {
     title: base.title,
-    description: truncateDesc(base.description),
+    description: base.description,
     pubDate: base.pubDate.toISOString().slice(0, 10),
     ...(base.updatedDate ? { updatedDate: base.updatedDate.toISOString().slice(0, 10) } : {}),
     tags: base.tags,
@@ -136,6 +131,12 @@ const translateFile = async (
     ...(ruMeta.summary ? { summary: ruMeta.summary } : {}),
   };
 
+  const fmConstraints: Limits = {
+    title: { min: POST_LIMITS.title.min, max: POST_LIMITS.title.max },
+    description: { min: POST_LIMITS.description.min, max: POST_LIMITS.description.max },
+    summary: { min: POST_LIMITS.summary.min, max: POST_LIMITS.summary.max },
+  };
+
   const fmTranslated =
     Object.keys(fmStrings).length > 0
       ? await translateStrings({
@@ -143,6 +144,8 @@ const translateFile = async (
           sourceLocale: "ru",
           targetLocale: "en",
           strings: fmStrings,
+          constraints: fmConstraints,
+          optionalKeys: new Set(["summary", "coverAlt"]),
         })
       : {};
 
@@ -155,11 +158,23 @@ const translateFile = async (
             flat[`q${i}`] = it.question;
             flat[`a${i}`] = it.answer;
           });
+          const faqConstraints: Record<string, { min?: number; max: number }> = {};
+          ruMeta.faq!.forEach((_, i) => {
+            faqConstraints[`q${i}`] = {
+              min: POST_LIMITS.faqQuestion.min,
+              max: POST_LIMITS.faqQuestion.max,
+            };
+            faqConstraints[`a${i}`] = {
+              min: POST_LIMITS.faqAnswer.min,
+              max: POST_LIMITS.faqAnswer.max,
+            };
+          });
           const t = await translateStrings({
             apiKey: apiKey!,
             sourceLocale: "ru",
             targetLocale: "en",
             strings: flat,
+            constraints: faqConstraints,
           });
           return ruMeta.faq!.map((_, i) => ({
             question: t[`q${i}`] ?? ruMeta.faq![i]!.question,
@@ -302,6 +317,10 @@ const translateSiteFile = async (
     if (typeof rawData[field] === "string") fmStrings[field] = rawData[field] as string;
   }
 
+  const siteConstraints: Limits = {
+    description: { min: SITE_LIMITS.description.min, max: SITE_LIMITS.description.max },
+  };
+
   const fmTranslated =
     Object.keys(fmStrings).length > 0
       ? await translateStrings({
@@ -309,6 +328,8 @@ const translateSiteFile = async (
           sourceLocale: "ru",
           targetLocale: "en",
           strings: fmStrings,
+          constraints: siteConstraints,
+          optionalKeys: new Set(["description"]),
         })
       : {};
 
@@ -409,6 +430,12 @@ const translateProjectFile = async (
     }
   });
 
+  const projectConstraints: Limits = {
+    title: { min: PROJECT_LIMITS.title.min, max: PROJECT_LIMITS.title.max },
+    description: { min: PROJECT_LIMITS.description.min, max: PROJECT_LIMITS.description.max },
+    role: { min: PROJECT_LIMITS.role.min, max: PROJECT_LIMITS.role.max },
+  };
+
   const fmTranslated =
     Object.keys(fmStrings).length > 0
       ? await translateStrings({
@@ -416,6 +443,8 @@ const translateProjectFile = async (
           sourceLocale: "ru",
           targetLocale: "en",
           strings: fmStrings,
+          constraints: projectConstraints,
+          optionalKeys: new Set(["coverAlt"]),
         })
       : {};
 

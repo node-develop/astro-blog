@@ -26,6 +26,8 @@ import { extractProse, reassemble } from "./extract-prose";
 import { translateProse, translateStrings } from "./claude";
 import { decideAction } from "./decide-action";
 import { resolveCollectionPaths, type TranslateCollection } from "./site-config";
+import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "../content/limits";
+import type { Limits } from "./validate-lengths";
 
 export interface TranslateOneInput {
   readonly collection: TranslateCollection;
@@ -213,6 +215,57 @@ const applyTranslations = (
 };
 
 /**
+ * Build the `constraints` and `optionalKeys` for a given collection so that
+ * `translateStrings` can enforce per-field length limits after translation.
+ * courses/lessons have no limits defined yet — returns empty constraints.
+ */
+const buildConstraints = (
+  collection: TranslateCollection,
+  rawData: Record<string, unknown>,
+): { constraints: Limits; optionalKeys: ReadonlySet<string> } => {
+  if (collection === "posts") {
+    const faqCount = Array.isArray(rawData["faq"]) ? (rawData["faq"] as unknown[]).length : 0;
+    const faqLimits: Record<string, { min?: number; max: number }> = {};
+    for (let i = 0; i < faqCount; i++) {
+      faqLimits[`faq_q${i}`] = {
+        min: POST_LIMITS.faqQuestion.min,
+        max: POST_LIMITS.faqQuestion.max,
+      };
+      faqLimits[`faq_a${i}`] = { min: POST_LIMITS.faqAnswer.min, max: POST_LIMITS.faqAnswer.max };
+    }
+    return {
+      constraints: {
+        title: { min: POST_LIMITS.title.min, max: POST_LIMITS.title.max },
+        description: { min: POST_LIMITS.description.min, max: POST_LIMITS.description.max },
+        summary: { min: POST_LIMITS.summary.min, max: POST_LIMITS.summary.max },
+        ...faqLimits,
+      },
+      optionalKeys: new Set(["summary", "coverAlt"]),
+    };
+  }
+  if (collection === "site") {
+    return {
+      constraints: {
+        description: { min: SITE_LIMITS.description.min, max: SITE_LIMITS.description.max },
+      },
+      optionalKeys: new Set(["description"]),
+    };
+  }
+  if (collection === "projects") {
+    return {
+      constraints: {
+        title: { min: PROJECT_LIMITS.title.min, max: PROJECT_LIMITS.title.max },
+        description: { min: PROJECT_LIMITS.description.min, max: PROJECT_LIMITS.description.max },
+        role: { min: PROJECT_LIMITS.role.min, max: PROJECT_LIMITS.role.max },
+      },
+      optionalKeys: new Set(["coverAlt"]),
+    };
+  }
+  // courses / lessons: no limits yet
+  return { constraints: {}, optionalKeys: new Set() };
+};
+
+/**
  * Translate one content file. Caller supplies the API key; we never read
  * `process.env` directly — keeps the function pure-ish and testable.
  */
@@ -256,6 +309,9 @@ export const translateOne = async (input: TranslateOneInput): Promise<TranslateO
     return { status: "skipped", reason: "draft", enPath, sourceHash: ruHash };
   }
 
+  // Build per-collection constraints and optional-key sets for length validation.
+  const { constraints, optionalKeys } = buildConstraints(collection, rawData);
+
   // Translate frontmatter strings (single API call for the whole bag).
   const fmStrings = collectStringFields(rawData, schema);
   const fmTranslated =
@@ -265,6 +321,8 @@ export const translateOne = async (input: TranslateOneInput): Promise<TranslateO
           sourceLocale: "ru",
           targetLocale: "en",
           strings: fmStrings,
+          constraints,
+          optionalKeys,
         })
       : {};
 

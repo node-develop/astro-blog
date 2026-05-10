@@ -1,27 +1,20 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 import { courses as course, lessons as lesson } from "~/lib/courses/schema";
+import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "~/lib/content/limits";
 
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/posts" }),
   schema: z.object({
-    title: z.string().min(3).max(120),
-    description: z.string().min(10).max(200),
-    // TL;DR — answer-first 60–280-char card rendered above the post body.
-    // Required for posts authored after 2026-05-02 (enforced by tests/unit/content/schema.test.ts).
-    summary: z.string().min(60).max(280).optional(),
-    // Semantic keywords for retrieval. Distinct from `tags` (which are slugs
-    // used for tag archives). Free-form short noun phrases — examples:
-    // "harness", "prompt caching", "tool use loop".
+    title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
+    description: z.string().min(POST_LIMITS.description.min).max(POST_LIMITS.description.max),
+    summary: z.string().min(POST_LIMITS.summary.min).max(POST_LIMITS.summary.max).optional(),
     keywords: z.array(z.string()).default([]),
-    // Question/Answer pairs. When non-empty, PostLayout renders a <Faq>
-    // block below the body and emits a FAQPage JSON-LD node into the
-    // single page @graph (via extraSchemaNodes).
     faq: z
       .array(
         z.object({
-          question: z.string().min(5).max(200),
-          answer: z.string().min(20).max(2000),
+          question: z.string().min(POST_LIMITS.faqQuestion.min).max(POST_LIMITS.faqQuestion.max),
+          answer: z.string().min(POST_LIMITS.faqAnswer.min).max(POST_LIMITS.faqAnswer.max),
         }),
       )
       .optional(),
@@ -29,14 +22,11 @@ const posts = defineCollection({
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
-    // Cover stores a relative path under /uploads/ (public URL, not a local asset).
     cover: z.string().optional(),
     coverAlt: z.string().optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
     author: z.string().default("Артём"),
-    // Explicit locale. Optional; PostLayout derives from path when absent.
-    // Useful for round-tripping in the translation pipeline.
     lang: z.enum(["ru", "en"]).optional(),
   }),
 });
@@ -45,10 +35,13 @@ const site = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/site" }),
   schema: z.object({
     title: z.string(),
-    description: z.string().min(10).max(200).optional(),
+    description: z
+      .string()
+      .min(SITE_LIMITS.description.min)
+      .max(SITE_LIMITS.description.max)
+      .optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
-    // Home page fields (only present in home.md / en/home.md)
     heroEyebrow: z.string().optional(),
     heroTitle: z.string().optional(),
     heroLede: z.string().optional(),
@@ -69,9 +62,9 @@ const site = defineCollection({
 const projects = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/projects" }),
   schema: z.object({
-    title: z.string().min(3).max(120),
-    description: z.string().min(10).max(200),
-    role: z.string().min(2).max(80),
+    title: z.string().min(PROJECT_LIMITS.title.min).max(PROJECT_LIMITS.title.max),
+    description: z.string().min(PROJECT_LIMITS.description.min).max(PROJECT_LIMITS.description.max),
+    role: z.string().min(PROJECT_LIMITS.role.min).max(PROJECT_LIMITS.role.max),
     status: z.enum(["active", "maintained", "archived"]),
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
