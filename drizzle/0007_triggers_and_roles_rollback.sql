@@ -19,6 +19,15 @@ REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM app_writer, agent_writer;
 REVOKE ALL ON SCHEMA public FROM app_writer, app_reader, render_reader, agent_writer;
 REVOKE ALL ON SCHEMA langgraph FROM agent_writer;
 
+-- Default privileges set via ALTER DEFAULT PRIVILEGES in 0007 must be revoked
+-- explicitly — DROP ROLE fails otherwise ("role X cannot be dropped because
+-- some objects depend on it / privileges for default privileges on new
+-- relations belonging to role blog in schema public").
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM app_writer, app_reader, render_reader, agent_writer;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM app_writer, agent_writer;
+ALTER DEFAULT PRIVILEGES IN SCHEMA langgraph REVOKE ALL ON TABLES FROM agent_writer;
+ALTER DEFAULT PRIVILEGES IN SCHEMA langgraph REVOKE ALL ON SEQUENCES FROM agent_writer;
+
 DROP SCHEMA IF EXISTS langgraph CASCADE;
 
 DROP ROLE IF EXISTS app_writer;
