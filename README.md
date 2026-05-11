@@ -102,6 +102,29 @@ pnpm translate -- --force-all
 - `.claude/hooks/` — session-start, no-secrets (блокирует .env), format (prettier), notify-stop
 - `.claude/settings.json` — permissions + hook registrations
 
+## Workspace structure (refactor v2 in progress)
+
+This repo is a pnpm monorepo undergoing migration from Astro-monolith to multi-service architecture (see `docs/superpowers/specs/2026-05-10-postgres-cms-agents-design.md`).
+
+Services after refactor:
+
+- `.` (root) — Astro frontend (will become read-only after Plan 2)
+- `api/` — Hono API server (`@artka/api`)
+- `render/` — Markdown→HTML render service (`@artka/render`)
+- `admin/` — React SPA admin (`@artka/admin`)
+- `agents/` — Python agent service (`artka-agents`, FastAPI + LangGraph)
+- `packages/shared/` — Zod schemas + TS types shared between TS services
+
+Run all services locally:
+
+```bash
+docker compose -f docker-compose.yml -f infra/docker-compose.dev.yml up -d
+```
+
+Postgres roles documented in `infra/postgres-roles.md`.
+
+Production cutover plan: `docs/cutover-checklist.md`.
+
 ## Структура репозитория
 
 ```
