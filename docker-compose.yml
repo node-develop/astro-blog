@@ -27,6 +27,10 @@ services:
       DATABASE_URL: postgresql://app_writer:app_writer_pw@postgres:5432/blog
       PORT: "3001"
       RENDER_SERVICE_URL: http://render:3002
+      INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
+      SITE_URL: ${SITE_URL:-https://nltosql.com}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://api.nltosql.com}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,6 +57,10 @@ services:
     environment:
       DATABASE_URL: postgresql://render_reader:render_reader_pw@postgres:5432/blog
       PORT: "3002"
+      INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
+      SITE_URL: ${SITE_URL:-https://nltosql.com}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://api.nltosql.com}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,6 +88,10 @@ services:
       DATABASE_URL: postgresql://agent_writer:agent_writer_pw@postgres:5432/blog
       LANGGRAPH_PG_SCHEMA: langgraph
       PORT: "8000"
+      INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
+      SITE_URL: ${SITE_URL:-https://nltosql.com}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://api.nltosql.com}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,6 +104,11 @@ services:
       dockerfile: admin/Dockerfile
     container_name: astro-blog-admin
     restart: unless-stopped
+    environment:
+      INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
+      SITE_URL: ${SITE_URL:-https://nltosql.com}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://api.nltosql.com}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
     expose:
       - "80"
 

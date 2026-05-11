@@ -2,14 +2,47 @@
     email dev@artka.dev
 }
 
+# ─── Production blocks (active after cutover) ─────────────────
+artka.dev {
+    reverse_proxy frontend:4321
+    @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
+    header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
 api.artka.dev {
     reverse_proxy api:3001 {
         flush_interval -1
     }
+    @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
+    header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
 }
 
 admin.artka.dev {
     reverse_proxy admin:80
+    header X-Robots-Tag "noindex, nofollow, noarchive"
 }
 
-# artka.dev обслуживается отдельным контейнером (текущая Astro setup), не входит в этот compose.
+# ─── Staging blocks (active during refactor development) ──────
+nltosql.com, www.nltosql.com {
+    reverse_proxy frontend:4321
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+    handle /robots.txt {
+        respond `User-agent: *
+Disallow: /
+` 200 {
+            close
+        }
+    }
+}
+
+api.nltosql.com {
+    reverse_proxy api:3001 {
+        flush_interval -1
+    }
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
+admin.nltosql.com {
+    reverse_proxy admin:80
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+}

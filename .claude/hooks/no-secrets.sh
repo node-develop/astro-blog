@@ -19,9 +19,9 @@ if [[ -z "$FILE_PATH" ]]; then
   exit 0
 fi
 
-# Block edits to .env files (not .env.example)
-if [[ "$FILE_PATH" =~ \.env(\..*)?$ ]] && [[ ! "$FILE_PATH" =~ \.env\.example$ ]]; then
-  echo "BLOCKED: editing .env files is not allowed. Use .env.example for templates." >&2
+# Block edits to .env files (not .env*.example templates)
+if [[ "$FILE_PATH" =~ \.env(\..*)?$ ]] && [[ ! "$FILE_PATH" =~ \.env(\..+)?\.example$ ]]; then
+  echo "BLOCKED: editing .env files is not allowed. Use .env*.example for templates." >&2
   exit 2
 fi
 
