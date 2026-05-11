@@ -185,17 +185,20 @@ GRANT USAGE ON SCHEMA public TO app_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO app_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO app_reader;
 
--- render_reader: read posts (для render-service)
+-- render_reader: read posts + media_assets (Plan 2 cover image lookups)
 GRANT USAGE ON SCHEMA public TO render_reader;
 GRANT SELECT ON posts TO render_reader;
+GRANT SELECT ON media_assets TO render_reader;
 
 -- agent_writer: agent_* tables full + posts write + media_assets read + langgraph schema full
 GRANT USAGE ON SCHEMA public TO agent_writer;
 GRANT SELECT, INSERT, UPDATE ON posts TO agent_writer;
 GRANT SELECT ON media_assets TO agent_writer;
 GRANT ALL ON agent_jobs, agent_runs, agent_artifacts, agent_events TO agent_writer;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO agent_writer;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO agent_writer;
+-- UPDATE on sequences is required for nextval() — direct INSERTs into
+-- agent_events from agent_writer would otherwise fail with permission denied.
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO agent_writer;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO agent_writer;
 GRANT USAGE, CREATE ON SCHEMA langgraph TO agent_writer;
 GRANT ALL ON ALL TABLES IN SCHEMA langgraph TO agent_writer;
 ALTER DEFAULT PRIVILEGES IN SCHEMA langgraph GRANT ALL ON TABLES TO agent_writer;

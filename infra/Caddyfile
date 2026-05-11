@@ -3,11 +3,16 @@
 }
 
 # ─── Production blocks (active after cutover) ─────────────────
-artka.dev {
-    reverse_proxy frontend:4321
-    @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
-    header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
-}
+# NOTE: `artka.dev` block disabled until Plan 2 adds the `frontend` service
+# to docker-compose. Until then, public artka.dev is served by the legacy
+# Astro deploy (Dokploy-managed, outside this compose). Uncomment when the
+# new frontend lands.
+#
+# artka.dev {
+#     reverse_proxy frontend:4321
+#     @indexation_disabled expression `{env.INDEXATION_ENABLED} != "true"`
+#     header @indexation_disabled X-Robots-Tag "noindex, nofollow, noarchive"
+# }
 
 api.artka.dev {
     reverse_proxy api:3001 {
@@ -23,17 +28,21 @@ admin.artka.dev {
 }
 
 # ─── Staging blocks (active during refactor development) ──────
-nltosql.com, www.nltosql.com {
-    reverse_proxy frontend:4321
-    header X-Robots-Tag "noindex, nofollow, noarchive"
-    handle /robots.txt {
-        respond `User-agent: *
-Disallow: /
-` 200 {
-            close
-        }
-    }
-}
+# NOTE: `nltosql.com` root block disabled until Plan 2 adds the `frontend`
+# service. Until then, api.nltosql.com + admin.nltosql.com are deployable
+# for partial staging (API + admin SPA testing without public site).
+#
+# nltosql.com, www.nltosql.com {
+#     reverse_proxy frontend:4321
+#     header X-Robots-Tag "noindex, nofollow, noarchive"
+#     handle /robots.txt {
+#         respond `User-agent: *
+# Disallow: /
+# ` 200 {
+#             close
+#         }
+#     }
+# }
 
 api.nltosql.com {
     reverse_proxy api:3001 {

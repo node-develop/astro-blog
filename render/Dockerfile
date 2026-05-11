@@ -16,7 +16,8 @@ COPY --from=deps /app/render/node_modules ./render/node_modules
 COPY render/ ./render/
 WORKDIR /app/render
 
-ENV NODE_ENV=production PORT=3002
+ARG GIT_SHA=unknown
+ENV NODE_ENV=production PORT=3002 GIT_SHA=$GIT_SHA
 
 EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

@@ -17,6 +17,8 @@
 
 ## T-0: cutover (≤30 мин)
 - [ ] `pg_restore` свежий prod-dump на staging БД (или re-run `migrate-content-to-db` если markdown ещё актуален)
+- [ ] **Rotate Postgres role passwords** (4 roles: app_writer, app_reader, render_reader, agent_writer): `ALTER ROLE <name> PASSWORD '<secure-random>';`. Default placeholder passwords from migration 0007 (`*_pw`) НЕ должны попасть в prod.
+- [ ] Update `DATABASE_URL` in `infra/.env.production` for each service (api, render, agents, frontend) с rotated passwords
 - [ ] Switch env на сервере с `infra/.env.staging` → `infra/.env.production` (см. infra/.env.production.example)
 - [ ] `docker compose down && docker compose up -d` — Caddy перевыпустит TLS на artka.dev/api.artka.dev/admin.artka.dev
 - [ ] DNS A/AAAA artka.dev, api.artka.dev, admin.artka.dev → IP cutover-сервера

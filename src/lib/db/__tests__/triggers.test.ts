@@ -17,10 +17,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await sql`DELETE FROM agent_artifacts WHERE 1=1`;
-  await sql`DELETE FROM agent_runs WHERE 1=1`;
+  // Scope cleanup to test-created rows only — never wipe a shared dev DB.
+  // FK CASCADE on agent_runs → agent_jobs handles agent_runs and via it
+  // agent_artifacts. agent_events scope by job_id IN (test jobs).
+  await sql`DELETE FROM agent_events WHERE job_id IN (
+    SELECT id FROM agent_jobs WHERE created_by_id = ${testUserId}
+  )`;
   await sql`DELETE FROM agent_jobs WHERE created_by_id = ${testUserId}`;
-  await sql`DELETE FROM agent_events WHERE 1=1`;
   await sql`DELETE FROM users WHERE email = 'triggers-test@artka.dev'`;
   await sql.end();
 });
