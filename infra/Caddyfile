@@ -1,0 +1,15 @@
+{
+    email dev@artka.dev
+}
+
+api.artka.dev {
+    reverse_proxy api:3001 {
+        flush_interval -1
+    }
+}
+
+admin.artka.dev {
+    reverse_proxy admin:80
+}
+
+# artka.dev обслуживается отдельным контейнером (текущая Astro setup), не входит в этот compose.

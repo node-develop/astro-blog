@@ -17,5 +17,102 @@ services:
       timeout: 3s
       retries: 5
 
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: astro-blog-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://app_writer:app_writer_pw@postgres:5432/blog
+      PORT: "3001"
+      RENDER_SERVICE_URL: http://render:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  render:
+    build:
+      context: .
+      dockerfile: render/Dockerfile
+    container_name: astro-blog-render
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://render_reader:render_reader_pw@postgres:5432/blog
+      PORT: "3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3002"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  agents:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile
+    container_name: astro-blog-agents
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://agent_writer:agent_writer_pw@postgres:5432/blog
+      LANGGRAPH_PG_SCHEMA: langgraph
+      PORT: "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8000"
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
+    container_name: astro-blog-admin
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: astro-blog-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      admin:
+        condition: service_started
+
 volumes:
   postgres-data:
+  caddy-data:
+  caddy-config:
