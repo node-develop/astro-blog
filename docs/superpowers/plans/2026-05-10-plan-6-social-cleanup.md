@@ -1201,7 +1201,7 @@ git commit -m "docs: update CLAUDE.md and README for new architecture"
 
 ```bash
 docker compose down -v
-docker compose up -d --build postgres api render admin agents caddy
+docker compose up -d --build postgres api render admin agents
 sleep 60
 docker compose ps
 ```
@@ -1247,7 +1247,7 @@ gh pr create --title "refactor: Plan 6/6 — social port + new agents + final cl
 - Updated CLAUDE.md and README
 
 ## End state
-- 5 sub-services in docker compose: postgres, api, render, frontend, admin, agents, caddy
+- 6 sub-services in docker compose: postgres, api, render, frontend, admin, agents (Dokploy Traefik handles routing/TLS — no caddy/nginx container)
 - Postgres = single source of truth (posts, agent_jobs, agent_runs, agent_artifacts, agent_events)
 - Python agents on LangGraph + LangSmith
 - React admin SPA on admin.artka.dev
@@ -1411,11 +1411,11 @@ DNS panel:
 - A/AAAA `api.artka.dev` → IP_OF_REFACTOR_SERVER
 - A/AAAA `admin.artka.dev` → IP_OF_REFACTOR_SERVER
 
-Caddy на сервере получит TLS-сертификаты для artka.dev (Let's Encrypt issue — несколько минут после первого хита).
+Dokploy Traefik автоматически выпустит TLS-сертификаты для artka.dev / api.artka.dev / admin.artka.dev через Let's Encrypt resolver (несколько минут после первого хита).
 
 Verify:
 ```bash
-# Wait for DNS propagation + Caddy issue cert (~5 min)
+# Wait for DNS propagation + Traefik issue cert (~5 min)
 sleep 300
 
 curl -I https://artka.dev/
@@ -1470,7 +1470,7 @@ Verify в Plausible/analytics:
 
 ```bash
 # Каждые 6 часов:
-docker compose logs caddy --since 6h | grep -E ' 4[0-9]{2} | 5[0-9]{2} ' | head -20
+docker logs dokploy-traefik --since 6h 2>&1 | grep -E ' 4[0-9]{2} | 5[0-9]{2} ' | head -20
 # expected: малое количество 4xx/5xx, преимущественно 404 на random scanner-боты
 ```
 
@@ -1482,14 +1482,14 @@ GSC через 24h:
 
 Variant A (рекомендую): оставить nltosql.com как staging для будущих feature-веток. Не делать ничего.
 
-Variant B: освободить домен. Добавить в Caddy:
+Variant B: освободить домен. Добавить Traefik redirect через labels (например, на frontend сервисе) в docker-compose.yml:
 ```
 nltosql.com {
     redir https://artka.dev{uri} permanent
 }
 ```
 
-Закоммитить решение в Caddyfile + commit message "chore(infra): post-cutover decision on nltosql.com".
+Закоммитить решение в `docker-compose.yml` + commit message "chore(infra): post-cutover decision on nltosql.com".
 
 - [ ] **Step 9: Mark cutover complete**
 

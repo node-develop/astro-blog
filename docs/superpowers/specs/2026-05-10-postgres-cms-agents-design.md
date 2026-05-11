@@ -506,7 +506,7 @@ shadcn/ui в admin использует Tailwind CSS variables. Astro frontend �
 
 | Phase | Дни | Done condition |
 |---|---|---|
-| 0 Foundation | 3-4 | docker-compose up даёт зелёные healthcheck'и для postgres, hono, render, agents (заглушки), admin (заглушка). Caddy раздаёт 3 поддомена с TLS. GH Actions paths-filter билдит правильный image. |
+| 0 Foundation | 3-4 | docker-compose up даёт зелёные healthcheck'и для postgres, hono, render, agents (заглушки), admin (заглушка). Dokploy/Traefik раздаёт 3 поддомена с TLS через свой built-in resolver. GH Actions paths-filter билдит правильный image. |
 | 1 Schema | 1-2 | `pnpm db:migrate` идемпотентен. `pg_notify('agent_jobs_pending')` срабатывает при INSERT (verified `psql LISTEN`). Postgres roles созданы, grants выданы. Rollback миграция reverts чисто. |
 | 2 Migrate content | 1-2 | `count(posts WHERE kind='post') = count(markdown files)`. `count(body_html IS NOT NULL) = count(posts)`. Spot-check 3 поста: rendered output байт-в-байт = текущий prod output (или объяснимо отличается). |
 | 3 Hono API + render-service | 5-7 | Все 25+ endpoints отвечают. Каждый endpoint имеет 200/400/401/403/404 тесты. Render preview p95 < 2 сек на типичном посте (3 mermaid + 2 katex). SSE `/jobs/stream` доставляет события из синтетических INSERT'ов в agent_jobs. Better-Auth login/logout/get-session работает с `SameSite=None` cookie. |
@@ -610,22 +610,31 @@ test-api / test-frontend / test-admin / test-agents / e2e (depends on previous).
 
 ### docker-compose
 
-Сервисы: **postgres, api, render, frontend, admin, agents, caddy** (7 контейнеров). Все через ghcr.io images. Healthchecks, depends_on с condition: service_healthy.
+Сервисы: **postgres, api, render, frontend, admin, agents** (6 контейнеров) под управлением Dokploy 0.29.2 — он сам поднимает Traefik как reverse-proxy и Let's Encrypt resolver. Собственный Caddy/nginx не требуется. Все через ghcr.io images. Healthchecks, depends_on с condition: service_healthy.
 
-`render` — отдельный stateless контейнер с Node + Playwright + unified pipeline. Не мониторит pgmq/agent_jobs. Hono вызывает по HTTP `/render` (preview) и `/render-and-store` (на publish). Restart render не влияет на auth/SSE.
+`render` — отдельный stateless контейнер с Node + Playwright + unified pipeline. Не мониторит pgmq/agent_jobs. Hono вызывает по HTTP `/render` (preview) и `/render-and-store` (на publish). Restart render не влияет на auth/SSE. Render без публичных Traefik labels — доступен только в `dokploy-network`.
 
-### Caddy
+### Routing — Dokploy Traefik labels
+
+Каждый публичный сервис в compose объявляет свои routers как labels:
+
+```yaml
+api:
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.api-artka-secure.rule=Host(`api.artka.dev`)"
+    - "traefik.http.routers.api-artka-secure.entrypoints=websecure"
+    - "traefik.http.routers.api-artka-secure.tls.certResolver=letsencrypt"
+    - "traefik.http.routers.api-nltosql-secure.rule=Host(`api.nltosql.com`)"
+    - "traefik.http.routers.api-nltosql-secure.entrypoints=websecure"
+    - "traefik.http.routers.api-nltosql-secure.tls.certResolver=letsencrypt"
+    - "traefik.http.routers.api-nltosql-secure.middlewares=staging-noindex@docker"
+    - "traefik.http.services.api.loadbalancer.server.port=3001"
+    - "traefik.http.middlewares.staging-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow, noarchive"
+  networks: [dokploy-network]
 ```
-artka.dev          { reverse_proxy frontend:4321 }
-api.artka.dev      {
-    reverse_proxy api:3001
-    # SSE требует отключения буферизации
-    flush_interval -1
-}
-admin.artka.dev    { reverse_proxy admin:80 }
-```
 
-`render:3002` — НЕ в Caddy, доступен только из docker network.
+Аналогично admin (всегда noindex, оба домена), frontend в Plan 2. Render — без публичных labels.
 
 ### GitHub Actions
 - `ci.yml` — тесты на каждый PR
@@ -642,7 +651,7 @@ admin.artka.dev    { reverse_proxy admin:80 }
 `pg_dump --format=c` ежедневно в S3, restore-test раз в месяц.
 
 ### Monitoring (минимум)
-Healthchecks в Docker, Caddy access logs JSON, pg_stat_statements, LangSmith dashboard.
+Healthchecks в Docker, Traefik access logs (Dokploy UI → Logs или `docker logs dokploy-traefik`), pg_stat_statements, LangSmith dashboard.
 
 ## 12. Open questions / risks
 
@@ -682,11 +691,11 @@ Healthchecks в Docker, Caddy access logs JSON, pg_stat_statements, LangSmith da
 
 ### Принципы
 
-1. **Изоляция staging.** nltosql.com = полная копия архитектуры (postgres, api, render, frontend, admin, agents, caddy), но **отдельная БД** (не shared с прод). Это исключает кросс-влияние на artka.dev.
+1. **Изоляция staging.** nltosql.com = полная копия архитектуры (postgres, api, render, frontend, admin, agents под управлением Dokploy/Traefik), но **отдельная БД** (не shared с прод). Это исключает кросс-влияние на artka.dev.
 2. **Закрыто для индексации на период разработки.** Любой ответ от nltosql.com — `X-Robots-Tag: noindex, nofollow`, `<meta name="robots" content="noindex,nofollow">`, `robots.txt = Disallow: /`. Контролируется одним env var `INDEXATION_ENABLED=false`.
 3. **URL-паритет.** Все existing public URLs на artka.dev должны работать на nltosql.com по тем же путям (`/`, `/blog/<slug>`, `/en/blog/<slug>`, `/about`, `/now`, `/uses`, `/projects`, `/projects/<slug>`, `/tags`, `/tags/<tag>`, `/rss.xml`, `/sitemap-index.xml`, `/sitemap-0.xml`, `/og-default.svg`, `/uploads/...`). Pre-cutover audit проверяет каждый.
 4. **SEO-метаданные сохраняются.** Canonical, OG, Twitter card, schema.org структуры — генерируются по тем же правилам. На staging canonical всегда указывает на свой домен (`https://nltosql.com/...`), на prod — на `https://artka.dev/...`. Это контролируется env var `SITE_URL`.
-5. **Redirect map.** Если в новой архитектуре какой-то URL изменится (например, был `/blog/X` стал `/posts/X` — НЕ планируется, но если случайно) — добавляем 301 redirect в Caddy/Astro middleware. Аудит: cross-check sitemap до/после.
+5. **Redirect map.** Если в новой архитектуре какой-то URL изменится (например, был `/blog/X` стал `/posts/X` — НЕ планируется, но если случайно) — добавляем 301 redirect через Astro middleware ИЛИ Traefik `redirectregex` middleware (compose labels). Аудит: cross-check sitemap до/после.
 
 ### Env-переменные, контролирующие поведение
 
@@ -707,7 +716,7 @@ COOKIE_DOMAIN=.artka.dev
 Каждый сервис читает `SITE_URL` для построения canonical/OG/RSS URLs. `INDEXATION_ENABLED=false` включает noindex-режим во всех ответах:
 - **Astro middleware** — добавляет `X-Robots-Tag: noindex, nofollow` к каждому ответу, инжектит `<meta name="robots" content="noindex,nofollow">` в layout если `INDEXATION_ENABLED !== "true"`.
 - **`/robots.txt`** — endpoint в Astro возвращает `User-agent: *\nDisallow: /` если staging, иначе нормальный robots с allow + sitemap link.
-- **Caddy** — на staging Caddyfile глобальный `header X-Robots-Tag "noindex, nofollow"` для всех поддоменов.
+- **Dokploy/Traefik** — для каждого staging-router'а (`api.nltosql.com`, `admin.nltosql.com`, `nltosql.com`) указан `middlewares=staging-noindex@docker`, который инжектит `X-Robots-Tag: noindex, nofollow, noarchive`. Production-routers (`*.artka.dev`) этого middleware не получают.
 - **API responses** — Hono тоже выставляет header (на случай прямых ссылок на api.nltosql.com).
 
 ### Cutover-процедура (2-3 часа в один заход)
@@ -725,10 +734,10 @@ COOKIE_DOMAIN=.artka.dev
    - Обновить A/AAAA `api.artka.dev`, `admin.artka.dev` аналогично.
    - TTL на DNS снизить за 24ч до cutover до 60 секунд, чтобы swap прошёл быстро.
 
-4. **Caddy reload с production env:**
-   - Сервер с refactor stack теперь обслуживает оба домена: artka.dev, api.artka.dev, admin.artka.dev. Caddy получает реальные TLS-сертификаты от Let's Encrypt по обоим доменам.
-   - `INDEXATION_ENABLED=true` теперь включён — noindex headers исчезают.
-   - Старый деплой artka.dev — оставляем работать ещё 24 часа на отдельном порту/IP как fallback (или просто остановлен).
+4. **Dokploy redeploy с production env:**
+   - Compose-приложение в Dokploy получает env `INDEXATION_ENABLED=true`, `SITE_URL=https://artka.dev`, `BETTER_AUTH_URL=https://api.artka.dev`, `COOKIE_DOMAIN=.artka.dev` (через UI или импорт из `infra/.env.production.example`). Re-deploy инициирует pickup новых env и переподнимает контейнеры.
+   - Traefik (часть Dokploy) автоматически выпустит реальные TLS-сертификаты от Let's Encrypt по новым DNS-записям artka.dev / api.artka.dev / admin.artka.dev.
+   - Старый Astro-стек в Dokploy — оставляем развёрнутым ещё 24 часа как fallback (можно временно остановить через UI).
 
 5. **Robots/Sitemap flip:**
    - `https://artka.dev/robots.txt` теперь allow + sitemap link.
@@ -737,10 +746,10 @@ COOKIE_DOMAIN=.artka.dev
 
 6. **Cleanup nltosql.com:**
    - **Variant A (рекомендую):** оставить nltosql.com как продолжающийся staging — будущие feature-ветки деплоятся туда, prod (artka.dev) только мерж из main.
-   - **Variant B:** освободить домен. Тогда добавить 301 redirect от `https://nltosql.com/*` → `https://artka.dev/*` в Caddy (на случай если кто-то запомнил staging URL).
+   - **Variant B:** освободить домен. Тогда добавить 301 redirect от `https://nltosql.com/*` → `https://artka.dev/*` через Traefik middleware labels (`traefik.http.middlewares.nltosql-redirect.redirectregex.*`).
 
 7. **48-часовой monitoring:**
-   - Caddy access logs: фильтр на 4xx/5xx, smoke по топ-10 URL'ов
+   - Traefik access logs (Dokploy UI → Logs или `docker logs dokploy-traefik`): фильтр на 4xx/5xx, smoke по топ-10 URL'ов
    - Plausible (если используется): сравнение трафика и bounce rate с baseline (последняя неделя до cutover)
    - GSC Coverage report: убедиться что новые URLs индексируются, не появилось `Excluded → Not found (404)` всплеска
    - Sentry/error logs: regressions ловить
@@ -750,12 +759,12 @@ COOKIE_DOMAIN=.artka.dev
 URL-схема **байт-в-байт** копируется со старого Astro-сайта. Это означает:
 - Slug формат: `[a-z0-9][a-z0-9-]*` (тот же regex)
 - Routing: `/blog/<slug>`, `/en/blog/<slug>`, `/about`, `/now`, `/uses`, `/projects`, `/projects/<slug>`, `/tags`, `/tags/<tag>`, `/rss.xml`
-- 301-redirect map для legacy paths (см. `astro.config.ts:redirects`) — портируется в Caddy 1-в-1
+- 301-redirect map для legacy paths (см. `astro.config.ts:redirects`) — портируется в Astro middleware (или Traefik `redirectregex` labels) 1-в-1
 - OG image URLs (`/og-default.svg` или генерируемые) — те же пути
 
 ### План в Plans
 
-- **Plan 1 Task NEW:** настроить staging-Caddyfile с noindex headers, env scaffolding (SITE_URL, INDEXATION_ENABLED, COOKIE_DOMAIN), robots.txt endpoint в Astro
+- **Plan 1 Task NEW:** настроить Traefik labels на сервисах api/admin с conditional noindex middleware для staging routers, env scaffolding (SITE_URL, INDEXATION_ENABLED, COOKIE_DOMAIN), robots.txt endpoint в Astro
 - **Plan 2 Task NEW:** Astro middleware применяет noindex headers + meta tag, canonical URL читает SITE_URL
 - **Plan 6 Task NEW:** Production cutover — pre-audit, DNS swap, robots flip, GSC re-submit, 48h monitoring
 

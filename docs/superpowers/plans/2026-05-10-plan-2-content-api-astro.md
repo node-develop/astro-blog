@@ -1538,7 +1538,7 @@ export async function jobsStreamHandler(c: Context) {
         if (queue.length === 0) {
           await new Promise<void>((r) => {
             resolve = r;
-            // Heartbeat every 25s — keeps connection alive past Caddy/proxy timeouts
+            // Heartbeat every 25s — keeps connection alive past Traefik/proxy idle timeouts
             setTimeout(() => {
               if (resolve === r) {
                 resolve = null;
@@ -2735,7 +2735,7 @@ git commit -m "feat(astro): switch to SSR from Hono API + disk-cache fallback"
 
 ## Task 9a: Indexation envelope (noindex via env) + dynamic robots.txt + canonical via SITE_URL
 
-Astro frontend должен на staging вести себя как noindex-зомби, на проде — как обычный сайт. Управляется через env `INDEXATION_ENABLED` и `SITE_URL`. Caddy уже выставляет header (Plan 1 Task 8a) — здесь дублируем на уровне Astro для defense-in-depth + meta robots tag в layout.
+Astro frontend должен на staging вести себя как noindex-зомби, на проде — как обычный сайт. Управляется через env `INDEXATION_ENABLED` и `SITE_URL`. Dokploy Traefik middleware `staging-noindex@docker` уже выставляет header на router-уровне для `*.nltosql.com` (Plan 1 Task 8a) — здесь дублируем на уровне Astro для defense-in-depth + meta robots tag в layout.
 
 **Files:**
 - Modify: `src/middleware.ts`
@@ -2953,6 +2953,6 @@ gh pr create --title "refactor: Plan 2/6 — content migration + Hono API + Astr
 - [x] Astro fallback disk-cache (Task 9)
 - [x] Integration tests (Task 8)
 
-**Coverage gaps:** Schema parity test TS↔Python — отложено в Plan 4 (требует Pydantic-моделей). Acceptance criteria поездки на Caddy с TLS — отложено до prod-deployment, не блокер для merge.
+**Coverage gaps:** Schema parity test TS↔Python — отложено в Plan 4 (требует Pydantic-моделей). Acceptance criteria для Dokploy Traefik TLS-выдачи — отложено до prod-deployment, не блокер для merge.
 
 **Placeholder scan:** проверено. Несколько мест где сказано «full implementation reads SSE response stream» / «sample, follow existing layout» — это не TBD кода, а указание engineer'у follow patterns existing codebase. Acceptable.

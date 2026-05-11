@@ -2,11 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **⚠️ Post-execution note (2026-05-11):** Plan 1 был выполнен полностью (commits 784a42c..f8c8599), затем добавлен follow-up commit, удаляющий Caddy/`infra/Caddyfile` и заменяющий его на Traefik labels в docker-compose. Causa: deploy target — Dokploy 0.29.2, который из коробки предоставляет Traefik + Let's Encrypt; собственный Caddy дублирует функциональность. Task 7 / Task 8a ниже **сохранены как историческая запись**; финальное состояние docker-compose, Caddyfile, infra/README и cutover-checklist использует Dokploy Traefik labels. См. `infra/README.md` и `docs/cutover-checklist.md`.
+
 **Goal:** Подготовить инфраструктурный фундамент для рефакторинга — pnpm workspace структура, новые таблицы Postgres с pg_notify триггерами, Postgres role separation, stub healthcheck-сервисы для api/render/admin/agents.
 
 **Architecture:** Существующее Astro приложение остаётся в корне репозитория (минимум disruption). Новые workspaces создаются как sub-directories: `api/`, `render/`, `admin/`, `agents/`, `packages/shared/`. Drizzle schema расширяется новыми таблицами (`posts`, `agent_jobs`, `agent_runs`, `agent_artifacts`, `agent_events`) — старые `postsMeta`, `postRevisions`, `socialPosts` остаются нетронутыми (миграция данных в Plan 2). Postgres roles `app_reader`, `app_writer`, `agent_writer`, `render_reader` создаются с минимальными grants. Stub-сервисы возвращают `200 /health` и больше ничего — реальная логика в последующих планах.
 
-**Tech Stack:** pnpm 10 workspaces, Drizzle ORM + drizzle-kit, PostgreSQL 18, Hono (для API stub), Fastify-style minimal HTTP servers, Docker Compose, Caddy 2, GitHub Actions paths-filter.
+**Tech Stack:** pnpm 10 workspaces, Drizzle ORM + drizzle-kit, PostgreSQL 18, Hono (для API stub), Fastify-style minimal HTTP servers, Docker Compose, Dokploy 0.29.2 + Traefik (вместо Caddy — см. post-execution note выше), GitHub Actions paths-filter.
 
 **Spec:** `docs/superpowers/specs/2026-05-10-postgres-cms-agents-design.md` (Phase 0-1).
 

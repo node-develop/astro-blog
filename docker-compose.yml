@@ -1,14 +1,11 @@
 services:
   postgres:
     image: postgres:18-bookworm
-    container_name: astro-blog-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: blog
       POSTGRES_PASSWORD: blog
       POSTGRES_DB: blog
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -16,12 +13,13 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - dokploy-network
 
   api:
     build:
       context: .
       dockerfile: api/Dockerfile
-    container_name: astro-blog-api
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://app_writer:app_writer_pw@postgres:5432/blog
@@ -34,8 +32,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     healthcheck:
       test:
         [
@@ -47,12 +45,28 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    labels:
+      - "traefik.enable=true"
+      # Production router: api.artka.dev (active when DNS points here post-cutover)
+      - "traefik.http.routers.api-artka-secure.rule=Host(`api.artka.dev`)"
+      - "traefik.http.routers.api-artka-secure.entrypoints=websecure"
+      - "traefik.http.routers.api-artka-secure.tls.certResolver=letsencrypt"
+      # Staging router: api.nltosql.com
+      - "traefik.http.routers.api-nltosql-secure.rule=Host(`api.nltosql.com`)"
+      - "traefik.http.routers.api-nltosql-secure.entrypoints=websecure"
+      - "traefik.http.routers.api-nltosql-secure.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.api-nltosql-secure.middlewares=staging-noindex@docker"
+      # Service definition shared by both routers
+      - "traefik.http.services.api.loadbalancer.server.port=3001"
+      # Middlewares
+      - "traefik.http.middlewares.staging-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow, noarchive"
+    networks:
+      - dokploy-network
 
   render:
     build:
       context: .
       dockerfile: render/Dockerfile
-    container_name: astro-blog-render
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://render_reader:render_reader_pw@postgres:5432/blog
@@ -77,12 +91,13 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    networks:
+      - dokploy-network
 
   agents:
     build:
       context: ./agents
       dockerfile: Dockerfile
-    container_name: astro-blog-agents
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://agent_writer:agent_writer_pw@postgres:5432/blog
@@ -97,12 +112,13 @@ services:
         condition: service_healthy
     expose:
       - "8000"
+    networks:
+      - dokploy-network
 
   admin:
     build:
       context: .
       dockerfile: admin/Dockerfile
-    container_name: astro-blog-admin
     restart: unless-stopped
     environment:
       INDEXATION_ENABLED: ${INDEXATION_ENABLED:-false}
@@ -111,25 +127,31 @@ services:
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.nltosql.com}
     expose:
       - "80"
+    labels:
+      - "traefik.enable=true"
+      # Admin always served with hard noindex regardless of env
+      - "traefik.http.routers.admin-artka-secure.rule=Host(`admin.artka.dev`)"
+      - "traefik.http.routers.admin-artka-secure.entrypoints=websecure"
+      - "traefik.http.routers.admin-artka-secure.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.admin-artka-secure.middlewares=admin-noindex@docker"
+      - "traefik.http.routers.admin-nltosql-secure.rule=Host(`admin.nltosql.com`)"
+      - "traefik.http.routers.admin-nltosql-secure.entrypoints=websecure"
+      - "traefik.http.routers.admin-nltosql-secure.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.admin-nltosql-secure.middlewares=admin-noindex@docker"
+      - "traefik.http.services.admin.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.admin-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow, noarchive"
+    networks:
+      - dokploy-network
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: astro-blog-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      api:
-        condition: service_healthy
-      admin:
-        condition: service_started
+  # NOTE: `frontend` (Astro) service не входит в этот compose до Plan 2.
+  # До тех пор:
+  # - на artka.dev (prod) фронт обслуживается legacy Astro deploy через Dokploy
+  # - на nltosql.com (staging) frontend пока недоступен; api+admin под-домены работают
+  # После Plan 2 добавится сервис frontend с Traefik labels на artka.dev + nltosql.com.
 
 volumes:
   postgres-data:
-  caddy-data:
-  caddy-config:
+
+networks:
+  dokploy-network:
+    external: true

@@ -1,20 +1,45 @@
+# Local development overlay.
 # Apply with: docker compose -f docker-compose.yml -f infra/docker-compose.dev.yml up -d
+#
+# Replaces the external `dokploy-network` (which exists only on Dokploy hosts)
+# with a compose-managed bridge, and exposes service ports directly so you can
+# curl them without Traefik routing.
+
 services:
-  caddy:
-    profiles: ["disabled"]
+  postgres:
+    networks:
+      default: {}
+      dokploy-network: !reset null
+    ports:
+      - "5432:5432"
 
   api:
+    networks:
+      default: {}
+      dokploy-network: !reset null
     ports:
       - "3001:3001"
 
   render:
+    networks:
+      default: {}
+      dokploy-network: !reset null
     ports:
       - "3002:3002"
 
   agents:
+    networks:
+      default: {}
+      dokploy-network: !reset null
     ports:
       - "8000:8000"
 
   admin:
+    networks:
+      default: {}
+      dokploy-network: !reset null
     ports:
       - "8080:80"
+
+networks:
+  dokploy-network: !reset null

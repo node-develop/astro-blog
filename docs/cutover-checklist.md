@@ -20,8 +20,8 @@
 - [ ] **Rotate Postgres role passwords** (4 roles: app_writer, app_reader, render_reader, agent_writer): `ALTER ROLE <name> PASSWORD '<secure-random>';`. Default placeholder passwords from migration 0007 (`*_pw`) НЕ должны попасть в prod.
 - [ ] Update `DATABASE_URL` in `infra/.env.production` for each service (api, render, agents, frontend) с rotated passwords
 - [ ] Switch env на сервере с `infra/.env.staging` → `infra/.env.production` (см. infra/.env.production.example)
-- [ ] `docker compose down && docker compose up -d` — Caddy перевыпустит TLS на artka.dev/api.artka.dev/admin.artka.dev
-- [ ] DNS A/AAAA artka.dev, api.artka.dev, admin.artka.dev → IP cutover-сервера
+- [ ] DNS A/AAAA artka.dev, api.artka.dev, admin.artka.dev → IP Dokploy-хоста
+- [ ] Re-deploy compose-приложения через Dokploy UI (или `dokploy app redeploy`) — Traefik подхватит новые env (`INDEXATION_ENABLED=true`, `SITE_URL=https://artka.dev`) и выпустит TLS-сертификаты для artka.dev / api.artka.dev / admin.artka.dev через настроенный Let's Encrypt resolver
 - [ ] `curl -I https://artka.dev/` → НЕТ `X-Robots-Tag`, статус 200
 - [ ] `curl https://artka.dev/robots.txt` → Allow + sitemap link
 - [ ] `curl https://artka.dev/sitemap-index.xml` → N URLs, N == baseline
@@ -38,11 +38,11 @@
 - [ ] Plausible/Analytics: traffic не упал
 
 ## T+24h-48h: monitor
-- [ ] Caddy access logs: 4xx/5xx rate в норме
+- [ ] Traefik access logs (Dokploy UI → Logs): 4xx/5xx rate в норме
 - [ ] GSC Coverage: новые URLs появляются в Indexed, нет всплеска "Not found (404)"
 - [ ] Bounce rate в Plausible сравнимый с baseline
 - [ ] Decision: nltosql.com → continue as staging (Variant A) ИЛИ 301 → artka.dev (Variant B)
 
 ## Rollback (если критично)
-- [ ] DNS A/AAAA artka.dev вернуть на старый сервер (TTL 60 сек — swap минуты)
-- [ ] Старый stack должен оставаться запущенным 24h после cutover как safety net
+- [ ] DNS A/AAAA artka.dev вернуть на старый Dokploy-проект / прежний хост (TTL 60 сек — swap минуты)
+- [ ] Старый Astro-стек в Dokploy должен оставаться развёрнутым 24h после cutover как safety net
