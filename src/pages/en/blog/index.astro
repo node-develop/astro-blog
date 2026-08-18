@@ -14,9 +14,9 @@ import {
   type GraphNode,
 } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
-import { resolveTagLabel } from "~/lib/content/tags";
-import tagsEn from "~/i18n/tags.en.json";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import { canonicalUrl } from "~/lib/seo/url-policy";
+import HomePostCard from "~/components/HomePostCard.astro";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
@@ -27,7 +27,7 @@ const courseHref =
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogNode = buildBlogNode(locale);
 const tagsHrefBase = "/en/tags/";
-const dict = tagsEn as Record<string, string>;
+const dict = getTagDict(locale);
 
 const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = canonicalUrl("/en/");
@@ -96,38 +96,25 @@ const webPageNode = buildWebPageNode({
       )
     }
 
-    <ul class="list__posts">
+    <div class="list__grid">
       {
-        posts.map((p: PostWithMeta, idx: number) => (
-          <li class="list__item">
-            <a href={`${blogHref}${bareSlug(p.entry.id)}/`} class="list__link">
-              {/* See RU twin for rationale — visible-list position, not
-                  p.meta.order (DB curatorial field that defaults to
-                  MAX_SAFE_INTEGER for un-backfilled rows). */}
-              <span class="list__num">{String(idx + 1).padStart(2, "0")}</span>
-              <span class="list__body">
-                <h2 class="list__post-title" transition:name={`post-title-${bareSlug(p.entry.id)}`}>
-                  {p.entry.data.title}
-                </h2>
-                <p class="list__post-desc">{p.entry.data.description}</p>
-                <time datetime={p.entry.data.pubDate.toISOString()} class="list__post-date">
-                  {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </time>
-              </span>
-            </a>
-          </li>
+        posts.map((p: PostWithMeta) => (
+          <HomePostCard
+            entry={p.entry}
+            href={`${blogHref}${bareSlug(p.entry.id)}/`}
+            locale={locale}
+            showDescription={true}
+            headingLevel="h2"
+            transitionName={`post-title-${bareSlug(p.entry.id)}`}
+          />
         ))
       }
-    </ul>
+    </div>
   </section>
 
   <style>
     .list {
-      max-width: 720px;
+      max-width: 1080px;
     }
     .list__header {
       margin-bottom: var(--space-6);
@@ -214,56 +201,15 @@ const webPageNode = buildWebPageNode({
       border-color: var(--color-accent);
       color: var(--color-accent-hover);
     }
-    .list__posts {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .list__item + .list__item {
-      border-top: 1px solid var(--color-border);
-    }
-    .list__link {
+    .list__grid {
       display: grid;
-      grid-template-columns: 42px 1fr;
-      gap: var(--space-4);
-      padding: var(--space-5) 0;
-      color: inherit;
-      text-decoration: none;
-      transition: transform var(--dur-fast) var(--ease-out);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5);
     }
-    .list__link:hover {
-      transform: translateX(2px);
-    }
-    .list__num {
-      font-family: var(--font-mono);
-      font-size: var(--fs-lg);
-      color: var(--color-fg-subtle);
-      font-variant-numeric: tabular-nums;
-      padding-top: 2px;
-    }
-    .list__post-title {
-      font-family: var(--font-serif);
-      font-size: var(--fs-xl);
-      line-height: var(--lh-snug);
-      letter-spacing: var(--tracking-tight);
-      font-weight: 500;
-      margin: 0 0 var(--space-2) 0;
-      color: var(--color-fg);
-    }
-    .list__link:hover .list__post-title {
-      color: var(--color-accent-hover);
-    }
-    .list__post-desc {
-      margin: 0 0 var(--space-2) 0;
-      color: var(--color-fg-muted);
-      line-height: var(--lh-normal);
-    }
-    .list__post-date {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      color: var(--color-fg-subtle);
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
+    @media (max-width: 700px) {
+      .list__grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   </style>
 </BaseLayout>
