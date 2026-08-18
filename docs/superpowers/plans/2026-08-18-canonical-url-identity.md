@@ -86,6 +86,7 @@
 - Modify: `src/content/courses/claude-code-guide/14-claims-verification.md`
 - Modify: `src/content/courses/claude-code-guide/en/14-claims-verification.md`
 - Modify: `tests/e2e/seo.spec.ts`
+- Modify: `tests/unit/seo/nodes-global.test.ts`
 
 **Interfaces:**
 - Produces: `isFileLikePath(pathname: string): boolean`
@@ -246,7 +247,7 @@ Expected: FAIL because the plugin does not exist.
 
 The plugin must leave fragments, `mailto:`, `tel:`, protocol-relative URLs, non-artka external URLs, and file-like URLs unchanged. It must preserve a fragment while discarding query identity on canonical artka.dev URLs and append `/` to root-relative and `./`/`../` internal document links.
 
-Use `canonicalUrl` in `BaseLayout` for canonical, OG URL, and hreflang. Use `canonicalPath` in `getCounterpart`. Return `false` for counterpart availability on `/login/`, `/admin/*`, and `/api/*`. Remove `SearchAction` from `buildWebSiteNode`. Convert schema, RSS, feed, navigation, breadcrumb, course, project, and tag URL producers to slash output. Remove the two `./README` links from lesson 14 because `/README/` is deliberately absent.
+Before editing `buildWebSiteNode`, add a direct object assertion to `tests/unit/seo/nodes-global.test.ts`, observe it fail because `potentialAction` exists, then remove `SearchAction` and observe it pass. Use `canonicalUrl` in `BaseLayout` for canonical, OG URL, and hreflang. Use `canonicalPath` in `getCounterpart`. Return `false` for counterpart availability on `/login/`, `/admin/*`, and `/api/*`. Convert schema, RSS, feed, navigation, breadcrumb, course, project, and tag URL producers to slash output. Remove the two `./README` links from lesson 14 because `/README/` is deliberately absent.
 
 - [ ] **Step 12: Add a failing generated-output audit and run it against the baseline artifact**
 

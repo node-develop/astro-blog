@@ -162,7 +162,6 @@ git commit -m "fix: align sitemap with indexability"
 - Modify: `src/pages/login.astro`
 - Modify: `src/pages/llms-full.txt.ts`
 - Modify: `public/robots.txt`
-- Modify: `src/lib/seo/nodes-global.ts`
 - Modify: `src/pages/about.astro`
 - Modify: `src/pages/en/about.astro`
 - Modify: `src/pages/uses.astro`
@@ -171,6 +170,7 @@ git commit -m "fix: align sitemap with indexability"
 - Modify: `src/pages/en/now.astro`
 - Modify: `src/content/posts/en/claude-md-12-rules.md`
 - Modify: `src/layouts/PostLayout.astro`
+- Modify: `astro.config.ts`
 - Create: `src/lib/rehype/lazy-content-images.ts`
 - Create: `tests/unit/seo/utility-indexing.test.ts`
 - Create: `tests/integration/seo-utility-routes.test.ts`
@@ -204,11 +204,11 @@ expect(robotsTxt).toMatch(/Disallow:\s*\/api\//);
 
 Run: `pnpm build && pnpm exec vitest run tests/unit/seo/utility-indexing.test.ts tests/unit/seo/llms-full-endpoint.test.ts tests/integration/seo-utility-routes.test.ts`
 
-Expected: failure on current `noindex,nofollow`, missing route props/header, blocked utility pages, and SearchAction.
+Expected: failure on current `noindex,nofollow`, missing route props/header, and blocked utility pages. The SearchAction assertion is regression coverage for the canonical URL package and already passes.
 
 - [ ] **Step 3: Implement utility policy and English search copy**
 
-Emit exactly `noindex,follow` from `BaseLayout` when `noindex` is true. Pass `noindex={true}` from both search pages and login. Remove `/login` and `/search` disallows from every robots user-agent block while retaining `/admin/` and `/api/`. Remove `potentialAction` from `buildWebSiteNode`. Add `X-Robots-Tag: noindex` to `llms-full.txt`.
+Emit exactly `noindex,follow` from `BaseLayout` when `noindex` is true. Pass `noindex={true}` from both search pages and login. Remove `/login` and `/search` disallows from every robots user-agent block while retaining `/admin/` and `/api/`. Keep the existing direct regression assertion that `buildWebSiteNode` has no `potentialAction`; do not edit the already-correct schema builder in this task. Add `X-Robots-Tag: noindex` to `llms-full.txt`.
 
 Use this English search contract:
 
