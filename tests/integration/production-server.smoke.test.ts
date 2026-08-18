@@ -43,13 +43,15 @@ const expectCanonicalHomeLinks = (
   body: string,
   expected: { readonly blog: string; readonly course: string },
 ): void => {
-  expect(body).toContain('href="' + expected.blog + '" class="hero__cta"');
-  expect(body).toContain('href="' + expected.course + '"');
-  const latest = [...body.matchAll(/<a\b[^>]*>/g)]
-    .filter(([tag]) => /\bclass="[^"]*\blatest__link\b/.test(tag))
+  expect(body).toContain('href="' + expected.blog + '" class="masthead__cta"');
+  expect(body).toContain('href="' + expected.course + '" class="course-band__cta"');
+  const homePosts = [...body.matchAll(/<a\b[^>]*>/g)]
+    .filter(([tag]) => /\bclass="[^"]*\b(featured__link|post-card__link)\b/.test(tag))
     .map(([tag]) => tag.match(/\bhref="([^"]+)"/)?.[1]);
-  expect(latest).toHaveLength(3);
-  expect(latest.every((href) => href?.startsWith(expected.blog) && href.endsWith("/"))).toBe(true);
+  expect(homePosts).toHaveLength(4);
+  expect(homePosts.every((href) => href?.startsWith(expected.blog) && href.endsWith("/"))).toBe(
+    true,
+  );
 };
 
 describe("production standalone server", () => {

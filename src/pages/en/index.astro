@@ -3,8 +3,12 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
-import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
+import HomeMasthead from "~/components/HomeMasthead.astro";
+import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
+import HomePostCard from "~/components/HomePostCard.astro";
+import HomeCourseBand from "~/components/HomeCourseBand.astro";
 import HomeTopics from "~/components/HomeTopics.astro";
+import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { getEntry } from "astro:content";
@@ -15,10 +19,12 @@ import { canonicalPath } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
-const latest = posts.slice(0, 3);
+const featured = posts[0];
+const grid = posts.slice(1, 4);
 const blogHref = canonicalPath("/en/blog");
 const courseHref = canonicalPath("/en/courses/claude-code-guide");
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
+const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 
 const homeEntry = await getEntry("site", "en/home");
 const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
@@ -52,199 +58,96 @@ const webPageNode = buildWebPageNode({
 >
   <SiteSidebar slot="sidebar" />
 
-  <section class="hero">
-    {data.heroEyebrow && <p class="hero__eyebrow">{data.heroEyebrow}</p>}
-    <h1 class="hero__title">
-      {data.heroTitle}
-    </h1>
-    {data.heroLede && <p class="hero__lede">{data.heroLede}</p>}
+  <div class="home">
+    <HomeMasthead
+      eyebrow={data.heroEyebrow}
+      title={data.heroTitle}
+      lede={data.heroLede}
+      cta={data.heroCta}
+      ctaHref={blogHref}
+    />
+
     {
-      data.heroCta && (
-        <a href={blogHref} class="hero__cta">
-          {data.heroCta}
-        </a>
+      featured && (
+        <HomeFeaturedCard
+          entry={featured.entry}
+          href={postHref(featured.entry.id)}
+          locale={locale}
+        />
       )
     }
-  </section>
 
-  <HomeAuthorCard
-    label={data.authorLabel ?? ""}
-    bio={data.authorBio ?? ""}
-    linksAria={data.authorLinksAria ?? ""}
-  />
-
-  <HomeTopics />
-
-  <aside class="course-card">
-    {data.courseEyebrow && <p class="course-card__eyebrow">{data.courseEyebrow}</p>}
-    <h2 class="course-card__title">
-      <a href={courseHref}>{data.courseTitle}</a>
-    </h2>
-    {data.courseLede && <p class="course-card__lede">{data.courseLede}</p>}
     {
-      data.courseCta && (
-        <a href={courseHref} class="course-card__cta">
-          {data.courseCta}
-        </a>
+      grid.length > 0 && (
+        <section class="home__grid-section" aria-labelledby="latest-label">
+          <h2 class="home__grid-label" id="latest-label">
+            {data.latestLabel}
+          </h2>
+          <div class="home__grid">
+            {grid.map((p, i) => (
+              <HomePostCard
+                entry={p.entry}
+                href={postHref(p.entry.id)}
+                locale={locale}
+                artVariant={i + 1}
+              />
+            ))}
+          </div>
+        </section>
       )
     }
-  </aside>
 
-  <section class="latest" aria-labelledby="latest-label">
-    <h3 class="latest__label" id="latest-label">{data.latestLabel}</h3>
-    <ul class="latest__list">
-      {
-        latest.map((p) => (
-          <li>
-            <a href={canonicalPath(`${blogHref}${bareSlug(p.entry.id)}`)} class="latest__link">
-              <span class="latest__title">{p.entry.data.title}</span>
-              <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
-                {p.entry.data.pubDate.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </time>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+    <HomeTopics />
+
+    <HomeCourseBand
+      eyebrow={data.courseEyebrow}
+      title={data.courseTitle}
+      lede={data.courseLede}
+      cta={data.courseCta}
+      href={courseHref}
+    />
+
+    <HomeAuthorCard
+      label={data.authorLabel ?? ""}
+      bio={data.authorBio ?? ""}
+      linksAria={data.authorLinksAria ?? ""}
+    />
+  </div>
 
   <style>
-    .hero {
-      max-width: 720px;
-      padding: var(--space-6) 0;
+    .home {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-7);
     }
-    .hero__eyebrow {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
-      color: var(--color-fg-subtle);
-      margin: 0 0 var(--space-4) 0;
+    .home__grid-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
     }
-    .hero__title {
-      font-family: var(--font-serif);
-      font-size: var(--fs-3xl);
-      line-height: var(--lh-tight);
-      letter-spacing: var(--tracking-tight);
-      font-weight: 500;
-      margin: 0 0 var(--space-4) 0;
-      color: var(--color-fg);
-    }
-    .hero__lede {
-      font-size: var(--fs-lg);
-      line-height: var(--lh-normal);
-      color: var(--color-fg-muted);
-      margin: 0 0 var(--space-5) 0;
-    }
-    .hero__cta {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: var(--fs-sm);
-      color: var(--color-accent);
-      text-decoration: none;
-      border-bottom: 1px dashed var(--color-accent);
-      padding-bottom: 1px;
-    }
-    .hero__cta:hover {
-      color: var(--color-accent-hover);
-    }
-
-    .course-card {
-      max-width: 720px;
-      margin-top: var(--space-7);
-      padding: var(--space-5) var(--space-6);
-      border: 1px solid var(--color-accent);
-      border-radius: var(--radius-md);
-      background: var(--color-accent-subtle);
-    }
-    .course-card__eyebrow {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
-      color: var(--color-accent);
-      margin: 0 0 var(--space-2) 0;
-    }
-    .course-card__title {
-      font-family: var(--font-serif);
-      font-size: var(--fs-xl);
-      font-weight: 500;
-      line-height: var(--lh-tight);
-      letter-spacing: var(--tracking-tight);
-      margin: 0 0 var(--space-2) 0;
-      color: var(--color-fg);
-    }
-    .course-card__title a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .course-card__title a:hover {
-      color: var(--color-accent);
-    }
-    .course-card__lede {
-      margin: 0 0 var(--space-3) 0;
-      color: var(--color-fg-muted);
-      line-height: var(--lh-normal);
-      text-wrap: pretty;
-    }
-    .course-card__cta {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: var(--fs-sm);
-      color: var(--color-accent);
-      text-decoration: none;
-      border-bottom: 1px dashed var(--color-accent);
-      padding-bottom: 1px;
-    }
-    .course-card__cta:hover {
-      color: var(--color-accent-hover);
-    }
-
-    .latest {
-      margin-top: var(--space-8);
-      padding-top: var(--space-5);
-      border-top: 1px solid var(--color-border);
-      max-width: 720px;
-    }
-    .latest__label {
+    .home__grid-label {
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
       text-transform: uppercase;
       letter-spacing: var(--tracking-wide);
       color: var(--color-fg-subtle);
       font-weight: 500;
-      margin: 0 0 var(--space-4) 0;
-    }
-    .latest__list {
-      list-style: none;
-      padding: 0;
       margin: 0;
     }
-    .latest__link {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: var(--space-4);
-      padding: var(--space-3) 0;
-      border-bottom: 1px dotted var(--color-border);
-      color: var(--color-fg);
-      text-decoration: none;
+    .home__grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-5);
     }
-    .latest__title {
-      font-family: var(--font-serif);
-      font-size: var(--fs-lg);
-      line-height: var(--lh-snug);
+    @media (max-width: 900px) {
+      .home__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
-    .latest__date {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      color: var(--color-fg-subtle);
-    }
-    .latest__link:hover .latest__title {
-      color: var(--color-accent-hover);
+    @media (max-width: 640px) {
+      .home__grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   </style>
 </BaseLayout>

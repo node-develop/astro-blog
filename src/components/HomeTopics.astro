@@ -7,12 +7,10 @@
  * /tags/<slug> archive routes, which already render with a CollectionPage
  * JSON-LD node and a visible breadcrumb.
  */
-import { groupPostsByTag, resolveTagLabel } from "~/lib/content/tags";
+import { groupPostsByTag, resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
-import tagsRu from "~/i18n/tags.ru.json";
-import tagsEn from "~/i18n/tags.en.json";
 
 interface Props {
   /** Cap. Default 5 keeps the row tight and avoids tag-cloud drift. */
@@ -24,7 +22,7 @@ const { limit = 5 } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const grouped = groupPostsByTag(posts);
-const dict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const dict = getTagDict(locale);
 const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 
 const topTags = [...grouped.entries()]
@@ -40,9 +38,9 @@ const topTags = [...grouped.entries()]
 {
   topTags.length > 0 && (
     <section class="topics" aria-labelledby="topics-label">
-      <h3 class="topics__label" id="topics-label">
+      <h2 class="topics__label" id="topics-label">
         {t(locale, "tags.title")}
-      </h3>
+      </h2>
       <ul class="topics__list" aria-label={t(locale, "tags.title")}>
         {topTags.map((tag) => (
           <li>
@@ -63,12 +61,8 @@ const topTags = [...grouped.entries()]
 }
 
 <style>
-  .topics {
-    max-width: 720px;
-    margin-top: var(--space-6);
-    padding-top: var(--space-5);
-    border-top: 1px solid var(--color-border);
-  }
+  /* Section rhythm is owned by the home page's flex column (gap) —
+     no local max-width/margins so the block spans the editorial grid. */
   .topics__label {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);

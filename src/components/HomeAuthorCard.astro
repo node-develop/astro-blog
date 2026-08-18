@@ -68,11 +68,10 @@ const socialLabel = (url: string): string => {
     grid-template-columns: 64px 1fr;
     gap: var(--space-4);
     align-items: start;
-    max-width: 720px;
-    padding: var(--space-5) 0;
-    margin-top: var(--space-6);
+    /* Vertical rhythm is owned by the home page's flex column (gap);
+       the block spans the full editorial grid and closes with a hairline. */
+    padding-top: var(--space-5);
     border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
   }
   .home-author__avatar {
     line-height: 0;

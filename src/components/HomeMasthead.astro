@@ -1,0 +1,81 @@
+---
+/**
+ * Centered masthead for the home page (Variant A redesign).
+ *
+ * GitBook-style: accent mono eyebrow, serif h1, muted lede, dashed CTA —
+ * all centered. Content comes from home.md frontmatter via the page.
+ */
+interface Props {
+  eyebrow?: string | undefined;
+  title?: string | undefined;
+  lede?: string | undefined;
+  cta?: string | undefined;
+  ctaHref: string;
+}
+
+const { eyebrow, title, lede, cta, ctaHref } = Astro.props;
+---
+
+<section class="masthead">
+  {eyebrow && <p class="masthead__eyebrow">{eyebrow}</p>}
+  <h1 class="masthead__title">{title}</h1>
+  {lede && <p class="masthead__lede">{lede}</p>}
+  {
+    cta && (
+      <a href={ctaHref} class="masthead__cta">
+        {cta}
+      </a>
+    )
+  }
+</section>
+
+<style>
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    text-align: center;
+    padding: var(--space-6) 0;
+  }
+  .masthead__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent);
+    font-weight: 500;
+    margin: 0;
+  }
+  .masthead__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-3xl);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    font-weight: 500;
+    color: var(--color-fg);
+    max-width: 780px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .masthead__lede {
+    font-size: var(--fs-md);
+    line-height: var(--lh-normal);
+    color: var(--color-fg-muted);
+    max-width: 640px;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .masthead__cta {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-accent);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--color-accent);
+    padding-bottom: 1px;
+  }
+  .masthead__cta:hover {
+    color: var(--color-accent-hover);
+  }
+</style>
