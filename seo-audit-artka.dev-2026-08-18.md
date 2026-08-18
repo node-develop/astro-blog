@@ -1,8 +1,11 @@
 # Google indexing audit: artka.dev
 
-Date: 2026-08-18  
-Search Console snapshot: 2026-08-14  
-Code baseline: `origin/main` at `875316a3887a231e96e39303deb701f3cdfa2b7d`  
+Date: 2026-08-18
+
+Search Console snapshot: 2026-08-14
+
+Code baseline: `origin/main` at `875316a3887a231e96e39303deb701f3cdfa2b7d`
+
 Audit mode: read-only Google Search Console + live-site checks + fresh-build repository inspection
 
 ## Executive summary
@@ -37,8 +40,10 @@ Important: Search Console is a lagging report. For example, `/blog/04-skills/` n
 
 ### #1. Make every page have exactly one URL identity
 
-**Impact:** Very high  
-**Complexity:** 1–2 days  
+**Impact:** Very high
+
+**Complexity:** 1–2 days
+
 **Block:** Canonicalization, internal linking, redirects
 
 **Current state**
@@ -64,8 +69,10 @@ Google receives one consistent identity per page. The alternate-canonical and du
 
 ### #2. Repair the broken and historical URL graph
 
-**Impact:** Very high  
-**Complexity:** 1–3 days  
+**Impact:** Very high
+
+**Complexity:** 1–3 days
+
 **Block:** Crawlability, redirects, hostname configuration
 
 **Current state**
@@ -95,8 +102,10 @@ Google stops spending crawls on malformed and legacy paths, all historical equit
 
 ### #3. Reduce low-value indexable inventory and strengthen canonical pages
 
-**Impact:** Very high  
-**Complexity:** 3–7 days initially, then ongoing  
+**Impact:** Very high
+
+**Complexity:** 3–7 days initially, then ongoing
+
 **Block:** Index selection, on-page quality, information architecture
 
 **Current state**

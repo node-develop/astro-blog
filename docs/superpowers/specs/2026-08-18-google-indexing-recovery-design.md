@@ -1,7 +1,9 @@
 # artka.dev Google Indexing Recovery Design
 
-Date: 2026-08-18  
-Status: approved for implementation  
+Date: 2026-08-18
+
+Status: approved for implementation
+
 Evidence: `seo-audit-artka.dev-2026-08-18.md`
 
 ## Objective
