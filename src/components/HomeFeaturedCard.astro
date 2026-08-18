@@ -1,0 +1,165 @@
+---
+/**
+ * Featured post card on the home page (Variant A redesign).
+ *
+ * GitBook-style split card: text column (date · tag eyebrow, serif title,
+ * description, author chip) + decorative artwork column with a "Featured"
+ * pill. Shows the newest post; the whole card is one link.
+ *
+ * The pill label stays latin in both locales — it is a typographic design
+ * element in the mono-caps register, like the hero eyebrow in home.md.
+ */
+import type { CollectionEntry } from "astro:content";
+import HomeCardArt from "~/components/HomeCardArt.astro";
+import { person } from "~/lib/seo/person";
+import { resolveTagLabel } from "~/lib/content/tags";
+import type { Locale } from "~/i18n";
+import tagsRu from "~/i18n/tags.ru.json";
+import tagsEn from "~/i18n/tags.en.json";
+
+interface Props {
+  entry: CollectionEntry<"posts">;
+  href: string;
+  locale: Locale;
+}
+
+const { entry, href, locale } = Astro.props;
+
+const dict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const firstTag = entry.data.tags[0];
+const tagLabel = firstTag ? resolveTagLabel(firstTag, locale, dict) : null;
+
+const dateLabel = entry.data.pubDate
+  .toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+  .replace(" г.", "");
+---
+
+<article class="featured">
+  <a href={href} class="featured__link">
+    <div class="featured__body">
+      <p class="featured__eyebrow">
+        <time datetime={entry.data.pubDate.toISOString()}>{dateLabel}</time>
+        {tagLabel && <span class="featured__tag">· {tagLabel}</span>}
+      </p>
+      <h2 class="featured__title">{entry.data.title}</h2>
+      <p class="featured__lede">{entry.data.description}</p>
+      <p class="featured__author">
+        <img
+          class="featured__avatar"
+          src={person.image}
+          alt=""
+          width="32"
+          height="32"
+          loading="lazy"
+          decoding="async"
+        />
+        <span>{person.name}</span>
+      </p>
+    </div>
+    <div class="featured__media">
+      <HomeCardArt variant={0} />
+      <span class="featured__pill" aria-hidden="true">Featured</span>
+    </div>
+  </a>
+</article>
+
+<style>
+  .featured__link {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    color: var(--color-fg);
+    text-decoration: none;
+    transition: box-shadow var(--dur-base) var(--ease-out);
+  }
+  .featured__link:hover {
+    box-shadow: var(--shadow-lifted);
+  }
+  .featured__link:hover .featured__title {
+    color: var(--color-accent-hover);
+  }
+  .featured__body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-7) var(--space-7);
+  }
+  .featured__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0;
+  }
+  .featured__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    font-weight: 500;
+    margin: 0;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .featured__lede {
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    color: var(--color-fg-muted);
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .featured__author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: var(--space-2) 0 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-fg-muted);
+  }
+  .featured__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    object-fit: cover;
+  }
+  .featured__media {
+    position: relative;
+    min-height: 300px;
+  }
+  .featured__pill {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: var(--color-accent);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+  }
+  @media (max-width: 768px) {
+    .featured__link {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .featured__body {
+      padding: var(--space-5);
+    }
+    .featured__media {
+      min-height: 200px;
+      order: -1;
+    }
+  }
+</style>
