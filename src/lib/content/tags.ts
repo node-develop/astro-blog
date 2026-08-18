@@ -1,5 +1,14 @@
 import type { PostWithMeta } from "./loader";
 import type { Locale } from "~/i18n";
+import tagsRu from "~/i18n/tags.ru.json";
+import tagsEn from "~/i18n/tags.en.json";
+
+/**
+ * Locale-specific tag dictionary for `resolveTagLabel`. Single import point
+ * so components don't each re-import and re-cast the JSON dicts.
+ */
+export const getTagDict = (locale: Locale): Readonly<Record<string, string>> =>
+  (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
 
 /**
  * Indexes posts by tag slug, preserving the caller-supplied iteration order

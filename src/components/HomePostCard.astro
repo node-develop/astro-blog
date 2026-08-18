@@ -1,0 +1,93 @@
+---
+/**
+ * Compact post card for the home-page grid (Variant A redesign).
+ *
+ * Decorative artwork block on top, mono date · tag eyebrow, serif title.
+ * The whole card is one link. `artVariant` keeps neighbouring cards from
+ * repeating the same artwork pattern.
+ */
+import type { CollectionEntry } from "astro:content";
+import HomeCardArt from "~/components/HomeCardArt.astro";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
+import type { Locale } from "~/i18n";
+
+interface Props {
+  entry: CollectionEntry<"posts">;
+  href: string;
+  locale: Locale;
+  artVariant: number;
+}
+
+const { entry, href, locale, artVariant } = Astro.props;
+
+const dict = getTagDict(locale);
+const firstTag = entry.data.tags[0];
+const tagLabel = firstTag ? resolveTagLabel(firstTag, locale, dict) : null;
+
+const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+  day: "numeric",
+  month: "short",
+});
+---
+
+<article class="post-card">
+  <a href={href} class="post-card__link">
+    <div class="post-card__media">
+      <HomeCardArt variant={artVariant} />
+    </div>
+    <div class="post-card__body">
+      <p class="post-card__eyebrow">
+        <time datetime={entry.data.pubDate.toISOString()}>{dateLabel}</time>
+        {tagLabel && <span>· {tagLabel}</span>}
+      </p>
+      <h3 class="post-card__title">{entry.data.title}</h3>
+    </div>
+  </a>
+</article>
+
+<style>
+  .post-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    color: var(--color-fg);
+    text-decoration: none;
+    transition: box-shadow var(--dur-base) var(--ease-out);
+  }
+  .post-card__link:hover {
+    box-shadow: var(--shadow-soft);
+  }
+  .post-card__link:hover .post-card__title {
+    color: var(--color-accent-hover);
+  }
+  .post-card__media {
+    height: 150px;
+  }
+  .post-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) var(--space-5) var(--space-5);
+  }
+  .post-card__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+  .post-card__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    line-height: var(--lh-snug);
+    font-weight: 500;
+    margin: 0;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+</style>
