@@ -26,7 +26,8 @@ export const canonicalInternalHref = (href: string): string => {
   const path = href.split(/[?#]/, 1)[0] ?? href;
   if (path.startsWith("/")) return `${canonicalPath(path)}${hash}`;
 
-  const bare = path.replace(/\/+$/, "");
+  const collapsed = path.replace(/\/{2,}/g, "/");
+  const bare = collapsed.replace(/\/+$/, "");
   return `${bare}/${hash}`;
 };
 

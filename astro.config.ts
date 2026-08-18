@@ -17,11 +17,10 @@ import { autolinkOptions } from "./src/lib/markdown/autolink";
 import { externalLinkPolicy } from "./src/lib/markdown/external-links";
 import { shikiThemes } from "./src/lib/markdown/shiki";
 import { buildLegacyRedirects } from "./src/lib/seo/redirects";
+import { CANONICAL_ORIGIN } from "./src/lib/seo/url-policy";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
-
-const SITE_URL = process.env.SITE_URL ?? "https://artka.dev";
 
 // Structural Vite plugin type. We avoid importing from `vite` directly
 // because it is not a top-level dependency — only Astro pulls it in
@@ -81,7 +80,7 @@ const pagefindDevMiddleware = (): VitePluginShape => ({
 });
 
 export default defineConfig({
-  site: SITE_URL,
+  site: CANONICAL_ORIGIN,
   trailingSlash: "always",
   output: "static",
   adapter: node({ mode: "standalone" }),

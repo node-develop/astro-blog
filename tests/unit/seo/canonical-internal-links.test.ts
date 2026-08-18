@@ -38,3 +38,10 @@ it("leaves non-document and non-artka destinations unchanged", async () => {
 
   expect(await transformHrefs(hrefs)).toEqual(hrefs);
 });
+
+it.each([
+  ["./guide//chapter?x=1#part", "./guide/chapter/#part"],
+  ["../guide///chapter?x=1#part", "../guide/chapter/#part"],
+])("collapses repeated slashes in relative document link %s", async (href, expected) => {
+  expect(await transformHrefs([href])).toEqual([expected]);
+});
