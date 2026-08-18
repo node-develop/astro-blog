@@ -5,7 +5,7 @@ import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getEntry, render } from "astro:content";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
-import { buildLandingNodes } from "~/lib/seo/schema";
+import { buildLandingNodes } from "~/lib/seo/landing";
 import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = getLocaleFromPath(Astro.url.pathname);

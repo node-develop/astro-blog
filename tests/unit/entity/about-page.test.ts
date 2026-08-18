@@ -9,12 +9,12 @@ describe.each([
   ["ru", ru],
   ["en", en],
 ])("/%s/about page wires WebPage JSON-LD", (_l, src) => {
-  it("imports buildLandingNodes from ~/lib/seo/schema", () => {
+  it("imports buildLandingNodes directly from ~/lib/seo/landing", () => {
     // After SEO-V the about page builds breadcrumbs + WebPage(AboutPage)
     // through the buildLandingNodes helper instead of calling
     // buildWebPageNode directly.
     expect(src).toMatch(
-      /import\s*\{[^}]*buildLandingNodes[^}]*\}\s+from\s+["']~\/lib\/seo\/schema["']/,
+      /import\s*\{[^}]*buildLandingNodes[^}]*\}\s+from\s+["']~\/lib\/seo\/landing["']/,
     );
   });
   it("declares the AboutPage type so the WebPage subtype is correct", () => {

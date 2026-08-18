@@ -80,7 +80,7 @@ samp {
   animation-timing-function: var(--ease-out);
 }
 
-::view-transition-group([transition-name^="post-title"]) {
+::view-transition-group(*) {
   animation-duration: var(--dur-slow);
   animation-timing-function: var(--ease-out);
 }

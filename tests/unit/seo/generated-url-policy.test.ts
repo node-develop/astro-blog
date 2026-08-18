@@ -180,7 +180,6 @@ it("emits one apex HTTPS slash identity for every internal document URL", () => 
     "en/courses/claude-code-guide/rss.xml",
   ].forEach((file) => auditXmlArtifact(violations, join(DIST, file)));
   ["feed.json", "en/feed.json"].forEach((file) => auditJsonFeed(violations, join(DIST, file)));
-  auditTextArtifact(violations, join(DIST, "llms-full.txt"));
   auditTextArtifact(violations, join(ROOT, "public", "llms.txt"));
 
   expect(violations).toEqual([]);

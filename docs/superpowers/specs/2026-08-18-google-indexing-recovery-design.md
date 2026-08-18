@@ -131,6 +131,8 @@ Source code will document the required edge rule:
 
 Application-level host normalization redirects a trusted `Host`/`X-Forwarded-Host` value of `www.artka.dev` to the HTTPS apex as defense in depth. It cannot solve TLS negotiation and is not counted as completion of the external fix.
 
+The standalone Node adapter serves prerendered files before Astro middleware. The application-level redirect therefore protects on-demand routes only; converting public prerendered pages to SSR solely for host normalization would be a disproportionate performance and architecture change and would not represent edge/CDN static delivery. The DNS/proxy one-hop redirect is mandatory for sitewide coverage, including `/about/?x=1`, and remains a post-deploy runbook acceptance check.
+
 ## Indexable inventory policy
 
 ### Tag pages
@@ -229,6 +231,8 @@ Start `dist/server/entry.mjs` on an isolated port and assert:
 Each sequence item is independently tested and reviewed before the next begins.
 
 ## External handoff after merge and deployment
+
+Use the owner-gated [Google Indexing Recovery Runbook](../../runbooks/google-indexing-recovery.md) for commands, expected statuses, Search Console steps, and weekly tracking. DNS/TLS, deployment, and Search Console mutations are not completed by this PR.
 
 1. Configure valid TLS and apex redirect for `www.artka.dev` at the DNS/proxy provider.
 2. Deploy the verified application build.

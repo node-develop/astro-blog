@@ -20,6 +20,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:production-smoke": "vitest run tests/integration/production-server.smoke.test.ts",
+    "verify:seo-build": "tsx scripts/verify-seo-build.ts",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --experimental-strip-types src/lib/db/migrate.ts",
