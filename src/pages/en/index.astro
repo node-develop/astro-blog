@@ -2,7 +2,6 @@
 export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import HomeMasthead from "~/components/HomeMasthead.astro";
 import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
 import PostCard from "~/components/PostCard.astro";
@@ -56,10 +55,9 @@ const webPageNode = buildWebPageNode({
   description={data.metaDescription ?? ""}
   ogImage={ogImagePath}
   fullWidth={true}
+  noSidebar={true}
   extraSchemaNodes={[webPageNode]}
 >
-  <SiteSidebar slot="sidebar" />
-
   <div class="home">
     <HomeMasthead
       eyebrow={data.heroEyebrow}
@@ -68,6 +66,8 @@ const webPageNode = buildWebPageNode({
       cta={data.heroCta}
       ctaHref={blogHref}
     />
+
+    <HomeTopics />
 
     {
       featured && (
@@ -99,8 +99,6 @@ const webPageNode = buildWebPageNode({
       )
     }
 
-    <HomeTopics />
-
     <HomeCourseBand
       eyebrow={data.courseEyebrow}
       title={data.courseTitle}
@@ -121,6 +119,8 @@ const webPageNode = buildWebPageNode({
       display: flex;
       flex-direction: column;
       gap: var(--space-7);
+      max-width: 1080px;
+      margin: 0 auto;
     }
     .home__grid-section {
       display: flex;
