@@ -15,7 +15,9 @@ import {
 } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
-import HomePostCard from "~/components/HomePostCard.astro";
+import { assignArtVariants } from "~/lib/content/card-art";
+import { bareSlug } from "~/lib/content/slug";
+import PostCard from "~/components/PostCard.astro";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
@@ -23,7 +25,7 @@ const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.da
 const blogHref = locale === "en" ? "/en/blog" : "/blog";
 const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
 const homeHref = locale === "en" ? "/en/" : "/";
-const bareSlug = (id: string): string => id.replace(/^en\//, "");
+const gridVariants = assignArtVariants(posts.map((p: PostWithMeta) => bareSlug(p.entry.id)));
 const blogNode = buildBlogNode(locale);
 const tagsHrefBase = locale === "en" ? "/en/tags" : "/tags";
 const dict = getTagDict(locale);
@@ -85,36 +87,37 @@ const webPageNode = buildWebPageNode({
 
     {
       allTags.length > 0 && (
-        <div class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
+        <nav class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
           {allTags.map((tag: string) => (
             <a class="list__tag-chip" href={`${tagsHrefBase}/${tag}`}>
               #{resolveTagLabel(tag, locale, dict)}
             </a>
           ))}
-        </div>
+        </nav>
       )
     }
 
-    <div class="list__grid">
+    <ul class="list__grid">
       {
-        posts.map((p: PostWithMeta) => (
-          <HomePostCard
-            entry={p.entry}
-            href={`${blogHref}/${bareSlug(p.entry.id)}`}
-            locale={locale}
-            showDescription={true}
-            headingLevel="h2"
-            transitionName={`post-title-${bareSlug(p.entry.id)}`}
-          />
+        posts.map((p: PostWithMeta, i: number) => (
+          <li>
+            <PostCard
+              entry={p.entry}
+              href={`${blogHref}/${bareSlug(p.entry.id)}`}
+              locale={locale}
+              artVariant={gridVariants[i]}
+              showDescription={true}
+              headingLevel="h2"
+              transitionName={`post-title-${bareSlug(p.entry.id)}`}
+            />
+          </li>
         ))
       }
-    </div>
+    </ul>
   </section>
 
   <style>
-    .list {
-      max-width: 1080px;
-    }
+    /* Width is owned by the layout's main column (~960px with sidebar). */
     .list__header {
       margin-bottom: var(--space-6);
       padding-bottom: var(--space-4);
@@ -205,8 +208,11 @@ const webPageNode = buildWebPageNode({
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--space-5);
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    @media (max-width: 700px) {
+    @media (max-width: 640px) {
       .list__grid {
         grid-template-columns: minmax(0, 1fr);
       }

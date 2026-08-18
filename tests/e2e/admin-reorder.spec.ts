@@ -88,7 +88,7 @@ test("admin reorder persists across refresh and reflects on public blog", async 
 
   // Public list reflects it: secondTitle is now before firstTitle.
   await page.goto("/blog");
-  const publicTitles = page.locator(".list__post-title");
+  const publicTitles = page.locator(".post-card__title");
   // Find both titles on the page and verify secondTitle comes first.
   const allTitles = await publicTitles.allInnerTexts();
   const secondPos = allTitles.indexOf(secondTitle);

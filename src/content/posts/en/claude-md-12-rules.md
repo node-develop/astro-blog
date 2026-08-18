@@ -1,8 +1,8 @@
 ---
 title: "12 rules for CLAUDE.md: extending Karpathy to the failure modes of 2026"
 description: >-
-  Mnilax tested 12 rules for CLAUDE.md on 30 codebases over 6 weeks — an extension of Karpathy's template covering
-  agent loops, checkpoints, and fail-loud. A breakdown and a framework for applying them.
+  Mnilax tested 12 rules for CLAUDE.md across 30 codebases over 6 weeks — extending Karpathy's template to agent
+  loops, checkpoints, and fail-loud. A breakdown and a framework for applying them.
 pubDate: 2026-05-10T00:00:00.000Z
 tags:
   - ai
@@ -12,8 +12,8 @@ draft: false
 cover: /og-default.svg
 coverAlt: 12 rules for CLAUDE.md — extending Karpathy
 summary: >-
-  In January, Karpathy formulated 4 rules for CLAUDE.md. Mnilax expanded them to 12, closing the failure modes of May
-  2026: token budgets, checkpoints, fail-loud, conventions. What's covered, what's not, and how to apply it without
+  In January, Karpathy formulated 4 rules for CLAUDE.md. Mnilax expanded them to 12, addressing the failure modes of
+  May 2026: token budgets, checkpoints, fail-loud, conventions. What's covered, what's not, and how to apply it without
   bloating the file.
 keywords:
   - claude code
@@ -34,8 +34,9 @@ faq:
   - question: What's the point of expanding to 12 rules if Karpathy's 4 were enough?
     answer: >-
       Karpathy wrote in January, when Claude Code was closer to autocomplete. By May the landscape is different:
-      multi-step agents, hook cascades, cross-session flows. By Mnilax's measurements, adding the 8 rules cuts the
-      error rate by another 8 percentage points (from 11% to 3%) with nearly unchanged compliance (76% vs 78%).
+      multi-step agents, hook cascades, cross-session flows. According to Mnilax's measurements, adding the 8 rules
+      cuts the error rate by another 8 percentage points (from 11% to 3%) with nearly unchanged compliance (76% vs
+      78%).
   - question: Can I just copy someone else's CLAUDE.md and forget about it?
     answer: >-
       You can, but it works for about two weeks. Then the codebase shifts, the rules stop matching reality, and Claude
@@ -43,7 +44,7 @@ faq:
       else's template is useful as a starter, not as the final version.
   - question: What if my CLAUDE.md is already over 200 lines?
     answer: >-
-      By Mnilax's measurements, compliance drops after ~200 lines: important rules drown in noise. The cure is moving
+      In Mnilax's measurements, compliance drops after ~200 lines: important rules drown in noise. The cure is moving
       long sections (stack, commands, subsystem descriptions) into `@docs/...` via Claude Code @-imports. The root
       CLAUDE.md keeps only the rules and brief context.
   - question: Do these rules help in a plain API session without Claude Code?
