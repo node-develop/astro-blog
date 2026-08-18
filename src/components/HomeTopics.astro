@@ -23,7 +23,7 @@ const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const grouped = groupPostsByTag(posts);
 const dict = getTagDict(locale);
-const tagsHrefBase = locale === "en" ? "/en/tags" : "/tags";
+const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 
 const topTags = [...grouped.entries()]
   .map(([slug, items]) => ({
@@ -44,7 +44,7 @@ const topTags = [...grouped.entries()]
       <ul class="topics__list" aria-label={t(locale, "tags.title")}>
         {topTags.map((tag) => (
           <li>
-            <a class="topics__chip" href={`${tagsHrefBase}/${tag.slug}`}>
+            <a class="topics__chip" href={`${tagsHrefBase}${tag.slug}/`}>
               <span class="topics__chip-label">#{tag.label}</span>
               <span class="topics__chip-count">{tag.count}</span>
             </a>

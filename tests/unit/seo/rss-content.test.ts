@@ -12,8 +12,9 @@ const en = readFileSync(join(process.cwd(), "src/pages/en/rss.xml.ts"), "utf8");
 describe("RSS feeds emit full content", () => {
   it("shared builder renders post.body via markdown-it into the content field", () => {
     expect(builder).toMatch(/import\s+MarkdownIt\s+from\s+["']markdown-it["']/);
-    expect(builder).toMatch(/parser\.render\(p\.entry\.body\)/);
-    expect(builder).toMatch(/content:\s*p\.entry\.body\s*\?\s*parser\.render/);
+    expect(builder).toMatch(/parser\s*\.render\(markdown\)/);
+    expect(builder).toMatch(/content:\s*p\.entry\.body\s*\?\s*renderContent/);
+    expect(builder).toMatch(/canonicalInternalHref/);
   });
 
   it.each([

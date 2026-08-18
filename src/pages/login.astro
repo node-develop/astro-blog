@@ -12,7 +12,7 @@ const next = safeNext(Astro.url.searchParams.get("next"));
 const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
 ---
 
-<BaseLayout title="Вход" description="Страница входа в админку">
+<BaseLayout title="Вход" description="Страница входа в админку" noindex={true}>
   <h1 class="mb-6 text-3xl font-bold">Вход</h1>
   <form id="login-form" data-callback={next} class="space-y-4">
     <p
@@ -83,7 +83,7 @@ const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB
         const data = new FormData(form);
         const callback = form.dataset.callback || "/admin";
         try {
-          const res = await fetch("/api/auth/sign-in/email", {
+          const res = await fetch("/api/auth/sign-in/email/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "same-origin",
@@ -109,7 +109,7 @@ const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB
       githubBtn.addEventListener("click", async () => {
         githubBtn.disabled = true;
         try {
-          const res = await fetch("/api/auth/sign-in/social", {
+          const res = await fetch("/api/auth/sign-in/social/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "same-origin",

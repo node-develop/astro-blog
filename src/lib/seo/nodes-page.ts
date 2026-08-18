@@ -1,6 +1,6 @@
 import { graphIds, type Locale } from "./nodes-global";
+import { canonicalUrl } from "./url-policy";
 
-const SITE = "https://artka.dev";
 const inLang = (locale: Locale): "ru-RU" | "en-US" => (locale === "ru" ? "ru-RU" : "en-US");
 
 export interface BlogPostingInput {
@@ -46,8 +46,8 @@ export interface BreadcrumbInput {
 }
 
 export const buildBreadcrumbListNode = (input: BreadcrumbInput) => {
-  const homeUrl = input.locale === "ru" ? `${SITE}/` : `${SITE}/en/`;
-  const blogUrl = input.locale === "ru" ? `${SITE}/blog` : `${SITE}/en/blog`;
+  const homeUrl = canonicalUrl(input.locale === "ru" ? "/" : "/en/");
+  const blogUrl = canonicalUrl(input.locale === "ru" ? "/blog" : "/en/blog");
   return {
     "@type": "BreadcrumbList",
     itemListElement: [

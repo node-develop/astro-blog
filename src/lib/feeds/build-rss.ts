@@ -3,8 +3,15 @@ import MarkdownIt from "markdown-it";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { person } from "~/lib/seo/person";
 import { t, type Locale } from "~/i18n";
+import { canonicalInternalHref } from "~/lib/rehype/canonical-internal-links";
 
 const parser = new MarkdownIt({ html: true, linkify: true, typographer: true });
+const renderContent = (markdown: string): string =>
+  parser
+    .render(markdown)
+    .replace(/(<a\b[^>]*\bhref=")([^"]+)(")/gi, (_match, before, href, after) =>
+      [before, canonicalInternalHref(href), after].join(""),
+    );
 
 export interface BuildRssFeedParams {
   readonly site: URL | string;
@@ -27,10 +34,10 @@ export const buildRssFeed = async ({ site, locale }: BuildRssFeedParams) => {
         title: p.entry.data.title,
         description: p.entry.data.description,
         pubDate: p.entry.data.pubDate,
-        link: `${blogPrefix}/${p.entry.id.replace(/^en\//, "")}`,
+        link: `${blogPrefix}/${p.entry.id.replace(/^en\//, "")}/`,
         author: `${person.email} (${p.entry.data.author})`,
         categories: p.entry.data.tags,
-        content: p.entry.body ? parser.render(p.entry.body) : undefined,
+        content: p.entry.body ? renderContent(p.entry.body) : undefined,
       })),
   });
 };

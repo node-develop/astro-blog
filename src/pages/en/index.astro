@@ -15,15 +15,16 @@ import { getEntry } from "astro:content";
 import { homeFrontmatterSchema } from "~/lib/content/home-schema";
 import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalPath } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const featured = posts[0];
 const grid = posts.slice(1, 4);
-const blogHref = "/en/blog";
-const courseHref = "/en/courses/claude-code-guide";
+const blogHref = canonicalPath("/en/blog");
+const courseHref = canonicalPath("/en/courses/claude-code-guide");
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
-const postHref = (id: string): string => `${blogHref}/${bareSlug(id)}`;
+const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 
 const homeEntry = await getEntry("site", "en/home");
 const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});

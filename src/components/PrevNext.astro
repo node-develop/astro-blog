@@ -24,7 +24,7 @@ const locale = forcedLocale ?? getLocaleFromPath(Astro.url.pathname);
 const { prev, next } = await getPrevNext({ slug: currentSlug, locale });
 const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
 
-const linkFor = (n: NeighbourPost): string => `${blogPrefix}/${n.slug}`;
+const linkFor = (n: NeighbourPost): string => `${blogPrefix}/${n.slug}/`;
 const labelPrev = locale === "en" ? "Previous" : "Предыдущая";
 const labelNext = locale === "en" ? "Next" : "Следующая";
 ---

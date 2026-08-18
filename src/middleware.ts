@@ -1,12 +1,21 @@
 import { defineMiddleware, sequence } from "astro:middleware";
 import { auth } from "~/lib/auth";
+import { canonicalHostRedirect, requiresAuthContext } from "~/lib/auth/request-classification";
 import { i18nRootRedirect } from "~/lib/i18n/middleware";
+
+const canonicalHostNormalization = defineMiddleware((context, next) => {
+  if (context.isPrerendered) return next();
+  const redirect = canonicalHostRedirect(context.request);
+  return redirect ? context.redirect(redirect.toString(), 301) : next();
+});
 
 const authContext = defineMiddleware(async (context, next) => {
   context.locals.user = null;
   context.locals.session = null;
 
-  if (context.isPrerendered) return next();
+  if (context.isPrerendered || !requiresAuthContext(context.request, context.url.pathname)) {
+    return next();
+  }
 
   const session = await auth.api.getSession({ headers: context.request.headers });
   context.locals.user = session?.user ?? null;
@@ -66,4 +75,10 @@ const securityHeaders = defineMiddleware(async (context, next) => {
   return response;
 });
 
-export const onRequest = sequence(i18nRootRedirect, authContext, adminGuard, securityHeaders);
+export const onRequest = sequence(
+  canonicalHostNormalization,
+  i18nRootRedirect,
+  authContext,
+  adminGuard,
+  securityHeaders,
+);

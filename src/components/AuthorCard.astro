@@ -4,8 +4,8 @@ import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
-const aboutHref = locale === "en" ? "/en/about" : "/about";
-const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+const aboutHref = locale === "en" ? "/en/about/" : "/about/";
+const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
 ---
 
 <aside class="author-card" aria-label={t(locale, "authorCard.aboutLabel")}>

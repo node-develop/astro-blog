@@ -18,7 +18,12 @@ describe("posts schema length enforcement", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects description exceeding max (201 — the regression case)", () => {
+  it("accepts a post description at the 200-character boundary", () => {
+    const result = postSchema.safeParse({ ...baseValid, description: "x".repeat(200) });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a post description exceeding the 200-character maximum", () => {
     const result = postSchema.safeParse({ ...baseValid, description: "x".repeat(201) });
     expect(result.success).toBe(false);
     if (!result.success) {

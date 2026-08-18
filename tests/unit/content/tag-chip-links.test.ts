@@ -8,18 +8,20 @@ const postLayout = readFileSync(join(process.cwd(), "src/layouts/PostLayout.astr
 
 describe("tag chips are anchors", () => {
   // Both files declare a locale-aware `tagsHrefBase` and use it as the chip prefix
-  // (RU page → "/tags", EN page → "/en/tags"). The chip then interpolates `${tag}`.
+  // (RU page → "/tags/", EN page → "/en/tags/"). The chip then interpolates `${tag}`.
   it("blog/index.astro renders tag chips as <a> with locale-aware /tags/<slug>", () => {
     expect(blogIndex).toMatch(/<a[^>]*class="list__tag-chip"/);
-    expect(blogIndex).toMatch(/const tagsHrefBase = locale === "en" \? "\/en\/tags" : "\/tags"/);
-    expect(blogIndex).toMatch(/href=\{`\$\{tagsHrefBase\}\/\$\{[^}]+\}`\}/);
+    expect(blogIndex).toMatch(
+      /const tagsHrefBase = locale === "en" \? "\/en\/tags\/" : "\/tags\/"/,
+    );
+    expect(blogIndex).toMatch(/href=\{`\$\{tagsHrefBase\}\$\{[^}]+\}\/`\}/);
     expect(blogIndex).not.toMatch(/<span class="list__tag-chip">/);
   });
 
   it("en/blog/index.astro renders tag chips as <a> with /en/tags/<slug>", () => {
     expect(blogIndexEn).toMatch(/<a[^>]*class="list__tag-chip"/);
-    expect(blogIndexEn).toMatch(/const tagsHrefBase = "\/en\/tags"/);
-    expect(blogIndexEn).toMatch(/href=\{`\$\{tagsHrefBase\}\/\$\{[^}]+\}`\}/);
+    expect(blogIndexEn).toMatch(/const tagsHrefBase = "\/en\/tags\/"/);
+    expect(blogIndexEn).toMatch(/href=\{`\$\{tagsHrefBase\}\$\{[^}]+\}\/`\}/);
   });
 
   it("PostLayout.astro renders tag chips as <a> with locale-aware path", () => {

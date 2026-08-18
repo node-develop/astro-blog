@@ -8,6 +8,7 @@ import { t } from "~/i18n";
 import tagsEn from "~/i18n/tags.en.json";
 import { buildWebPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale = "en" as const;
 const ru = await getOrderedPosts({ locale: "ru" });
@@ -16,8 +17,8 @@ const slugs = getAllTagSlugs({ ru, en });
 const grouped = groupPostsByTag(en); // EN page counts EN posts only
 const dict = tagsEn as Record<string, string>;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-const homeAbs = new URL("/en/", Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl("/en/");
 const title = t(locale, "tags.title");
 const description = t(locale, "tags.description");
 
@@ -72,7 +73,7 @@ const rows = slugs.map((slug) => ({
         <ul class="tags-index__list" aria-label={title}>
           {rows.map((row) => (
             <li class="tags-index__item">
-              <a class="tags-index__link" href={`/en/tags/${row.slug}`}>
+              <a class="tags-index__link" href={`/en/tags/${row.slug}/`}>
                 <span class="tags-index__chip">#{row.label}</span>
                 <span
                   class="tags-index__count"

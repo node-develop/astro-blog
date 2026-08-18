@@ -2,6 +2,8 @@ import MarkdownIt from "markdown-it";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { person } from "~/lib/seo/person";
 import { t, type Locale } from "~/i18n";
+import { canonicalInternalHref } from "~/lib/rehype/canonical-internal-links";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const parser = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
@@ -41,19 +43,24 @@ interface JsonFeed {
   readonly items: ReadonlyArray<JsonFeedItem>;
 }
 
-const stripTrailingSlash = (s: string): string => s.replace(/\/$/, "");
+const renderContent = (markdown: string): string =>
+  parser
+    .render(markdown)
+    .replace(/(<a\b[^>]*\bhref=")([^"]+)(")/gi, (_match, before, href, after) =>
+      [before, canonicalInternalHref(href), after].join(""),
+    );
 
 export const buildJsonFeed = async ({ site, locale }: BuildJsonFeedParams): Promise<Response> => {
   const posts = await getOrderedPosts({ locale });
   const lang = locale === "ru" ? "ru-RU" : "en-US";
-  const baseUrl = stripTrailingSlash(typeof site === "string" ? site : site.toString());
-  const blogPrefix = locale === "en" ? `${baseUrl}/en/blog` : `${baseUrl}/blog`;
-  const homeUrl = locale === "en" ? `${baseUrl}/en/` : `${baseUrl}/`;
-  const feedUrl = locale === "en" ? `${baseUrl}/en/feed.json` : `${baseUrl}/feed.json`;
+  const baseUrl = new URL(site).origin;
+  const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+  const homeUrl = canonicalUrl(locale === "en" ? "/en/" : "/", site);
+  const feedUrl = new URL(locale === "en" ? "/en/feed.json" : "/feed.json", site).toString();
 
   const author: JsonFeedAuthor = {
     name: person.name,
-    url: person.url,
+    url: canonicalUrl(person.url),
     avatar: person.image,
   };
 
@@ -71,7 +78,7 @@ export const buildJsonFeed = async ({ site, locale }: BuildJsonFeedParams): Prom
       .sort((a, b) => b.entry.data.pubDate.getTime() - a.entry.data.pubDate.getTime())
       .map((p): JsonFeedItem => {
         const slug = p.entry.id.replace(/^en\//, "");
-        const url = `${blogPrefix}/${slug}`;
+        const url = canonicalUrl(`${blogPrefix}/${slug}`, site);
         const base = {
           id: url,
           url,
@@ -82,7 +89,7 @@ export const buildJsonFeed = async ({ site, locale }: BuildJsonFeedParams): Prom
           authors: [author],
           language: lang,
         } as const;
-        return p.entry.body ? { ...base, content_html: parser.render(p.entry.body) } : base;
+        return p.entry.body ? { ...base, content_html: renderContent(p.entry.body) } : base;
       }),
   };
 

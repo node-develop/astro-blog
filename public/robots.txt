@@ -1,76 +1,56 @@
 # robots.txt — last reviewed 2026-05-09
 # Owner: a@artka.dev. Policy: allow retrieval/answer crawlers; disallow private surfaces.
-# /admin/, /api/, /login are auth-gated; /search is a client-side UI route with no
-# server-side content for crawlers to index.
+# /admin/ and /api/ are private surfaces. Utility HTML remains crawlable so its
+# noindex directive can be observed.
 
 User-agent: GPTBot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: OAI-SearchBot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: Claude-Web
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: anthropic-ai
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: Perplexity-User
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: Google-Extended
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
-Disallow: /login
-Disallow: /search
 
 Sitemap: https://artka.dev/sitemap-index.xml

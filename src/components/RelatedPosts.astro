@@ -44,7 +44,7 @@ const fmtDate = (d: Date): string =>
       <ul class="related__list">
         {related.map((p) => (
           <li class="related__item">
-            <a href={`${blogPrefix}/${p.slug}`} class="related__link">
+            <a href={`${blogPrefix}/${p.slug}/`} class="related__link">
               <p class="related__post-title">{p.title}</p>
               <p class="related__meta">
                 <time datetime={p.pubDate.toISOString()}>{fmtDate(p.pubDate)}</time>

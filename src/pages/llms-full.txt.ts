@@ -2,17 +2,16 @@ import type { APIContext } from "astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { person } from "~/lib/seo/person";
 import { extractArticleBody } from "~/lib/seo/article-body";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
-export const prerender = true;
-
-const SITE = "https://artka.dev";
+export const prerender = false;
 
 const renderPost = (
   locale: "ru" | "en",
   entry: { id: string; data: { title: string; description: string; pubDate: Date }; body?: string },
 ): string => {
   const slug = entry.id.replace(/^en\//, "").replace(/\.(md|mdx)$/, "");
-  const url = locale === "ru" ? `${SITE}/blog/${slug}` : `${SITE}/en/blog/${slug}`;
+  const url = canonicalUrl(locale === "ru" ? `/blog/${slug}` : `/en/blog/${slug}`);
   const tldr = extractArticleBody(entry.body ?? "", 80).text;
   const date = entry.data.pubDate.toISOString().slice(0, 10);
   return [
@@ -30,7 +29,7 @@ export async function GET(_ctx: APIContext) {
   const en = await getOrderedPosts({ locale: "en" });
 
   const sameAsLines = person.sameAs.length > 0 ? `Profiles: ${person.sameAs.join(", ")}` : null;
-  const notableWorkLines = person.notableWork.map((w) => `  - ${w.title} → ${w.url}`);
+  const notableWorkLines = person.notableWork.map((w) => `  - ${w.title} → ${canonicalUrl(w.url)}`);
   const header = [
     "# artka.dev — full LLM digest",
     "",
@@ -41,7 +40,7 @@ export async function GET(_ctx: APIContext) {
     `Alternate name: ${person.alternateName}`,
     `Role: ${person.jobTitle}`,
     `Years of experience: ${person.yearsExperience}+`,
-    `URL: ${person.url}`,
+    `URL: ${canonicalUrl(person.url)}`,
     `Email: ${person.email}`,
     ...(sameAsLines ? [sameAsLines] : []),
     "",
@@ -75,6 +74,7 @@ export async function GET(_ctx: APIContext) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=3600",
+      "X-Robots-Tag": "noindex",
     },
   });
 }

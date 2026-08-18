@@ -6,7 +6,7 @@ import Avatar from "~/components/Avatar.astro";
 import { getEntry, render } from "astro:content";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
-import { buildLandingNodes } from "~/lib/seo/schema";
+import { buildLandingNodes } from "~/lib/seo/landing";
 import { landingOgPath } from "~/lib/og/landing-pages";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
@@ -48,6 +48,7 @@ const nodes = buildLandingNodes({
   <SiteSidebar slot="sidebar" />
   <article class="prose">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
+    <h1>{entry.data.title}</h1>
     <Avatar size="lg" />
     <Content />
   </article>

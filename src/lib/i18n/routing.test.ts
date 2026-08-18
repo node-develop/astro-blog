@@ -59,10 +59,10 @@ describe("getCounterpart", () => {
     expect(getCounterpart("/en", "en")).toBe("/");
   });
   it("RU article → /en/<same>", () => {
-    expect(getCounterpart("/blog/01-introduction", "ru")).toBe("/en/blog/01-introduction");
+    expect(getCounterpart("/blog/01-introduction", "ru")).toBe("/en/blog/01-introduction/");
   });
   it("EN article → RU equivalent", () => {
-    expect(getCounterpart("/en/blog/01-introduction", "en")).toBe("/blog/01-introduction");
+    expect(getCounterpart("/en/blog/01-introduction", "en")).toBe("/blog/01-introduction/");
   });
   it("preserves trailing slash", () => {
     expect(getCounterpart("/blog/", "ru")).toBe("/en/blog/");
@@ -84,4 +84,11 @@ describe("checkCounterpartExists", () => {
   it("returns true for EN article when RU source exists", async () => {
     expect(await checkCounterpartExists("/en/blog/01-introduction", "en")).toBe(true);
   });
+
+  it.each(["/login/", "/admin/", "/admin/posts/", "/api/auth/get-session/"])(
+    "returns false for utility route %s",
+    async (pathname) => {
+      expect(await checkCounterpartExists(pathname, "ru")).toBe(false);
+    },
+  );
 });

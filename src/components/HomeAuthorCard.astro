@@ -24,7 +24,7 @@ interface Props {
 const { label, bio, linksAria } = Astro.props;
 
 const locale = getLocaleFromPath(Astro.url.pathname);
-const aboutHref = locale === "en" ? "/en/about" : "/about";
+const aboutHref = locale === "en" ? "/en/about/" : "/about/";
 
 const socialLabel = (url: string): string => {
   const host = new URL(url).hostname.replace(/^www\./, "");

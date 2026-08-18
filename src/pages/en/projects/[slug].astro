@@ -11,6 +11,7 @@ import {
   buildWebPageNode,
   type GraphNode,
 } from "~/lib/seo/schema";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 type Project = CollectionEntry<"projects">;
 
@@ -28,10 +29,9 @@ interface Props {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const locale: Locale = getLocaleFromPath(Astro.url.pathname);
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-const siteBase = Astro.site?.toString() ?? "https://artka.dev";
-const homeAbs = new URL("/en/", siteBase).toString();
-const projectsAbs = new URL("/en/projects", siteBase).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl("/en/");
+const projectsAbs = canonicalUrl("/en/projects");
 
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
@@ -67,6 +67,8 @@ const webPageNode = buildWebPageNode({
 }) as GraphNode;
 
 const statusLabel = t(locale, `projects.status.${entry.data.status}` as Parameters<typeof t>[1]);
+const projectLinkHref = (url: string): string =>
+  new URL(url).hostname === "artka.dev" ? canonicalUrl(url) : url;
 ---
 
 <BaseLayout
@@ -125,7 +127,7 @@ const statusLabel = t(locale, `projects.status.${entry.data.status}` as Paramete
             <ul class="project__links">
               {entry.data.links.map((l: { label: string; url: string }) => (
                 <li>
-                  <a href={l.url} target="_blank" rel="noopener noreferrer">
+                  <a href={projectLinkHref(l.url)} target="_blank" rel="noopener noreferrer">
                     {l.label} →
                   </a>
                 </li>

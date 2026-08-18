@@ -14,7 +14,10 @@ test.describe("SEO: static assets and feeds", () => {
     expect(res.status()).toBe(200);
     const body = await res.text();
     expect(body).toContain("<sitemap>");
-    expect(body).toContain("sitemap-0.xml");
+    expect(body).toContain("sitemap-ru.xml");
+    expect(body).toContain("sitemap-en.xml");
+    expect(body).not.toContain("sitemap-0.xml");
+    expect(body).not.toContain("<lastmod>");
   });
 
   test("/favicon.svg exists", async ({ request }) => {
@@ -72,7 +75,7 @@ test.describe("SEO: meta tags on rendered pages", () => {
   });
 
   test("post page emits BlogPosting + BreadcrumbList + article meta", async ({ page }) => {
-    await page.goto("/blog/02-context-and-cache");
+    await page.goto("/blog/local-coding-agent/");
 
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "article");
     await expect(page.locator('meta[property="article:published_time"]')).toHaveCount(1);
@@ -91,12 +94,17 @@ test.describe("SEO: meta tags on rendered pages", () => {
   });
 
   test("hreflang only emitted when EN counterpart exists", async ({ page }) => {
-    await page.goto("/blog/02-context-and-cache");
-    const ru = page.locator('link[rel="alternate"][hreflang="ru"]');
-    const en = page.locator('link[rel="alternate"][hreflang="en"]');
+    await page.goto("/blog/local-coding-agent/");
+    const ru = page.locator('link[rel="alternate"][hreflang="ru-RU"]');
+    const en = page.locator('link[rel="alternate"][hreflang="en-US"]');
     const xDefault = page.locator('link[rel="alternate"][hreflang="x-default"]');
     await expect(ru).toHaveCount(1);
     await expect(en).toHaveCount(1);
     await expect(xDefault).toHaveCount(1);
+  });
+
+  test("login has no locale alternates", async ({ page }) => {
+    await page.goto("/login/");
+    await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(0);
   });
 });

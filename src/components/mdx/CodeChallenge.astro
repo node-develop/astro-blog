@@ -3,7 +3,7 @@
  * Phase 5 — CodeChallenge MDX component.
  *
  * Renders a code prompt + textarea + "Run" button. On submit, posts to
- * `/api/check` with { challengeId, code, language }. The server runs
+ * `/api/check/` with { challengeId, code, language }. The server runs
  * the check (LLM-validated against the rubric in the lesson frontmatter
  * or hard-coded test cases), returns { pass, feedback, score? }.
  *
@@ -191,7 +191,7 @@ const labelLang = language.toUpperCase();
         statusEl.removeAttribute("data-state");
         fbEl.hidden = true;
         try {
-          const r = await fetch("/api/check", {
+          const r = await fetch("/api/check/", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ challengeId: id, code: editor.value, language: lang }),

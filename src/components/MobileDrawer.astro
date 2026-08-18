@@ -25,11 +25,11 @@ import ThemeToggle from "./ThemeToggle.astro";
 import LangToggle from "./LangToggle.astro";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
-const homeHref = locale === "en" ? "/en" : "/";
-const blogHref = locale === "en" ? "/en/blog" : "/blog";
-const aboutHref = locale === "en" ? "/en/about" : "/about";
-const projectsHref = locale === "en" ? "/en/projects" : "/projects";
-const usesHref = locale === "en" ? "/en/uses" : "/uses";
+const homeHref = locale === "en" ? "/en/" : "/";
+const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
+const aboutHref = locale === "en" ? "/en/about/" : "/about/";
+const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
+const usesHref = locale === "en" ? "/en/uses/" : "/uses/";
 
 const current = Astro.url.pathname.replace(/\/$/, "") || "/";
 const isActive = (href: string): boolean => {

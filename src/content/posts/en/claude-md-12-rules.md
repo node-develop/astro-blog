@@ -1,8 +1,7 @@
 ---
-title: "12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года"
+title: "12 Rules for CLAUDE.md: Extending Karpathy for 2026 Failure Modes"
 description: >-
-  Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
-  agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
+  Mnilax tested 12 CLAUDE.md rules across 30 codebases over six weeks, extending Karpathy's template for agent loops, checkpoints, and fail-loud behavior. This article explains the evidence.
 pubDate: 2026-05-10T00:00:00.000Z
 tags:
   - ai
@@ -10,10 +9,9 @@ tags:
   - prompt-engineering
 draft: false
 cover: /og-default.svg
-coverAlt: 12 правил для CLAUDE.md — расширение Karpathy
+coverAlt: "12 rules for CLAUDE.md — an extension of Karpathy's template"
 summary: >-
-  Karpathy в январе сформулировал 4 правила для CLAUDE.md. Mnilax расширил до 12, закрывая failure modes мая 2026:
-  токен-бюджеты, чекпойнты, fail-loud, конвенции. Что есть, что нет, как применить без раздувания файла.
+  Karpathy proposed four CLAUDE.md rules in January. Mnilax expanded them to twelve for token budgets, checkpoints, fail-loud behavior, and newer coding-agent failure modes. Here is what the set covers and how to adopt it without bloating the file.
 keywords:
   - claude code
   - claude.md
@@ -24,34 +22,24 @@ keywords:
   - multi-step ai workflows
   - behavioral contract llm
 faq:
-  - question: Зачем CLAUDE.md, если Claude Code и так подцепляет контекст из проекта?
+  - question: "Why use CLAUDE.md if Claude Code already reads project context?"
     answer: >-
-      CLAUDE.md задаёт поведенческие рамки до того, как модель прочитает код. Без него Claude угадывает стек, конвенции
-      и запреты заново на каждой сессии — это лишние токены и непредсказуемая консистентность между запусками. По данным
-      Anthropic, файл advisory (~80% compliance), но без него и этих 80% не будет.
-  - question: Какой смысл расширять до 12 правил, если 4 от Karpathy хватало?
+      CLAUDE.md establishes behavioral constraints before the model reads the code. Without it, Claude repeatedly guesses the stack, conventions, and prohibitions, consuming tokens and producing less consistent sessions. Anthropic describes the file as advisory, but an absent contract cannot guide behavior at all.
+  - question: "Why expand the template to twelve rules if Karpathy's four were enough?"
     answer: >-
-      Karpathy писал в январе, когда Claude Code был ближе к autocomplete. В мае ландшафт другой: multi-step агенты,
-      hook-каскады, кросс-сессионные потоки. По замерам Mnilax, добавление 8 правил снижает частоту ошибок ещё на 8
-      процентных пунктов (с 11% до 3%) при почти неизменном compliance (76% против 78%).
-  - question: Можно ли просто скопировать чужой CLAUDE.md и забыть?
+      The original rules predated today's long multi-step agents, hook chains, and cross-session workflows. Mnilax's measurements attribute an additional reduction in errors to eight rules covering those newer failure modes while keeping compliance nearly unchanged.
+  - question: "Can I copy someone else's CLAUDE.md and leave it unchanged?"
     answer: >-
-      Можно, но это работает две недели. Дальше кодовая база сдвигается, правила перестают совпадать с реальностью, и
-      Claude следует им формально. CLAUDE.md — behavioral contract против ошибок, которые ты сам видишь; чужой шаблон
-      полезен как стартер, не как финал.
-  - question: Что если мой CLAUDE.md уже больше 200 строк?
+      It works only as a starting point. As a codebase evolves, generic rules drift away from reality. A useful CLAUDE.md is a behavioral contract for failures observed in the actual project and must evolve with that project.
+  - question: "What should I do if my CLAUDE.md is already longer than 200 lines?"
     answer: >-
-      По замерам Mnilax, после ~200 строк compliance падает: важные правила тонут в шуме. Лечится выносом длинных секций
-      (стек, команды, описания подсистем) в `@docs/...` через @-импорты Claude Code. В корневом CLAUDE.md остаются
-      только правила и краткий контекст.
-  - question: Помогают ли эти правила в обычной API-сессии без Claude Code?
+      Move long stack, command, and subsystem references into imported documents. Keep the root CLAUDE.md focused on rules and brief context so important constraints are not buried in noise.
+  - question: "Do these rules help in an API session without Claude Code?"
     answer: >-
-      Да, если положить их в system prompt. Cache-friendly статичный префикс с правилами работает поверх любых вызовов
-      Anthropic SDK. Эффект тот же — модель меньше додумывает и больше озвучивает предположения. Правила 6 (бюджеты), 10
-      (чекпойнты) и 12 (fail loud) полезны и без CLI-обвязки.
+      Yes. Put the stable rules in the system prompt so they form a cache-friendly prefix. Budget, checkpoint, and fail-loud rules improve multi-step Anthropic SDK workflows even without the CLI.
 lang: en
 sourceHash: 07660cd4ad93b31d9b38e2ab5ed52708cccd60f9b4d74674d7e87502bd738457
-manuallyEdited: false
+manuallyEdited: true
 ---
 
 > Over four months after Karpathy's January thread, the `CLAUDE.md` template grew from 4 rules to 12. I ran the expanded set on typical blog tasks and several work repos — the frequency of silent Claude Code errors drops noticeably. The eight added rules cover what didn't exist as a class of problems in January: long-running agent loops, cross-session flows, shallow tests, quiet failures instead of explicit errors. I opened my own `CLAUDE.md` for this blog — Karpathy's four original rules are already there in `Code Standards` and `Prohibitions`, the eight added ones are not. I'm going through each one and figuring out where it makes sense to insert them.
@@ -86,10 +74,10 @@ flowchart LR
 
 This is the foundation. Without it, any superstructure loses half its meaning.
 
-| #   | Rule                  | What it covers                                                                                           |
-| --- | --------------------- | -------------------------------------------------------------------------------------------------------- |
-| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.               |
-| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                         |
+| #   | Rule                  | What it covers                                                                                         |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Think Before Coding   | Silent guesses. Voice assumptions, ask when unclear, push back when there's a simpler way.              |
+| 2   | Simplicity First      | Minimum code that solves the task. No speculative abstractions "for the future".                       |
 | 3   | Surgical Changes      | Touch only what's needed. Don't "improve" neighboring code, don't reformat what you weren't asked about. |
 | 4   | Goal-Driven Execution | Describe success criteria, not step-by-step instructions. Strong success-criteria let the model iterate. |
 
@@ -101,12 +89,12 @@ In my Astro blog's `CLAUDE.md`, these four are covered not as a separate section
 
 Four gaps I observe in real work:
 
-| Gap                        | What breaks                                                                               | Which added rules cover it               |
-| -------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Long-running agent tasks   | Multi-step pipeline drifts, burns tokens, loses context                                   | 6 (budgets), 10 (checkpoints), 12 (loud) |
-| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages     | 11 (conventions), 7 (surface conflicts)  |
-| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic | 9 (intent over behavior)                 |
-| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe  | (not covered by 12 rules — separate)     |
+| Gap                        | What breaks                                                                                    | Which added rules cover it         |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Long-running agent tasks   | Multi-step pipeline drifts, burns tokens, loses context                                        | 6 (budgets), 10 (checkpoints), 12 (loud) |
+| Multi-codebase consistency | In a monorepo "match existing style" is ambiguous — Claude picks randomly or averages           | 11 (conventions), 7 (surface conflicts)  |
+| Test quality               | "Tests passed" becomes the goal; Claude writes tests that won't fail even on broken logic       | 9 (intent over behavior)           |
+| Prototype vs production    | "Simplicity First" overdoes it early on, when you need 100 lines of scaffolding to probe       | (not covered by 12 rules — separate)   |
 
 The last gap stays alive. Either you turn Simplicity on or off — there's no middle mode in `CLAUDE.md`.
 

@@ -7,20 +7,16 @@
  * (or set `sitemap: false`) so this file owns `/sitemap.xml`.
  */
 import type { APIRoute } from "astro";
-
-const SITE = "https://artka.dev";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 export const GET: APIRoute = () => {
-  const today = new Date().toISOString().slice(0, 10);
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>${SITE}/sitemap-ru.xml</loc>
-    <lastmod>${today}</lastmod>
+    <loc>${canonicalUrl("/sitemap-ru.xml")}</loc>
   </sitemap>
   <sitemap>
-    <loc>${SITE}/sitemap-en.xml</loc>
-    <lastmod>${today}</lastmod>
+    <loc>${canonicalUrl("/sitemap-en.xml")}</loc>
   </sitemap>
 </sitemapindex>`;
   return new Response(xml, {

@@ -21,7 +21,7 @@ const user = session?.user ?? null;
   </nav>
   <div class="admin-header__user">
     {user && <span class="admin-header__email">{user.email}</span>}
-    <form method="POST" action="/api/auth/sign-out">
+    <form method="POST" action="/api/auth/sign-out/">
       <button type="submit" class="admin-header__logout">Выйти</button>
     </form>
   </div>
