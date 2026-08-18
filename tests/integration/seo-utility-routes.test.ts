@@ -58,6 +58,31 @@ const fetchBuiltRoute = async (
   throw new Error(`Timed out fetching ${path}`);
 };
 
+const fetchBuiltResponse = async (
+  origin: string,
+  path: string,
+  child: ChildProcess,
+  serverOutput: () => string,
+): Promise<{ readonly response: Response; readonly body: string }> => {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    if (child.exitCode !== null) {
+      throw new Error(`Standalone server exited with ${child.exitCode}:\n${serverOutput()}`);
+    }
+    try {
+      const response = await fetch(`${origin}${path}`, { redirect: "follow" });
+      const body = await response.text();
+      if (!response.ok) {
+        throw new Error(`${path} returned ${response.status}:\n${body.slice(0, 1_000)}`);
+      }
+      return { response, body };
+    } catch (error) {
+      if (attempt === 79) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+  throw new Error(`Timed out fetching ${path}`);
+};
+
 const metaContent = (html: string, name: string): string | undefined => {
   const tag = html.match(new RegExp(`<meta\\b(?=[^>]*\\bname=["']${name}["'])[^>]*>`, "i"))?.[0];
   return tag?.match(/\bcontent=["']([^"']+)["']/i)?.[1];
@@ -91,10 +116,16 @@ describe("built utility routes", () => {
       const searchHtml = await fetchBuiltRoute(origin, "/search/", child, () => output);
       const enSearchHtml = await fetchBuiltRoute(origin, "/en/search/", child, () => output);
       const loginHtml = await fetchBuiltRoute(origin, "/login/", child, () => output);
+      const llmsFull = await fetchBuiltResponse(origin, "/llms-full.txt", child, () => output);
 
       expect(metaContent(searchHtml, "robots")).toBe("noindex,follow");
       expect(metaContent(enSearchHtml, "robots")).toBe("noindex,follow");
       expect(metaContent(loginHtml, "robots")).toBe("noindex,follow");
+
+      expect(llmsFull.response.status).toBe(200);
+      expect(llmsFull.response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+      expect(llmsFull.response.headers.get("x-robots-tag")).toBe("noindex");
+      expect(llmsFull.body).toContain("# artka.dev — full LLM digest");
 
       expect(enSearchHtml).toMatch(/<h1\b[^>]*>\s*Search\s*<\/h1>/);
       expect(enSearchHtml).toContain('action="/en/search/"');

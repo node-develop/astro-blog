@@ -4,7 +4,7 @@ import { person } from "~/lib/seo/person";
 import { extractArticleBody } from "~/lib/seo/article-body";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
-export const prerender = true;
+export const prerender = false;
 
 const renderPost = (
   locale: "ru" | "en",

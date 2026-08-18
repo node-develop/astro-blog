@@ -1,6 +1,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import { searchPostsMeta } from "~/lib/db/repo/posts-meta";
 import type { Locale } from "~/i18n";
+import { canonicalPath } from "~/lib/seo/url-policy";
 
 export interface NodeSearchHit {
   readonly url: string;
@@ -53,7 +54,7 @@ export const searchNode = async (
     // URL is always /<locale>/blog/<bare-slug> with no double segment.
     const bareSlug = hit.slug.replace(/^en\//, "");
     enriched.push({
-      url: `${blogPrefix}/${bareSlug}`,
+      url: canonicalPath(`${blogPrefix}/${bareSlug}`),
       title: post.data.title,
       excerpt: post.data.description ?? "",
     });
