@@ -8,6 +8,7 @@ import { t } from "~/i18n";
 import tagsEn from "~/i18n/tags.en.json";
 import { graphIds, buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import type { GetStaticPaths } from "astro";
+import { isTagArchiveIndexable } from "~/lib/seo/indexability";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
 export const getStaticPaths = (async () => {
@@ -74,6 +75,7 @@ const webPageNode = buildWebPageNode({
   title={title}
   description={description}
   fullWidth={true}
+  noindex={!isTagArchiveIndexable(matches)}
   extraSchemaNodes={[blogNode, breadcrumbNode, webPageNode]}
 >
   <SiteSidebar slot="sidebar" />

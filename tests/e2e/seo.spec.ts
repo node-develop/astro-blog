@@ -14,7 +14,10 @@ test.describe("SEO: static assets and feeds", () => {
     expect(res.status()).toBe(200);
     const body = await res.text();
     expect(body).toContain("<sitemap>");
-    expect(body).toContain("sitemap-0.xml");
+    expect(body).toContain("sitemap-ru.xml");
+    expect(body).toContain("sitemap-en.xml");
+    expect(body).not.toContain("sitemap-0.xml");
+    expect(body).not.toContain("<lastmod>");
   });
 
   test("/favicon.svg exists", async ({ request }) => {
