@@ -16,20 +16,22 @@ import {
 import { landingOgPath } from "~/lib/og/landing-pages";
 import { resolveTagLabel } from "~/lib/content/tags";
 import tagsRu from "~/i18n/tags.ru.json";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
-const blogHref = locale === "en" ? "/en/blog" : "/blog";
-const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
+const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
+const courseHref =
+  locale === "en" ? "/en/courses/claude-code-guide/" : "/courses/claude-code-guide/";
 const homeHref = locale === "en" ? "/en/" : "/";
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const blogNode = buildBlogNode(locale);
-const tagsHrefBase = locale === "en" ? "/en/tags" : "/tags";
+const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 const dict = tagsRu as Record<string, string>;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-const homeAbs = new URL(homeHref, Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(homeHref);
 
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
@@ -87,7 +89,7 @@ const webPageNode = buildWebPageNode({
       allTags.length > 0 && (
         <div class="list__tags" aria-label={t(locale, "blog.tagsAria")}>
           {allTags.map((tag: string) => (
-            <a class="list__tag-chip" href={`${tagsHrefBase}/${tag}`}>
+            <a class="list__tag-chip" href={`${tagsHrefBase}${tag}/`}>
               #{resolveTagLabel(tag, locale, dict)}
             </a>
           ))}
@@ -99,7 +101,7 @@ const webPageNode = buildWebPageNode({
       {
         posts.map((p: PostWithMeta, idx: number) => (
           <li class="list__item">
-            <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="list__link">
+            <a href={`${blogHref}${bareSlug(p.entry.id)}/`} class="list__link">
               {/* Position in the visible list, not p.meta.order — the latter is
                   a DB curatorial field that defaults to MAX_SAFE_INTEGER for
                   posts without a posts_meta row, rendering as a 16-digit

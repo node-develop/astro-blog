@@ -17,6 +17,7 @@ import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import { mdxComponents } from "~/components/mdx";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -40,13 +41,12 @@ const courseSlug = course.id.replace(/(?:\/en)?\/_index$/, "");
 const lessonSlug = lesson.id.replace(/^.*\//, "");
 
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
-  `${localePrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
-const courseHref = `${localePrefix}/courses/${courseSlug}`;
+  `${localePrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}/`;
+const courseHref = `${localePrefix}/courses/${courseSlug}/`;
 
-const siteBase = Astro.site?.toString() ?? "https://artka.dev";
-const canonical = new URL(Astro.url.pathname, siteBase).toString();
-const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
-const courseAbs = new URL(courseHref, siteBase).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
+const courseAbs = canonicalUrl(courseHref);
 
 // Title template per SEO-W: "{N}. {lesson.title} — {course.title}".
 // BaseLayout's smart-suffix appends " | artka.dev".

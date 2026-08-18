@@ -40,14 +40,13 @@ describe("buildOrganizationNode", () => {
 });
 
 describe("buildWebSiteNode", () => {
-  it("emits inLanguage and SearchAction for ru", () => {
+  it("emits inLanguage without advertising a nonexistent search endpoint", () => {
     const node = buildWebSiteNode("ru");
     expect(node["@type"]).toBe("WebSite");
     expect(node["@id"]).toBe(graphIds.website);
     expect(node.inLanguage).toBe("ru-RU");
     expect(node.publisher).toEqual({ "@id": graphIds.organization });
-    expect(node.potentialAction["@type"]).toBe("SearchAction");
-    expect(node.potentialAction.target).toContain("search?q={search_term_string}");
+    expect(node).not.toHaveProperty("potentialAction");
   });
 
   it("switches inLanguage for en", () => {
@@ -72,7 +71,7 @@ describe("buildPersonNode — Plan 2 additions", () => {
       const out = node.subjectOf[i]!;
       expect(out["@type"]).toBe("CreativeWork");
       expect(out.name).toBe(w.title);
-      expect(out.url).toBe(w.url);
+      expect(out.url).toBe(new URL(w.url.endsWith("/") ? w.url : `${w.url}/`).toString());
       expect(out.description).toBe(w.description);
     }
   });
@@ -83,14 +82,14 @@ describe("buildBlogNode", () => {
     const ru = buildBlogNode("ru");
     expect(ru["@type"]).toBe("Blog");
     expect(ru["@id"]).toBe(graphIds.blogRu);
-    expect(ru.url).toBe("https://artka.dev/blog");
+    expect(ru.url).toBe("https://artka.dev/blog/");
     expect(ru.inLanguage).toBe("ru-RU");
     expect(ru.author).toEqual({ "@id": graphIds.person });
     expect(ru.publisher).toEqual({ "@id": graphIds.organization });
 
     const en = buildBlogNode("en");
     expect(en["@id"]).toBe(graphIds.blogEn);
-    expect(en.url).toBe("https://artka.dev/en/blog");
+    expect(en.url).toBe("https://artka.dev/en/blog/");
     expect(en.inLanguage).toBe("en-US");
   });
 });

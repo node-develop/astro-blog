@@ -7,6 +7,7 @@ import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t, type Locale } from "~/i18n";
 import { buildCollectionPageNode, buildBreadcrumbsNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale: Locale = getLocaleFromPath(Astro.url.pathname);
 const allProjects = await getCollection("projects", (e: CollectionEntry<"projects">) =>
@@ -18,13 +19,10 @@ const projects = [...allProjects].sort((a, b) => {
 });
 
 const bareSlug = (id: string): string => id.replace(/^en\//, "").replace(/\.md$/, "");
-const projectsHref = locale === "en" ? "/en/projects" : "/projects";
-const siteBase = Astro.site?.toString() ?? "https://artka.dev";
-const itemUrls = projects.map((p) =>
-  new URL(`${projectsHref}/${bareSlug(p.id)}`, siteBase).toString(),
-);
-const canonical = new URL(Astro.url.pathname, siteBase).toString();
-const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
+const itemUrls = projects.map((p) => canonicalUrl(`${projectsHref}${bareSlug(p.id)}`));
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
@@ -71,7 +69,7 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
         <ul class="projects__list">
           {projects.map((p) => (
             <li class="projects__item">
-              <a href={`${projectsHref}/${bareSlug(p.id)}`} class="projects__link">
+              <a href={`${projectsHref}${bareSlug(p.id)}/`} class="projects__link">
                 <header class="projects__card-header">
                   <h2 class="projects__card-title">{p.data.title}</h2>
                   <span class={`projects__status projects__status--${p.data.status}`}>

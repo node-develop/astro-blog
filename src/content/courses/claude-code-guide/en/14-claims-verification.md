@@ -229,5 +229,3 @@ This guide is a snapshot as of **April 23, 2026, Claude Code v2.1.89**. Some thi
 **End of guide.**
 
 🚀 Good luck with Claude Code. If this guide helped you avoid even one mistake — it paid for itself.
-
-**Back →** [README (table of contents)](./README)

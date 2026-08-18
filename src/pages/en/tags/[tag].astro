@@ -8,6 +8,7 @@ import { t } from "~/i18n";
 import tagsEn from "~/i18n/tags.en.json";
 import { graphIds, buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import type { GetStaticPaths } from "astro";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 export const getStaticPaths = (async () => {
   const ru = await getOrderedPosts({ locale: "ru" });
@@ -26,9 +27,7 @@ const dict = tagsEn as Record<string, string>;
 const label = resolveTagLabel(tag, "en", dict);
 const title = t("en", "tags.archiveTitle").replace("{label}", label);
 const description = t("en", "tags.archiveDescription").replace("{label}", label);
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-
-const SITE = "https://artka.dev";
+const canonical = canonicalUrl(Astro.url.pathname);
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 
 // Blog node for THIS archive — distinct @id per slug; references global Person/Org.
@@ -43,16 +42,16 @@ const blogNode = {
   publisher: { "@id": graphIds.organization },
   blogPost: matches.map((p) => ({
     "@type": "BlogPosting",
-    "@id": `${SITE}/en/blog/${bareSlug(p.entry.id)}#blogposting`,
+    "@id": `${canonicalUrl(`/en/blog/${bareSlug(p.entry.id)}`)}#blogposting`,
     headline: p.entry.data.title,
-    url: `${SITE}/en/blog/${bareSlug(p.entry.id)}`,
+    url: canonicalUrl(`/en/blog/${bareSlug(p.entry.id)}`),
     datePublished: p.entry.data.pubDate.toISOString(),
   })),
 };
 
 const breadcrumbItems = [
-  { name: t("en", "nav.home"), href: `${SITE}/en/` },
-  { name: t("en", "tags.title"), href: `${SITE}/en/tags` },
+  { name: t("en", "nav.home"), href: canonicalUrl("/en/") },
+  { name: t("en", "tags.title"), href: canonicalUrl("/en/tags") },
   { name: label },
 ] as const;
 
@@ -83,7 +82,7 @@ const webPageNode = buildWebPageNode({
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t("en", "breadcrumbs.aria")} />
     <header class="tag-archive__header">
       <p class="tag-archive__eyebrow">
-        <a href="/en/tags">{t("en", "tags.backToIndex")}</a>
+        <a href="/en/tags/">{t("en", "tags.backToIndex")}</a>
       </p>
       <h1 class="tag-archive__title">#{label}</h1>
       <p class="tag-archive__lede">{description}</p>
@@ -96,7 +95,7 @@ const webPageNode = buildWebPageNode({
         <ul class="tag-archive__posts">
           {matches.map((p, idx) => (
             <li class="tag-archive__item">
-              <a href={`/en/blog/${bareSlug(p.entry.id)}`} class="tag-archive__link">
+              <a href={`/en/blog/${bareSlug(p.entry.id)}/`} class="tag-archive__link">
                 {/* See RU twin for rationale — visible-list position, not
                     p.meta.order (DB curatorial field). */}
                 <span class="tag-archive__num">{String(idx + 1).padStart(2, "0")}</span>

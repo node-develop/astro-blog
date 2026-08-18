@@ -195,6 +195,9 @@ importers:
       '@types/diff':
         specifier: ^5.2.3
         version: 5.2.3
+      '@types/hast':
+        specifier: 3.0.4
+        version: 3.0.4
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9

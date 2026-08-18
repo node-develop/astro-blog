@@ -7,16 +7,16 @@
 > distributed systems, gRPC, Kafka, observability.
 
 ## Authoritative pages
-- [About the author](https://artka.dev/about): bio, role, stack, contact
-- [Now](https://artka.dev/now): currently in flight
-- [Uses](https://artka.dev/uses): public toolchain
-- [Projects](https://artka.dev/projects): portfolio with role and outcomes
+- [About the author](https://artka.dev/about/): bio, role, stack, contact
+- [Now](https://artka.dev/now/): currently in flight
+- [Uses](https://artka.dev/uses/): public toolchain
+- [Projects](https://artka.dev/projects/): portfolio with role and outcomes
 
 ## Content
-- [Blog index (RU)](https://artka.dev/blog): all articles, source of truth
-- [Blog index (EN)](https://artka.dev/en/blog): English translations
-- [Tags index (RU)](https://artka.dev/tags): topic-grouped archives
-- [Claude Code Guide](https://artka.dev/courses/claude-code-guide): 14-lesson course
+- [Blog index (RU)](https://artka.dev/blog/): all articles, source of truth
+- [Blog index (EN)](https://artka.dev/en/blog/): English translations
+- [Tags index (RU)](https://artka.dev/tags/): topic-grouped archives
+- [Claude Code Guide](https://artka.dev/courses/claude-code-guide/): 14-lesson course
 - [RSS RU](https://artka.dev/rss.xml): full text
 - [RSS EN](https://artka.dev/en/rss.xml): full text
 - [JSON Feed RU](https://artka.dev/feed.json): full text, JSON Feed 1.1

@@ -1,6 +1,7 @@
 import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { Locale } from "~/i18n";
+import { canonicalPath } from "~/lib/seo/url-policy";
 
 const isEnPrefix = (pathname: string): boolean => pathname === "/en" || pathname.startsWith("/en/");
 
@@ -15,9 +16,9 @@ export const stripLocalePrefix = (pathname: string): string => {
 export const getCounterpart = (pathname: string, currentLocale: Locale): string => {
   if (currentLocale === "ru") {
     if (pathname === "/") return "/en/";
-    return `/en${pathname}`;
+    return canonicalPath(`/en${pathname}`);
   }
-  return stripLocalePrefix(pathname);
+  return canonicalPath(stripLocalePrefix(pathname));
 };
 
 const BLOG_PREFIX_RU = "/blog/";
@@ -27,6 +28,10 @@ export const checkCounterpartExists = async (
   pathname: string,
   currentLocale: Locale,
 ): Promise<boolean> => {
+  const canonical = canonicalPath(pathname);
+  if (canonical === "/login/" || canonical.startsWith("/admin/") || canonical.startsWith("/api/")) {
+    return false;
+  }
   if (currentLocale === "ru" && pathname.startsWith(BLOG_PREFIX_RU)) {
     const slug = pathname.slice(BLOG_PREFIX_RU.length).replace(/\/$/, "");
     const entries = await getCollection(

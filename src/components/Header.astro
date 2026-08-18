@@ -25,11 +25,11 @@ const isActive = (prefix: string): boolean =>
   prefix === "/" ? localPath === "/" : localPath.startsWith(prefix);
 
 const homeHref = locale === "en" ? "/en/" : "/";
-const blogHref = locale === "en" ? "/en/blog" : "/blog";
-const aboutHref = locale === "en" ? "/en/about" : "/about";
-const nowHref = locale === "en" ? "/en/now" : "/now";
-const usesHref = locale === "en" ? "/en/uses" : "/uses";
-const projectsHref = locale === "en" ? "/en/projects" : "/projects";
+const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
+const aboutHref = locale === "en" ? "/en/about/" : "/about/";
+const nowHref = locale === "en" ? "/en/now/" : "/now/";
+const usesHref = locale === "en" ? "/en/uses/" : "/uses/";
+const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
 
 const tagline = locale === "en" ? "notes from production" : "записки из продакшна";
 ---

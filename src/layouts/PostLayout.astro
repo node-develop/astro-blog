@@ -27,6 +27,7 @@ import {
 } from "~/lib/seo/schema";
 import type { CollectionEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 interface Props {
   post: CollectionEntry<"posts">;
@@ -36,7 +37,7 @@ interface Props {
 const { post, headings } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary, faq } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
 const slug = post.id.replace(/^en\//, "");
 const ogImagePath = `/og/${slug}.png`;
 
@@ -91,7 +92,7 @@ const primaryTag = tags?.[0] ?? "—";
 const pubYear = pubDate.getFullYear();
 const pagefindFilter = `tag:${primaryTag}, date:${pubYear}`;
 
-const aboutHref = locale === "en" ? "/en/about" : "/about";
+const aboutHref = locale === "en" ? "/en/about/" : "/about/";
 const formattedPubDate = pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
   year: "numeric",
   month: "long",
@@ -157,7 +158,7 @@ const formattedUpdatedDate = updatedDate
           <ul class="post__tags" aria-label={t(locale, "post.tags")}>
             {tags.map((tag: string) => (
               <li>
-                <a class="post__tag-chip" href={`${tagsHrefBase}${tag}`}>
+                <a class="post__tag-chip" href={`${tagsHrefBase}${tag}/`}>
                   #{resolveTagLabel(tag, locale, tagDict)}
                 </a>
               </li>

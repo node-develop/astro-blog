@@ -117,6 +117,7 @@
     "@playwright/test": "^1.55.0",
     "@testcontainers/postgresql": "^11.14.0",
     "@types/diff": "^5.2.3",
+    "@types/hast": "3.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/markdown-it": "^14.1.2",
     "@types/mdast": "^4.0.4",

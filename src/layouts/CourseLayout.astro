@@ -21,6 +21,7 @@ import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildBreadcrumbsNode, buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -37,11 +38,11 @@ const blogPrefix = locale === "en" ? "/en" : "";
 // — a path the EN lesson route doesn't generate, hence the 404.
 const courseSlug = course.id.replace(/(?:\/en)?\/_index$/, "");
 const lessonHref = (l: CollectionEntry<"lesson">): string =>
-  `${blogPrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}`;
+  `${blogPrefix}/courses/${courseSlug}/${l.id.replace(/^.*\//, "")}/`;
 
 const siteBase = Astro.site?.toString() ?? "https://artka.dev";
-const canonical = new URL(Astro.url.pathname, siteBase).toString();
-const homeAbs = new URL(locale === "en" ? "/en/" : "/", siteBase).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
@@ -54,7 +55,7 @@ const breadcrumbsNode = buildBreadcrumbsNode({
   items: breadcrumbItems,
 }) as GraphNode;
 
-const lessonUrls = lessons.map((l) => new URL(lessonHref(l), siteBase).toString());
+const lessonUrls = lessons.map((l) => canonicalUrl(lessonHref(l)));
 
 // Hardcoded knowledge that the only course we own today is the Claude Code
 // Guide. When a second course ships, expose `ogSlug` from course frontmatter

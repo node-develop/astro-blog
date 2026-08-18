@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import remarkMath from "remark-math";
 import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter-duplicates";
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
+import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
 import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
@@ -15,6 +16,7 @@ import rehypeCodeTitles from "rehype-code-titles";
 import { autolinkOptions } from "./src/lib/markdown/autolink";
 import { externalLinkPolicy } from "./src/lib/markdown/external-links";
 import { shikiThemes } from "./src/lib/markdown/shiki";
+import { buildLegacyRedirects } from "./src/lib/seo/redirects";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -80,6 +82,7 @@ const pagefindDevMiddleware = (): VitePluginShape => ({
 
 export default defineConfig({
   site: SITE_URL,
+  trailingSlash: "always",
   output: "static",
   adapter: node({ mode: "standalone" }),
   i18n: {
@@ -90,80 +93,12 @@ export default defineConfig({
       redirectToDefaultLocale: false,
     },
   },
-  // Permanent redirects (Astro emits 301s + a static fallback at build).
-  //
-  // Three families:
-  //
-  //   1. /blog/<slug>(/) → /courses/claude-code-guide/<slug>
-  //      The claude-code-guide series previously lived under /blog/ before
-  //      the course-lesson layout existed. We list both with and without
-  //      trailing slash because Astro's `redirects` matches keys exactly,
-  //      and Search Console reported the slash-suffixed variants as 404.
-  //
-  //   2. Removed posts → /blog
-  //      A handful of older drafts (igaming-architecture, event-sourcing-kafka,
-  //      scaling-node-microservices) were unpublished. Send their URLs back
-  //      to the blog index instead of returning 404.
-  //
-  //   3. Misc legacy roots → closest live page
-  //      One-off paths surfaced in Search Console (`/02-context-and-cache`
-  //      from a pre-/blog era, `/igaming`, `/privacy`) that have no modern
-  //      counterpart. Redirect to the closest live page rather than 404.
-  redirects: (() => {
-    const courseSlugs = [
-      "01-introduction",
-      "02-context-and-cache",
-      "03-claude-md",
-      "04-skills",
-      "05-hooks",
-      "06-mcp",
-      "07-plugins",
-      "08-tool-calls-and-loop",
-      "09-subagents",
-      "10-agent-teams",
-      "11-models-and-pricing",
-      "12-travel-agent-blueprint",
-      "13-best-practices",
-      "14-claims-verification",
-    ];
-    const removedPosts = [
-      "igaming-architecture",
-      "event-sourcing-kafka",
-      "scaling-node-microservices",
-    ];
-    const blogToCourseRu = courseSlugs.flatMap((slug) => [
-      [`/blog/${slug}`, `/courses/claude-code-guide/${slug}`],
-      [`/blog/${slug}/`, `/courses/claude-code-guide/${slug}`],
-    ]);
-    const blogToCourseEn = courseSlugs.flatMap((slug) => [
-      [`/en/blog/${slug}`, `/en/courses/claude-code-guide/${slug}`],
-      [`/en/blog/${slug}/`, `/en/courses/claude-code-guide/${slug}`],
-    ]);
-    const removedPostsRedirects = removedPosts.flatMap((slug) => [
-      [`/blog/${slug}`, "/blog"],
-      [`/blog/${slug}/`, "/blog"],
-      [`/en/blog/${slug}`, "/en/blog"],
-      [`/en/blog/${slug}/`, "/en/blog"],
-    ]);
-    const legacyMisc: ReadonlyArray<[string, string]> = [
-      ["/02-context-and-cache", "/courses/claude-code-guide/02-context-and-cache"],
-      ["/02-context-and-cache/", "/courses/claude-code-guide/02-context-and-cache"],
-      ["/igaming", "/"],
-      ["/igaming/", "/"],
-      ["/privacy", "/"],
-      ["/privacy/", "/"],
-    ];
-    return Object.fromEntries([
-      ...blogToCourseRu,
-      ...blogToCourseEn,
-      ...removedPostsRedirects,
-      ...legacyMisc,
-    ]);
-  })(),
+  redirects: buildLegacyRedirects(),
   integrations: [
     mdx({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
       rehypePlugins: [
+        canonicalInternalLinks,
         rehypeSlug,
         [rehypeAutolinkHeadings, autolinkOptions],
         // SEO: outbound links get rel="nofollow noopener noreferrer" + target="_blank".
@@ -184,6 +119,7 @@ export default defineConfig({
     shikiConfig: shikiThemes,
     remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
     rehypePlugins: [
+      canonicalInternalLinks,
       rehypeSlug,
       [rehypeAutolinkHeadings, autolinkOptions],
       [rehypeExternalLinks, externalLinkPolicy satisfies ExternalLinksOptions],

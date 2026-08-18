@@ -90,7 +90,8 @@ describe("SEO: RSS feeds", () => {
   it("shared feed builder includes content, author, categories, both languages", async () => {
     const src = await read("src/lib/feeds/build-rss.ts");
     expect(src).toMatch(/MarkdownIt/);
-    expect(src).toMatch(/content:.*parser\.render/);
+    expect(src).toMatch(/content:.*renderContent/);
+    expect(src).toMatch(/canonicalInternalHref/);
     expect(src).toMatch(/author:/);
     expect(src).toMatch(/categories:/);
     expect(src).toMatch(/<language>\$\{lang\}<\/language>/);

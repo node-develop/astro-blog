@@ -31,6 +31,7 @@ import { t } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 import { person } from "~/lib/seo/person";
+import { canonicalPath, canonicalUrl } from "~/lib/seo/url-policy";
 
 interface Props {
   title: string;
@@ -58,14 +59,12 @@ const BRAND = "artka.dev";
 const fullTitle = title.includes(BRAND) ? title : `${title} | ${BRAND}`;
 
 const locale = getLocaleFromPath(Astro.url.pathname);
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
 
 const counterpartPath = getCounterpart(Astro.url.pathname, locale);
 const counterpartExists = await checkCounterpartExists(Astro.url.pathname, locale);
-const ruVariant =
-  locale === "ru" ? canonical : new URL(counterpartPath, Astro.site ?? Astro.url).toString();
-const enVariant =
-  locale === "en" ? canonical : new URL(counterpartPath, Astro.site ?? Astro.url).toString();
+const ruVariant = locale === "ru" ? canonical : canonicalUrl(counterpartPath);
+const enVariant = locale === "en" ? canonical : canonicalUrl(counterpartPath);
 
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
 const ogLocaleAlternate = locale === "ru" ? "en_US" : "ru_RU";
@@ -85,15 +84,18 @@ const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
 const localePrefix = locale === "en" ? "/en" : "";
 const footerLinks = {
   about: [
-    { href: `${localePrefix}/about`, key: "nav.about" },
-    { href: `${localePrefix}/now`, key: "nav.now" },
-    { href: `${localePrefix}/uses`, key: "nav.uses" },
-    { href: `${localePrefix}/projects`, key: "nav.projects" },
+    { href: canonicalPath(`${localePrefix}/about`), key: "nav.about" },
+    { href: canonicalPath(`${localePrefix}/now`), key: "nav.now" },
+    { href: canonicalPath(`${localePrefix}/uses`), key: "nav.uses" },
+    { href: canonicalPath(`${localePrefix}/projects`), key: "nav.projects" },
   ],
   read: [
-    { href: `${localePrefix}/blog`, key: "nav.posts" },
-    { href: `${localePrefix}/courses/claude-code-guide`, key: "footer.link.course" },
-    { href: `${localePrefix}/tags`, key: "footer.link.tags" },
+    { href: canonicalPath(`${localePrefix}/blog`), key: "nav.posts" },
+    {
+      href: canonicalPath(`${localePrefix}/courses/claude-code-guide`),
+      key: "footer.link.course",
+    },
+    { href: canonicalPath(`${localePrefix}/tags`), key: "footer.link.tags" },
     { href: rssHref, key: "footer.link.rss" },
     { href: jsonFeedHref, key: "footer.link.json" },
   ],

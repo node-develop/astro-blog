@@ -60,7 +60,7 @@ describe("buildBreadcrumbListNode", () => {
     expect(node["@type"]).toBe("BreadcrumbList");
     expect(node.itemListElement).toHaveLength(3);
     expect(node.itemListElement[0].name).toBe("Главная");
-    expect(node.itemListElement[1].item).toBe("https://artka.dev/blog");
+    expect(node.itemListElement[1].item).toBe("https://artka.dev/blog/");
     expect(node.itemListElement[2].name).toBe("Заголовок");
   });
 
@@ -71,7 +71,7 @@ describe("buildBreadcrumbListNode", () => {
       title: "Title",
     });
     expect(node.itemListElement[0].item).toBe("https://artka.dev/en/");
-    expect(node.itemListElement[1].item).toBe("https://artka.dev/en/blog");
+    expect(node.itemListElement[1].item).toBe("https://artka.dev/en/blog/");
   });
 });
 
