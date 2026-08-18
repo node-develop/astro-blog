@@ -1,8 +1,8 @@
 ---
-title: "12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года"
+title: "12 rules for CLAUDE.md: extending Karpathy to the failure modes of 2026"
 description: >-
-  Mnilax протестировал 12 правил для CLAUDE.md на 30 кодовых базах за 6 недель — расширение шаблона Karpathy на
-  agent-loops, чекпойнты и fail-loud. Разбор и рамка применения.
+  Mnilax tested 12 rules for CLAUDE.md on 30 codebases over 6 weeks — an extension of Karpathy's template covering
+  agent loops, checkpoints, and fail-loud. A breakdown and a framework for applying them.
 pubDate: 2026-05-10T00:00:00.000Z
 tags:
   - ai
@@ -10,10 +10,11 @@ tags:
   - prompt-engineering
 draft: false
 cover: /og-default.svg
-coverAlt: 12 правил для CLAUDE.md — расширение Karpathy
+coverAlt: 12 rules for CLAUDE.md — extending Karpathy
 summary: >-
-  Karpathy в январе сформулировал 4 правила для CLAUDE.md. Mnilax расширил до 12, закрывая failure modes мая 2026:
-  токен-бюджеты, чекпойнты, fail-loud, конвенции. Что есть, что нет, как применить без раздувания файла.
+  In January, Karpathy formulated 4 rules for CLAUDE.md. Mnilax expanded them to 12, closing the failure modes of May
+  2026: token budgets, checkpoints, fail-loud, conventions. What's covered, what's not, and how to apply it without
+  bloating the file.
 keywords:
   - claude code
   - claude.md
@@ -24,34 +25,35 @@ keywords:
   - multi-step ai workflows
   - behavioral contract llm
 faq:
-  - question: Зачем CLAUDE.md, если Claude Code и так подцепляет контекст из проекта?
+  - question: Why have CLAUDE.md if Claude Code already picks up context from the project?
     answer: >-
-      CLAUDE.md задаёт поведенческие рамки до того, как модель прочитает код. Без него Claude угадывает стек, конвенции
-      и запреты заново на каждой сессии — это лишние токены и непредсказуемая консистентность между запусками. По данным
-      Anthropic, файл advisory (~80% compliance), но без него и этих 80% не будет.
-  - question: Какой смысл расширять до 12 правил, если 4 от Karpathy хватало?
+      CLAUDE.md sets the behavioral frame before the model reads the code. Without it, Claude re-guesses the stack,
+      conventions, and prohibitions from scratch in every session — extra tokens and unpredictable consistency between
+      runs. According to Anthropic, the file is advisory (~80% compliance), but without it you don't get even those
+      80%.
+  - question: What's the point of expanding to 12 rules if Karpathy's 4 were enough?
     answer: >-
-      Karpathy писал в январе, когда Claude Code был ближе к autocomplete. В мае ландшафт другой: multi-step агенты,
-      hook-каскады, кросс-сессионные потоки. По замерам Mnilax, добавление 8 правил снижает частоту ошибок ещё на 8
-      процентных пунктов (с 11% до 3%) при почти неизменном compliance (76% против 78%).
-  - question: Можно ли просто скопировать чужой CLAUDE.md и забыть?
+      Karpathy wrote in January, when Claude Code was closer to autocomplete. By May the landscape is different:
+      multi-step agents, hook cascades, cross-session flows. By Mnilax's measurements, adding the 8 rules cuts the
+      error rate by another 8 percentage points (from 11% to 3%) with nearly unchanged compliance (76% vs 78%).
+  - question: Can I just copy someone else's CLAUDE.md and forget about it?
     answer: >-
-      Можно, но это работает две недели. Дальше кодовая база сдвигается, правила перестают совпадать с реальностью, и
-      Claude следует им формально. CLAUDE.md — behavioral contract против ошибок, которые ты сам видишь; чужой шаблон
-      полезен как стартер, не как финал.
-  - question: Что если мой CLAUDE.md уже больше 200 строк?
+      You can, but it works for about two weeks. Then the codebase shifts, the rules stop matching reality, and Claude
+      follows them only formally. CLAUDE.md is a behavioral contract against the mistakes you actually see; someone
+      else's template is useful as a starter, not as the final version.
+  - question: What if my CLAUDE.md is already over 200 lines?
     answer: >-
-      По замерам Mnilax, после ~200 строк compliance падает: важные правила тонут в шуме. Лечится выносом длинных секций
-      (стек, команды, описания подсистем) в `@docs/...` через @-импорты Claude Code. В корневом CLAUDE.md остаются
-      только правила и краткий контекст.
-  - question: Помогают ли эти правила в обычной API-сессии без Claude Code?
+      By Mnilax's measurements, compliance drops after ~200 lines: important rules drown in noise. The cure is moving
+      long sections (stack, commands, subsystem descriptions) into `@docs/...` via Claude Code @-imports. The root
+      CLAUDE.md keeps only the rules and brief context.
+  - question: Do these rules help in a plain API session without Claude Code?
     answer: >-
-      Да, если положить их в system prompt. Cache-friendly статичный префикс с правилами работает поверх любых вызовов
-      Anthropic SDK. Эффект тот же — модель меньше додумывает и больше озвучивает предположения. Правила 6 (бюджеты), 10
-      (чекпойнты) и 12 (fail loud) полезны и без CLI-обвязки.
+      Yes, if you put them in the system prompt. A cache-friendly static prefix with the rules works on top of any
+      Anthropic SDK calls. The effect is the same — the model guesses less and voices its assumptions more. Rules 6
+      (budgets), 10 (checkpoints), and 12 (fail loud) are useful without the CLI harness too.
 lang: en
 sourceHash: 07660cd4ad93b31d9b38e2ab5ed52708cccd60f9b4d74674d7e87502bd738457
-manuallyEdited: false
+manuallyEdited: true
 ---
 
 > Over four months after Karpathy's January thread, the `CLAUDE.md` template grew from 4 rules to 12. I ran the expanded set on typical blog tasks and several work repos — the frequency of silent Claude Code errors drops noticeably. The eight added rules cover what didn't exist as a class of problems in January: long-running agent loops, cross-session flows, shallow tests, quiet failures instead of explicit errors. I opened my own `CLAUDE.md` for this blog — Karpathy's four original rules are already there in `Code Standards` and `Prohibitions`, the eight added ones are not. I'm going through each one and figuring out where it makes sense to insert them.

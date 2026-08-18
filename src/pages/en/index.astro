@@ -83,13 +83,8 @@ const webPageNode = buildWebPageNode({
             {data.latestLabel}
           </h2>
           <div class="home__grid">
-            {grid.map((p, i) => (
-              <HomePostCard
-                entry={p.entry}
-                href={postHref(p.entry.id)}
-                locale={locale}
-                artVariant={i + 1}
-              />
+            {grid.map((p) => (
+              <HomePostCard entry={p.entry} href={postHref(p.entry.id)} locale={locale} />
             ))}
           </div>
         </section>

@@ -3,11 +3,11 @@
  * Compact post card for the home-page grid (Variant A redesign).
  *
  * Decorative artwork block on top, mono date · tag eyebrow, serif title.
- * The whole card is one link. `artVariant` keeps neighbouring cards from
- * repeating the same artwork pattern.
+ * The whole card is one link. Artwork is seeded by the post slug, so the
+ * same article shows the same composition everywhere it appears.
  */
 import type { CollectionEntry } from "astro:content";
-import HomeCardArt from "~/components/HomeCardArt.astro";
+import CardArt from "~/components/CardArt.astro";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import type { Locale } from "~/i18n";
 
@@ -15,10 +15,23 @@ interface Props {
   entry: CollectionEntry<"posts">;
   href: string;
   locale: Locale;
-  artVariant: number;
+  /** Show the post description under the title (blog index; home grid omits it). */
+  showDescription?: boolean;
+  /** View-transition name for the title, morphing into the post page h1. */
+  transitionName?: string;
+  /** Title heading level — h3 under the home grid's h2, h2 on the blog index. */
+  headingLevel?: "h2" | "h3";
 }
 
-const { entry, href, locale, artVariant } = Astro.props;
+const {
+  entry,
+  href,
+  locale,
+  showDescription = false,
+  transitionName,
+  headingLevel = "h3",
+} = Astro.props;
+const Heading = headingLevel;
 
 const dict = getTagDict(locale);
 const firstTag = entry.data.tags[0];
@@ -33,14 +46,23 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
 <article class="post-card">
   <a href={href} class="post-card__link">
     <div class="post-card__media">
-      <HomeCardArt variant={artVariant} />
+      <CardArt seed={entry.id.replace(/^en\//, "")} />
     </div>
     <div class="post-card__body">
       <p class="post-card__eyebrow">
         <time datetime={entry.data.pubDate.toISOString()}>{dateLabel}</time>
         {tagLabel && <span>· {tagLabel}</span>}
       </p>
-      <h3 class="post-card__title">{entry.data.title}</h3>
+      {
+        transitionName ? (
+          <Heading class="post-card__title" transition:name={transitionName}>
+            {entry.data.title}
+          </Heading>
+        ) : (
+          <Heading class="post-card__title">{entry.data.title}</Heading>
+        )
+      }
+      {showDescription && <p class="post-card__desc">{entry.data.description}</p>}
     </div>
   </a>
 </article>
@@ -89,5 +111,12 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     font-weight: 500;
     margin: 0;
     transition: color var(--dur-fast) var(--ease-out);
+  }
+  .post-card__desc {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    color: var(--color-fg-muted);
+    margin: 0;
+    text-wrap: pretty;
   }
 </style>

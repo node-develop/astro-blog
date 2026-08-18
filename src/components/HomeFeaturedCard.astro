@@ -13,7 +13,7 @@
  * home.md is English by editorial choice).
  */
 import type { CollectionEntry } from "astro:content";
-import HomeCardArt from "~/components/HomeCardArt.astro";
+import CardArt from "~/components/CardArt.astro";
 import Avatar from "~/components/Avatar.astro";
 import { person } from "~/lib/seo/person";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
@@ -55,7 +55,7 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
       </div>
     </div>
     <div class="featured__media">
-      <HomeCardArt variant={0} />
+      <CardArt seed={entry.id.replace(/^en\//, "")} />
       <span class="featured__pill">Featured</span>
     </div>
   </a>

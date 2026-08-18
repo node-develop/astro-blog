@@ -1,6 +1,7 @@
 ---
 /**
- * Decorative artwork block for home-page post cards (Variant A redesign).
+ * Decorative artwork block for post cards and article headers (editorial
+ * redesign, Variant A).
  *
  * Post OG images carry the post title as text, so reusing them inside a
  * card that already shows the title would duplicate it. Instead each card
@@ -8,15 +9,34 @@
  * decorative — aria-hidden, colors from CSS custom properties so both
  * themes work without extra rules.
  *
- * `variant` picks one of four compositions; parents pass the card's
- * position so the row doesn't repeat a pattern.
+ * Pick a composition either by explicit `variant` (parents pass the card's
+ * position so a row doesn't repeat a pattern) or by `seed` — usually the
+ * post slug — hashed to a stable variant, so each article keeps the same
+ * artwork everywhere it appears.
  */
 interface Props {
-  variant: number;
+  variant?: number;
+  seed?: string;
 }
 
-const { variant } = Astro.props;
-const v = ((variant % 4) + 4) % 4;
+/**
+ * FNV-1a string hash + murmur3 finalizer. The finalizer matters: raw FNV
+ * low bits cluster on same-alphabet slugs (all real posts landed on the
+ * same variant mod 4 without it).
+ */
+const hashSeed = (s: string): number => {
+  let h = [...s].reduce((acc, ch) => ((acc ^ ch.charCodeAt(0)) * 16777619) >>> 0, 2166136261);
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  return h >>> 0;
+};
+
+const { variant, seed } = Astro.props;
+const raw = variant ?? (seed !== undefined ? hashSeed(seed) : 0);
+const v = ((raw % 4) + 4) % 4;
 ---
 
 <div class="card-art" aria-hidden="true">

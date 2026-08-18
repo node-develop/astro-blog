@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import CardArt from "~/components/CardArt.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import AuthorCard from "~/components/AuthorCard.astro";
@@ -12,9 +13,7 @@ import { renderInlineCode } from "~/lib/inline-md";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { person } from "~/lib/seo/person";
-import { resolveTagLabel } from "~/lib/content/tags";
-import tagsRu from "~/i18n/tags.ru.json";
-import tagsEn from "~/i18n/tags.en.json";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
 import { getReadingTime, formatReadingTime } from "~/lib/posts/reading-time";
@@ -47,6 +46,11 @@ const coverUrl = cover
     ? cover
     : `/uploads/${cover}`
   : null;
+
+// The site-wide /og-default.* placeholder is not a real cover — those posts
+// get the slug-seeded editorial artwork banner (same visual system as the
+// home-page cards) instead of a generic image.
+const hasRealCover = coverUrl !== null && !/^\/og-default\.(svg|png)$/.test(coverUrl);
 const bodyText = post.body ?? "";
 const readingTime = getReadingTime({ text: bodyText, locale });
 
@@ -84,7 +88,7 @@ const breadcrumbNode = buildBreadcrumbListNode({
 const faqItems = faq ?? [];
 const faqNode = buildFaqPageNode({ canonical, items: faqItems });
 
-const tagDict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const tagDict = getTagDict(locale);
 const tagsHrefBase = locale === "en" ? "/en/tags/" : "/tags/";
 
 const primaryTag = tags?.[0] ?? "—";
@@ -167,10 +171,14 @@ const formattedUpdatedDate = updatedDate
       }
     </header>
     {
-      coverUrl && (
+      hasRealCover ? (
         <figure class="post__cover">
           <img src={coverUrl} alt={coverAlt ?? ""} loading="eager" decoding="async" />
         </figure>
+      ) : (
+        <div class="post__art">
+          <CardArt seed={slug} />
+        </div>
       )
     }
     {summary && <Tldr text={summary} />}
@@ -302,6 +310,13 @@ const formattedUpdatedDate = updatedDate
       display: block;
       width: 100%;
       height: auto;
+    }
+    .post__art {
+      height: 220px;
+      margin: 0 0 var(--space-7) 0;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
     }
     .post__after {
       max-width: 720px;
