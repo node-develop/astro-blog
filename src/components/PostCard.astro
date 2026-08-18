@@ -1,0 +1,136 @@
+---
+/**
+ * Compact post card for the home grid and blog index (editorial redesign).
+ *
+ * Decorative artwork block on top, mono date · tag eyebrow, serif title.
+ * The whole card is one link. Artwork defaults to the slug-seeded variant;
+ * grids pass `artVariant` from `assignArtVariants()` so neighbouring cards
+ * never repeat a composition.
+ */
+import type { CollectionEntry } from "astro:content";
+import CardArt from "~/components/CardArt.astro";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
+import { bareSlug } from "~/lib/content/slug";
+import { renderInlineCode } from "~/lib/inline-md";
+import type { Locale } from "~/i18n";
+
+interface Props {
+  entry: CollectionEntry<"posts">;
+  href: string;
+  locale: Locale;
+  /** Collision-free variant from assignArtVariants(); falls back to the slug seed. */
+  artVariant?: number | undefined;
+  /** Show the post description under the title (blog index; home grid omits it). */
+  showDescription?: boolean;
+  /** View-transition name for the title, morphing into the post page h1. */
+  transitionName?: string;
+  /** Title heading level — h3 under the home grid's h2, h2 on the blog index. */
+  headingLevel?: "h2" | "h3";
+}
+
+const {
+  entry,
+  href,
+  locale,
+  artVariant,
+  showDescription = false,
+  transitionName,
+  headingLevel = "h3",
+} = Astro.props;
+const Heading = headingLevel;
+
+const dict = getTagDict(locale);
+const firstTag = entry.data.tags[0];
+const tagLabel = firstTag ? resolveTagLabel(firstTag, locale, dict) : null;
+
+const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+  day: "numeric",
+  month: "short",
+});
+---
+
+<a href={href} class="post-card__link">
+  <div class="post-card__media">
+    {
+      artVariant !== undefined ? (
+        <CardArt variant={artVariant} />
+      ) : (
+        <CardArt seed={bareSlug(entry.id)} />
+      )
+    }
+  </div>
+  <div class="post-card__body">
+    <p class="post-card__eyebrow">
+      <time datetime={entry.data.pubDate.toISOString()}>{dateLabel}</time>
+      {tagLabel && <span>· {tagLabel}</span>}
+    </p>
+    {
+      transitionName ? (
+        <Heading class="post-card__title" transition:name={transitionName}>
+          {entry.data.title}
+        </Heading>
+      ) : (
+        <Heading class="post-card__title">{entry.data.title}</Heading>
+      )
+    }
+    {
+      showDescription && (
+        <p class="post-card__desc" set:html={renderInlineCode(entry.data.description)} />
+      )
+    }
+  </div>
+</a>
+
+<style>
+  .post-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    color: var(--color-fg);
+    text-decoration: none;
+    transition: box-shadow var(--dur-base) var(--ease-out);
+  }
+  .post-card__link:hover {
+    box-shadow: var(--shadow-soft);
+  }
+  .post-card__link:hover .post-card__title {
+    color: var(--color-accent-hover);
+  }
+  .post-card__media {
+    height: 150px;
+  }
+  .post-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) var(--space-5) var(--space-5);
+  }
+  .post-card__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+  .post-card__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    line-height: var(--lh-snug);
+    font-weight: 500;
+    margin: 0;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .post-card__desc {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    color: var(--color-fg-muted);
+    margin: 0;
+    text-wrap: pretty;
+  }
+</style>

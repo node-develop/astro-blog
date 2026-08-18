@@ -1,6 +1,7 @@
 ---
 /**
- * Decorative artwork block for home-page post cards (Variant A redesign).
+ * Decorative artwork block for post cards and article headers (editorial
+ * redesign, Variant A).
  *
  * Post OG images carry the post title as text, so reusing them inside a
  * card that already shows the title would duplicate it. Instead each card
@@ -8,15 +9,22 @@
  * decorative — aria-hidden, colors from CSS custom properties so both
  * themes work without extra rules.
  *
- * `variant` picks one of four compositions; parents pass the card's
- * position so the row doesn't repeat a pattern.
+ * Variant 0 is the large featured-slot composition (420×260, heavy
+ * strokes) — pass it explicitly; it never comes out of a seed. Variants
+ * 1..5 are the small-card pool. Pick one via `seed` (the post slug —
+ * stable per article), via `variant` from `assignArtVariants()` when a
+ * grid needs collision-free neighbours, or `variant` literal.
  */
+import { pickArtVariant, SEEDED_VARIANT_COUNT } from "~/lib/content/card-art";
+
 interface Props {
-  variant: number;
+  variant?: number;
+  seed?: string;
 }
 
-const { variant } = Astro.props;
-const v = ((variant % 4) + 4) % 4;
+const { variant, seed } = Astro.props;
+const raw = variant ?? (seed !== undefined ? pickArtVariant(seed) : 1);
+const v = raw >= 0 && raw <= SEEDED_VARIANT_COUNT ? raw : 1;
 ---
 
 <div class="card-art" aria-hidden="true">
@@ -124,6 +132,81 @@ const v = ((variant % 4) + 4) % 4;
           y2="95"
           stroke="var(--color-border-strong)"
           stroke-width="3"
+        />
+      </svg>
+    )
+  }
+  {
+    v === 4 && (
+      <svg
+        viewBox="0 0 200 110"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <rect
+          x="42"
+          y="58"
+          width="16"
+          height="32"
+          rx="4"
+          fill="var(--color-accent)"
+          opacity="0.3"
+        />
+        <rect
+          x="78"
+          y="42"
+          width="16"
+          height="48"
+          rx="4"
+          stroke="var(--color-accent)"
+          stroke-width="5"
+        />
+        <rect
+          x="114"
+          y="24"
+          width="16"
+          height="66"
+          rx="4"
+          fill="var(--color-accent)"
+          opacity="0.25"
+        />
+        <circle cx="152" cy="30" r="7" stroke="var(--color-fg-subtle)" stroke-width="4" />
+        <line
+          x1="30"
+          y1="96"
+          x2="170"
+          y2="96"
+          stroke="var(--color-border-strong)"
+          stroke-width="3"
+        />
+      </svg>
+    )
+  }
+  {
+    v === 5 && (
+      <svg
+        viewBox="0 0 200 110"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <path
+          d="M40 82 A 60 60 0 0 1 160 82"
+          stroke="var(--color-accent)"
+          stroke-width="5"
+          stroke-linecap="round"
+        />
+        <circle cx="160" cy="82" r="7" fill="var(--color-accent)" />
+        <circle cx="100" cy="22" r="10" fill="var(--color-accent)" opacity="0.25" />
+        <rect
+          x="34"
+          y="76"
+          width="12"
+          height="12"
+          rx="3"
+          stroke="var(--color-fg-subtle)"
+          stroke-width="4"
         />
       </svg>
     )

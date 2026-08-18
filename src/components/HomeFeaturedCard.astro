@@ -13,10 +13,11 @@
  * home.md is English by editorial choice).
  */
 import type { CollectionEntry } from "astro:content";
-import HomeCardArt from "~/components/HomeCardArt.astro";
+import CardArt from "~/components/CardArt.astro";
 import Avatar from "~/components/Avatar.astro";
 import { person } from "~/lib/seo/person";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
+import { renderInlineCode } from "~/lib/inline-md";
 import type { Locale } from "~/i18n";
 
 interface Props {
@@ -46,7 +47,7 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
         {tagLabel && <span class="featured__tag">· {tagLabel}</span>}
       </p>
       <h2 class="featured__title">{entry.data.title}</h2>
-      <p class="featured__lede">{entry.data.description}</p>
+      <p class="featured__lede" set:html={renderInlineCode(entry.data.description)} />
       <!-- div, not p: Avatar renders a <figure>, which is invalid inside <p>
            (the browser would split the paragraph and break the flex row) -->
       <div class="featured__author">
@@ -55,7 +56,11 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
       </div>
     </div>
     <div class="featured__media">
-      <HomeCardArt variant={0} />
+      {
+        /* Always variant 0 — the one large composition (420×260, heavy strokes)
+          drawn for this slot; seeded picks stay in the small-card pool. */
+      }
+      <CardArt variant={0} />
       <span class="featured__pill">Featured</span>
     </div>
   </a>

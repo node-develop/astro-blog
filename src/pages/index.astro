@@ -5,11 +5,13 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import SiteSidebar from "~/components/SiteSidebar.astro";
 import HomeMasthead from "~/components/HomeMasthead.astro";
 import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
-import HomePostCard from "~/components/HomePostCard.astro";
+import PostCard from "~/components/PostCard.astro";
 import HomeCourseBand from "~/components/HomeCourseBand.astro";
 import HomeTopics from "~/components/HomeTopics.astro";
 import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
+import { assignArtVariants } from "~/lib/content/card-art";
+import { bareSlug } from "~/lib/content/slug";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { getEntry } from "astro:content";
 import { homeFrontmatterSchema } from "~/lib/content/home-schema";
@@ -25,8 +27,8 @@ const blogHref = canonicalPath(locale === "en" ? "/en/blog" : "/blog");
 const courseHref = canonicalPath(
   locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide",
 );
-const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
+const gridVariants = assignArtVariants(grid.map((p) => bareSlug(p.entry.id)));
 
 const homeEntry = await getEntry("site", "home");
 const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
@@ -87,11 +89,11 @@ const webPageNode = buildWebPageNode({
           </h2>
           <div class="home__grid">
             {grid.map((p, i) => (
-              <HomePostCard
+              <PostCard
                 entry={p.entry}
                 href={postHref(p.entry.id)}
                 locale={locale}
-                artVariant={i + 1}
+                artVariant={gridVariants[i]}
               />
             ))}
           </div>
