@@ -32,9 +32,9 @@ describe("tag chips are anchors", () => {
 
   it("PostLayout resolves display labels through the locale tag dicts", () => {
     // The tags.{ru,en}.json imports moved behind getTagDict() in
-    // ~/lib/content/tags — the layout must still resolve labels through it
-    // rather than rendering raw slugs.
-    expect(postLayout).toMatch(/getTagDict/);
-    expect(postLayout).toMatch(/resolveTagLabel/);
+    // ~/lib/content/tags — the layout must still CALL it with the page
+    // locale and feed the dict into resolveTagLabel, not just import it.
+    expect(postLayout).toMatch(/getTagDict\(locale\)/);
+    expect(postLayout).toMatch(/resolveTagLabel\(tag, locale, tagDict\)/);
   });
 });

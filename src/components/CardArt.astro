@@ -9,34 +9,22 @@
  * decorative — aria-hidden, colors from CSS custom properties so both
  * themes work without extra rules.
  *
- * Pick a composition either by explicit `variant` (parents pass the card's
- * position so a row doesn't repeat a pattern) or by `seed` — usually the
- * post slug — hashed to a stable variant, so each article keeps the same
- * artwork everywhere it appears.
+ * Variant 0 is the large featured-slot composition (420×260, heavy
+ * strokes) — pass it explicitly; it never comes out of a seed. Variants
+ * 1..5 are the small-card pool. Pick one via `seed` (the post slug —
+ * stable per article), via `variant` from `assignArtVariants()` when a
+ * grid needs collision-free neighbours, or `variant` literal.
  */
+import { pickArtVariant, SEEDED_VARIANT_COUNT } from "~/lib/content/card-art";
+
 interface Props {
   variant?: number;
   seed?: string;
 }
 
-/**
- * FNV-1a string hash + murmur3 finalizer. The finalizer matters: raw FNV
- * low bits cluster on same-alphabet slugs (all real posts landed on the
- * same variant mod 4 without it).
- */
-const hashSeed = (s: string): number => {
-  let h = [...s].reduce((acc, ch) => ((acc ^ ch.charCodeAt(0)) * 16777619) >>> 0, 2166136261);
-  h ^= h >>> 16;
-  h = Math.imul(h, 0x85ebca6b) >>> 0;
-  h ^= h >>> 13;
-  h = Math.imul(h, 0xc2b2ae35) >>> 0;
-  h ^= h >>> 16;
-  return h >>> 0;
-};
-
 const { variant, seed } = Astro.props;
-const raw = variant ?? (seed !== undefined ? hashSeed(seed) : 0);
-const v = ((raw % 4) + 4) % 4;
+const raw = variant ?? (seed !== undefined ? pickArtVariant(seed) : 1);
+const v = raw >= 0 && raw <= SEEDED_VARIANT_COUNT ? raw : 1;
 ---
 
 <div class="card-art" aria-hidden="true">
@@ -144,6 +132,81 @@ const v = ((raw % 4) + 4) % 4;
           y2="95"
           stroke="var(--color-border-strong)"
           stroke-width="3"
+        />
+      </svg>
+    )
+  }
+  {
+    v === 4 && (
+      <svg
+        viewBox="0 0 200 110"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <rect
+          x="42"
+          y="58"
+          width="16"
+          height="32"
+          rx="4"
+          fill="var(--color-accent)"
+          opacity="0.3"
+        />
+        <rect
+          x="78"
+          y="42"
+          width="16"
+          height="48"
+          rx="4"
+          stroke="var(--color-accent)"
+          stroke-width="5"
+        />
+        <rect
+          x="114"
+          y="24"
+          width="16"
+          height="66"
+          rx="4"
+          fill="var(--color-accent)"
+          opacity="0.25"
+        />
+        <circle cx="152" cy="30" r="7" stroke="var(--color-fg-subtle)" stroke-width="4" />
+        <line
+          x1="30"
+          y1="96"
+          x2="170"
+          y2="96"
+          stroke="var(--color-border-strong)"
+          stroke-width="3"
+        />
+      </svg>
+    )
+  }
+  {
+    v === 5 && (
+      <svg
+        viewBox="0 0 200 110"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <path
+          d="M40 82 A 60 60 0 0 1 160 82"
+          stroke="var(--color-accent)"
+          stroke-width="5"
+          stroke-linecap="round"
+        />
+        <circle cx="160" cy="82" r="7" fill="var(--color-accent)" />
+        <circle cx="100" cy="22" r="10" fill="var(--color-accent)" opacity="0.25" />
+        <rect
+          x="34"
+          y="76"
+          width="12"
+          height="12"
+          rx="3"
+          stroke="var(--color-fg-subtle)"
+          stroke-width="4"
         />
       </svg>
     )

@@ -14,6 +14,7 @@ import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { person } from "~/lib/seo/person";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
+import { bareSlug } from "~/lib/content/slug";
 import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
 import { getReadingTime, formatReadingTime } from "~/lib/posts/reading-time";
@@ -37,7 +38,7 @@ const { post, headings } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt, summary, faq } = post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = canonicalUrl(Astro.url.pathname);
-const slug = post.id.replace(/^en\//, "");
+const slug = bareSlug(post.id);
 const ogImagePath = `/og/${slug}.png`;
 
 // Cover is stored as a path relative to /uploads/ (e.g. "2026/04/file.png").
@@ -48,22 +49,26 @@ const coverUrl = cover
     : `/uploads/${cover}`
   : null;
 
-// The site-wide /og-default.* placeholder is not a real cover — those posts
-// get the slug-seeded editorial artwork banner (same visual system as the
-// home-page cards) instead of a generic image.
+// The site-wide /og-default.* placeholder is not a real cover — those posts,
+// and posts with no cover at all, get the slug-seeded editorial artwork
+// banner (same visual system as the home-page cards) instead of a generic
+// image.
 const hasRealCover = coverUrl !== null && !/^\/og-default\.(svg|png)$/.test(coverUrl);
 const bodyText = post.body ?? "";
 const readingTime = getReadingTime({ text: bodyText, locale });
 
 const siteBase = Astro.site?.toString() ?? "https://artka.dev";
 // BlogPosting.image must be a raster (Schema.org / Google Rich Results
-// reject SVG). Fallback to /og-default.png, matching the BaseLayout
-// og:image fallback. Per-post cover (when set) wins.
-const absoluteCover = coverUrl
-  ? /^https?:\/\//.test(coverUrl)
-    ? coverUrl
-    : new URL(coverUrl, siteBase).toString()
-  : new URL("/og-default.png", siteBase).toString();
+// reject SVG). A real uploaded cover wins; otherwise use the per-post
+// /og/<slug>.png raster — the same image BaseLayout puts in og:image —
+// so JSON-LD and OG agree. The old fallback let the /og-default.svg
+// placeholder through, shipping an SVG in every BlogPosting.image.
+const absoluteCover =
+  coverUrl !== null && hasRealCover
+    ? /^https?:\/\//.test(coverUrl)
+      ? coverUrl
+      : new URL(coverUrl, siteBase).toString()
+    : new URL(ogImagePath, siteBase).toString();
 
 const excerpt = extractArticleBody(post.body ?? "", 800);
 
