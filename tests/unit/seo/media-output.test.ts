@@ -15,20 +15,31 @@ const image = (src: string, properties: Properties = {}): Element => ({
 });
 
 describe("built post media", () => {
-  it("renders the post cover eagerly with truthful intrinsic dimensions", () => {
+  // The editorial redesign replaced the /og-default.* placeholder cover with
+  // a decorative slug-seeded artwork banner (aria-hidden inline SVG). Every
+  // current post uses the placeholder, so the built fixture asserts the
+  // banner path; the eager-with-intrinsic-dimensions contract for REAL
+  // covers is pinned against the PostLayout source below.
+  it("renders the editorial artwork banner instead of the placeholder cover", () => {
     const html = readFileSync(
       join(process.cwd(), "dist/client/en/blog/claude-md-12-rules/index.html"),
       "utf8",
     );
-    const cover = html.match(
-      /<figure\b[^>]*class=["'][^"']*post__cover[^"']*["'][^>]*>[\s\S]*?(<img\b[^>]*>)/i,
-    )?.[1];
+
+    expect(html).toMatch(/class=["'][^"']*post__art[^"']*["']/);
+    expect(html).not.toMatch(/class=["'][^"']*post__cover[^"']*["']/);
+    expect(html).not.toMatch(/og-default\.(svg|png)/);
+  });
+
+  it("keeps the real-cover branch eager with truthful intrinsic dimensions", () => {
+    const layout = readFileSync(join(process.cwd(), "src/layouts/PostLayout.astro"), "utf8");
+    const cover = layout.match(/class="post__cover">\s*<img\b([\s\S]*?)\/>/)?.[1];
 
     expect(cover).toBeDefined();
-    expect(attribute(cover!, "loading")).toBe("eager");
-    expect(attribute(cover!, "width")).toBe("1200");
-    expect(attribute(cover!, "height")).toBe("630");
-    expect(attribute(cover!, "fetchpriority")).toBe("high");
+    expect(cover).toMatch(/loading="eager"/);
+    expect(cover).toMatch(/width="1200"/);
+    expect(cover).toMatch(/height="630"/);
+    expect(cover).toMatch(/fetchpriority="high"/);
   });
 
   it("lazily decodes Mermaid images produced during the Markdown build", () => {
