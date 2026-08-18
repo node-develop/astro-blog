@@ -118,7 +118,6 @@ const webPageNode = buildWebPageNode({
       display: flex;
       flex-direction: column;
       gap: var(--space-7);
-      max-width: 1080px;
     }
     .home__grid-section {
       display: flex;
@@ -140,6 +139,11 @@ const webPageNode = buildWebPageNode({
       gap: var(--space-5);
     }
     @media (max-width: 900px) {
+      .home__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
       .home__grid {
         grid-template-columns: minmax(0, 1fr);
       }

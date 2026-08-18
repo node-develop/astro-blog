@@ -8,10 +8,8 @@
  */
 import type { CollectionEntry } from "astro:content";
 import HomeCardArt from "~/components/HomeCardArt.astro";
-import { resolveTagLabel } from "~/lib/content/tags";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import type { Locale } from "~/i18n";
-import tagsRu from "~/i18n/tags.ru.json";
-import tagsEn from "~/i18n/tags.en.json";
 
 interface Props {
   entry: CollectionEntry<"posts">;
@@ -22,7 +20,7 @@ interface Props {
 
 const { entry, href, locale, artVariant } = Astro.props;
 
-const dict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const dict = getTagDict(locale);
 const firstTag = entry.data.tags[0];
 const tagLabel = firstTag ? resolveTagLabel(firstTag, locale, dict) : null;
 
@@ -80,7 +78,8 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-fg-subtle);
+    /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
+    color: var(--color-fg-muted);
     margin: 0;
   }
   .post-card__title {

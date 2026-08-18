@@ -4,18 +4,20 @@
  *
  * GitBook-style split card: text column (date · tag eyebrow, serif title,
  * description, author chip) + decorative artwork column with a "Featured"
- * pill. Shows the newest post; the whole card is one link.
+ * pill. Shows the FIRST post in editorial order (pinned first, then curated
+ * `order` from posts_meta — not necessarily the newest by pubDate); the
+ * whole card is one link.
  *
- * The pill label stays latin in both locales — it is a typographic design
- * element in the mono-caps register, like the hero eyebrow in home.md.
+ * The pill label stays latin in both locales — same mono-caps latin
+ * register the site already uses on the RU homepage (heroEyebrow in
+ * home.md is English by editorial choice).
  */
 import type { CollectionEntry } from "astro:content";
 import HomeCardArt from "~/components/HomeCardArt.astro";
+import Avatar from "~/components/Avatar.astro";
 import { person } from "~/lib/seo/person";
-import { resolveTagLabel } from "~/lib/content/tags";
+import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import type { Locale } from "~/i18n";
-import tagsRu from "~/i18n/tags.ru.json";
-import tagsEn from "~/i18n/tags.en.json";
 
 interface Props {
   entry: CollectionEntry<"posts">;
@@ -25,17 +27,15 @@ interface Props {
 
 const { entry, href, locale } = Astro.props;
 
-const dict = (locale === "en" ? tagsEn : tagsRu) as Record<string, string>;
+const dict = getTagDict(locale);
 const firstTag = entry.data.tags[0];
 const tagLabel = firstTag ? resolveTagLabel(firstTag, locale, dict) : null;
 
-const dateLabel = entry.data.pubDate
-  .toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
-  .replace(" г.", "");
+const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 ---
 
 <article class="featured">
@@ -47,22 +47,16 @@ const dateLabel = entry.data.pubDate
       </p>
       <h2 class="featured__title">{entry.data.title}</h2>
       <p class="featured__lede">{entry.data.description}</p>
-      <p class="featured__author">
-        <img
-          class="featured__avatar"
-          src={person.image}
-          alt=""
-          width="32"
-          height="32"
-          loading="lazy"
-          decoding="async"
-        />
+      <!-- div, not p: Avatar renders a <figure>, which is invalid inside <p>
+           (the browser would split the paragraph and break the flex row) -->
+      <div class="featured__author">
+        <Avatar size="sm" framed={false} alt="" />
         <span>{person.name}</span>
-      </p>
+      </div>
     </div>
     <div class="featured__media">
       <HomeCardArt variant={0} />
-      <span class="featured__pill" aria-hidden="true">Featured</span>
+      <span class="featured__pill">Featured</span>
     </div>
   </a>
 </article>
@@ -98,7 +92,8 @@ const dateLabel = entry.data.pubDate
     font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-fg-subtle);
+    /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
+    color: var(--color-fg-muted);
     margin: 0;
   }
   .featured__title {
@@ -125,13 +120,9 @@ const dateLabel = entry.data.pubDate
     font-size: var(--fs-sm);
     color: var(--color-fg-muted);
   }
-  .featured__avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-subtle);
-    object-fit: cover;
+  /* Avatar's own figure margin is for standalone use; inline chip needs none. */
+  .featured__author :global(.avatar) {
+    margin: 0;
   }
   .featured__media {
     position: relative;
