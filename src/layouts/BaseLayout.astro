@@ -40,6 +40,8 @@ interface Props {
   ogType?: "website" | "article";
   noindex?: boolean;
   fullWidth?: boolean;
+  /** Drop the left sidebar column entirely (home page editorial layout). */
+  noSidebar?: boolean;
   extraSchemaNodes?: ReadonlyArray<GraphNode | null>;
 }
 
@@ -50,6 +52,7 @@ const {
   ogType = "website",
   noindex = false,
   fullWidth = false,
+  noSidebar = false,
   extraSchemaNodes = [],
 } = Astro.props;
 
@@ -225,10 +228,14 @@ const socialLabel = (url: string): string => {
       desktop sidebar to keep mobile navigation editorial-clean.
     -->
     <MobileDrawer />
-    <div class="layout" data-full-width={fullWidth}>
-      <aside class="layout__sidebar" aria-label={t(locale, "sidebar.aria")}>
-        <slot name="sidebar" />
-      </aside>
+    <div class="layout" data-full-width={fullWidth} data-no-sidebar={noSidebar}>
+      {
+        !noSidebar && (
+          <aside class="layout__sidebar" aria-label={t(locale, "sidebar.aria")}>
+            <slot name="sidebar" />
+          </aside>
+        )
+      }
       <main id="main" class="layout__main">
         <slot />
       </main>
@@ -304,6 +311,10 @@ const socialLabel = (url: string): string => {
       }
       .layout[data-full-width="true"] .layout__toc {
         display: none;
+      }
+      .layout[data-no-sidebar="true"],
+      .layout[data-full-width="true"][data-no-sidebar="true"] {
+        grid-template-columns: minmax(0, 1fr);
       }
       .layout__sidebar,
       .layout__toc {
