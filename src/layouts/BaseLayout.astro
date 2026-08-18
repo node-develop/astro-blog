@@ -134,7 +134,7 @@ const socialLabel = (url: string): string => {
     </script>
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    {noindex && <meta name="robots" content="noindex,follow" />}
     <link rel="canonical" href={canonical} />
     {
       counterpartExists && (

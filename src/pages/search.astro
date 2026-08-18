@@ -14,11 +14,12 @@ const hits = query ? await searchNode(query, locale) : [];
 <BaseLayout
   title={query ? `Поиск: ${query}` : "Поиск"}
   description="Поиск по блогу"
+  noindex={true}
   fullWidth={true}
 >
   <section class="search-page">
     <h1>Поиск</h1>
-    <form method="get" action="/search" role="search">
+    <form method="get" action="/search/" role="search">
       <input
         type="search"
         name="q"

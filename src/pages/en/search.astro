@@ -12,27 +12,28 @@ const hits = query ? await searchNode(query, locale) : [];
 ---
 
 <BaseLayout
-  title={query ? `Поиск: ${query}` : "Поиск"}
-  description="Поиск по блогу"
+  title={query ? `Search: ${query}` : "Search"}
+  description="Search the blog"
+  noindex={true}
   fullWidth={true}
 >
   <section class="search-page">
-    <h1>Поиск</h1>
-    <form method="get" action="/search" role="search">
+    <h1>Search</h1>
+    <form method="get" action="/en/search/" role="search">
       <input
         type="search"
         name="q"
         value={query}
-        placeholder="Запрос…"
-        aria-label="Поисковый запрос"
+        placeholder="Search…"
+        aria-label="Search query"
         autofocus
       />
-      <button type="submit">Найти</button>
+      <button type="submit">Search</button>
     </form>
 
     {
       query && hits.length === 0 && (
-        <p class="search-page__empty">По запросу «{query}» ничего не найдено.</p>
+        <p class="search-page__empty">No results found for “{query}”.</p>
       )
     }
 
@@ -54,7 +55,7 @@ const hits = query ? await searchNode(query, locale) : [];
     {
       !query && (
         <p class="search-page__hint">
-          Введите запрос или нажмите <kbd>⌘K</kbd> где угодно на сайте.
+          Enter a query or press <kbd>⌘K</kbd> anywhere on the site.
         </p>
       )
     }

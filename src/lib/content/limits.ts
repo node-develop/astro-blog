@@ -1,6 +1,6 @@
 export const POST_LIMITS = {
   title: { min: 3, max: 120 },
-  description: { min: 10, max: 200 },
+  description: { min: 10, max: 240 },
   summary: { min: 60, max: 280 },
   faqQuestion: { min: 5, max: 200 },
   faqAnswer: { min: 20, max: 2000 },

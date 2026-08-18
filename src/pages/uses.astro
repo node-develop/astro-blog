@@ -46,6 +46,7 @@ const nodes = buildLandingNodes({
   <SiteSidebar slot="sidebar" />
   <article class="prose">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
+    <h1>{entry.data.title}</h1>
     <Content />
   </article>
 </BaseLayout>

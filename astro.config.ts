@@ -7,6 +7,7 @@ import remarkMath from "remark-math";
 import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter-duplicates";
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
+import lazyContentImages from "./src/lib/rehype/lazy-content-images";
 import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
@@ -106,6 +107,7 @@ export default defineConfig({
         rehypeCodeTitles,
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
+        lazyContentImages,
       ],
     }),
     react(),
@@ -125,6 +127,7 @@ export default defineConfig({
       rehypeCodeTitles,
       rehypeKatex,
       [rehypeMermaid, { strategy: "img-svg", dark: true }],
+      lazyContentImages,
     ],
   },
   vite: {

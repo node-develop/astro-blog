@@ -21,13 +21,14 @@ describe("public/robots.txt", () => {
     expect(robots).toMatch(new RegExp(`^User-agent:\\s*${bot}\\s*$`, "m"));
   });
 
-  it("disallows admin, api, login under every block", () => {
+  it("disallows private admin/API routes while leaving noindex utility pages crawlable", () => {
     const blocks = robots.split(/\n\n+/).filter((b) => /^User-agent:/m.test(b));
     expect(blocks.length).toBeGreaterThanOrEqual(10); // 9 named + catch-all *
     for (const block of blocks) {
       expect(block).toMatch(/^Disallow:\s*\/admin\//m);
       expect(block).toMatch(/^Disallow:\s*\/api\//m);
-      expect(block).toMatch(/^Disallow:\s*\/login\b/m);
+      expect(block).not.toMatch(/^Disallow:\s*\/login\b/m);
+      expect(block).not.toMatch(/^Disallow:\s*\/(?:en\/)?search\b/m);
     }
   });
 

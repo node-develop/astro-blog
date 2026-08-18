@@ -66,7 +66,7 @@ describe("SEO: BaseLayout meta", () => {
   it("supports noindex prop", async () => {
     const src = await read("src/layouts/BaseLayout.astro");
     expect(src).toMatch(/noindex/);
-    expect(src).toMatch(/noindex,nofollow/);
+    expect(src).toMatch(/noindex,follow/);
   });
 });
 
