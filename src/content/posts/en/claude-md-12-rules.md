@@ -1,7 +1,7 @@
 ---
 title: "12 Rules for CLAUDE.md: Extending Karpathy for 2026 Failure Modes"
 description: >-
-  Mnilax tested 12 rules for CLAUDE.md across 30 codebases over six weeks, extending Karpathy's template for agent loops, checkpoints, and fail-loud behavior. This article explains the evidence and when to use the rules.
+  Mnilax tested 12 CLAUDE.md rules across 30 codebases over six weeks, extending Karpathy's template for agent loops, checkpoints, and fail-loud behavior. This article explains the evidence.
 pubDate: 2026-05-10T00:00:00.000Z
 tags:
   - ai

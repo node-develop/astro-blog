@@ -24,7 +24,7 @@ it("canonicalizes document links in a real HAST tree", async () => {
       "/rss.xml",
       "#local",
     ]),
-  ).toEqual(["/about/", "./next/", "https://artka.dev/en/blog/post/#part", "/rss.xml", "#local"]);
+  ).toEqual(["/about/", "../next/", "https://artka.dev/en/blog/post/#part", "/rss.xml", "#local"]);
 });
 
 it("leaves non-document and non-artka destinations unchanged", async () => {
@@ -40,8 +40,26 @@ it("leaves non-document and non-artka destinations unchanged", async () => {
 });
 
 it.each([
-  ["./guide//chapter?x=1#part", "./guide/chapter/#part"],
+  ["./guide//chapter?x=1#part", "../guide/chapter/#part"],
   ["../guide///chapter?x=1#part", "../guide/chapter/#part"],
 ])("collapses repeated slashes in relative document link %s", async (href, expected) => {
   expect(await transformHrefs([href])).toEqual([expected]);
+});
+
+it("keeps files, fragments, query-only references, roots, and parent-relative links stable", async () => {
+  expect(
+    await transformHrefs([
+      "./images/cover.svg?size=2#preview",
+      "#section",
+      "?view=compact",
+      "/courses/claude-code-guide/02-context-and-cache/",
+      "../02-context-and-cache/",
+    ]),
+  ).toEqual([
+    "./images/cover.svg?size=2#preview",
+    "#section",
+    "?view=compact",
+    "/courses/claude-code-guide/02-context-and-cache/",
+    "../02-context-and-cache/",
+  ]);
 });

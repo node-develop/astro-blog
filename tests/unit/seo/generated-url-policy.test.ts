@@ -1,5 +1,6 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
+import { buildLegacyRedirects } from "~/lib/seo/redirects";
 import { canonicalPath, isFileLikePath } from "~/lib/seo/url-policy";
 
 interface Violation {
@@ -24,60 +25,90 @@ const decodeHtml = (value: string): string => value.replaceAll("&amp;", "&");
 const attribute = (tag: string, name: string): string | undefined =>
   tag.match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1];
 
-const isSkipped = (href: string): boolean =>
-  href === "" || href.startsWith("#") || href.startsWith("//") || /^(?:mailto|tel):/i.test(href);
+type UrlRole = "content" | "identity";
+
+const addViolation = (
+  violations: Violation[],
+  file: string,
+  href: string,
+  resolved: string,
+): void => {
+  const violation = { file: relative(ROOT, file), href, resolved };
+  if (
+    !violations.some(
+      (item) =>
+        item.file === violation.file &&
+        item.href === violation.href &&
+        item.resolved === violation.resolved,
+    )
+  ) {
+    violations.push(violation);
+  }
+};
 
 const auditUrl = (
   violations: Violation[],
   file: string,
   rawHref: string,
   base: string,
-  requireAbsolute: boolean,
+  role: UrlRole,
 ): void => {
   const href = decodeHtml(rawHref);
-  if (isSkipped(href)) return;
+  if (
+    href === "" ||
+    /^(?:mailto|tel):/i.test(href) ||
+    (role === "content" && (href.startsWith("#") || href.startsWith("?") || href.startsWith("//")))
+  ) {
+    return;
+  }
 
   let url: URL;
   try {
     url = new URL(href, base);
   } catch {
+    if (role === "identity") addViolation(violations, file, href, ORIGIN);
     return;
   }
 
-  if (url.hostname !== "artka.dev" && url.hostname !== "www.artka.dev") return;
-  if (isFileLikePath(url.pathname)) return;
+  if (role === "content" && url.hostname !== "artka.dev" && url.hostname !== "www.artka.dev") {
+    return;
+  }
 
   const expected = `${ORIGIN}${canonicalPath(url.pathname)}${url.hash}`;
   const hasCanonicalOrigin = url.origin === ORIGIN;
   const hasCanonicalPath = url.pathname === canonicalPath(url.pathname);
-  const hasNoQueryIdentity = url.search === "";
-  const hasAbsoluteForm = !requireAbsolute || /^https:\/\/artka\.dev\//.test(href);
-  if (!hasCanonicalOrigin || !hasCanonicalPath || !hasNoQueryIdentity || !hasAbsoluteForm) {
-    const violation = { file: relative(ROOT, file), href, resolved: expected };
-    if (
-      !violations.some(
-        (item) =>
-          item.file === violation.file &&
-          item.href === violation.href &&
-          item.resolved === violation.resolved,
-      )
-    ) {
-      violations.push(violation);
-    }
+  const hasCanonicalDocumentPath = isFileLikePath(url.pathname) || hasCanonicalPath;
+  const hasNoIdentityQuery = role === "content" || url.search === "";
+  const hasAbsoluteForm = role === "content" || /^https:\/\/artka\.dev(?:\/|$)/.test(href);
+  if (!hasCanonicalOrigin || !hasCanonicalDocumentPath || !hasNoIdentityQuery || !hasAbsoluteForm) {
+    addViolation(violations, file, href, expected);
   }
 };
 
-const collectJsonUrls = (value: unknown, urls: string[]): void => {
-  if (typeof value === "string") {
-    if (value.startsWith("/") || /^https?:\/\//.test(value)) urls.push(value);
-    return;
-  }
+const JSON_IDENTITY_KEYS = new Set([
+  "@id",
+  "url",
+  "mainEntityOfPage",
+  "isPartOf",
+  "item",
+  "image",
+  "contentUrl",
+  "thumbnailUrl",
+]);
+
+const collectJsonIdentityUrls = (value: unknown, urls: string[]): void => {
   if (Array.isArray(value)) {
-    value.forEach((item) => collectJsonUrls(item, urls));
+    value.forEach((item) => collectJsonIdentityUrls(item, urls));
     return;
   }
   if (value && typeof value === "object") {
-    Object.values(value).forEach((item) => collectJsonUrls(item, urls));
+    Object.entries(value).forEach(([key, item]) => {
+      if (JSON_IDENTITY_KEYS.has(key) && typeof item === "string") {
+        urls.push(item);
+        return;
+      }
+      collectJsonIdentityUrls(item, urls);
+    });
   }
 };
 
@@ -90,42 +121,42 @@ const auditHtml = (violations: Violation[], file: string): void => {
 
   for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
     const href = attribute(match[0], "href");
-    if (href) auditUrl(violations, file, href, canonical, false);
+    if (href) auditUrl(violations, file, href, canonical, "content");
   }
 
   for (const tag of linkTags) {
     const rel = attribute(tag, "rel");
-    if (rel !== "canonical" && rel !== "alternate") continue;
+    if (rel !== "canonical" && !(rel === "alternate" && attribute(tag, "hreflang"))) continue;
     const href = attribute(tag, "href");
-    if (href) auditUrl(violations, file, href, canonical, true);
+    if (href) auditUrl(violations, file, href, canonical, "identity");
   }
 
   for (const match of html.matchAll(/<meta\b[^>]*>/gi)) {
     if (attribute(match[0], "property") !== "og:url") continue;
     const content = attribute(match[0], "content");
-    if (content) auditUrl(violations, file, content, canonical, true);
+    if (content) auditUrl(violations, file, content, canonical, "identity");
   }
 
   for (const match of html.matchAll(
     /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
     const urls: string[] = [];
-    collectJsonUrls(JSON.parse(match[1] ?? "null"), urls);
-    urls.forEach((url) => auditUrl(violations, file, url, canonical, true));
+    collectJsonIdentityUrls(JSON.parse(match[1] ?? "null"), urls);
+    urls.forEach((url) => auditUrl(violations, file, url, canonical, "identity"));
   }
 };
 
 const auditXmlArtifact = (violations: Violation[], file: string): void => {
   const contents = readFileSync(file, "utf8");
   for (const match of contents.matchAll(/<(?:loc|link|guid)(?:\s[^>]*)?>([^<]+)<\//gi)) {
-    auditUrl(violations, file, match[1] ?? "", ORIGIN, true);
+    auditUrl(violations, file, match[1] ?? "", ORIGIN, "identity");
   }
   for (const match of contents.matchAll(/<(?:atom:link|xhtml:link)\b[^>]*>/gi)) {
     const href = attribute(match[0], "href");
-    if (href) auditUrl(violations, file, href, ORIGIN, true);
+    if (href) auditUrl(violations, file, href, ORIGIN, "identity");
   }
   for (const match of contents.matchAll(/href=&quot;([^&]+)&quot;/gi)) {
-    auditUrl(violations, file, match[1] ?? "", ORIGIN, false);
+    auditUrl(violations, file, match[1] ?? "", ORIGIN, "content");
   }
 };
 
@@ -133,29 +164,22 @@ const auditJsonFeed = (violations: Violation[], file: string): void => {
   const feed = JSON.parse(readFileSync(file, "utf8")) as {
     home_page_url: string;
     feed_url: string;
-    authors: ReadonlyArray<{ url: string; avatar?: string }>;
     items: ReadonlyArray<{
       id: string;
       url: string;
-      authors: ReadonlyArray<{ url: string; avatar?: string }>;
       content_html?: string;
     }>;
   };
   const absoluteUrls = [
     feed.home_page_url,
     feed.feed_url,
-    ...feed.authors.flatMap((author) => [author.url, author.avatar].filter(Boolean) as string[]),
-    ...feed.items.flatMap((item) => [
-      item.id,
-      item.url,
-      ...item.authors.flatMap((author) => [author.url, author.avatar].filter(Boolean) as string[]),
-    ]),
+    ...feed.items.flatMap((item) => [item.id, item.url]),
   ];
-  absoluteUrls.forEach((url) => auditUrl(violations, file, url, ORIGIN, true));
+  absoluteUrls.forEach((url) => auditUrl(violations, file, url, ORIGIN, "identity"));
   feed.items.forEach((item) => {
     for (const match of (item.content_html ?? "").matchAll(/<a\b[^>]*>/gi)) {
       const href = attribute(match[0], "href");
-      if (href) auditUrl(violations, file, href, item.url, false);
+      if (href) auditUrl(violations, file, href, item.url, "content");
     }
   });
 };
@@ -163,8 +187,83 @@ const auditJsonFeed = (violations: Violation[], file: string): void => {
 const auditTextArtifact = (violations: Violation[], file: string): void => {
   const contents = readFileSync(file, "utf8");
   const urls = contents.match(/https?:\/\/(?:www\.)?artka\.dev[^\s<"'\\)\],]*/g) ?? [];
-  urls.forEach((url) => auditUrl(violations, file, url, ORIGIN, true));
+  urls.forEach((url) => auditUrl(violations, file, url, ORIGIN, "identity"));
 };
+
+it.each([
+  ["http://artka.dev/blog/", "https://artka.dev/blog/"],
+  ["https://www.artka.dev/blog/", "https://artka.dev/blog/"],
+  ["https://preview.example/blog/", "https://artka.dev/blog/"],
+  ["/blog/", "https://artka.dev/blog/"],
+  ["https://artka.dev/blog/?preview=1", "https://artka.dev/blog/"],
+  ["https://artka.dev/rss.xml?preview=1", "https://artka.dev/rss.xml"],
+  ["https://www.artka.dev/rss.xml", "https://artka.dev/rss.xml"],
+  ["https://artka.dev/rss.xml/", "https://artka.dev/rss.xml"],
+])("rejects non-canonical identity fixture %s", (href, resolved) => {
+  const violations: Violation[] = [];
+  const fixture = join(ROOT, "tests/fixtures/generated-url-policy.html");
+
+  auditUrl(violations, fixture, href, ORIGIN, "identity");
+
+  expect(violations).toEqual([
+    {
+      file: "tests/fixtures/generated-url-policy.html",
+      href,
+      resolved,
+    },
+  ]);
+});
+
+it("allows an ordinary external content link while enforcing a valid file identity", () => {
+  const violations: Violation[] = [];
+  const fixture = join(ROOT, "tests/fixtures/generated-url-policy.html");
+
+  auditUrl(violations, fixture, "https://example.com/reference?x=1", ORIGIN, "content");
+  auditUrl(violations, fixture, "https://artka.dev/rss.xml", ORIGIN, "identity");
+
+  expect(violations).toEqual([]);
+});
+
+it("resolves every generated RU and EN lesson link to a built course route", () => {
+  const lessonFiles = filesUnder(DIST, ".html").filter((file) =>
+    /(?:^|\/)courses\/claude-code-guide\/[^/]+\/index\.html$/.test(file),
+  );
+  const redirects = buildLegacyRedirects();
+  const violations: Violation[] = [];
+  let checkedLinks = 0;
+
+  expect(lessonFiles).toHaveLength(28);
+  for (const file of lessonFiles) {
+    const html = readFileSync(file, "utf8");
+    const canonical = html.match(
+      /<link\b(?=[^>]*\brel=["']canonical["'])[^>]*\bhref=["']([^"']+)/i,
+    )?.[1];
+    if (!canonical) throw new Error("Missing lesson canonical in " + relative(ROOT, file));
+
+    for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
+      const href = attribute(match[0], "href");
+      if (!href || href.startsWith("#") || /^(?:mailto|tel):/i.test(href)) continue;
+      const resolved = new URL(decodeHtml(href), canonical);
+      if (
+        resolved.origin !== ORIGIN ||
+        !resolved.pathname.includes("/courses/claude-code-guide/")
+      ) {
+        continue;
+      }
+
+      checkedLinks += 1;
+      const sourcePath = canonicalPath(resolved.pathname);
+      const finalPath = redirects[sourcePath] ?? sourcePath;
+      const generatedFile = join(DIST, finalPath.slice(1), "index.html");
+      if (!existsSync(generatedFile)) {
+        addViolation(violations, file, href, ORIGIN + finalPath);
+      }
+    }
+  }
+
+  expect(checkedLinks).toBeGreaterThan(100);
+  expect(violations).toEqual([]);
+});
 
 it("emits one apex HTTPS slash identity for every internal document URL", () => {
   const violations: Violation[] = [];

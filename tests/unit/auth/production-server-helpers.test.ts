@@ -5,7 +5,9 @@ import {
   buildProductionSmokeEnvironment,
   fetchWithTimeout,
   hasProcessExited,
+  parseListeningOrigin,
   stopServer,
+  waitForListeningOrigin,
   waitForOutput,
 } from "../../integration/production-server.helpers";
 
@@ -23,24 +25,43 @@ class FakeChildProcess extends EventEmitter {
 describe("production server smoke helpers", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("masks auth configuration even when the base environment contains values", () => {
+  it("uses port zero and masks database/auth/service credentials instead of inheriting them", () => {
     const environment = buildProductionSmokeEnvironment(
       {
+        PATH: "/safe/bin",
         BETTER_AUTH_SECRET: "value-loaded-from-dotenv",
         BETTER_AUTH_URL: "https://configured.example",
-        UNRELATED: "preserved",
+        DATABASE_URL: "postgres://external.example/private",
+        ANTHROPIC_API_KEY: "external-api-key",
+        GITHUB_PAT: "external-github-token",
+        UNRELATED: "must-not-be-inherited",
       },
-      { host: "127.0.0.1", port: 4321, siteUrl: "https://artka.dev" },
+      { host: "127.0.0.1", siteUrl: "https://artka.dev", auth: "unconfigured" },
     );
 
     expect(environment).toMatchObject({
       BETTER_AUTH_SECRET: "",
       BETTER_AUTH_URL: "",
+      DATABASE_URL: "",
+      ANTHROPIC_API_KEY: "",
+      GITHUB_PAT: "",
       HOST: "127.0.0.1",
-      PORT: "4321",
+      PORT: "0",
       SITE_URL: "https://artka.dev",
-      UNRELATED: "preserved",
+      PATH: "/safe/bin",
     });
+    expect(environment.UNRELATED).toBeUndefined();
+  });
+
+  it("can enable only a fixed test auth secret while database access remains disabled", () => {
+    const environment = buildProductionSmokeEnvironment(
+      { DATABASE_URL: "postgres://external.example/private" },
+      { host: "127.0.0.1", siteUrl: "https://artka.dev", auth: "test" },
+    );
+
+    expect(environment.BETTER_AUTH_SECRET?.length).toBeGreaterThanOrEqual(32);
+    expect(environment.BETTER_AUTH_URL).toBe("https://artka.dev");
+    expect(environment.DATABASE_URL).toBe("");
   });
 
   it("treats either an exit code or signal code as an exited process", () => {
@@ -83,5 +104,27 @@ describe("production server smoke helpers", () => {
     await expect(waitForOutput(() => output, "never emitted", 1, 1)).rejects.toThrow(
       "Timed out waiting for server output",
     );
+  });
+
+  it("parses and polls the adapter-selected origin without a free-port probe", async () => {
+    const child = new FakeChildProcess();
+    let output = "";
+    setTimeout(() => {
+      output = "Server listening on http://127.0.0.1:51847";
+    }, 5);
+
+    expect(parseListeningOrigin(output)).toBeNull();
+    await expect(
+      waitForListeningOrigin(child as unknown as ChildProcess, () => output, 100, 1),
+    ).resolves.toBe("http://127.0.0.1:51847");
+  });
+
+  it("reports both exit code and signal code in early-exit diagnostics", async () => {
+    const child = new FakeChildProcess();
+    child.signalCode = "SIGTERM";
+
+    await expect(
+      waitForListeningOrigin(child as unknown as ChildProcess, () => "startup failed", 100, 1),
+    ).rejects.toThrow("exitCode=null signalCode=SIGTERM");
   });
 });

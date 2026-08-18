@@ -1,5 +1,5 @@
 /**
- * POST /api/check — CodeChallenge submission endpoint.
+ * POST /api/check/ — CodeChallenge submission endpoint.
  *
  * Body: { challengeId: string, code: string, language: enum }
  * Response: { pass: boolean, feedback: string }

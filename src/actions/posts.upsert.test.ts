@@ -27,16 +27,16 @@ describe("postUpsertInput — slug", () => {
   });
 });
 
-describe("postUpsertInput — description.max(240)", () => {
-  it("accepts 240-character description", () => {
-    const desc = "x".repeat(240);
+describe("postUpsertInput — description.max(200)", () => {
+  it("accepts 200-character description", () => {
+    const desc = "x".repeat(200);
     expect(
       postUpsertInput.parse({ ...baseInput, frontmatter: { ...baseFm, description: desc } }),
     ).toBeDefined();
   });
 
-  it("rejects 241-character description (synced with content.config.ts)", () => {
-    const desc = "x".repeat(241);
+  it("rejects 201-character description (synced with content.config.ts)", () => {
+    const desc = "x".repeat(201);
     expect(() =>
       postUpsertInput.parse({ ...baseInput, frontmatter: { ...baseFm, description: desc } }),
     ).toThrow();

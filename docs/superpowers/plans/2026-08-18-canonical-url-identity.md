@@ -18,6 +18,7 @@
 - English paths retain `/en/`; Russian paths have no locale prefix.
 - Historical redirect destinations are final slash canonicals; `/privacy/`, `/terms/`, `/README/`, and `/en/tags/guide/` remain real 404s.
 - Do not generate both slash and non-slash redirect keys for one normalized Astro route.
+- Repository-owned non-GET clients use canonical slash endpoints. Astro standalone uses `301` before middleware even for non-GET; the edge must use `307`/`308` for slashless non-idempotent traffic and collapse slashless legacy aliases directly to their final canonical.
 - Tests must be written and observed failing before production code changes.
 - Before editing any existing function, run GitNexus upstream impact analysis and record the blast radius; warn before any HIGH or CRITICAL edit.
 - Before each commit, run `gitnexus_detect_changes` for `/Users/izual/astro-blog-gsc-indexing-audit`.
@@ -228,7 +229,7 @@ const input = [
 ].join("");
 
 expect(await renderWithCanonicalInternalLinks(input)).toContain('href="/about/"');
-expect(await renderWithCanonicalInternalLinks(input)).toContain('href="./next/"');
+expect(await renderWithCanonicalInternalLinks(input)).toContain('href="../next/"');
 expect(await renderWithCanonicalInternalLinks(input))
   .toContain('href="https://artka.dev/en/blog/post/#part"');
 expect(await renderWithCanonicalInternalLinks(input)).toContain('href="/rss.xml"');
@@ -245,13 +246,13 @@ Expected: FAIL because the plugin does not exist.
 
 - [ ] **Step 11: Implement the plugin and converge metadata/feeds/links**
 
-The plugin must leave fragments, `mailto:`, `tel:`, protocol-relative URLs, non-artka external URLs, and file-like URLs unchanged. It must preserve a fragment while discarding query identity on canonical artka.dev URLs and append `/` to root-relative and `./`/`../` internal document links.
+The plugin must leave fragments, query-only references, `mailto:`, `tel:`, protocol-relative URLs, non-artka external URLs, and file-like URLs unchanged. It must preserve a fragment while discarding query identity on canonical artka.dev URLs, append `/` to root-relative and `../` internal document links, and convert a leaf Markdown document's `./sibling` reference to `../sibling/` so the browser resolves it beside the current lesson rather than below it.
 
-Before editing `buildWebSiteNode`, add a direct object assertion to `tests/unit/seo/nodes-global.test.ts`, observe it fail because `potentialAction` exists, then remove `SearchAction` and observe it pass. Use `canonicalUrl` in `BaseLayout` for canonical, OG URL, and hreflang. Use `canonicalPath` in `getCounterpart`. Return `false` for counterpart availability on `/login/`, `/admin/*`, and `/api/*`. Convert schema, RSS, feed, navigation, breadcrumb, course, project, and tag URL producers to slash output. Remove the two `./README` links from lesson 14 because `/README/` is deliberately absent.
+Before editing `buildWebSiteNode`, add a direct object assertion to `tests/unit/seo/nodes-global.test.ts`, observe it fail because `potentialAction` exists, then remove `SearchAction` and observe it pass. Use `canonicalUrl` in `BaseLayout` for canonical, OG URL, and hreflang. Use `canonicalPath` in `getCounterpart`. Return `false` for counterpart availability on `/login/`, `/admin/*`, and `/api/*`. Convert schema, RSS, feed, navigation, breadcrumb, RU/EN on-demand home, course, project, tag, and repository-owned POST URL producers to the shared canonical policy. Remove the two `./README` links from lesson 14 because `/README/` is deliberately absent.
 
 - [ ] **Step 12: Add a failing generated-output audit and run it against the baseline artifact**
 
-The test recursively reads `dist/client/**/*.html`, resolves every internal `<a href>` against that page's canonical, and reports tuples `{ file, href, resolved }` when a document URL differs from `canonicalPath(resolved.pathname)`. It also parses canonical/hreflang/`og:url`, JSON-LD URL-like values, sitemap `<loc>`, feed links, `public/llms.txt`, and built `llms-full.txt`; every artka.dev document URL must be apex HTTPS and canonical. File endpoints, fragments, mail/tel, and non-artka origins are excluded.
+The test recursively reads `dist/client/**/*.html`, resolves every internal `<a href>` against that page's canonical, and reports tuples `{ file, href, resolved }` when a document URL differs from `canonicalPath(resolved.pathname)`. It also parses canonical/hreflang/`og:url`, JSON-LD identity values, sitemap `<loc>`, feed self/home/item identity, `public/llms.txt`, and built `llms-full.txt`. Identity values, including file-like identities, must be absolute apex HTTPS without queries; file-like paths skip only slash enforcement. Ordinary external content links remain allowed. A separate all-lessons regression resolves more than 100 generated RU/EN course links and requires every target to be a built canonical route or intentional redirect.
 
 Run: `pnpm exec vitest run tests/unit/seo/generated-url-policy.test.ts`
 
@@ -261,7 +262,7 @@ Expected: FAIL with the current no-slash internal URLs.
 
 Run: `pnpm build && pnpm exec vitest run tests/unit/seo/url-policy.test.ts tests/unit/seo/redirects.test.ts tests/unit/seo/canonical-internal-links.test.ts tests/unit/seo/generated-url-policy.test.ts src/lib/i18n/routing.test.ts`
 
-Expected: all tests pass; generated audit returns an empty violation array.
+Expected: the forced-fresh build and all tests pass; generated identity and RU/EN lesson-route audits return empty violation arrays.
 
 - [ ] **Step 14: Update rendered SEO assertions**
 

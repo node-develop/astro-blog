@@ -17,7 +17,8 @@
 - Admin, login, `/api/auth/*`, action/non-idempotent requests, and requests with `better-auth.session_token` or `__Secure-better-auth.session_token` still initialize auth and fail loudly when configuration is absent.
 - Only trusted `Host`/`X-Forwarded-Host` equal to `www.artka.dev` redirects to `https://artka.dev` with path and query preserved; source code does not claim to repair TLS negotiation.
 - The build must not emit duplicate-route, invalid view-transition selector, or SEO Rollup cycle warnings.
-- Production smoke uses `dist/server/entry.mjs`, an isolated port, and always terminates the child process.
+- Production smoke uses `dist/server/entry.mjs` with `PORT=0`, parses the adapter-selected origin with bounded output polling, masks database/service credentials, and always performs verified bounded termination.
+- Repository non-GET clients call canonical slash endpoints. Astro standalone truthfully returns `301` before middleware for slashless POST; production edge normalization must use method-preserving `307`/`308`.
 - External DNS/TLS, deployment, and Search Console mutations remain owner-gated runbook actions.
 - Tests must be written and observed failing before production code changes.
 - Before editing any existing function, run GitNexus upstream impact analysis and record the blast radius; warn before any HIGH or CRITICAL edit.
@@ -30,8 +31,10 @@
 - `src/lib/auth/request-classification.ts`: pure auth-context and host-redirect decisions.
 - `tests/unit/auth/request-classification.test.ts`: boundary tables including cookie/host cases.
 - `tests/integration/production-server.smoke.test.ts`: built-server redirects/public rendering/file endpoints.
+- `tests/integration/production-server.helpers.ts`: shared hermetic environment, bounded fetch/startup, and TERM-to-KILL lifecycle.
 - `scripts/verify-seo-build.ts`: runs the build, captures output, rejects targeted warnings.
 - `docs/runbooks/google-indexing-recovery.md`: deploy/TLS/GSC operations checklist.
+- `.github/workflows/ci.yml`: installs Chromium, produces fresh `dist`, and runs unit plus explicit runtime suites in order.
 
 ### Task 1: Auth-safe middleware, host defense, clean build, and production smoke
 
@@ -148,7 +151,7 @@ Expected: parser tests pass; real build succeeds without any targeted warning.
 
 - [ ] **Step 9: Write the production-server smoke test and capture RED on baseline behavior**
 
-Spawn `node dist/server/entry.mjs` with `HOST=127.0.0.1`, an OS-selected free `PORT`, `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` removed, and `SITE_URL=https://artka.dev`. Poll `/robots.txt` until ready, then assert:
+Spawn `node dist/server/entry.mjs` with `HOST=127.0.0.1`, `PORT=0`, external database/API credentials masked, and `SITE_URL=https://artka.dev`. Parse the adapter's listening origin with bounded output polling, then poll `/robots.txt` with fetch deadlines. Exercise both an unconfigured-auth process and a fixed test-secret process, then assert:
 
 ```ts
 expect(await status("/")).toBe(200);
@@ -156,6 +159,8 @@ expect(await status("/blog/")).toBe(200);
 expect(await status("/en/")).toBe(200);
 expect(await status("/en/blog/")).toBe(200);
 expect(await redirect("/blog")).toEqual({ status: 301, location: "/blog/" });
+expect(await redirect("/blog/02-context-and-cache"))
+  .toEqual({ status: 301, location: "/blog/02-context-and-cache/" });
 expect(await redirect("/blog/02-context-and-cache/"))
   .toEqual({ status: 301, location: "/courses/claude-code-guide/02-context-and-cache/" });
 expect(await status("/sitemap-index.xml")).toBe(200);
@@ -164,7 +169,7 @@ expect(await hostRedirect("/about/?x=1", "www.artka.dev"))
   .toEqual({ status: 301, location: "https://artka.dev/about/?x=1" });
 ```
 
-Always terminate the child in `finally`; escalate from SIGTERM to SIGKILL after a bounded timeout. Add `"test:production-smoke": "vitest run tests/integration/production-server.smoke.test.ts"`.
+Assert live RU/EN on-demand home links use slash canonicals. With configured test auth, prove POST `/api/check/` reaches its handler with method/body and that canonical auth POST routes are not normalization redirects; retain the diagnostic that slashless POST receives adapter-owned `301`. Record exact GET/HEAD file-variant behavior (`/llms-full.txt/` duplicate `200`; static RSS/feed/sitemap variants `500`) because static handling precedes middleware and a custom server/adapter patch is prohibited. Always terminate the child in `finally`; escalate from SIGTERM to SIGKILL after bounded deadlines and include `exitCode`, `signalCode`, and masked server output in diagnostics. Add `"test:production-smoke": "vitest run tests/integration/production-server.smoke.test.ts"`.
 
 Run: `pnpm test:production-smoke`
 
@@ -174,7 +179,7 @@ Expected on the pre-middleware baseline: public SSR requests fail because Better
 
 Run: `pnpm verify:seo-build && pnpm test:production-smoke`
 
-Expected: all public, redirect, file, deliberate-404, and trusted-host cases pass; child exits cleanly.
+Expected: public, truthful redirect, canonical POST, file diagnostics, deliberate-404, and trusted-host cases pass; both child processes exit cleanly.
 
 - [ ] **Step 11: Write the external operations runbook**
 
@@ -183,13 +188,14 @@ Create `docs/runbooks/google-indexing-recovery.md` with checked/unchecked comman
 ```text
 1. Provision a certificate valid for www.artka.dev at the DNS/proxy owner.
 2. Configure one-hop HTTP/HTTPS www -> https://artka.dev/$request_uri (301).
-3. Deploy this branch after CI.
-4. curl -I apex/www slash/no-slash, legacy, utility, sitemap, and deliberate-404 representatives.
-5. Submit https://artka.dev/sitemap-index.xml in Search Console.
-6. Remove the obsolete https://artka.dev/sitemap.xml submission.
-7. Inspect/request indexing for home, RU/EN post, course, tag, and project canonical samples.
-8. Start validation for 404, redirect, alternate-canonical, and Google-selected-canonical buckets.
-9. Record weekly counts for 4–8 weeks; do not promise immediate indexing.
+3. Configure `307`/`308` for slashless non-idempotent traffic, direct final redirects for slashless legacy aliases, and direct unslashed file canonicalization for GET/HEAD variants.
+4. Deploy this branch after CI's forced-fresh build, unit, production-smoke, and utility-route suites.
+5. curl apex/www slash/no-slash, non-GET, legacy, utility/file variants, sitemap, and deliberate-404 representatives.
+6. Submit https://artka.dev/sitemap-index.xml in Search Console.
+7. Remove the obsolete https://artka.dev/sitemap.xml submission.
+8. Inspect/request indexing for home, RU/EN post, course, tag, and project canonical samples.
+9. Start validation for 404, redirect, alternate-canonical, and Google-selected-canonical buckets.
+10. Record weekly counts for 4–8 weeks; do not promise immediate indexing.
 ```
 
 Link the runbook from the spec external-handoff section. Explicitly label DNS/TLS, deploy, and GSC mutations as not completed by this PR.
@@ -201,8 +207,12 @@ Run:
 ```bash
 pnpm exec vitest run tests/unit/auth/request-classification.test.ts scripts/verify-seo-build.test.ts
 pnpm verify:seo-build
+pnpm exec vitest run --exclude 'tests/integration/**'
 pnpm test:production-smoke
+pnpm exec vitest run tests/integration/seo-utility-routes.test.ts
+pnpm translate:check
 pnpm typecheck
+pnpm lint
 ```
 
 Then run GitNexus change detection, stage only files in this task, and commit:

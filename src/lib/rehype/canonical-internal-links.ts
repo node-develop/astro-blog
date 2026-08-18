@@ -28,7 +28,8 @@ export const canonicalInternalHref = (href: string): string => {
 
   const collapsed = path.replace(/\/{2,}/g, "/");
   const bare = collapsed.replace(/\/+$/, "");
-  return `${bare}/${hash}`;
+  const siblingRelative = bare.startsWith("./") ? `../${bare.slice(2)}` : bare;
+  return `${siblingRelative}/${hash}`;
 };
 
 const canonicalInternalLinks = (): Transformer<Root> => (tree) => {

@@ -20,6 +20,7 @@
 - The only sitemap index is `/sitemap-index.xml`; locale children contain each canonical indexable URL once and include all project details.
 - Sitemap `lastmod` values come from content dates and never from build time alone.
 - Metadata-length findings are editorial diagnostics; do not mechanically pad titles/descriptions.
+- Post descriptions retain the shared 200-character maximum; schema, admin actions, and translation drift tests enforce the 200/201 boundary.
 - Tests must be written and observed failing before production code changes.
 - Before editing any existing function, run GitNexus upstream impact analysis and record the blast radius; warn before any HIGH or CRITICAL edit.
 - Before each commit, run `gitnexus_detect_changes` for `/Users/izual/astro-blog-gsc-indexing-audit`.
@@ -186,7 +187,7 @@ git commit -m "fix: align sitemap with indexability"
 
 - [ ] **Step 1: Write failing utility indexing tests**
 
-The unit test invokes `llms-full.txt` `GET`, `buildWebSiteNode`, and reads the delivered robots artifact. The integration test starts the already-built standalone server on a free localhost port with a fixed test-only Better Auth secret/base URL and no session cookie, fetches the three HTML routes, extracts `meta[name="robots"]`, and always terminates the child in `finally`. Required behavior:
+The unit test invokes `llms-full.txt` `GET`, `buildWebSiteNode`, and reads the delivered robots artifact. The integration test starts the already-built standalone server with `PORT=0` through the shared hardened helper, a fixed test-only Better Auth secret/base URL, external service credentials masked, and no session cookie. It parses the adapter-selected origin with a deadline, fetches with abort deadlines, extracts `meta[name="robots"]`, and performs verified TERM-to-KILL cleanup in `finally`. Required behavior:
 
 ```ts
 expect(searchRobots).toBe("noindex,follow");
@@ -247,7 +248,7 @@ Render `<h1>{entry.data.title}</h1>` immediately after `<Breadcrumbs>` and befor
 ```yaml
 title: "12 Rules for CLAUDE.md: Extending Karpathy for 2026 Failure Modes"
 description: >-
-  Mnilax tested 12 rules for CLAUDE.md across 30 codebases over six weeks, extending Karpathy's template for agent loops, checkpoints, and fail-loud behavior. This article explains the evidence and when to use the rules.
+  Mnilax tested 12 CLAUDE.md rules across 30 codebases over six weeks, extending Karpathy's template for agent loops, checkpoints, and fail-loud behavior. This article explains the evidence.
 coverAlt: "12 rules for CLAUDE.md — an extension of Karpathy's template"
 summary: >-
   Karpathy proposed four CLAUDE.md rules in January. Mnilax expanded them to twelve for token budgets, checkpoints, fail-loud behavior, and newer coding-agent failure modes. Here is what the set covers and how to adopt it without bloating the file.

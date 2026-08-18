@@ -13,15 +13,15 @@ The work targets every repository-level issue identified in the audit. DNS/TLS r
 ## Success criteria
 
 1. Every public HTML document has one slash-suffixed canonical URL.
-2. A non-slash request receives one permanent redirect to its slash canonical in the production Node server.
-3. Known legacy URLs with an equivalent page resolve directly to the final canonical; unmatched URLs return a real `404` and do not create duplicate build routes.
+2. A non-slash GET/HEAD document request receives a production Node `301`; every repository-owned non-GET producer already uses the slash endpoint, and the edge uses method-preserving `307`/`308` for slashless non-idempotent traffic.
+3. Known already-slashed legacy URLs resolve directly to the final canonical. The edge collapses slashless legacy aliases directly to that final destination; the local standalone adapter truthfully takes two `301` hops. Unmatched URLs return a real `404` and do not create duplicate build routes.
 4. Internal links, canonical, hreflang, Open Graph, JSON-LD, RSS, and sitemaps use the same URL policy.
 5. Thin tag archives are `noindex,follow` and excluded from sitemaps; useful tag hubs remain indexable.
 6. All intended project detail pages are included in sitemaps.
 7. Search and login pages are explicitly `noindex,follow`, and structured data does not advertise a blocked internal search URL.
 8. Every indexable landing page has one language-correct H1 and metadata.
 9. The build has no duplicate redirect-route collisions, invalid view-transition selector warning, or SEO chunk-cycle warning.
-10. Automated tests cover URL normalization, redirect coverage, sitemap coverage, indexing policy, metadata, and anonymous public-route behavior.
+10. Automated tests cover URL normalization, redirect coverage, sitemap coverage, indexing policy, metadata, anonymous public-route behavior, canonical POST delivery, and freshly built output.
 
 ## Scope
 
@@ -65,7 +65,7 @@ Advantages:
 - Keeps the URL contract reviewable and testable with the application.
 - Uses Astro’s supported routing behavior.
 
-Trade-off: a reverse proxy can still override application behavior, so live smoke checks remain mandatory.
+Trade-off: Astro's standalone slash normalizer hardcodes `301` before middleware for every method. Repository clients therefore emit canonical non-GET paths, while method-preserving normalization and direct slashless-legacy collapse are mandatory edge contracts verified after deployment.
 
 ### B. Edge-only normalization — rejected
 
@@ -104,7 +104,7 @@ Markdown-authored internal links will be normalized in the existing Markdown/reh
 
 ### Global normalization
 
-`astro.config.ts` sets `trailingSlash: "always"`. With the standalone Node adapter, non-slash GET requests receive `301`; non-GET requests receive method-preserving `308`.
+`astro.config.ts` sets `trailingSlash: "always"`. The standalone Node adapter normalizes slashless requests with a hardcoded `301` before repository middleware, including non-GET requests. It cannot generically guarantee method preservation. All repository-owned POST producers therefore call canonical slash endpoints. At the production edge, slashless non-idempotent requests must use `307` or `308` so method and body survive.
 
 ### Historical redirects
 
@@ -120,6 +120,12 @@ Redirect families:
 6. `/terms/`, `/README/`, and `/en/tags/guide/` remain deliberate `404`s; their internal discovery sources are removed and no misleading homepage redirect is added.
 
 The build must contain no duplicate normalized redirect routes. A test compares normalized keys before Astro consumes the map.
+
+An already-slashed legacy alias is one local `301` hop to its final canonical. A slashless legacy alias is two local hops because adapter normalization runs first. The production edge must recognize slashless legacy aliases and redirect directly to the final canonical in one hop.
+
+### File-like slash variants
+
+No repository producer emits a trailing slash for file-like identities. Astro's standalone static handler runs before middleware: in the verified adapter build, `/llms-full.txt/` returns a duplicate `200`, while `/rss.xml/`, `/feed.json/`, `/sitemap-index.xml/`, and `/sitemap-ru.xml/` return `500`, for both GET and HEAD. Middleware or an Astro catch-all cannot intercept these requests without a custom server or adapter patch, which is disproportionate and explicitly out of scope. The production edge must issue one direct `301` from every such variant to the unslashed file canonical; the runbook verifies both GET and HEAD.
 
 ### `www` host
 
@@ -204,20 +210,27 @@ Every behavior change follows red-green-refactor.
 
 - Build succeeds without route collisions or targeted Rollup/CSS warnings.
 - Every public internal link obeys the slash policy.
-- Canonical, hreflang, OG, and JSON-LD URLs agree.
+- Canonical, hreflang, OG, JSON-LD identity, sitemap, and feed identity URLs are absolute apex HTTPS values without queries; file-like identities skip only trailing-slash enforcement. Ordinary external content links remain allowed.
+- Every internal link in every generated RU/EN lesson resolves to a generated canonical route or an intentional redirect destination.
 - Every intended indexable HTML route appears in exactly one sitemap.
 - Every sitemap URL maps to generated or on-demand output and is not noindex.
 - H1 and locale checks for the affected landing/article pages.
 
 ### Production-server smoke tests
 
-Start `dist/server/entry.mjs` on an isolated port and assert:
+Start `dist/server/entry.mjs` with `PORT=0`, parse the adapter-selected listening origin with bounded output polling, mask external service credentials, and assert:
 
 - `/blog` -> one `301` to `/blog/`.
 - `/blog/` -> `200` with slash canonical.
-- a legacy lesson URL resolves to its final course canonical.
+- an already-slashed legacy lesson URL resolves in one `301`; a slashless legacy request is truthfully two local `301` hops.
 - file endpoints do not gain a slash.
+- file-like slash variants retain exact adapter diagnostics so the edge limitation is not hidden.
+- canonical `/api/check/` preserves POST method/body, and canonical auth POST paths are not normalization redirects.
 - anonymous `/`, `/blog/`, `/en/`, and `/en/blog/` respond without an auth cookie.
+
+### CI order
+
+CI installs Playwright Chromium and OS dependencies, runs `pnpm verify:seo-build` (whose build forces a content-cache refresh), runs unit tests against that fresh `dist`, then explicitly runs the production smoke and SEO utility-route integration suites before translation drift, typecheck, and lint checks.
 
 ## Delivery sequence
 
@@ -238,7 +251,7 @@ Use the owner-gated [Google Indexing Recovery Runbook](../../runbooks/google-ind
 
 1. Configure valid TLS and apex redirect for `www.artka.dev` at the DNS/proxy provider.
 2. Deploy the verified application build.
-3. Confirm live one-hop redirects, sitemap coverage, robots/noindex behavior, and representative canonicals.
+3. Confirm live one-hop GET redirects, method-preserving non-GET redirects, direct file-variant/legacy edge redirects, sitemap coverage, robots/noindex behavior, and representative canonicals.
 4. In Search Console, submit `/sitemap-index.xml` and remove the obsolete `/sitemap.xml` submission.
 5. Inspect/request indexing for a small representative canonical set.
 6. Start validation for the 404, redirect, alternate-canonical, and duplicate-canonical buckets.
@@ -247,6 +260,7 @@ Use the owner-gated [Google Indexing Recovery Runbook](../../runbooks/google-ind
 ## Risks and mitigations
 
 - **Redirect loops:** pure normalization tests plus production-server smoke tests.
+- **Adapter changes method or mishandles file variants before middleware:** canonical repository clients plus explicit edge acceptance checks for `307`/`308` non-GET and direct `301` file variants.
 - **Lost course links:** explicit legacy mappings and generated link audit.
 - **Tag pages accidentally submitted while noindex:** one shared threshold function and sitemap/page parity test.
 - **Authenticated public experience regresses:** cookie-present and cookie-absent middleware tests.

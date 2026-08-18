@@ -4,11 +4,11 @@ Owner: site owner / DNS, proxy, deployment, and Google Search Console administra
 Repository prerequisite: merge and deploy the Google indexing recovery changes after CI passes
 Status: owner-gated; external mutations in this runbook are **not completed by the PR**
 
-Record the operator, UTC timestamp, deployed commit, command output, and Search Console screenshots or export links alongside every completed checkbox. Stop if a redirect takes more than one hop, changes the path/query, returns a temporary status, or points away from `https://artka.dev`.
+Record the operator, UTC timestamp, deployed commit, command output, and Search Console screenshots or export links alongside every completed checkbox. Stop if a redirect takes more than one hop, changes the intended path/query, points away from `https://artka.dev`, uses anything except `301` for GET/HEAD canonicalization, or uses anything except method-preserving `307`/`308` for slashless non-idempotent traffic.
 
-Astro middleware supplies a defense-in-depth host redirect and security headers for on-demand routes. The standalone adapter and production edges serve prerendered files before that middleware, so the DNS/proxy rule below is mandatory for sitewide host normalization; do not treat the application fallback as completion of the `www` migration. Prerendered responses also need equivalent security headers configured at the edge if those headers are intended sitewide.
+Astro middleware supplies a defense-in-depth host redirect and security headers for on-demand routes. The standalone adapter serves prerendered files before that middleware and hardcodes slash normalization as `301` before middleware for every method. It also serves `/llms-full.txt/` as a duplicate `200` and returns `500` for static RSS/feed/sitemap slash variants. Therefore the DNS/proxy rules below are mandatory for sitewide host normalization, method-preserving non-GET handling, and file-like canonicalization. Prerendered responses also need equivalent security headers configured at the edge if those headers are intended sitewide.
 
-## 1. DNS and TLS for `www`
+## 1. DNS, TLS, and edge canonicalization
 
 - [ ] At the DNS/proxy provider, confirm `www.artka.dev` resolves only to the intended production edge. Remove stale records only after the owner verifies their purpose.
 - [ ] Provision and activate a certificate whose Subject Alternative Names include `www.artka.dev`. This must be valid before relying on an HTTPS redirect; an application response cannot repair a failed TLS handshake.
@@ -30,9 +30,13 @@ Astro middleware supplies a defense-in-depth host redirect and security headers 
 
   Expected for both: `301` and exactly `Location: https://artka.dev/about/?x=1`. The HTTPS command must complete without certificate warnings.
 
+- [ ] Configure the edge to use `307` or `308` when a slashless non-idempotent request needs its canonical slash. Do not use `301`/`302`, which may change the method or discard the body.
+- [ ] Configure the edge to collapse a slashless legacy alias directly to its final canonical rather than first adding a slash.
+- [ ] Configure direct permanent GET/HEAD redirects from file-like slash variants to the unslashed identity, including `/llms-full.txt/`, `/rss.xml/`, `/feed.json/`, `/sitemap-index.xml/`, and locale sitemap variants.
+
 ## 2. Deploy the verified application
 
-- [ ] Confirm CI ran the repository checks, including `pnpm verify:seo-build` and `pnpm test:production-smoke`, on the commit selected for release.
+- [ ] Confirm CI ran these gates in order on the commit selected for release: Playwright Chromium/dependency installation; `pnpm verify:seo-build` (which forces Astro content-cache refresh); unit tests excluding integration; `pnpm test:production-smoke`; `pnpm exec vitest run tests/integration/seo-utility-routes.test.ts`; `pnpm translate:check`; `pnpm typecheck`; and `pnpm lint`.
 - [ ] Deploy that exact commit through the normal production pipeline. Record the commit SHA and deployment identifier.
 - [ ] Confirm the deployment is healthy before changing Search Console submissions. Roll back through the deployment platform if public `200` pages or canonical redirects regress.
 
@@ -55,10 +59,24 @@ Run these checks against production after caches have refreshed. `curl -I` sends
 - [ ] Historical lesson redirect:
 
   ```bash
+  curl -sS -I 'https://artka.dev/blog/02-context-and-cache'
   curl -sS -I 'https://artka.dev/blog/02-context-and-cache/'
   ```
 
-  Expected: one `301` directly to `https://artka.dev/courses/claude-code-guide/02-context-and-cache/`.
+  Expected for both: one `301` directly to `https://artka.dev/courses/claude-code-guide/02-context-and-cache/`. The local standalone server takes two `301` hops for the slashless form because its normalization precedes the repository redirect; one-hop slashless behavior is therefore an edge-owned production acceptance gate.
+
+- [ ] Method-preserving non-GET slash normalization:
+
+  ```bash
+  curl -sS -D - -o /dev/null -X POST -H 'Content-Type: application/json' --data '{' 'https://artka.dev/api/check'
+  curl -sS -L --max-redirs 1 -D - -o /dev/null -H 'Content-Type: application/json' --data-binary '{' 'https://artka.dev/api/check'
+  curl -sS -D - -o /dev/null -H 'Content-Type: application/json' --data-binary '{' 'https://artka.dev/api/check/'
+  curl -sS -D - -o /dev/null -X POST -H 'Content-Type: application/json' --data '{' 'https://artka.dev/api/auth/sign-in/email/'
+  curl -sS -D - -o /dev/null -X POST -H 'Content-Type: application/json' --data '{' 'https://artka.dev/api/auth/sign-in/social/'
+  curl -sS -D - -o /dev/null -X POST -H 'Content-Type: application/json' --data '{' 'https://artka.dev/api/auth/sign-out/'
+  ```
+
+  Expected: the first slashless `/api/check` request returns `307` or `308` to `/api/check/`. The followed probe shows that the same POST body reaches the canonical handler and finishes with deterministic `400` for the intentionally invalid JSON; the direct canonical probe does the same. Canonical auth POST paths may return validation/auth errors, but must not return slash-normalization `301`, `302`, `307`, or `308` and must not expose a normalization `Location` header.
 
 - [ ] Utility and file-like routes:
 
@@ -73,6 +91,23 @@ Run these checks against production after caches have refreshed. `curl -I` sends
   ```
 
   Expected: every route returns `200` without a slash redirect. Search pages render `noindex,follow`; `/llms-full.txt` returns `X-Robots-Tag: noindex`; sitemap responses are XML and list apex HTTPS canonical URLs.
+
+- [ ] File-like slash variants at the edge, using both HEAD and GET:
+
+  ```bash
+  curl -sS -I 'https://artka.dev/llms-full.txt/'
+  curl -sS -D - -o /dev/null 'https://artka.dev/llms-full.txt/'
+  curl -sS -I 'https://artka.dev/rss.xml/'
+  curl -sS -D - -o /dev/null 'https://artka.dev/rss.xml/'
+  curl -sS -I 'https://artka.dev/feed.json/'
+  curl -sS -D - -o /dev/null 'https://artka.dev/feed.json/'
+  curl -sS -I 'https://artka.dev/sitemap-index.xml/'
+  curl -sS -D - -o /dev/null 'https://artka.dev/sitemap-index.xml/'
+  curl -sS -I 'https://artka.dev/sitemap-ru.xml/'
+  curl -sS -D - -o /dev/null 'https://artka.dev/sitemap-ru.xml/'
+  ```
+
+  Expected: each command returns one `301` directly to the corresponding unslashed apex HTTPS URL. No internal producer emits these variants. Do not accept the standalone adapter's unproxied behavior (`200` duplicate for `/llms-full.txt/`, `500` for the static variants) as production completion.
 
 - [ ] Deliberate removal:
 

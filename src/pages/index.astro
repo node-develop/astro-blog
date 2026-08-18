@@ -11,12 +11,15 @@ import { getEntry } from "astro:content";
 import { homeFrontmatterSchema } from "~/lib/content/home-schema";
 import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalPath } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
 const latest = posts.slice(0, 3);
-const blogHref = locale === "en" ? "/en/blog" : "/blog";
-const courseHref = locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide";
+const blogHref = canonicalPath(locale === "en" ? "/en/blog" : "/blog");
+const courseHref = canonicalPath(
+  locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide",
+);
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 
 const homeEntry = await getEntry("site", "home");
@@ -95,7 +98,7 @@ const webPageNode = buildWebPageNode({
       {
         latest.map((p) => (
           <li>
-            <a href={`${blogHref}/${bareSlug(p.entry.id)}`} class="latest__link">
+            <a href={canonicalPath(`${blogHref}${bareSlug(p.entry.id)}`)} class="latest__link">
               <span class="latest__title">{p.entry.data.title}</span>
               <time datetime={p.entry.data.pubDate.toISOString()} class="latest__date">
                 {p.entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
