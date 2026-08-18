@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { CANONICAL_ORIGIN, canonicalPath, isFileLikePath } from "~/lib/seo/url-policy";
 
 const getFreePort = async (): Promise<number> =>
   await new Promise((resolve, reject) => {
@@ -88,6 +89,11 @@ const metaContent = (html: string, name: string): string | undefined => {
   return tag?.match(/\bcontent=["']([^"']+)["']/i)?.[1];
 };
 
+const internalUrls = (text: string): URL[] =>
+  [...text.matchAll(/https?:\/\/(?:www\.)?artka\.dev[^\s<>"']*/gi)].map(
+    ([match]) => new URL(match.replace(/[\])},.;:!?]+$/g, "")),
+  );
+
 describe("built utility routes", () => {
   it("serves crawlable noindex pages and localized English search UI", async () => {
     const port = await getFreePort();
@@ -126,6 +132,20 @@ describe("built utility routes", () => {
       expect(llmsFull.response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
       expect(llmsFull.response.headers.get("x-robots-tag")).toBe("noindex");
       expect(llmsFull.body).toContain("# artka.dev — full LLM digest");
+
+      const llmsUrls = internalUrls(llmsFull.body);
+      expect(llmsUrls.length).toBeGreaterThan(0);
+      for (const url of llmsUrls) {
+        expect(url.origin, url.toString()).toBe(CANONICAL_ORIGIN);
+        expect(url.search, url.toString()).toBe("");
+        expect(url.hash, url.toString()).toBe("");
+        expect(url.pathname, url.toString()).toBe(canonicalPath(url.pathname));
+        if (isFileLikePath(url.pathname)) {
+          expect(url.pathname, url.toString()).not.toEndWith("/");
+        } else {
+          expect(url.pathname === "/" || url.pathname.endsWith("/"), url.toString()).toBe(true);
+        }
+      }
 
       expect(enSearchHtml).toMatch(/<h1\b[^>]*>\s*Search\s*<\/h1>/);
       expect(enSearchHtml).toContain('action="/en/search/"');

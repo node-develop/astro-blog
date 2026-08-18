@@ -4,8 +4,9 @@ import {
   buildWebSiteNode,
   type Locale,
 } from "./nodes-global";
+import type { GraphNode } from "./graph-types";
 
-export type GraphNode = Record<string, unknown> & { "@type": string };
+export type { GraphNode } from "./graph-types";
 
 export interface GraphInput {
   readonly locale: Locale;

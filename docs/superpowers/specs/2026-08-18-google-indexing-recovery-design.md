@@ -133,6 +133,8 @@ Application-level host normalization redirects a trusted `Host`/`X-Forwarded-Hos
 
 The standalone Node adapter serves prerendered files before Astro middleware. The application-level redirect therefore protects on-demand routes only; converting public prerendered pages to SSR solely for host normalization would be a disproportionate performance and architecture change and would not represent edge/CDN static delivery. The DNS/proxy one-hop redirect is mandatory for sitewide coverage, including `/about/?x=1`, and remains a post-deploy runbook acceptance check.
 
+The same adapter boundary means Astro middleware security headers wrap on-demand responses but not prerendered static responses. If those headers are intended sitewide, the production edge must attach the equivalent policy to static responses and the owner must verify representative static and on-demand URLs after deployment. This PR does not configure the external edge.
+
 ## Indexable inventory policy
 
 ### Tag pages

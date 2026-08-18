@@ -3,8 +3,8 @@ import {
   buildWebPageNode,
   type BreadcrumbItem,
   type WebPageType,
-  type GraphNode,
-} from "./schema";
+} from "./nodes-page";
+import type { GraphNode } from "./graph-types";
 import type { Locale } from "./nodes-global";
 
 export interface LandingScaffoldInput {

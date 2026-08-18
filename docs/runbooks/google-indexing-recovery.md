@@ -6,7 +6,7 @@ Status: owner-gated; external mutations in this runbook are **not completed by t
 
 Record the operator, UTC timestamp, deployed commit, command output, and Search Console screenshots or export links alongside every completed checkbox. Stop if a redirect takes more than one hop, changes the path/query, returns a temporary status, or points away from `https://artka.dev`.
 
-Astro middleware supplies a defense-in-depth host redirect for on-demand routes. The standalone adapter and production edges serve prerendered files before that middleware, so the DNS/proxy rule below is mandatory for sitewide host normalization; do not treat the application fallback as completion of the `www` migration.
+Astro middleware supplies a defense-in-depth host redirect and security headers for on-demand routes. The standalone adapter and production edges serve prerendered files before that middleware, so the DNS/proxy rule below is mandatory for sitewide host normalization; do not treat the application fallback as completion of the `www` migration. Prerendered responses also need equivalent security headers configured at the edge if those headers are intended sitewide.
 
 ## 1. DNS and TLS for `www`
 
@@ -18,6 +18,8 @@ Astro middleware supplies a defense-in-depth host redirect for on-demand routes.
   https://www.artka.dev/$request_uri -> https://artka.dev/$request_uri (301)
   http://www.artka.dev/$request_uri  -> https://artka.dev/$request_uri (301)
   ```
+
+- [ ] If security headers are intended across the entire site, configure the edge to attach the production policy to prerendered responses: `X-Frame-Options`, `Referrer-Policy`, `X-Content-Type-Options`, `Permissions-Policy`, and the intended report-only CSP. Keep the values aligned with `src/middleware.ts` for on-demand responses.
 
 - [ ] Verify certificate and redirect behavior from outside the provider network:
 
@@ -88,6 +90,15 @@ Run these checks against production after caches have refreshed. `curl -I` sends
   curl -sS 'https://artka.dev/tags/astro/'
   curl -sS 'https://artka.dev/projects/astro-blog/'
   ```
+
+- [ ] Compare response security headers on one prerendered page and one on-demand route:
+
+  ```bash
+  curl -sS -I 'https://artka.dev/about/'
+  curl -sS -I 'https://artka.dev/llms-full.txt'
+  ```
+
+  If sitewide headers are part of the deployment policy, both responses must expose the approved `X-Frame-Options`, `Referrer-Policy`, `X-Content-Type-Options`, `Permissions-Policy`, and report-only CSP values. A passing application smoke test alone does not prove headers on edge-served static files.
 
 ## 4. Search Console sitemap handoff
 

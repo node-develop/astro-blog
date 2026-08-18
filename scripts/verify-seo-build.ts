@@ -24,15 +24,29 @@ const VIOLATIONS: ReadonlyArray<SeoBuildViolation> = [
 ];
 
 export const assertSeoBuildOutput = (output: string): string[] => {
-  const plainOutput = stripVTControlCharacters(output);
-  return VIOLATIONS.filter(({ pattern }) => pattern.test(plainOutput)).map(({ label }) => label);
+  return diagnoseSeoBuildOutput(output).map(({ label }) => label);
 };
 
-const matchingBlock = (output: string, pattern: RegExp): string => {
-  const lines = stripVTControlCharacters(output).split("\n");
-  const lineIndex = lines.findIndex((line) => pattern.test(line));
-  if (lineIndex < 0) return "(matching warning block unavailable)";
+const matchingBlock = (normalizedOutput: string, pattern: RegExp): string => {
+  const match = pattern.exec(normalizedOutput);
+  if (!match) return "(matching warning block unavailable)";
+  const lines = normalizedOutput.split("\n");
+  const lineIndex = normalizedOutput.slice(0, match.index).split("\n").length - 1;
   return lines.slice(Math.max(0, lineIndex - 2), Math.min(lines.length, lineIndex + 7)).join("\n");
+};
+
+export interface SeoBuildDiagnostic {
+  readonly label: string;
+  readonly block: string;
+}
+
+export const diagnoseSeoBuildOutput = (output: string): SeoBuildDiagnostic[] => {
+  const normalizedOutput = stripVTControlCharacters(output);
+  return VIOLATIONS.flatMap(({ label, pattern }) =>
+    pattern.test(normalizedOutput)
+      ? [{ label, block: matchingBlock(normalizedOutput, pattern) }]
+      : [],
+  );
 };
 
 const runBuild = async (): Promise<number> => {
@@ -60,14 +74,13 @@ const runBuild = async (): Promise<number> => {
     child.once("close", (code) => resolveExit(code ?? 1));
   });
 
-  const violations = assertSeoBuildOutput(output);
-  for (const label of violations) {
-    const violation = VIOLATIONS.find((candidate) => candidate.label === label);
-    console.error(`[seo-build] ${label}:\n${matchingBlock(output, violation?.pattern ?? /$^/)}\n`);
+  const diagnostics = diagnoseSeoBuildOutput(output);
+  for (const { label, block } of diagnostics) {
+    console.error(`[seo-build] ${label}:\n${block}\n`);
   }
 
   if (exitCode !== 0) return exitCode;
-  return violations.length === 0 ? 0 : 1;
+  return diagnostics.length === 0 ? 0 : 1;
 };
 
 const entrypoint = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;

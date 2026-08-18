@@ -2,6 +2,13 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  buildProductionSmokeEnvironment,
+  fetchWithTimeout,
+  hasProcessExited,
+  stopServer,
+  waitForOutput,
+} from "./production-server.helpers";
 
 const getFreePort = async (): Promise<number> =>
   await new Promise((resolve, reject) => {
@@ -18,42 +25,20 @@ const getFreePort = async (): Promise<number> =>
     });
   });
 
-const waitForExit = async (child: ChildProcess, timeoutMs: number): Promise<boolean> =>
-  await new Promise((resolve) => {
-    if (child.exitCode !== null) {
-      resolve(true);
-      return;
-    }
-    const onExit = () => {
-      clearTimeout(timer);
-      resolve(true);
-    };
-    const timer = setTimeout(() => {
-      child.off("exit", onExit);
-      resolve(false);
-    }, timeoutMs);
-    child.once("exit", onExit);
-  });
-
-const stopServer = async (child: ChildProcess): Promise<void> => {
-  if (child.exitCode !== null) return;
-  child.kill("SIGTERM");
-  if (await waitForExit(child, 2_000)) return;
-  child.kill("SIGKILL");
-  await waitForExit(child, 2_000);
-};
-
 const waitUntilReady = async (
   origin: string,
   child: ChildProcess,
   serverOutput: () => string,
 ): Promise<void> => {
   for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (child.exitCode !== null) {
-      throw new Error(`Standalone server exited with ${child.exitCode}:\n${serverOutput()}`);
+    if (hasProcessExited(child)) {
+      throw new Error(
+        `Standalone server exited with ${child.exitCode ?? child.signalCode}:\n${serverOutput()}`,
+      );
     }
     try {
-      const response = await fetch(`${origin}/robots.txt`, { redirect: "manual" });
+      const response = await fetchWithTimeout(`${origin}/robots.txt`, { redirect: "manual" }, 500);
+      await response.body?.cancel();
       if (response.status === 200) return;
     } catch {
       // The port is expected to refuse connections briefly while Astro starts.
@@ -64,7 +49,10 @@ const waitUntilReady = async (
 };
 
 const status = async (origin: string, pathname: string, headers?: HeadersInit): Promise<number> => {
-  const response = await fetch(`${origin}${pathname}`, { headers, redirect: "manual" });
+  const response = await fetchWithTimeout(`${origin}${pathname}`, {
+    headers,
+    redirect: "manual",
+  });
   await response.body?.cancel();
   return response.status;
 };
@@ -74,7 +62,10 @@ const redirect = async (
   pathname: string,
   headers?: HeadersInit,
 ): Promise<{ readonly status: number; readonly location: string | null }> => {
-  const response = await fetch(`${origin}${pathname}`, { headers, redirect: "manual" });
+  const response = await fetchWithTimeout(`${origin}${pathname}`, {
+    headers,
+    redirect: "manual",
+  });
   await response.body?.cancel();
   return { status: response.status, location: response.headers.get("location") };
 };
@@ -84,18 +75,14 @@ describe("production standalone server", () => {
     const port = await getFreePort();
     const origin = `http://127.0.0.1:${port}`;
     let output = "";
-    const environment = { ...process.env };
-    delete environment.BETTER_AUTH_SECRET;
-    delete environment.BETTER_AUTH_URL;
 
     const child = spawn(process.execPath, [join(process.cwd(), "dist/server/entry.mjs")], {
       cwd: process.cwd(),
-      env: {
-        ...environment,
-        HOST: "127.0.0.1",
-        PORT: String(port),
-        SITE_URL: "https://artka.dev",
-      },
+      env: buildProductionSmokeEnvironment(process.env, {
+        host: "127.0.0.1",
+        port,
+        siteUrl: "https://artka.dev",
+      }),
       stdio: ["ignore", "pipe", "pipe"],
     });
     child.stdout?.on("data", (chunk) => {
@@ -136,6 +123,7 @@ describe("production standalone server", () => {
       );
 
       expect(await status(origin, "/api/auth/get-session/")).toBe(500);
+      await waitForOutput(() => output, "BETTER_AUTH_SECRET is required", 1_000);
       expect(output).toContain("BETTER_AUTH_SECRET is required");
     } finally {
       await stopServer(child);

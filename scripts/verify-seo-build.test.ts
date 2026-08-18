@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertSeoBuildOutput } from "./verify-seo-build";
+import { assertSeoBuildOutput, diagnoseSeoBuildOutput } from "./verify-seo-build";
 
 describe("assertSeoBuildOutput", () => {
   it("accepts clean build output", () => {
@@ -30,5 +30,22 @@ describe("assertSeoBuildOutput", () => {
         "static route cannot be defined more than once\nstatic route cannot be defined more than once",
       ),
     ).toEqual(["duplicate redirect route"]);
+  });
+
+  it("prints context for an SEO chunk-cycle warning that spans lines", () => {
+    const output = [
+      "rendering server chunks",
+      "buildLandingNodes is imported from landing.ts",
+      "and reexported through module schema.ts while both modules depend on each other",
+      "build complete",
+    ].join("\n");
+
+    expect(diagnoseSeoBuildOutput(output)).toEqual([
+      {
+        label: "SEO chunk cycle",
+        block: expect.stringContaining("reexported through module schema.ts"),
+      },
+    ]);
+    expect(diagnoseSeoBuildOutput(output)[0]?.block).not.toContain("unavailable");
   });
 });
