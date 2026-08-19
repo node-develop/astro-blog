@@ -312,7 +312,11 @@ const socialLabel = (url: string): string => {
       .layout[data-full-width="true"] .layout__toc {
         display: none;
       }
-      .layout[data-no-sidebar="true"],
+      /* noSidebar alone keeps the toc rail (articles); combined with
+         fullWidth it collapses to a single centered column. */
+      .layout[data-no-sidebar="true"] {
+        grid-template-columns: minmax(0, 1fr) var(--col-toc);
+      }
       .layout[data-full-width="true"][data-no-sidebar="true"] {
         grid-template-columns: minmax(0, 1fr);
       }

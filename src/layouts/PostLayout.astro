@@ -2,7 +2,6 @@
 import BaseLayout from "./BaseLayout.astro";
 import CardArt from "~/components/CardArt.astro";
 import PostTOC from "~/components/PostTOC.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import AuthorCard from "~/components/AuthorCard.astro";
 import ReadingProgress from "~/components/ReadingProgress.astro";
 import PrevNext from "~/components/PrevNext.astro";
@@ -117,6 +116,7 @@ const formattedUpdatedDate = updatedDate
   description={description}
   ogImage={ogImagePath}
   ogType="article"
+  noSidebar={true}
   extraSchemaNodes={[blogPostingNode, breadcrumbNode, faqNode]}
 >
   <Fragment slot="head">
@@ -126,7 +126,6 @@ const formattedUpdatedDate = updatedDate
     {tags.map((tag: string) => <meta property="article:tag" content={tag} />)}
   </Fragment>
 
-  <SiteSidebar slot="sidebar" activeSlug={post.id} />
   <PostTOC slot="toc" headings={headings} />
 
   <ReadingProgress targetSelector=".post" />
@@ -225,6 +224,7 @@ const formattedUpdatedDate = updatedDate
   <style>
     .post {
       max-width: 720px;
+      margin-inline: auto;
     }
     .post__header {
       margin-bottom: var(--space-7);
@@ -334,6 +334,7 @@ const formattedUpdatedDate = updatedDate
     }
     .post__after {
       max-width: 720px;
+      margin-inline: auto;
       margin: var(--space-6) 0 var(--space-9) 0;
     }
     @media (max-width: 600px) {
