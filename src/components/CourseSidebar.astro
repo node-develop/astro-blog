@@ -1,0 +1,147 @@
+---
+/**
+ * Lesson navigation sidebar for COURSE pages only (CourseLayout /
+ * LessonLayout). The old site-wide SiteSidebar was removed from content
+ * pages in the editorial redesign; this is its lessons section, scoped to
+ * the course being viewed — the one place where a persistent lesson list
+ * belongs.
+ */
+import { getCollection, type CollectionEntry } from "astro:content";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  /** Course directory slug, e.g. "claude-code-guide". */
+  courseSlug: string;
+  /** Short slug of the lesson being viewed (e.g. "03-claude-md"), if any. */
+  activeSlug?: string | undefined;
+}
+
+const { courseSlug, activeSlug } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
+const coursePrefix = locale === "en" ? "/en/courses" : "/courses";
+
+const allLessons = await getCollection("lesson");
+const lessonPathPrefix = locale === "en" ? `${courseSlug}/en/` : `${courseSlug}/`;
+const series = allLessons
+  .filter((l: CollectionEntry<"lesson">) => {
+    if (!l.id.startsWith(lessonPathPrefix)) return false;
+    if (locale === "ru" && l.id.startsWith(`${courseSlug}/en/`)) return false;
+    return true;
+  })
+  .sort((a: CollectionEntry<"lesson">, b: CollectionEntry<"lesson">) => {
+    const ao = a.data.order ?? parseInt(a.id.match(/(\d+)/)?.[1] ?? "0", 10);
+    const bo = b.data.order ?? parseInt(b.id.match(/(\d+)/)?.[1] ?? "0", 10);
+    return ao - bo;
+  });
+
+const courseLandingHref = `${coursePrefix}/${courseSlug}/`;
+const lessonShortSlug = (lesson: CollectionEntry<"lesson">): string =>
+  lesson.id.split("/").pop() ?? lesson.id;
+const lessonOrder = (lesson: CollectionEntry<"lesson">): number =>
+  lesson.data.order ?? parseInt(lesson.id.match(/(\d+)/)?.[1] ?? "0", 10);
+const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
+  `${courseLandingHref}${lessonShortSlug(lesson)}/`;
+---
+
+{
+  series.length > 0 && (
+    <nav class="sidebar" aria-label={t(locale, "sidebar.guide")}>
+      <h3 class="sidebar__label">
+        <a href={courseLandingHref} class="sidebar__label-link">
+          {t(locale, "sidebar.guide")}
+        </a>
+      </h3>
+      <ol class="sidebar__list">
+        {series.map((lesson: CollectionEntry<"lesson">) => (
+          <li>
+            <a
+              href={lessonHref(lesson)}
+              class="sidebar__link"
+              aria-current={lessonShortSlug(lesson) === activeSlug ? "page" : undefined}
+            >
+              <span class="sidebar__num">{String(lessonOrder(lesson)).padStart(2, "0")}</span>
+              <span class="sidebar__title">{lesson.data.title}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+<style>
+  .sidebar {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+  }
+  .sidebar__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg-subtle);
+    margin: 0 0 var(--space-3) 0;
+    font-weight: 500;
+  }
+  .sidebar__label-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .sidebar__label-link:hover {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+  }
+  .sidebar__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sidebar__link {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: var(--space-2);
+    align-items: baseline;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .sidebar__link:hover {
+    color: var(--color-fg);
+    background: var(--color-bg-elevated);
+  }
+  .sidebar__link[aria-current="page"] {
+    color: var(--color-fg);
+    background: var(--color-accent-soft);
+    box-shadow: inset 2px 0 0 var(--color-accent);
+  }
+  .sidebar__num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  .sidebar__link[aria-current="page"] .sidebar__num {
+    color: var(--color-accent);
+  }
+  .sidebar__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+</style>

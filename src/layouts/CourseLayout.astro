@@ -16,6 +16,7 @@
  */
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import CourseSidebar from "~/components/CourseSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
@@ -95,6 +96,8 @@ const labels =
   {...ogImagePath ? { ogImage: ogImagePath } : {}}
   extraSchemaNodes={[breadcrumbsNode, collectionNode]}
 >
+  <CourseSidebar slot="sidebar" courseSlug={courseSlug} />
+
   <article class="course" data-course-slug={courseSlug}>
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="course__hero">
