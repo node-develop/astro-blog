@@ -312,7 +312,11 @@ const socialLabel = (url: string): string => {
       .layout[data-full-width="true"] .layout__toc {
         display: none;
       }
-      .layout[data-no-sidebar="true"],
+      /* noSidebar alone keeps the toc rail (articles); combined with
+         fullWidth it collapses to a single centered column. */
+      .layout[data-no-sidebar="true"] {
+        grid-template-columns: minmax(0, 1fr) var(--col-toc);
+      }
       .layout[data-full-width="true"][data-no-sidebar="true"] {
         grid-template-columns: minmax(0, 1fr);
       }
@@ -328,8 +332,12 @@ const socialLabel = (url: string): string => {
         min-width: 0;
       }
       @media (max-width: 1023px) {
+        /* data-no-sidebar must be listed explicitly: its desktop rule has
+           higher specificity (0,2,0) than bare .layout and would otherwise
+           keep the phantom toc track on phones. */
         .layout,
-        .layout[data-full-width="true"] {
+        .layout[data-full-width="true"],
+        .layout[data-no-sidebar="true"] {
           grid-template-columns: minmax(0, 1fr);
         }
         .layout__sidebar,

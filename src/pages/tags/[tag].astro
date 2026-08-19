@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
@@ -75,11 +74,10 @@ const webPageNode = buildWebPageNode({
   title={title}
   description={description}
   fullWidth={true}
+  noSidebar={true}
   noindex={!isTagArchiveIndexable(matches)}
   extraSchemaNodes={[blogNode, breadcrumbNode, webPageNode]}
 >
-  <SiteSidebar slot="sidebar" />
-
   <section class="tag-archive">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t("ru", "breadcrumbs.aria")} />
     <header class="tag-archive__header">
@@ -128,6 +126,7 @@ const webPageNode = buildWebPageNode({
   <style>
     .tag-archive {
       max-width: 720px;
+      margin-inline: auto;
     }
     .tag-archive__header {
       margin-bottom: var(--space-6);

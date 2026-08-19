@@ -2,7 +2,6 @@
 export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
@@ -18,6 +17,7 @@ import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 import { assignArtVariants } from "~/lib/content/card-art";
 import { bareSlug } from "~/lib/content/slug";
+import { BLOG_PAGE_SIZE } from "~/lib/content/blog-pagination";
 import PostCard from "~/components/PostCard.astro";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
@@ -27,6 +27,9 @@ const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
 const courseHref =
   locale === "en" ? "/en/courses/claude-code-guide/" : "/courses/claude-code-guide/";
 const gridVariants = assignArtVariants(posts.map((p: PostWithMeta) => bareSlug(p.entry.id)));
+const initialPosts = posts.slice(0, BLOG_PAGE_SIZE);
+const hasMore = posts.length > BLOG_PAGE_SIZE;
+const partialBase = "/en/blog/partials/";
 const blogNode = buildBlogNode(locale);
 const tagsHrefBase = "/en/tags/";
 const dict = getTagDict(locale);
@@ -69,10 +72,9 @@ const webPageNode = buildWebPageNode({
   description={t(locale, "blog.description")}
   ogImage={ogImagePath}
   fullWidth={true}
+  noSidebar={true}
   extraSchemaNodes={[blogNode, breadcrumbsNode, webPageNode]}
 >
-  <SiteSidebar slot="sidebar" />
-
   <section class="list">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="list__header">
@@ -98,9 +100,9 @@ const webPageNode = buildWebPageNode({
       )
     }
 
-    <ul class="list__grid">
+    <ul class="list__grid" data-blog-grid>
       {
-        posts.map((p: PostWithMeta, i: number) => (
+        initialPosts.map((p: PostWithMeta, i: number) => (
           <li>
             <PostCard
               entry={p.entry}
@@ -115,10 +117,38 @@ const webPageNode = buildWebPageNode({
         ))
       }
     </ul>
+
+    {
+      hasMore && (
+        <>
+          <div
+            class="list__sentinel"
+            data-blog-sentinel
+            data-next-page="2"
+            data-partial-base={partialBase}
+            data-announce="More posts loaded"
+            aria-hidden="true"
+          />
+          <p class="list__status" data-blog-status role="status" aria-live="polite" />
+        </>
+      )
+    }
   </section>
 
+  <script>
+    import { initLazyPostList } from "~/lib/posts/lazy-list";
+
+    // astro:page-load fires on initial mount and after every View Transitions
+    // navigation - same pattern as PostLayout's enhance script.
+    document.addEventListener("astro:page-load", () => initLazyPostList(document));
+  </script>
+
   <style>
-    /* Width is owned by the layout's main column (~960px with sidebar). */
+    .list {
+      max-width: 1080px;
+      margin-inline: auto;
+    }
+
     .list__header {
       margin-bottom: var(--space-6);
       padding-bottom: var(--space-4);
@@ -216,6 +246,32 @@ const webPageNode = buildWebPageNode({
       .list__grid {
         grid-template-columns: minmax(0, 1fr);
       }
+    }
+    /* Lazy-loaded cards fade up into place; durations come from tokens,
+       which collapse to 0ms under prefers-reduced-motion. */
+    /* :global — lazily fetched <li> from the partial route carry no Astro
+       scope attribute, so scoped selectors would never match them. */
+    .list__grid > :global(li) {
+      transition:
+        opacity var(--dur-slow) var(--ease-out),
+        transform var(--dur-slow) var(--ease-out);
+    }
+    .list__grid > :global(li.is-entering) {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    .list__sentinel {
+      height: 1px;
+    }
+    /* Visually hidden live region announcing lazily loaded cards to AT. */
+    .list__status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   </style>
 </BaseLayout>

@@ -1,0 +1,59 @@
+---
+/**
+ * HTML fragment route for the blog index lazy loader (EN). RU twin at
+ * /src/pages/blog/partials/[page].astro — keep the two in sync.
+ *
+ * Returns bare <li><PostCard/></li> items for page N of the ordered post
+ * list, plus a <template data-next-page> marker while more pages remain.
+ * Art variants are assigned over the FULL slug list and sliced, so lazy
+ * cards get exactly the variants the full server render would.
+ *
+ * Page 1 is the blog index itself — fragments start at 2. Not a document:
+ * X-Robots-Tag keeps crawlers from indexing the naked fragment.
+ */
+export const prerender = false;
+export const partial = true;
+
+import PostCard from "~/components/PostCard.astro";
+import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
+import { assignArtVariants } from "~/lib/content/card-art";
+import { bareSlug } from "~/lib/content/slug";
+import { BLOG_PAGE_SIZE } from "~/lib/content/blog-pagination";
+
+const locale = "en" as const;
+const blogHref = "/en/blog/";
+
+const page = Number.parseInt(Astro.params.page ?? "", 10);
+if (!Number.isInteger(page) || page < 2 || page > 10_000) {
+  return new Response(null, { status: 404 });
+}
+
+const posts = await getOrderedPosts({ locale });
+const start = (page - 1) * BLOG_PAGE_SIZE;
+const slice = posts.slice(start, start + BLOG_PAGE_SIZE);
+if (slice.length === 0) {
+  return new Response(null, { status: 404 });
+}
+
+const variants = assignArtVariants(posts.map((p: PostWithMeta) => bareSlug(p.entry.id)));
+const hasMore = posts.length > start + BLOG_PAGE_SIZE;
+
+Astro.response.headers.set("X-Robots-Tag", "noindex");
+---
+
+{
+  slice.map((p: PostWithMeta, i: number) => (
+    <li>
+      <PostCard
+        entry={p.entry}
+        href={`${blogHref}${bareSlug(p.entry.id)}/`}
+        locale={locale}
+        artVariant={variants[start + i]}
+        showDescription={true}
+        headingLevel="h2"
+        transitionName={`post-title-${bareSlug(p.entry.id)}`}
+      />
+    </li>
+  ))
+}
+{hasMore && <template data-next-page={String(page + 1)} />}

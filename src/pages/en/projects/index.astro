@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
@@ -51,10 +50,9 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
   description={t(locale, "meta.projects.description")}
   ogImage={landingOgPath("projects", locale)}
   fullWidth={true}
+  noSidebar={true}
   extraSchemaNodes={[collectionNode, breadcrumbsNode]}
 >
-  <SiteSidebar slot="sidebar" />
-
   <section class="projects">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="projects__header">
@@ -99,6 +97,7 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
   <style>
     .projects {
       max-width: 720px;
+      margin-inline: auto;
     }
     .projects__header {
       margin-bottom: var(--space-6);

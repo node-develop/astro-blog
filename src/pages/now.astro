@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getEntry, render } from "astro:content";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
@@ -40,12 +39,20 @@ const nodes = buildLandingNodes({
   description={description}
   ogImage={ogImagePath}
   fullWidth={true}
+  noSidebar={true}
   extraSchemaNodes={nodes}
 >
-  <SiteSidebar slot="sidebar" />
   <article class="prose">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <h1>{entry.data.title}</h1>
     <Content />
   </article>
+  <style>
+    /* The sidebar column is gone (noSidebar) - keep prose at a readable
+       measure, centered in the full-width main column. */
+    .prose {
+      max-width: 720px;
+      margin-inline: auto;
+    }
+  </style>
 </BaseLayout>

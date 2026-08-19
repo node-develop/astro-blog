@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
-import SiteSidebar from "~/components/SiteSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
@@ -54,10 +53,9 @@ const rows = slugs.map((slug) => ({
   description={description}
   ogImage={ogImagePath}
   fullWidth={true}
+  noSidebar={true}
   extraSchemaNodes={[webPageNode, breadcrumbsNode]}
 >
-  <SiteSidebar slot="sidebar" />
-
   <section class="tags-index">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <header class="tags-index__header">
@@ -94,6 +92,7 @@ const rows = slugs.map((slug) => ({
   <style>
     .tags-index {
       max-width: 720px;
+      margin-inline: auto;
     }
     .tags-index__header {
       margin-bottom: var(--space-6);
