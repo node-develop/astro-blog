@@ -120,13 +120,17 @@ const webPageNode = buildWebPageNode({
 
     {
       hasMore && (
-        <div
-          class="list__sentinel"
-          data-blog-sentinel
-          data-next-page="2"
-          data-partial-base={partialBase}
-          aria-hidden="true"
-        />
+        <>
+          <div
+            class="list__sentinel"
+            data-blog-sentinel
+            data-next-page="2"
+            data-partial-base={partialBase}
+            data-announce="More posts loaded"
+            aria-hidden="true"
+          />
+          <p class="list__status" data-blog-status role="status" aria-live="polite" />
+        </>
       )
     }
   </section>
@@ -245,17 +249,29 @@ const webPageNode = buildWebPageNode({
     }
     /* Lazy-loaded cards fade up into place; durations come from tokens,
        which collapse to 0ms under prefers-reduced-motion. */
-    .list__grid > li {
+    /* :global — lazily fetched <li> from the partial route carry no Astro
+       scope attribute, so scoped selectors would never match them. */
+    .list__grid > :global(li) {
       transition:
         opacity var(--dur-slow) var(--ease-out),
         transform var(--dur-slow) var(--ease-out);
     }
-    .list__grid > li.is-entering {
+    .list__grid > :global(li.is-entering) {
       opacity: 0;
       transform: translateY(14px);
     }
     .list__sentinel {
       height: 1px;
+    }
+    /* Visually hidden live region announcing lazily loaded cards to AT. */
+    .list__status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   </style>
 </BaseLayout>

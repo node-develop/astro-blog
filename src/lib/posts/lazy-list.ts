@@ -39,7 +39,10 @@ export const initLazyPostList = (doc: Document): void => {
     try {
       const res = await fetch(`${base}${page}/`);
       if (!res.ok) {
-        finish(observer);
+        // 404 = the archive genuinely ended (page out of range) — stop.
+        // Anything else (5xx, network middlebox) is transient: keep the
+        // observer armed so the next scroll intersection retries.
+        if (res.status === 404) finish(observer);
         return;
       }
       const tpl = doc.createElement("template");
@@ -68,6 +71,13 @@ export const initLazyPostList = (doc: Document): void => {
           },
           items.length * STAGGER_MS + 800,
         );
+      }
+
+      // Announce the append to assistive tech via the polite live region.
+      const status = doc.querySelector<HTMLElement>("[data-blog-status]");
+      const announce = sentinel.dataset.announce;
+      if (status && announce && items.length > 0) {
+        status.textContent = announce;
       }
 
       const nextPage = next?.getAttribute("data-next-page");
