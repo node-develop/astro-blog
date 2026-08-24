@@ -21,6 +21,7 @@ export const buildPersonNode = () => {
     "@type": "Person",
     "@id": graphIds.person,
     name: person.name,
+    alternateName: person.alternateName,
     url: canonicalUrl(person.url),
     image: person.image,
     jobTitle: person.jobTitle,
@@ -41,7 +42,11 @@ export const buildOrganizationNode = () => ({
   "@type": "Organization",
   "@id": graphIds.organization,
   name: "artka.dev",
+  alternateName: ["artka.dev by Artyom Kashuta", "artka.dev by Артём Кашута"],
+  description:
+    "Bilingual technical publication by Artyom Kashuta about Claude Code internals, AI agent engineering, RAG, and production backend systems.",
   url: canonicalUrl("/"),
+  email: person.email,
   logo: {
     "@type": "ImageObject",
     url: `${SITE}/icon-512.png`,
@@ -49,6 +54,13 @@ export const buildOrganizationNode = () => ({
     height: 512,
   },
   founder: { "@id": graphIds.person },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "editorial and technical inquiries",
+    email: person.email,
+    url: canonicalUrl("/contact/"),
+    availableLanguage: ["Russian", "English"],
+  },
 });
 
 export const buildWebSiteNode = (locale: Locale) => ({
@@ -56,6 +68,11 @@ export const buildWebSiteNode = (locale: Locale) => ({
   "@id": graphIds.website,
   url: canonicalUrl("/"),
   name: "artka.dev",
+  alternateName: ["Artyom Kashuta technical blog", "Технический блог Артёма Кашуты"],
+  description:
+    locale === "ru"
+      ? "Технические материалы Артёма Кашуты о Claude Code, AI-агентах, LLM, RAG и production backend."
+      : "Technical writing by Artyom Kashuta about Claude Code, AI agents, LLMs, RAG, and production backend systems.",
   inLanguage: inLang(locale),
   publisher: { "@id": graphIds.organization },
 });

@@ -2,7 +2,7 @@
 /**
  * Course landing route (RU). EN twin at /src/pages/en/courses/[course]/index.astro.
  */
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
 import CourseLayout from "~/layouts/CourseLayout.astro";
 
 export async function getStaticPaths() {
@@ -36,6 +36,9 @@ const { course, lessons } = Astro.props as {
   course: CollectionEntry<"course">;
   lessons: CollectionEntry<"lesson">[];
 };
+const { Content } = await render(course);
 ---
 
-<CourseLayout course={course} lessons={lessons} />
+<CourseLayout course={course} lessons={lessons}>
+  <Content />
+</CourseLayout>

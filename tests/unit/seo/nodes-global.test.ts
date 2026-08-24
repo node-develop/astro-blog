@@ -24,6 +24,7 @@ describe("buildPersonNode", () => {
     expect(node["@type"]).toBe("Person");
     expect(node["@id"]).toBe(graphIds.person);
     expect(node.name).toBe("Artyom Kashuta");
+    expect(node.alternateName).toBe("Артём Кашута");
     expect(node.knowsAbout).toContain("Claude Code");
     expect(node.email).toMatch(/@/);
   });
@@ -45,6 +46,8 @@ describe("buildWebSiteNode", () => {
     expect(node["@type"]).toBe("WebSite");
     expect(node["@id"]).toBe(graphIds.website);
     expect(node.inLanguage).toBe("ru-RU");
+    expect(node.alternateName).toContain("Artyom Kashuta technical blog");
+    expect(node.description).toMatch(/Claude Code/i);
     expect(node.publisher).toEqual({ "@id": graphIds.organization });
     expect(node).not.toHaveProperty("potentialAction");
   });

@@ -77,6 +77,11 @@ const assertUniqueLocations = (entries: readonly UrlEntry[]): void => {
 export const buildLocaleSitemapEntries = (input: SitemapInput): readonly UrlEntry[] => {
   const prefix = localePrefix(input.locale);
   const generated: UrlEntry[] = [
+    ...["contact", "privacy"].map((slug) => ({
+      loc: canonicalUrl(`${prefix}/${slug}/`),
+      changefreq: "yearly",
+      priority: 0.4,
+    })),
     ...[...input.tagGroups.entries()]
       .filter(([, posts]) => isTagArchiveIndexable(posts))
       .map(([slug]) => ({
