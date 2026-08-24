@@ -1,0 +1,105 @@
+---
+export const prerender = false;
+
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { renderAgent404Markdown } from "~/lib/agents/markdown";
+import {
+  appendVary,
+  markdownResponse,
+  negotiateRepresentation,
+} from "~/lib/http/content-negotiation";
+import { canonicalPath } from "~/lib/seo/url-policy";
+
+const locale = Astro.url.pathname.startsWith("/en/") ? "en" : "ru";
+const representation = negotiateRepresentation(Astro.request.headers.get("Accept"));
+const isApiPath = Astro.url.pathname.startsWith("/api/");
+if (!isApiPath && representation === "text/markdown") {
+  return markdownResponse(Astro.request, renderAgent404Markdown(locale, Astro.url.pathname), 404);
+}
+
+Astro.response.status = 404;
+appendVary(Astro.response.headers, "Accept", "Accept-Encoding");
+
+const copy =
+  locale === "en"
+    ? {
+        title: "Page not found",
+        description:
+          "The address may be outdated or contain a typo. These direct links work without JavaScript.",
+        next: "Where to go next",
+        nav: "Recovery links",
+        links: [
+          { label: "Home", href: "/en/" },
+          { label: "Articles", href: "/en/blog/" },
+          { label: "Claude Code Guide", href: "/en/courses/claude-code-guide/" },
+          { label: "XML sitemap", href: "/sitemap-index.xml" },
+          { label: "Information for AI agents", href: "/llms.txt" },
+        ],
+      }
+    : {
+        title: "Страница не найдена",
+        description:
+          "Адрес мог устареть или содержать ошибку. Эти прямые ссылки работают без JavaScript.",
+        next: "Куда перейти дальше",
+        nav: "Ссылки для продолжения",
+        links: [
+          { label: "Главная", href: "/" },
+          { label: "Статьи", href: "/blog/" },
+          { label: "Claude Code Guide", href: "/courses/claude-code-guide/" },
+          { label: "XML-карта сайта", href: "/sitemap-index.xml" },
+          { label: "Информация для AI-агентов", href: "/llms.txt" },
+        ],
+      };
+---
+
+<BaseLayout
+  title={`404 — ${copy.title}`}
+  description={copy.description}
+  noindex={true}
+  fullWidth={true}
+  noSidebar={true}
+>
+  <article class="not-found">
+    <p class="not-found__code" aria-hidden="true">404</p>
+    <h1>{copy.title}</h1>
+    <p>{copy.description}</p>
+    <h2>{copy.next}</h2>
+    <nav aria-label={copy.nav}>
+      <ul>
+        {
+          copy.links.map(({ label, href }) => (
+            <li>
+              <a href={canonicalPath(href)}>{label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </article>
+
+  <style>
+    .not-found {
+      max-width: var(--col-content);
+      margin-inline: auto;
+    }
+    .not-found__code {
+      margin: 0 0 var(--space-3);
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      letter-spacing: var(--tracking-wide);
+    }
+    .not-found h1 {
+      margin-block: 0 var(--space-4);
+    }
+    .not-found h2 {
+      margin-block: var(--space-7) var(--space-3);
+    }
+    .not-found ul {
+      display: grid;
+      gap: var(--space-3);
+      padding-inline-start: var(--space-5);
+    }
+  </style>
+</BaseLayout>

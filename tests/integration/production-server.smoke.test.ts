@@ -39,6 +39,22 @@ const html = async (origin: string, pathname: string): Promise<string> => {
   return body;
 };
 
+const visibleMainText = (body: string): string =>
+  (body.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const expectNegotiatedVary = (response: Response): void => {
+  const tokens = (response.headers.get("vary") ?? "")
+    .split(",")
+    .map((token) => token.trim().toLowerCase());
+  expect(tokens).toContain("accept");
+  expect(tokens).toContain("accept-encoding");
+};
+
 const expectCanonicalHomeLinks = (
   body: string,
   expected: { readonly blog: string; readonly course: string },
@@ -66,6 +82,86 @@ describe("production standalone server", () => {
       const ruHome = await html(server.origin, "/");
       const enHome = await html(server.origin, "/en/");
 
+      for (const body of [ruHome, enHome]) {
+        expect(body.match(/<h1\b/gi)).toHaveLength(1);
+        expect(body).toMatch(/<h2\b/i);
+        expect(body).toMatch(/<h3\b/i);
+        expect(visibleMainText(body).length).toBeGreaterThan(500);
+        expect(body).toContain('"@type":"ContactPoint"');
+        expect(body).toContain('"email":"a@artka.dev"');
+      }
+
+      for (const pathname of ["/", "/en/"]) {
+        const markdown = await responseFor(server.origin, pathname, {
+          headers: { Accept: "text/markdown" },
+        });
+        expect(markdown.status).toBe(200);
+        expect(markdown.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+        expectNegotiatedVary(markdown);
+        const markdownBody = await markdown.text();
+        expect(markdownBody).toMatch(/^# artka\.dev/m);
+        expect(markdownBody).toContain("https://artka.dev/llms.txt");
+        expect(markdownBody).not.toContain("<!doctype html>");
+        expect(markdownBody.length).toBeGreaterThan(500);
+
+        const markdownHead = await responseFor(server.origin, pathname, {
+          method: "HEAD",
+          headers: { Accept: "text/markdown" },
+        });
+        expect(markdownHead.status).toBe(200);
+        expect(markdownHead.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+        expectNegotiatedVary(markdownHead);
+        expect(await markdownHead.text()).toBe("");
+
+        const htmlVariant = await responseFor(server.origin, pathname, {
+          headers: { Accept: "text/html" },
+        });
+        expect(htmlVariant.status).toBe(200);
+        expect(htmlVariant.headers.get("content-type")).toContain("text/html");
+        expectNegotiatedVary(htmlVariant);
+        await htmlVariant.body?.cancel();
+
+        const htmlHead = await responseFor(server.origin, pathname, {
+          method: "HEAD",
+          headers: { Accept: "text/html" },
+        });
+        expect(htmlHead.status).toBe(200);
+        expect(htmlHead.headers.get("content-type")).toContain("text/html");
+        expectNegotiatedVary(htmlHead);
+        expect(await htmlHead.text()).toBe("");
+
+        const weightedMarkdown = await responseFor(server.origin, pathname, {
+          headers: { Accept: "text/html;q=0.3, text/markdown;q=0.9" },
+        });
+        expect(weightedMarkdown.status).toBe(200);
+        expect(weightedMarkdown.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+        await expect(weightedMarkdown.text()).resolves.toMatch(/^# artka\.dev/m);
+
+        const specificHtml = await responseFor(server.origin, pathname, {
+          headers: { Accept: "text/*;q=0.9, text/markdown;q=0.1" },
+        });
+        expect(specificHtml.status).toBe(200);
+        expect(specificHtml.headers.get("content-type")).toContain("text/html");
+        await specificHtml.body?.cancel();
+
+        const unacceptable = await responseFor(server.origin, pathname, {
+          headers: { Accept: "application/pdf" },
+        });
+        expect(unacceptable.status).toBe(406);
+        expect(unacceptable.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+        expectNegotiatedVary(unacceptable);
+        await expect(unacceptable.text()).resolves.toContain("text/markdown");
+
+        const unacceptableHead = await responseFor(server.origin, pathname, {
+          method: "HEAD",
+          headers: { Accept: "application/pdf" },
+        });
+        expect(unacceptableHead.status).toBe(406);
+        expect(unacceptableHead.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+        expectNegotiatedVary(unacceptableHead);
+        expect(await unacceptableHead.text()).toBe("");
+      }
+
       for (const pathname of ["/blog/", "/en/blog/"]) {
         expect(await status(server.origin, pathname), pathname + "\n" + server.output()).toBe(200);
       }
@@ -80,8 +176,54 @@ describe("production standalone server", () => {
         location: "/courses/claude-code-guide/02-context-and-cache/",
       });
 
-      for (const pathname of ["/robots.txt", "/rss.xml", "/sitemap-index.xml", "/llms-full.txt"]) {
+      for (const pathname of [
+        "/robots.txt",
+        "/rss.xml",
+        "/en/rss.xml",
+        "/feed.json",
+        "/en/feed.json",
+        "/sitemap-index.xml",
+        "/sitemap-ru.xml",
+        "/sitemap-en.xml",
+        "/llms.txt",
+        "/llms-full.txt",
+      ]) {
         expect(await status(server.origin, pathname), pathname).toBe(200);
+      }
+
+      const llms = await responseFor(server.origin, "/llms.txt");
+      await expect(llms.text()).resolves.toContain("## When to use artka.dev");
+
+      const courseLanding = await html(server.origin, "/courses/claude-code-guide/");
+      expect(courseLanding).toContain("Зачем этот курс");
+      expect(courseLanding).toContain("Ключевые принципы");
+      expect(courseLanding.indexOf('class="course__progress"')).toBeLessThan(
+        courseLanding.indexOf('class="course__overview prose"'),
+      );
+      expect(courseLanding.indexOf('class="course__overview prose"')).toBeLessThan(
+        courseLanding.indexOf('class="course__lessons"'),
+      );
+      const enCourseLanding = await html(server.origin, "/en/courses/claude-code-guide/");
+      expect(enCourseLanding).toContain("Why this course");
+      expect(enCourseLanding).toContain("Recurring principles");
+      expect(enCourseLanding.indexOf('class="course__progress"')).toBeLessThan(
+        enCourseLanding.indexOf('class="course__overview prose"'),
+      );
+      expect(enCourseLanding.indexOf('class="course__overview prose"')).toBeLessThan(
+        enCourseLanding.indexOf('class="course__lessons"'),
+      );
+
+      for (const [pathname, courseUrl] of [
+        ["/sitemap-ru.xml", "https://artka.dev/courses/claude-code-guide/"],
+        ["/sitemap-en.xml", "https://artka.dev/en/courses/claude-code-guide/"],
+      ] as const) {
+        const sitemap = await responseFor(server.origin, pathname);
+        expect(sitemap.status).toBe(200);
+        const sitemapBody = await sitemap.text();
+        const courseEntry = [...sitemapBody.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+          .map((match) => match[1] ?? "")
+          .find((entry) => entry.includes(`<loc>${courseUrl}</loc>`));
+        expect(courseEntry, pathname).toContain("<lastmod>2026-08-24</lastmod>");
       }
 
       const fileVariantResults = await Promise.all(
@@ -128,7 +270,61 @@ describe("production standalone server", () => {
         course: "/en/courses/claude-code-guide/",
       });
 
-      expect(await status(server.origin, "/privacy/")).toBe(404);
+      for (const pathname of ["/contact/", "/privacy/", "/en/contact/", "/en/privacy/"]) {
+        const trustPage = await html(server.origin, pathname);
+        expect(visibleMainText(trustPage).length, pathname).toBeGreaterThan(500);
+        expect(trustPage).toContain(`rel="canonical" href="https://artka.dev${pathname}"`);
+        expect(trustPage).toContain('hreflang="ru-RU"');
+        expect(trustPage).toContain('hreflang="en-US"');
+      }
+
+      const missingPath = "/__agent-readiness-missing__/";
+      expect(await status(server.origin, missingPath.slice(0, -1))).toBe(404);
+      const html404 = await responseFor(server.origin, missingPath, {
+        headers: { Accept: "text/html" },
+      });
+      expect(html404.status).toBe(404);
+      expect(html404.headers.get("content-type")).toContain("text/html");
+      expectNegotiatedVary(html404);
+      const html404Body = await html404.text();
+      expect(html404Body).toContain("Страница не найдена");
+      expect(html404Body).toContain('name="robots" content="noindex,follow"');
+
+      const html404Head = await responseFor(server.origin, missingPath, {
+        method: "HEAD",
+        headers: { Accept: "text/html" },
+      });
+      expect(html404Head.status).toBe(404);
+      expect(html404Head.headers.get("content-type")).toContain("text/html");
+      expectNegotiatedVary(html404Head);
+      expect(await html404Head.text()).toBe("");
+
+      const markdown404 = await responseFor(server.origin, missingPath, {
+        headers: { Accept: "text/markdown" },
+      });
+      expect(markdown404.status).toBe(404);
+      expect(markdown404.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+      expectNegotiatedVary(markdown404);
+      const markdown404Body = await markdown404.text();
+      expect(markdown404Body).toContain("# 404 — Страница не найдена");
+      expect(markdown404Body).toContain("https://artka.dev/sitemap-index.xml");
+      expect(markdown404Body).toContain("https://artka.dev/llms.txt");
+
+      const markdown404Head = await responseFor(server.origin, missingPath, {
+        method: "HEAD",
+        headers: { Accept: "text/markdown" },
+      });
+      expect(markdown404Head.status).toBe(404);
+      expect(markdown404Head.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+      expectNegotiatedVary(markdown404Head);
+      expect(await markdown404Head.text()).toBe("");
+
+      const api404 = await responseFor(server.origin, "/api/__agent-readiness-missing__/", {
+        headers: { Accept: "text/markdown" },
+      });
+      expect(api404.status).toBe(404);
+      expect(api404.headers.get("content-type")).toContain("text/html");
+      await api404.body?.cancel();
       expect(
         await redirect(server.origin, "/llms-full.txt?x=1", {
           headers: { "x-forwarded-host": "www.artka.dev" },

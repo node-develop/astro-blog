@@ -6,7 +6,7 @@ status: published
 duration: "~6 часов"
 locale: ru
 pubDate: 2026-04-23
-updatedDate: 2026-05-03
+updatedDate: 2026-08-24
 tags:
   - claude-code
   - guide

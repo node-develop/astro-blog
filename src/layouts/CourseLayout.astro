@@ -129,6 +129,10 @@ const labels =
       </div>
     </section>
 
+    <section class="course__overview prose">
+      <slot />
+    </section>
+
     <section class="course__lessons">
       <ol class="course__list">
         {
@@ -212,6 +216,9 @@ const labels =
     margin: 0;
     max-width: 56ch;
     text-wrap: pretty;
+  }
+  .course__overview {
+    margin-block: 0 var(--space-7);
   }
 
   .course__progress {
