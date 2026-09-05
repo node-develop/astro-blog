@@ -6,7 +6,9 @@ import { getEntry, render } from "astro:content";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { buildLandingNodes } from "~/lib/seo/landing";
+import { graphIds } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const slug = locale === "en" ? "en/about" : "about";
@@ -14,8 +16,8 @@ const entry = await getEntry("site", slug);
 if (!entry) return new Response(null, { status: 404 });
 const { Content } = await render(entry);
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-const homeAbs = new URL(locale === "en" ? "/en/" : "/", Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 const description = entry.data.description ?? t(locale, "meta.about.description");
 
 const breadcrumbItems = [
@@ -31,9 +33,12 @@ const nodes = buildLandingNodes({
   canonical,
   name: entry.data.title,
   description,
-  type: "AboutPage",
+  // ProfilePage: the page's main entity IS the author Person node.
+  type: "ProfilePage",
   breadcrumb: breadcrumbItems,
   primaryImageOfPage,
+  aboutId: graphIds.person,
+  mainEntityId: graphIds.person,
 });
 ---
 

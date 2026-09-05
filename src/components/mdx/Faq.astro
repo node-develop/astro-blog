@@ -25,20 +25,22 @@ const { items, title = "FAQ" } = Astro.props;
   items.length > 0 && (
     <section class="faq" aria-labelledby="faq-heading">
       <h2 id="faq-heading">{title}</h2>
-      <dl class="faq__list">
+      {/*
+        Not a <dl>: the content model of <dl> only allows dt/dd (or a <div>
+        wrapper), so <details> cannot sit between them and <dd> inside <dt>
+        is invalid HTML. The FAQPage JSON-LD carries the question/answer
+        semantics; the markup only needs to be valid and keep the disclosure UX.
+      */}
+      <div class="faq__list">
         {items.map((it) => (
-          <div class="faq__item">
-            <dt>
-              <details>
-                <summary>{it.question}</summary>
-                <dd class="faq__answer">
-                  <p>{it.answer}</p>
-                </dd>
-              </details>
-            </dt>
-          </div>
+          <details class="faq__item">
+            <summary>{it.question}</summary>
+            <div class="faq__answer">
+              <p>{it.answer}</p>
+            </div>
+          </details>
         ))}
-      </dl>
+      </div>
     </section>
   )
 }
@@ -64,9 +66,6 @@ const { items, title = "FAQ" } = Astro.props;
   .faq__item:last-child {
     border-bottom: none;
   }
-  .faq__item dt {
-    margin: 0;
-  }
   .faq__item summary {
     font-family: var(--font-sans);
     font-weight: 500;
@@ -87,7 +86,7 @@ const { items, title = "FAQ" } = Astro.props;
     color: var(--color-fg-muted);
     transition: transform var(--dur-fast) var(--ease-out);
   }
-  .faq__item details[open] summary::before {
+  .faq__item[open] summary::before {
     content: "−";
   }
   .faq__answer {

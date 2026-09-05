@@ -6,14 +6,15 @@ import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import { buildLandingNodes } from "~/lib/seo/landing";
 import { landingOgPath } from "~/lib/og/landing-pages";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const entry = await getEntry("site", locale === "en" ? "en/uses" : "uses");
 if (!entry) return new Response(null, { status: 404 });
 const { Content } = await render(entry);
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
-const homeAbs = new URL(locale === "en" ? "/en/" : "/", Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 const description =
   entry.data.description ?? "Public toolkit: editor, backend, infra, observability, AI tooling.";
 

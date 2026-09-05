@@ -20,7 +20,13 @@ import CourseSidebar from "~/components/CourseSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
-import { buildBreadcrumbsNode, buildCollectionPageNode, type GraphNode } from "~/lib/seo/schema";
+import {
+  buildBreadcrumbsNode,
+  buildCourseNode,
+  buildWebPageNode,
+  courseId,
+  type GraphNode,
+} from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
@@ -65,14 +71,36 @@ const isCcg = courseSlug === "claude-code-guide";
 const ogImagePath = isCcg ? landingOgPath("course-ccg", locale) : undefined;
 const primaryImageOfPage = ogImagePath ? new URL(ogImagePath, siteBase).toString() : undefined;
 
-const collectionNode = buildCollectionPageNode({
+// Course (the educational entity) + WebPage (the page that hosts it). The
+// previous CollectionPage/#creativework pairing described the landing as a
+// list of generic works; Course/LearningResource is what search engines and
+// answer engines actually consume for lessons.
+const courseNode = buildCourseNode({
   locale,
   canonical,
   name: course.data.title,
   description: course.data.blurb,
-  itemUrls: lessonUrls,
+  level: course.data.level,
+  workload: course.data.duration,
+  lessonUrls,
+  ...(primaryImageOfPage ? { image: primaryImageOfPage } : {}),
+  datePublished: course.data.pubDate,
+  dateModified: course.data.updatedDate ?? null,
+}) as GraphNode;
+
+const webPageNode = buildWebPageNode({
+  locale,
+  canonical,
+  name: course.data.title,
+  description: course.data.blurb,
+  type: "WebPage",
+  breadcrumbId: `${canonical}#breadcrumbs`,
+  mainEntityId: courseId(canonical),
+  dateModified: course.data.updatedDate ?? course.data.pubDate,
   ...(primaryImageOfPage ? { primaryImageOfPage } : {}),
 }) as GraphNode;
+
+const courseRssHref = `${blogPrefix}/courses/${courseSlug}/rss.xml`;
 
 const labels =
   locale === "en"
@@ -94,8 +122,15 @@ const labels =
   title={course.data.title}
   description={course.data.blurb}
   {...ogImagePath ? { ogImage: ogImagePath } : {}}
-  extraSchemaNodes={[breadcrumbsNode, collectionNode]}
+  extraSchemaNodes={[webPageNode, courseNode, breadcrumbsNode]}
 >
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/rss+xml"
+    title={course.data.title}
+    href={courseRssHref}
+  />
   <CourseSidebar slot="sidebar" courseSlug={courseSlug} />
 
   <article class="course" data-course-slug={courseSlug}>

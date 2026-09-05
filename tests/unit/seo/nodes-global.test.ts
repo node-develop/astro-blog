@@ -5,6 +5,7 @@ import {
   buildWebSiteNode,
   buildBlogNode,
   graphIds,
+  websiteId,
 } from "~/lib/seo/nodes-global";
 import { person } from "~/lib/seo/person";
 
@@ -13,6 +14,8 @@ describe("graphIds", () => {
     expect(graphIds.person).toBe("https://artka.dev/#person");
     expect(graphIds.organization).toBe("https://artka.dev/#brand");
     expect(graphIds.website).toBe("https://artka.dev/#website");
+    expect(graphIds.websiteRu).toBe("https://artka.dev/#website");
+    expect(graphIds.websiteEn).toBe("https://artka.dev/#website-en");
     expect(graphIds.blogRu).toBe("https://artka.dev/#blog-ru");
     expect(graphIds.blogEn).toBe("https://artka.dev/#blog-en");
   });
@@ -52,8 +55,19 @@ describe("buildWebSiteNode", () => {
     expect(node).not.toHaveProperty("potentialAction");
   });
 
-  it("switches inLanguage for en", () => {
-    expect(buildWebSiteNode("en").inLanguage).toBe("en-US");
+  // One WebSite per locale: the shared #website @id used to carry conflicting
+  // inLanguage/description depending on the page a crawler fetched first.
+  it("emits a distinct EN WebSite linked to the RU original", () => {
+    const ru = buildWebSiteNode("ru");
+    const en = buildWebSiteNode("en");
+    expect(en.inLanguage).toBe("en-US");
+    expect(en["@id"]).toBe(graphIds.websiteEn);
+    expect(en.url).toBe("https://artka.dev/en/");
+    expect(en.translationOfWork).toEqual({ "@id": graphIds.websiteRu });
+    expect(ru.workTranslation).toEqual({ "@id": graphIds.websiteEn });
+    expect(ru["@id"]).not.toBe(en["@id"]);
+    expect(websiteId("ru")).toBe(graphIds.websiteRu);
+    expect(websiteId("en")).toBe(graphIds.websiteEn);
   });
 });
 

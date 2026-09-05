@@ -22,6 +22,10 @@ export interface LandingScaffoldInput {
   readonly type?: WebPageType;
   readonly primaryImageOfPage?: string;
   readonly dateModified?: Date | null;
+  /** `@id` the page is about — only for About/Profile-style pages. */
+  readonly aboutId?: string;
+  /** `@id` of the page's main entity (ProfilePage → `#person`). */
+  readonly mainEntityId?: string;
 }
 
 /**
@@ -45,6 +49,8 @@ export const buildLandingNodes = (input: LandingScaffoldInput): ReadonlyArray<Gr
     breadcrumbId: `${input.canonical}#breadcrumbs`,
     ...(input.primaryImageOfPage ? { primaryImageOfPage: input.primaryImageOfPage } : {}),
     ...(input.dateModified ? { dateModified: input.dateModified } : {}),
+    ...(input.aboutId ? { aboutId: input.aboutId } : {}),
+    ...(input.mainEntityId ? { mainEntityId: input.mainEntityId } : {}),
   }) as GraphNode;
 
   return [breadcrumbsNode, webPageNode];
