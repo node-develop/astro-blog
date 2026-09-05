@@ -1,5 +1,8 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
+import type { APIContext } from "astro";
+import { GET as getLlmsFull } from "../../../src/pages/llms-full.txt";
+import { GET as getLlmsTxt } from "../../../src/pages/llms.txt";
 import { buildLegacyRedirects } from "~/lib/seo/redirects";
 import { canonicalPath, isFileLikePath } from "~/lib/seo/url-policy";
 
@@ -184,8 +187,7 @@ const auditJsonFeed = (violations: Violation[], file: string): void => {
   });
 };
 
-const auditTextArtifact = (violations: Violation[], file: string): void => {
-  const contents = readFileSync(file, "utf8");
+const auditText = (violations: Violation[], file: string, contents: string): void => {
   const urls = contents.match(/https?:\/\/(?:www\.)?artka\.dev[^\s<"'\\)\],]*/g) ?? [];
   urls.forEach((url) => auditUrl(violations, file, url, ORIGIN, "identity"));
 };
@@ -265,7 +267,7 @@ it("resolves every generated RU and EN lesson link to a built course route", () 
   expect(violations).toEqual([]);
 });
 
-it("emits one apex HTTPS slash identity for every internal document URL", () => {
+it("emits one apex HTTPS slash identity for every internal document URL", async () => {
   const violations: Violation[] = [];
 
   filesUnder(DIST, ".html").forEach((file) => auditHtml(violations, file));
@@ -279,7 +281,9 @@ it("emits one apex HTTPS slash identity for every internal document URL", () => 
     "en/courses/claude-code-guide/rss.xml",
   ].forEach((file) => auditXmlArtifact(violations, join(DIST, file)));
   ["feed.json", "en/feed.json"].forEach((file) => auditJsonFeed(violations, join(DIST, file)));
-  auditTextArtifact(violations, join(ROOT, "public", "llms.txt"));
+  // llms.txt and llms-full.txt are generated at request time (no dist file).
+  auditText(violations, "llms.txt", await (await getLlmsTxt({} as APIContext)).text());
+  auditText(violations, "llms-full.txt", await (await getLlmsFull({} as APIContext)).text());
 
   expect(violations).toEqual([]);
 });

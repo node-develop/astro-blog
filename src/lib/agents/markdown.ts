@@ -111,3 +111,55 @@ export const renderAgent404Markdown = (locale: AgentLocale, requestedPath: strin
     "",
   ].join("\n");
 };
+
+export interface DocumentMarkdownInput {
+  readonly locale: AgentLocale;
+  readonly title: string;
+  readonly description: string;
+  /** Absolute canonical URL of the HTML page this Markdown mirrors. */
+  readonly canonical: string;
+  /** Absolute canonical URL of the other-locale twin, if it exists. */
+  readonly alternate?: string | null;
+  readonly author: string;
+  readonly pubDate: Date;
+  readonly updatedDate?: Date | null;
+  readonly tags?: ReadonlyArray<string>;
+  /** Extra `key: value` lines appended to the header (e.g. course, lesson). */
+  readonly extra?: ReadonlyArray<readonly [string, string]>;
+  /** Raw Markdown body as authored (frontmatter already stripped). */
+  readonly body: string;
+}
+
+const dateOnly = (value: Date): string => value.toISOString().slice(0, 10);
+
+// YAML-ish header + the authored body. This is the representation linked from
+// `<link rel="alternate" type="text/markdown">` on the HTML page; the header
+// carries the canonical URL so an agent that fetched the .md directly still
+// cites the HTML page. Prerendered endpoints cannot set a `Link:` header, so
+// the canonical lives in the body instead.
+export const renderDocumentMarkdown = (input: DocumentMarkdownInput): string => {
+  const header: Array<readonly [string, string]> = [
+    ["title", JSON.stringify(input.title)],
+    ["description", JSON.stringify(input.description)],
+    ["canonical", input.canonical],
+    ...(input.alternate ? [["alternate", input.alternate] as const] : []),
+    ["author", JSON.stringify(input.author)],
+    ["language", input.locale === "en" ? "en-US" : "ru-RU"],
+    ["published", dateOnly(input.pubDate)],
+    ...(input.updatedDate ? [["updated", dateOnly(input.updatedDate)] as const] : []),
+    ...(input.tags && input.tags.length > 0
+      ? [["tags", `[${input.tags.join(", ")}]`] as const]
+      : []),
+    ...(input.extra ?? []),
+  ];
+  return [
+    "---",
+    ...header.map(([key, value]) => `${key}: ${value}`),
+    "---",
+    "",
+    `# ${input.title}`,
+    "",
+    input.body.trim(),
+    "",
+  ].join("\n");
+};
