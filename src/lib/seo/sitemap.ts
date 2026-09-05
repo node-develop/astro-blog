@@ -28,11 +28,18 @@ export interface SitemapInput {
   readonly tagGroups: ReadonlyMap<string, readonly unknown[]>;
 }
 
+export interface UrlAlternate {
+  readonly hreflang: "ru" | "en" | "x-default";
+  readonly href: string;
+}
+
 export interface UrlEntry {
   readonly loc: string;
   readonly lastmod?: string;
   readonly changefreq?: string;
   readonly priority?: number;
+  /** hreflang cluster (ru, en, x-default) — only when both locale pages exist. */
+  readonly alternates?: ReadonlyArray<UrlAlternate>;
 }
 
 const localePrefix = (locale: Locale): string => (locale === "en" ? "/en" : "");
@@ -128,6 +135,50 @@ export const buildLocaleSitemapEntries = (input: SitemapInput): readonly UrlEntr
   return entries;
 };
 
+const RU_ORIGIN_PATH = /^https:\/\/artka\.dev\//;
+
+/** URL of the same page in the other locale (`/x/` ↔ `/en/x/`). */
+export const counterpartLocation = (loc: string, locale: Locale): string => {
+  const path = loc.replace(RU_ORIGIN_PATH, "/");
+  const counterpartPath =
+    locale === "ru"
+      ? path === "/"
+        ? "/en/"
+        : `/en${path}`
+      : path === "/en/"
+        ? "/"
+        : path.slice(3);
+  return canonicalUrl(counterpartPath);
+};
+
+/**
+ * Attaches the hreflang cluster to every entry whose counterpart is present in
+ * the other locale's sitemap. Using the real inventory (not a naive prefix
+ * swap) means untranslated posts and noindexed tag archives never advertise a
+ * missing alternate. x-default always points at the RU page (source of truth).
+ */
+export const attachAlternates = (
+  entries: readonly UrlEntry[],
+  locale: Locale,
+  otherLocaleEntries: readonly UrlEntry[],
+): readonly UrlEntry[] => {
+  const other = new Set(otherLocaleEntries.map((entry) => entry.loc));
+  return entries.map((entry) => {
+    const counterpart = counterpartLocation(entry.loc, locale);
+    if (!other.has(counterpart)) return entry;
+    const ru = locale === "ru" ? entry.loc : counterpart;
+    const en = locale === "en" ? entry.loc : counterpart;
+    return {
+      ...entry,
+      alternates: [
+        { hreflang: "ru", href: ru },
+        { hreflang: "en", href: en },
+        { hreflang: "x-default", href: ru },
+      ],
+    };
+  });
+};
+
 const xmlEscape = (value: string): string =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -135,6 +186,11 @@ export const renderUrlSet = (entries: readonly UrlEntry[]): string => {
   const items = entries
     .map((entry) => {
       const parts = [`    <loc>${xmlEscape(entry.loc)}</loc>`];
+      for (const alternate of entry.alternates ?? []) {
+        parts.push(
+          `    <xhtml:link rel="alternate" hreflang="${alternate.hreflang}" href="${xmlEscape(alternate.href)}" />`,
+        );
+      }
       if (entry.lastmod) parts.push(`    <lastmod>${entry.lastmod}</lastmod>`);
       if (entry.changefreq) parts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
       if (typeof entry.priority === "number") {
@@ -145,19 +201,49 @@ export const renderUrlSet = (entries: readonly UrlEntry[]): string => {
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${items}
 </urlset>`;
 };
 
-export const buildLocaleSitemapResponse = async (locale: Locale): Promise<Response> => {
+/** Newest `lastmod` across entries (YYYY-MM-DD), or null when none carries one. */
+export const latestLastmod = (entries: readonly UrlEntry[]): string | null =>
+  entries.reduce<string | null>((acc, entry) => {
+    if (!entry.lastmod) return acc;
+    return acc === null || entry.lastmod > acc ? entry.lastmod : acc;
+  }, null);
+
+export interface SitemapIndexChild {
+  readonly loc: string;
+  readonly entries: readonly UrlEntry[];
+}
+
+export const renderSitemapIndex = (children: readonly SitemapIndexChild[]): string => {
+  const items = children
+    .map(({ loc, entries }) => {
+      const lastmod = latestLastmod(entries);
+      return [
+        "  <sitemap>",
+        `    <loc>${xmlEscape(loc)}</loc>`,
+        ...(lastmod ? [`    <lastmod>${lastmod}</lastmod>`] : []),
+        "  </sitemap>",
+      ].join("\n");
+    })
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${items}
+</sitemapindex>`;
+};
+
+const loadLocaleEntries = async (locale: Locale): Promise<readonly UrlEntry[]> => {
   const [posts, courseEntries, lessonEntries, projectEntries] = await Promise.all([
     getOrderedPosts({ locale }),
     getCollection("course"),
     getCollection("lesson"),
     getCollection("projects"),
   ]);
-  const entries = buildLocaleSitemapEntries({
+  return buildLocaleSitemapEntries({
     locale,
     posts,
     courseEntries,
@@ -165,8 +251,22 @@ export const buildLocaleSitemapResponse = async (locale: Locale): Promise<Respon
     projectEntries,
     tagGroups: groupPostsByTag(posts),
   });
+};
 
-  return new Response(renderUrlSet(entries), {
+export interface LocaleSitemaps {
+  readonly ru: readonly UrlEntry[];
+  readonly en: readonly UrlEntry[];
+}
+
+/** Both locale inventories with hreflang clusters cross-linked. */
+export const loadLocaleSitemaps = async (): Promise<LocaleSitemaps> => {
+  const [ru, en] = await Promise.all([loadLocaleEntries("ru"), loadLocaleEntries("en")]);
+  return { ru: attachAlternates(ru, "ru", en), en: attachAlternates(en, "en", ru) };
+};
+
+export const buildLocaleSitemapResponse = async (locale: Locale): Promise<Response> => {
+  const sitemaps = await loadLocaleSitemaps();
+  return new Response(renderUrlSet(sitemaps[locale]), {
     headers: { "Content-Type": "application/xml; charset=utf-8" },
   });
 };
