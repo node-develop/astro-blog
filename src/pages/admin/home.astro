@@ -3,19 +3,32 @@ export const prerender = false;
 
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import HomeEditor from "~/components/admin/HomeEditor";
-import { getEntry } from "astro:content";
+import { join } from "node:path";
+import { readHomeFromDisk } from "~/lib/content/write-home";
+import type { HomeFrontmatter } from "~/lib/content/home-schema";
+import { SITE_DIR } from "~/lib/fs/paths";
 import type { HomeData } from "~/components/admin/HomeEditor";
 
 // Auth is handled by middleware for all /admin/* routes.
 
-const ruEntry = await getEntry("site", "home");
-const enEntry = await getEntry("site", "en/home");
+// Read from disk, NOT from `getEntry("site", …)`: the content layer is a
+// build-time snapshot and is stale in the SSR runtime after the editor
+// (or `pnpm translate`) writes home.md.
+const ruFm = await readHomeFromDisk(join(SITE_DIR, "home.md"));
+const enFm = await readHomeFromDisk(join(SITE_DIR, "en", "home.md"));
 
-// home.md may not exist yet if backender hasn't created it.
-// Degrade gracefully with empty objects so the editor still renders.
-const ruData: HomeData = ruEntry?.data ?? {};
-const enData: HomeData | null = enEntry?.data ?? null;
-const enManuallyEdited = enEntry?.data.manuallyEdited === true;
+// Project the 14 editable fields (drops title/sourceHash/manuallyEdited and
+// omits undefined keys — exactOptionalPropertyTypes).
+const toHomeData = (fm: HomeFrontmatter): HomeData => {
+  const { title: _t, sourceHash: _s, manuallyEdited: _m, ...fields } = fm;
+  return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)) as HomeData;
+};
+
+// home.md may not exist yet. Degrade gracefully with empty objects so the
+// editor still renders.
+const ruData: HomeData = ruFm ? toHomeData(ruFm) : {};
+const enData: HomeData | null = enFm ? toHomeData(enFm) : null;
+const enManuallyEdited = enFm?.manuallyEdited === true;
 ---
 
 <AdminLayout title="Главная страница">

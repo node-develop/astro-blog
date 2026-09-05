@@ -110,10 +110,57 @@ const toFormValues = (data: HomeData | null): HomeData => {
   return out;
 };
 
+const REQUIRED_FIELDS: ReadonlyArray<keyof HomeData> = [
+  "heroTitle",
+  "metaTitle",
+  "metaDescription",
+];
+
+/**
+ * Build the action payload from the form values.
+ *
+ * heroTitle / metaTitle / metaDescription are required by the server schema
+ * and are always sent. Every other field is sent only when it differs from
+ * `snapshot` (the values this tab loaded or last saved). The server merges
+ * the patch into the on-disk file, so untouched fields survive — a tab that
+ * was opened before another tab (or `pnpm translate`) rewrote the file can
+ * no longer clobber those fields with stale values.
+ */
+export interface HomeUpdatePayload extends HomeData {
+  readonly locale: "ru" | "en";
+  readonly heroTitle: string;
+  readonly metaTitle: string;
+  readonly metaDescription: string;
+}
+
+export const buildHomePayload = (
+  values: HomeData,
+  snapshot: HomeData,
+  locale: "ru" | "en",
+): HomeUpdatePayload => {
+  const dirty: HomeData = {};
+  for (const key of FIELD_ORDER) {
+    const next = values[key] ?? "";
+    const prev = snapshot[key] ?? "";
+    if (!REQUIRED_FIELDS.includes(key) && next !== prev) dirty[key] = next;
+  }
+  return {
+    ...dirty,
+    locale,
+    heroTitle: values.heroTitle ?? "",
+    metaTitle: values.metaTitle ?? "",
+    metaDescription: values.metaDescription ?? "",
+  };
+};
+
 export default function HomeEditor({ ru, en, enManuallyEdited }: Props): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>("ru");
   const [ruValues, setRuValues] = useState<HomeData>(() => toFormValues(ru));
   const [enValues, setEnValues] = useState<HomeData>(() => toFormValues(en));
+  // Last known on-disk state per locale (loaded → then last successful save).
+  // Used to compute the dirty-fields patch in buildHomePayload.
+  const [ruSnapshot, setRuSnapshot] = useState<HomeData>(() => toFormValues(ru));
+  const [enSnapshot, setEnSnapshot] = useState<HomeData>(() => toFormValues(en));
 
   const [ruStatus, setRuStatus] = useState<SaveStatus>("idle");
   const [enStatus, setEnStatus] = useState<SaveStatus>("idle");
@@ -131,37 +178,18 @@ export default function HomeEditor({ ru, en, enManuallyEdited }: Props): React.J
     }, 8000);
   };
 
-  // Build the action payload. heroTitle / metaTitle / metaDescription are
-  // required by the server schema; the others are optional.
-  const buildPayload = (values: HomeData, locale: "ru" | "en") => ({
-    locale,
-    heroTitle: values.heroTitle ?? "",
-    metaTitle: values.metaTitle ?? "",
-    metaDescription: values.metaDescription ?? "",
-    heroEyebrow: values.heroEyebrow,
-    heroLede: values.heroLede,
-    heroCta: values.heroCta,
-    courseEyebrow: values.courseEyebrow,
-    courseTitle: values.courseTitle,
-    courseLede: values.courseLede,
-    courseCta: values.courseCta,
-    latestLabel: values.latestLabel,
-    authorLabel: values.authorLabel,
-    authorBio: values.authorBio,
-    authorLinksAria: values.authorLinksAria,
-  });
-
   const handleSaveRu = async (): Promise<void> => {
     setRuStatus("saving");
     setRuError(null);
     setWarnMsg(null);
 
-    const saveResult = await actions.home.update(buildPayload(ruValues, "ru"));
+    const saveResult = await actions.home.update(buildHomePayload(ruValues, ruSnapshot, "ru"));
     if (saveResult.error) {
       setRuStatus("error");
       setRuError(saveResult.error.message ?? "Не удалось сохранить");
       return;
     }
+    setRuSnapshot(ruValues);
     setRuStatus("saved");
     setTimeout(() => setRuStatus("idle"), 1500);
 
@@ -191,12 +219,13 @@ export default function HomeEditor({ ru, en, enManuallyEdited }: Props): React.J
     setEnStatus("saving");
     setEnError(null);
 
-    const saveResult = await actions.home.update(buildPayload(enValues, "en"));
+    const saveResult = await actions.home.update(buildHomePayload(enValues, enSnapshot, "en"));
     if (saveResult.error) {
       setEnStatus("error");
       setEnError(saveResult.error.message ?? "Не удалось сохранить");
       return;
     }
+    setEnSnapshot(enValues);
     setEnStatus("saved");
     showToast("EN сохранён. manuallyEdited выставлен сервером.", "success");
     setTimeout(() => setEnStatus("idle"), 1500);

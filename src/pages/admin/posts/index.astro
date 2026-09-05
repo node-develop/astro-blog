@@ -3,27 +3,34 @@ export const prerender = false;
 
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import PostList, { type PostListItem } from "~/components/admin/PostList";
-import { getCollection, type CollectionEntry } from "astro:content";
 import { listAllMeta } from "~/lib/db/repo/posts-meta";
-import { defaultMetaFor, sortWithMeta, type PostWithMeta } from "~/lib/content/loader";
+import { defaultMetaFor } from "~/lib/content/loader";
+import { listPostsFromDisk } from "~/lib/content/post-io";
+import { POSTS_DIR } from "~/lib/fs/paths";
 
-type Entry = CollectionEntry<"posts">;
-
+// Read from disk, NOT `getCollection("posts")`: the content layer is a
+// build-time snapshot and does not see posts created/edited/deleted by the
+// admin in the SSR runtime.
 // Admin sees ALL entries including drafts/hidden — don't filter by draft here.
-const entries = await getCollection("posts");
+const files = await listPostsFromDisk(POSTS_DIR);
 const metaRows = await listAllMeta();
 const metaBySlug = new Map(metaRows.map((m) => [m.slug, m]));
-const merged: PostWithMeta[] = entries.map((entry: Entry) => ({
-  entry,
-  meta: metaBySlug.get(entry.id) ?? defaultMetaFor(entry.id),
+const merged = files.map((file) => ({
+  file,
+  meta: metaBySlug.get(file.slug) ?? defaultMetaFor(file.slug),
 }));
-const initial: PostListItem[] = sortWithMeta(merged).map((p) => ({
-  slug: p.entry.id,
-  title: p.entry.data.title,
-  description: p.entry.data.description,
-  pubDate: p.entry.data.pubDate.toISOString(),
-  draft: p.entry.data.draft,
-  tags: p.entry.data.tags,
+// Same ordering as `sortWithMeta` in ~/lib/content/loader (pinned first, then `order`).
+const sorted = [...merged].sort((a, b) => {
+  if (a.meta.pinned !== b.meta.pinned) return a.meta.pinned ? -1 : 1;
+  return a.meta.order - b.meta.order;
+});
+const initial: PostListItem[] = sorted.map((p) => ({
+  slug: p.file.slug,
+  title: p.file.frontmatter.title,
+  description: p.file.frontmatter.description,
+  pubDate: p.file.frontmatter.pubDate.toISOString(),
+  draft: p.file.frontmatter.draft,
+  tags: [...p.file.frontmatter.tags],
   order: p.meta.order,
   pinned: p.meta.pinned,
   hidden: p.meta.hiddenFromList,

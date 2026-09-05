@@ -2,7 +2,8 @@
  * Canonical schema and key order for home.md / en/home.md frontmatter.
  *
  * Used by:
- *   - src/actions/home.ts  (input validation + serialisation)
+ *   - src/lib/content/write-home.ts  (read/validate + merge-write of home.md)
+ *   - src/actions/home.ts            (input validation, via homeUpdateInput)
  *   - tests/unit/actions/home.test.ts
  *
  * KEY_ORDER drives yaml.dump({ sortKeys: false }) so the on-disk file stays
