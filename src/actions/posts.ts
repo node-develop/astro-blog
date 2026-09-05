@@ -1,5 +1,5 @@
 import { defineAction } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { eq } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
 import { db } from "~/lib/db";

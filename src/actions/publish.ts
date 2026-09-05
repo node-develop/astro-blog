@@ -11,7 +11,7 @@
  */
 import { ActionError, defineAction } from "astro:actions";
 import type { ActionAPIContext } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { relative, isAbsolute } from "node:path";

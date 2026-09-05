@@ -1,4 +1,5 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { courses as course, lessons as lesson } from "~/lib/courses/schema";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "~/lib/content/limits";
@@ -70,7 +71,7 @@ const projects = defineCollection({
     updatedDate: z.coerce.date().optional(),
     stack: z.array(z.string()).default([]),
     outcomes: z.array(z.string()).default([]),
-    links: z.array(z.object({ label: z.string().min(2), url: z.string().url() })).default([]),
+    links: z.array(z.object({ label: z.string().min(2), url: z.url() })).default([]),
     cover: z.string().optional(),
     coverAlt: z.string().optional(),
     featured: z.boolean().default(false),

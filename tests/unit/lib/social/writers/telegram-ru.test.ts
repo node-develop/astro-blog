@@ -4,9 +4,11 @@ import { validateMarkdownV2 } from "~/lib/social/markdown-v2";
 import type { Article } from "~/lib/social/types";
 
 vi.mock("@anthropic-ai/sdk", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: { create: mockAnthropicWithFixture("writer-tg_ru-happy") },
-  })),
+  default: vi.fn(function () {
+    return {
+      messages: { create: mockAnthropicWithFixture("writer-tg_ru-happy") },
+    };
+  }),
 }));
 
 const article: Article = {

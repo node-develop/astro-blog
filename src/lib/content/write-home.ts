@@ -13,7 +13,7 @@
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 import { KEY_ORDER, type HomeFrontmatter } from "./home-schema";
 
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;

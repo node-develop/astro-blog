@@ -16,14 +16,7 @@ import { t } from "~/i18n";
 import { type Locale } from "~/i18n";
 
 export type LandingPage =
-  | "home"
-  | "blog"
-  | "tags"
-  | "about"
-  | "now"
-  | "uses"
-  | "projects"
-  | "course-ccg";
+  "home" | "blog" | "tags" | "about" | "now" | "uses" | "projects" | "course-ccg";
 
 interface LandingMeta {
   readonly page: LandingPage;

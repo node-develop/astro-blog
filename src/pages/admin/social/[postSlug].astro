@@ -43,8 +43,7 @@ if (rows.length === 0) return Astro.redirect("/admin/social");
           threadTail: row.threadTail as string[] | null,
           mediaUrl: row.mediaUrl,
           criticAnnotations: row.criticAnnotations as
-            | import("~/lib/social/types").CriticNote[]
-            | null,
+            import("~/lib/social/types").CriticNote[] | null,
           externalUrl: row.externalUrl,
           errorMessage: row.errorMessage,
         };

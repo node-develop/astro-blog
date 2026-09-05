@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
-import { z } from "astro:schema";
-import { dump } from "js-yaml";
+import { z } from "astro/zod";
+import { dump } from "~/lib/yaml";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { SITE_DIR } from "~/lib/fs/paths";
 import { assertAdmin } from "./_auth";

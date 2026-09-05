@@ -1,16 +1,15 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     },
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": false,
+    "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
     "module": "ESNext",
     "target": "ES2023",

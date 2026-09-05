@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFile, access } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const read = (rel: string) => readFile(`${root}${rel}`, "utf8");

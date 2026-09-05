@@ -7,7 +7,7 @@ import { readFile, writeFile, readdir, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { config as dotenv } from "dotenv";
-import yaml from "js-yaml";
+import * as yaml from "../src/lib/yaml";
 import { sha256 } from "../src/lib/translate/hash";
 import { extractProse, reassemble } from "../src/lib/translate/extract-prose";
 import { translateProse, translateStrings } from "../src/lib/translate/claude";

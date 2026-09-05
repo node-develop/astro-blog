@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import node from "@astrojs/node";
 import react from "@astrojs/react";
@@ -94,8 +95,12 @@ export default defineConfig({
     },
   },
   redirects: buildLegacyRedirects(),
-  integrations: [
-    mdx({
+  // MDX inherits remark/rehype plugins from `markdown.processor` (Astro 7).
+  integrations: [mdx(), react()],
+  // Astro 7 defaults to the Sätteri pipeline; we depend on the remark/rehype
+  // ecosystem (KaTeX, Mermaid, custom link/heading plugins), so we keep unified().
+  markdown: {
+    processor: unified({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
       rehypePlugins: [
         canonicalInternalLinks,
@@ -110,26 +115,16 @@ export default defineConfig({
         lazyContentImages,
       ],
     }),
-    react(),
-  ],
-  markdown: {
     syntaxHighlight: {
       type: "shiki",
       excludeLangs: ["mermaid", "math"],
     },
     shikiConfig: shikiThemes,
-    remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
-    rehypePlugins: [
-      canonicalInternalLinks,
-      rehypeSlug,
-      [rehypeAutolinkHeadings, autolinkOptions],
-      [rehypeExternalLinks, externalLinkPolicy satisfies ExternalLinksOptions],
-      rehypeCodeTitles,
-      rehypeKatex,
-      [rehypeMermaid, { strategy: "img-svg", dark: true }],
-      lazyContentImages,
-    ],
   },
+  // Astro 7 changed the default to "jsx" (strips inter-element whitespace);
+  // keep HTML semantics so inline `<a> <span>` runs render with spaces.
+  compressHTML: true,
+  security: { checkOrigin: true },
   vite: {
     plugins: [tailwindcss(), pagefindDevMiddleware()],
   },

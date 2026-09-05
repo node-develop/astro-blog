@@ -243,16 +243,17 @@ describe("production standalone server", () => {
         })),
       );
 
-      // Astro's standalone static handler runs before repository middleware. Until the edge
-      // canonicalizes these variants, preserve exact diagnostics rather than claiming a redirect
-      // contract that this adapter cannot provide without a custom server.
+      // Since Astro 6, endpoints whose route ends in a file extension are only served
+      // without a trailing slash regardless of `trailingSlash`; the slash variant is a
+      // plain 404 (no redirect). Pin that so a regression to 500 (Astro 5 behaviour)
+      // or an accidental duplicate-content 200 is caught.
       expect(fileVariantResults).toEqual(
         [
-          ["/llms-full.txt/", "/llms-full.txt", 200],
-          ["/rss.xml/", "/rss.xml", 500],
-          ["/feed.json/", "/feed.json", 500],
-          ["/sitemap-index.xml/", "/sitemap-index.xml", 500],
-          ["/sitemap-ru.xml/", "/sitemap-ru.xml", 500],
+          ["/llms-full.txt/", "/llms-full.txt", 404],
+          ["/rss.xml/", "/rss.xml", 404],
+          ["/feed.json/", "/feed.json", 404],
+          ["/sitemap-index.xml/", "/sitemap-index.xml", 404],
+          ["/sitemap-ru.xml/", "/sitemap-ru.xml", 404],
         ].map(([variant, canonical, adapterStatus]) => ({
           variant,
           canonical,

@@ -1,5 +1,5 @@
 import { ActionError, defineAction } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { listRevisionsBySlug, getRevision, appendRevision } from "~/lib/db/repo/revisions";
 import { serializeFrontmatter, type Frontmatter } from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";

@@ -3,9 +3,11 @@ import { mockAnthropicWithFixture } from "../../../fixtures/anthropic/index.js";
 import type { Article, Draft, SocialChannel } from "~/lib/social/types";
 
 vi.mock("@anthropic-ai/sdk", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: { create: mockAnthropicWithFixture("critic-happy") },
-  })),
+  default: vi.fn(function () {
+    return {
+      messages: { create: mockAnthropicWithFixture("critic-happy") },
+    };
+  }),
 }));
 
 const article: Article = {

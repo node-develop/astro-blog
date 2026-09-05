@@ -73,7 +73,7 @@ export const projectSchema = z.object({
   updatedDate: z.coerce.date().optional(),
   stack: z.array(z.string()).default([]),
   outcomes: z.array(z.string()).default([]),
-  links: z.array(z.object({ label: z.string().min(2), url: z.string().url() })).default([]),
+  links: z.array(z.object({ label: z.string().min(2), url: z.url() })).default([]),
   cover: z.string().optional(),
   coverAlt: z.string().optional(),
   featured: z.boolean().default(false),

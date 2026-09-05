@@ -1,6 +1,6 @@
 import { ActionError, defineAction } from "astro:actions";
 import type { ActionAPIContext } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { and, eq, ne, notInArray } from "drizzle-orm";
 import { assertAdmin } from "./_auth.js";
 import { computeSourceHash, decideChannels, loadArticle } from "./_social.js";
@@ -92,8 +92,7 @@ export type GenerateInput = {
 };
 
 export type GenerateResult =
-  | { ok: true; channels: SocialChannel[] }
-  | { ok: false; reason: string };
+  { ok: true; channels: SocialChannel[] } | { ok: false; reason: string };
 
 export const generateHandler = async (
   { slug, collection, channels }: GenerateInput,
@@ -418,7 +417,7 @@ export const socialDrafts = {
   publish: defineAction({
     accept: "json",
     input: z.object({
-      id: z.string().uuid(),
+      id: z.uuid(),
       force: z.boolean().default(false),
     }),
     handler: async (input, ctx) =>
@@ -427,7 +426,7 @@ export const socialDrafts = {
   save: defineAction({
     accept: "json",
     input: z.object({
-      id: z.string().uuid(),
+      id: z.uuid(),
       body: z.string(),
       threadTail: z.array(z.string()).optional(),
     }),
@@ -436,14 +435,14 @@ export const socialDrafts = {
   skip: defineAction({
     accept: "json",
     input: z.object({
-      id: z.string().uuid(),
+      id: z.uuid(),
       reason: z.string().optional(),
     }),
     handler: async (input, ctx) => skipHandler(input, ctx),
   }),
   recheck: defineAction({
     accept: "json",
-    input: z.object({ id: z.string().uuid() }),
+    input: z.object({ id: z.uuid() }),
     handler: async (input, ctx) => recheckHandler(input, ctx),
   }),
   regenerate: defineAction({

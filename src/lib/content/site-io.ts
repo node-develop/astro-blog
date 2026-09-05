@@ -1,6 +1,6 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { load as loadYaml } from "js-yaml";
+import { load as loadYaml } from "~/lib/yaml";
 
 export interface SiteFile {
   readonly slug: string;

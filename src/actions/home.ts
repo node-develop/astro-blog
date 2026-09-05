@@ -1,5 +1,5 @@
 import { defineAction, ActionError } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { join } from "node:path";
 import { SITE_DIR } from "~/lib/fs/paths";
 import { writeHomeToDisk } from "~/lib/content/write-home";

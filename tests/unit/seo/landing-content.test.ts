@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { load } from "js-yaml";
+import { load } from "~/lib/yaml";
 import { describe, expect, it } from "vitest";
 
 interface LandingFrontmatter {
