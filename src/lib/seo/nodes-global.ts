@@ -5,13 +5,22 @@ export type Locale = "ru" | "en";
 
 const SITE = CANONICAL_ORIGIN;
 
+// One WebSite node per locale. A single shared `#website` @id used to be
+// emitted with conflicting `inLanguage`/`description` values depending on
+// which page a crawler happened to fetch first, so the two locales are now
+// distinct entities linked through workTranslation/translationOfWork.
 export const graphIds = {
   person: `${SITE}/#person`,
   organization: `${SITE}/#brand`,
   website: `${SITE}/#website`,
+  websiteRu: `${SITE}/#website`,
+  websiteEn: `${SITE}/#website-en`,
   blogRu: `${SITE}/#blog-ru`,
   blogEn: `${SITE}/#blog-en`,
 } as const;
+
+export const websiteId = (locale: Locale): string =>
+  locale === "ru" ? graphIds.websiteRu : graphIds.websiteEn;
 
 const inLang = (locale: Locale): "ru-RU" | "en-US" => (locale === "ru" ? "ru-RU" : "en-US");
 
@@ -65,8 +74,8 @@ export const buildOrganizationNode = () => ({
 
 export const buildWebSiteNode = (locale: Locale) => ({
   "@type": "WebSite",
-  "@id": graphIds.website,
-  url: canonicalUrl("/"),
+  "@id": websiteId(locale),
+  url: canonicalUrl(locale === "ru" ? "/" : "/en/"),
   name: "artka.dev",
   alternateName: ["Artyom Kashuta technical blog", "Технический блог Артёма Кашуты"],
   description:
@@ -75,6 +84,11 @@ export const buildWebSiteNode = (locale: Locale) => ({
       : "Technical writing by Artyom Kashuta about Claude Code, AI agents, LLMs, RAG, and production backend systems.",
   inLanguage: inLang(locale),
   publisher: { "@id": graphIds.organization },
+  // RU is the source of truth; EN is its translation. Cross-link both ways so
+  // either locale's graph resolves to the same publication.
+  ...(locale === "ru"
+    ? { workTranslation: { "@id": graphIds.websiteEn } }
+    : { translationOfWork: { "@id": graphIds.websiteRu } }),
 });
 
 export const buildBlogNode = (locale: Locale) => ({

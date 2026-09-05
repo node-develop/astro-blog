@@ -71,10 +71,13 @@ describe("SEO: BaseLayout meta", () => {
 });
 
 describe("SEO: PostLayout meta", () => {
-  it("passes BlogPosting and BreadcrumbList nodes via extraSchemaNodes", async () => {
+  it("passes WebPage, BlogPosting and BreadcrumbList nodes via extraSchemaNodes", async () => {
     const src = await read("src/layouts/PostLayout.astro");
     expect(src).toMatch(/buildBlogPostingNode/);
-    expect(src).toMatch(/buildBreadcrumbListNode/);
+    // Migrated from buildBreadcrumbListNode (no @id) to the generic
+    // buildBreadcrumbsNode so WebPage.breadcrumb can reference `#breadcrumbs`.
+    expect(src).toMatch(/buildBreadcrumbsNode/);
+    expect(src).toMatch(/buildWebPageNode/);
     expect(src).toMatch(/extraSchemaNodes/);
   });
 

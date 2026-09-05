@@ -2,6 +2,7 @@ import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { Locale } from "~/i18n";
 import { canonicalPath } from "~/lib/seo/url-policy";
+import { isTagArchiveIndexable } from "~/lib/seo/indexability";
 
 const isEnPrefix = (pathname: string): boolean => pathname === "/en" || pathname.startsWith("/en/");
 
@@ -23,6 +24,27 @@ export const getCounterpart = (pathname: string, currentLocale: Locale): string 
 
 const BLOG_PREFIX_RU = "/blog/";
 const BLOG_PREFIX_EN = "/en/blog/";
+const TAG_ARCHIVE = /^\/(?:en\/)?tags\/([^/]+)\/$/;
+
+/** Tag slug when `pathname` is a tag archive (`/tags/<slug>/`, `/en/tags/<slug>/`). */
+export const tagArchiveSlug = (pathname: string): string | null =>
+  canonicalPath(pathname).match(TAG_ARCHIVE)?.[1] ?? null;
+
+// A tag archive below MIN_INDEXABLE_TAG_POSTS is noindexed, and a noindexed
+// page must not be advertised as an hreflang alternate (Google treats the
+// cluster as broken). Both locale archives have to be indexable for the pair
+// to be emitted. Counts non-draft posts per locale straight from the
+// collection; hidden-from-list posts (DB flag) are ignored here, which can
+// only over-count — never advertise a page that is indexable as missing.
+const tagArchivePairIndexable = async (slug: string): Promise<boolean> => {
+  const tagged = await getCollection(
+    "posts",
+    (e: CollectionEntry<"posts">) => !e.data.draft && e.data.tags.includes(slug),
+  );
+  const ru = tagged.filter((e: CollectionEntry<"posts">) => !e.id.startsWith("en/"));
+  const en = tagged.filter((e: CollectionEntry<"posts">) => e.id.startsWith("en/"));
+  return isTagArchiveIndexable(ru) && isTagArchiveIndexable(en);
+};
 
 export const checkCounterpartExists = async (
   pathname: string,
@@ -32,6 +54,8 @@ export const checkCounterpartExists = async (
   if (canonical === "/login/" || canonical.startsWith("/admin/") || canonical.startsWith("/api/")) {
     return false;
   }
+  const tagSlug = tagArchiveSlug(canonical);
+  if (tagSlug !== null) return tagArchivePairIndexable(tagSlug);
   if (currentLocale === "ru" && pathname.startsWith(BLOG_PREFIX_RU)) {
     const slug = pathname.slice(BLOG_PREFIX_RU.length).replace(/\/$/, "");
     const entries = await getCollection(

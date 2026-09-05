@@ -35,7 +35,9 @@ export const buildRssFeed = async ({ site, locale }: BuildRssFeedParams) => {
         description: p.entry.data.description,
         pubDate: p.entry.data.pubDate,
         link: `${blogPrefix}/${p.entry.id.replace(/^en\//, "")}/`,
-        author: `${person.email} (${p.entry.data.author})`,
+        // Frontmatter `author` defaults to person.name (see content schema);
+        // fall back explicitly so an empty override can't blank the feed author.
+        author: `${person.email} (${p.entry.data.author || person.name})`,
         categories: p.entry.data.tags,
         content: p.entry.body ? renderContent(p.entry.body) : undefined,
       })),

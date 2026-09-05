@@ -32,7 +32,7 @@ export const buildGraph = (input: GraphInput): JsonLdGraph => {
 };
 
 export type { Locale } from "./nodes-global";
-export { graphIds } from "./nodes-global";
+export { graphIds, websiteId } from "./nodes-global";
 export { safeJsonLd } from "./json-ld";
 export {
   buildBlogPostingNode,
@@ -40,6 +40,12 @@ export {
   buildBreadcrumbsNode,
   buildWebPageNode,
   buildFaqPageNode,
+  buildCourseNode,
+  buildLearningResourceNode,
+  courseId,
+  lessonId,
+  minutesToIsoDuration,
+  parseWorkloadToIsoDuration,
   type BreadcrumbItem,
   type WebPageType,
 } from "./nodes-page";

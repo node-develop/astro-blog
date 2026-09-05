@@ -6,16 +6,24 @@ import {
   checkCounterpartExists,
 } from "./routing";
 
-vi.mock("astro:content", () => ({
-  getCollection: vi.fn(async (_name: string, filter?: (e: { id: string }) => boolean) => {
-    const all = [
-      { id: "01-introduction" },
-      { id: "02-context-and-cache" },
-      { id: "en/01-introduction" },
-    ];
-    return filter ? all.filter(filter) : all;
-  }),
-}));
+vi.mock("astro:content", () => {
+  interface MockEntry {
+    readonly id: string;
+    readonly data: { readonly draft: boolean; readonly tags: readonly string[] };
+  }
+  const all: readonly MockEntry[] = [
+    { id: "01-introduction", data: { draft: false, tags: ["claude-code", "solo", "pair"] } },
+    { id: "02-context-and-cache", data: { draft: false, tags: ["claude-code", "pair"] } },
+    { id: "en/01-introduction", data: { draft: false, tags: ["claude-code", "solo", "pair"] } },
+    { id: "en/04-draft", data: { draft: true, tags: ["claude-code"] } },
+    { id: "en/03-skills", data: { draft: false, tags: ["pair"] } },
+  ];
+  return {
+    getCollection: vi.fn(async (_name: string, filter?: (e: MockEntry) => boolean) =>
+      filter ? all.filter(filter) : all,
+    ),
+  };
+});
 
 describe("getLocaleFromPath", () => {
   it("returns 'en' for /en/* paths", () => {
@@ -83,6 +91,18 @@ describe("checkCounterpartExists", () => {
   });
   it("returns true for EN article when RU source exists", async () => {
     expect(await checkCounterpartExists("/en/blog/01-introduction", "en")).toBe(true);
+  });
+
+  // Tag archives: hreflang pair only when BOTH locale archives are indexable
+  // (>= MIN_INDEXABLE_TAG_POSTS non-draft posts). "claude-code" has 2 RU but
+  // only 1 non-draft EN post, so the EN archive is noindexed and must not be
+  // advertised as an alternate from either side.
+  it("suppresses the tag-archive counterpart when the EN archive is noindexed", async () => {
+    expect(await checkCounterpartExists("/tags/claude-code/", "ru")).toBe(false);
+    expect(await checkCounterpartExists("/en/tags/claude-code/", "en")).toBe(false);
+    expect(await checkCounterpartExists("/tags/solo/", "ru")).toBe(false);
+    expect(await checkCounterpartExists("/tags/pair/", "ru")).toBe(true);
+    expect(await checkCounterpartExists("/en/tags/pair/", "en")).toBe(true);
   });
 
   it.each(["/login/", "/admin/", "/admin/posts/", "/api/auth/get-session/"])(

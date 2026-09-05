@@ -17,8 +17,11 @@ describe.each([
       /import\s*\{[^}]*buildLandingNodes[^}]*\}\s+from\s+["']~\/lib\/seo\/landing["']/,
     );
   });
-  it("declares the AboutPage type so the WebPage subtype is correct", () => {
-    expect(src).toMatch(/type:\s*["']AboutPage["']/);
+  // SEO audit 2026-09: /about is the author's ProfilePage whose mainEntity is
+  // the global #person node (AboutPage described the site, not the person).
+  it("declares the ProfilePage type with #person as mainEntity", () => {
+    expect(src).toMatch(/type:\s*["']ProfilePage["']/);
+    expect(src).toMatch(/mainEntityId:\s*graphIds\.person/);
   });
   it("passes the helper output through extraSchemaNodes", () => {
     expect(src).toMatch(/extraSchemaNodes=\{nodes\}/);
