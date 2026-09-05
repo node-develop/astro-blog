@@ -27,15 +27,19 @@ Invoke this skill when the task matches one of these patterns:
 
 Start here when exploring this area:
 
-- **`globalSetup`** (Function) — `tests/e2e/global-setup.ts:41`
+- **`globalSetup`** (Function) — `tests/e2e/global-setup.ts`
 
 ## Key Symbols
 
-| Symbol                    | Type     | File                        | Line |
-| ------------------------- | -------- | --------------------------- | ---- |
-| `globalSetup`             | Function | `tests/e2e/global-setup.ts` | 41   |
-| `ensurePagefindArtifacts` | Function | `tests/e2e/global-setup.ts` | 17   |
-| `lstatExistsSafe`         | Function | `tests/e2e/global-setup.ts` | 29   |
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`. `installFixtures` / `removeFixtures` (same file) manage the `e2e-*` content fixtures that `pnpm translate` and the translation guard skip.
+
+| Symbol                    | Type     | File                        |
+| ------------------------- | -------- | --------------------------- |
+| `globalSetup`             | Function | `tests/e2e/global-setup.ts` |
+| `ensurePagefindArtifacts` | Function | `tests/e2e/global-setup.ts` |
+| `lstatExistsSafe`         | Function | `tests/e2e/global-setup.ts` |
+| `installFixtures`         | Function | `tests/e2e/global-setup.ts` |
+| `removeFixtures`          | Function | `tests/e2e/global-setup.ts` |
 
 ## Execution Flows
 
