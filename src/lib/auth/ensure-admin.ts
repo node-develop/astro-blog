@@ -10,6 +10,7 @@
  * `tests/e2e/global-setup.ts` (Playwright fixture) — keep the logic here so
  * the two never drift.
  */
+import { createLocalAccountIssuer } from "better-auth/db";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users, accounts } from "../db/schema.js";
@@ -74,6 +75,7 @@ export const ensureAdminUser = async (input: EnsureAdminInput): Promise<EnsureAd
     await db.insert(accounts).values({
       userId,
       providerId: "credential",
+      issuer: createLocalAccountIssuer("credential"),
       accountId: userId,
       password: passwordHash,
     });
@@ -81,7 +83,11 @@ export const ensureAdminUser = async (input: EnsureAdminInput): Promise<EnsureAd
   } else {
     await db
       .update(accounts)
-      .set({ password: passwordHash, updatedAt: new Date() })
+      .set({
+        password: passwordHash,
+        issuer: createLocalAccountIssuer("credential"),
+        updatedAt: new Date(),
+      })
       .where(eq(accounts.userId, userId));
     createdAccount = false;
   }

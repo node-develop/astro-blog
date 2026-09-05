@@ -32,11 +32,15 @@ export default function MediaPicker({ value, onChange }: Props): React.JSX.Eleme
     })();
   }, [open]);
 
+  // `cover` is either an upload-relative path (`2026/05/x.png`) or a site-absolute
+  // one (`/og-default.svg`, `https://…`); only the former lives under /uploads/.
+  const previewSrc = value && /^(\/|https?:)/.test(value) ? value : `/uploads/${value ?? ""}`;
+
   return (
     <div className="media-picker">
       {value ? (
         <div className="media-picker__current">
-          <img src={`/uploads/${value}`} alt="" />
+          <img src={previewSrc} alt="" />
           <button type="button" onClick={() => onChange(null)}>
             Убрать
           </button>
