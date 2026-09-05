@@ -476,7 +476,7 @@ const socialLabel = (url: string): string => {
       // not assume it's there on first paint.
       const probeAuth = async () => {
         try {
-          const r = await fetch("/api/auth/get-session", { credentials: "same-origin" });
+          const r = await fetch("/api/auth/get-session/", { credentials: "same-origin" });
           if (r.ok) {
             const data = await r.json();
             if (data?.user) document.body.setAttribute("data-auth", "signed-in");

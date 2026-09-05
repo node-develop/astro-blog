@@ -361,6 +361,13 @@ describe("production standalone server", () => {
       expect(check.headers.get("location")).toBeNull();
       await expect(check.json()).resolves.toMatchObject({ pass: false, feedback: "Bad JSON." });
 
+      // Better-Auth does not accept trailing slashes, but `trailingSlash: "always"`
+      // forces every client to use them. The handler must strip the slash: a 404
+      // here means nobody can log in (this regressed silently in production once).
+      const ok = await responseFor(server.origin, "/api/auth/ok/");
+      expect(ok.status, server.output()).toBe(200);
+      await expect(ok.json()).resolves.toEqual({ ok: true });
+
       for (const pathname of [
         "/api/auth/sign-in/email/",
         "/api/auth/sign-in/social/",
@@ -371,7 +378,7 @@ describe("production standalone server", () => {
           headers: { "content-type": "application/json" },
           body: "{",
         });
-        expect([301, 302, 307, 308], pathname + "\n" + server.output()).not.toContain(
+        expect([301, 302, 307, 308, 404], pathname + "\n" + server.output()).not.toContain(
           response.status,
         );
         expect(response.headers.get("location"), pathname).toBeNull();

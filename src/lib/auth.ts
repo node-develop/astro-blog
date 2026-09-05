@@ -5,6 +5,11 @@ import { db, schema } from "./db/index.js";
 
 export type Auth = ReturnType<typeof createAuth>;
 
+const trustedProxies = (process.env.AUTH_TRUSTED_PROXIES ?? "")
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean);
+
 export const createAuth = () => {
   const secret = process.env.BETTER_AUTH_SECRET;
   const baseUrl = process.env.BETTER_AUTH_URL ?? process.env.SITE_URL;
@@ -34,6 +39,11 @@ export const createAuth = () => {
       },
       // `Secure` cookies only in prod: dev/e2e run over plain http://localhost.
       useSecureCookies: isProduction,
+      // Rate limiting keys buckets by client IP. With one proxy hop (Traefik) a
+      // single-value X-Forwarded-For is trusted as is; with more hops (e.g.
+      // Cloudflare → Traefik) list the proxy CIDRs so the chain is walked
+      // from the right, otherwise every visitor shares one bucket.
+      ...(trustedProxies.length > 0 ? { ipAddress: { trustedProxies } } : {}),
     },
     // Brute-force protection for the credential login. Enabled in prod, and
     // opt-in elsewhere via AUTH_RATE_LIMIT=1 (the e2e suite logs in per test
