@@ -6,7 +6,7 @@ Pipeline status: shipped on branch `feat/social-autopost`, gated behind `SOCIAL_
 
 - Postgres reachable at `DATABASE_URL` (the docker-compose container or your prod instance).
 - `pnpm install` clean.
-- Node 20.12+ (matches existing `engines`).
+- Node 24 (prod runtime, `.nvmrc`); `engines` allows `>=22.12 <25`.
 
 ## 1. Apply the migration
 

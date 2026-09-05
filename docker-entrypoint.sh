@@ -1,6 +1,14 @@
 #!/bin/sh
 set -e
 
+# SINGLE-REPLICA ASSUMPTION
+# Migrations and the posts_meta backfill run on every container start with no
+# advisory lock or leader election. Two replicas booting at the same time would
+# execute them concurrently. Do not scale this service horizontally without
+# first moving these two steps into a separate one-shot job (see CLAUDE.md
+# "Деплой"). Both steps are deliberately fail-loud: a failure aborts startup
+# instead of serving traffic against a half-migrated schema.
+
 if [ -n "$DATABASE_URL" ]; then
   echo "[entrypoint] applying migrations..."
   node ./scripts/migrate-prod.mjs

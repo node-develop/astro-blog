@@ -1,12 +1,12 @@
 # Personal blog on Astro
 
-Стек (апрель 2026): Astro 5, TypeScript 6 (strict), pnpm 10, PostgreSQL 18, Drizzle ORM, Better-Auth, Tailwind 4, MDX с Mermaid и KaTeX.
+Стек (сентябрь 2026): Astro 7, TypeScript 6 (strict), Node 24, pnpm 10, PostgreSQL 18, Drizzle ORM, Better-Auth, Tailwind 4, MDX с Mermaid и KaTeX. Точные версии — раздел «Стек» в `CLAUDE.md` и `package.json`.
 
 ## Быстрый старт
 
 ```bash
-# 1. зависимости
-corepack enable && corepack prepare pnpm@10.12.1 --activate
+# 1. зависимости (версия pnpm — из поля packageManager в package.json)
+corepack enable && corepack prepare --activate
 pnpm install
 
 # 2. переменные окружения
@@ -26,19 +26,23 @@ pnpm dev           # http://localhost:4321
 
 ## Команды
 
-| Команда            | Что делает                      |
-| ------------------ | ------------------------------- |
-| `pnpm dev`         | Dev-сервер                      |
-| `pnpm build`       | Прод-билд в `dist/`             |
-| `pnpm preview`     | Локальный просмотр прод-билда   |
-| `pnpm typecheck`   | `astro check` + `tsc --noEmit`  |
-| `pnpm lint`        | ESLint + Prettier check         |
-| `pnpm format`      | Prettier fix                    |
-| `pnpm test`        | Vitest unit                     |
-| `pnpm test:e2e`    | Playwright                      |
-| `pnpm db:generate` | Сгенерировать миграцию из схемы |
-| `pnpm db:migrate`  | Применить миграции              |
-| `pnpm db:studio`   | drizzle-kit studio              |
+| Команда                      | Что делает                                    |
+| ---------------------------- | --------------------------------------------- |
+| `pnpm dev`                   | Dev-сервер                                    |
+| `pnpm build`                 | Прод-билд в `dist/`                           |
+| `pnpm preview`               | Локальный просмотр прод-билда                 |
+| `pnpm typecheck`             | `astro sync` + `astro check` + `tsc --noEmit` |
+| `pnpm lint`                  | ESLint + Prettier check                       |
+| `pnpm format`                | Prettier fix                                  |
+| `pnpm test`                  | Vitest (unit + integration)                   |
+| `pnpm test:production-smoke` | Smoke standalone-сервера из `dist/`           |
+| `pnpm verify:seo-build`      | Билд + проверка вывода на SEO-регрессии       |
+| `pnpm test:e2e`              | Playwright                                    |
+| `pnpm translate`             | Сгенерировать EN-двойники                     |
+| `pnpm translate:check`       | Проверить актуальность EN (CI)                |
+| `pnpm db:generate`           | Сгенерировать миграцию из схемы               |
+| `pnpm db:migrate`            | Применить миграции                            |
+| `pnpm db:studio`             | drizzle-kit studio                            |
 
 ## Публикация статьи
 
@@ -90,15 +94,15 @@ pnpm translate -- --force-all
 
 ## Деплой
 
-Пуш в `main` запускает `.github/workflows/docker-publish.yml` → билд → пуш в `ghcr.io/<owner>/astro-blog:latest` с тегами из git.
+Пуш в `main` запускает `.github/workflows/docker-publish.yml` → билд → пуш в `ghcr.io/node-develop/astro-blog` (теги `main`, `sha-…`, `latest`, semver) → webhook в Dokploy (`DOKPLOY_WEBHOOK_URL`). Обязательные runtime env, требование одной реплики и persistent volume для загрузок — раздел «Деплой» в `CLAUDE.md` и `docs/runbooks/dokploy-uploads-volume.md`.
 
 ## Claude Code
 
 Проект настроен под Claude Code:
 
-- `CLAUDE.md` — глобальный контекст и стандарты
-- `.claude/agents/` — architect, sysanalyst, backender, frontender, critic
-- `.claude/skills/` — new-blog-post, astro-component, db-migration, deploy-check
+- `CLAUDE.md` — глобальный контекст и стандарты; `AGENTS.md` — правила GitNexus
+- `.claude/agents/` — architect, sysanalyst, designer, backender, frontender, critic
+- `.claude/skills/` — new-blog-post, astro-component, design-system-tokens, ui-design-review, db-migration, deploy-check, gitnexus/\*, generated/\*
 - `.claude/hooks/` — session-start, no-secrets (блокирует .env), format (prettier), notify-stop
 - `.claude/settings.json` — permissions + hook registrations
 

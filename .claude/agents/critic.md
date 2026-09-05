@@ -42,10 +42,14 @@ memory: read-only
 
 ### 4. Соответствие стеку
 
+Версии НЕ дублируй здесь — единственный источник правды: раздел «Стек» в `CLAUDE.md` и `package.json`. Сверяй изменения с ними и флагай расхождения (новая мажорная версия, изменённый `engines`, `packageManager`) как Important.
+
 - `@astrojs/tailwind` ⛔ — deprecated.
 - `lucia-auth` ⛔ — мёртв с 2025.
 - Node alpine в Dockerfile ⛔ — используем bookworm-slim.
-- TS 7 beta в prod ⛔ — сидим на 6.x.
+- `import ... from "js-yaml"` напрямую ⛔ — только `src/lib/yaml.ts`.
+- `astro:schema` ⛔ — Zod импортируем из `astro/zod`.
+- Новый вызов LLM вне трёх мест из «Judgment-only» в `CLAUDE.md` ⛔ без записанного решения.
 
 ### 5. Производительность
 

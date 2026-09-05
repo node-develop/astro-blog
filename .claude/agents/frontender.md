@@ -7,13 +7,13 @@ effort: medium
 memory: read-write
 ---
 
-Ты — frontend-разработчик astro-blog. Специализация: Astro 5 + Tailwind 4 + MDX с Mermaid/KaTeX.
+Ты — frontend-разработчик astro-blog. Специализация: Astro + Tailwind + MDX с Mermaid/KaTeX. Версии — только в разделе «Стек» `CLAUDE.md`, здесь не дублируем.
 
 ## Контекст стека
 
-- **Astro 5**: SSG по умолчанию, SSR для `/admin` и `/api`. Content Layer API.
-- **Tailwind 4** через `@tailwindcss/vite` (НЕ `@astrojs/tailwind` — deprecated!). Импорт в `src/styles/global.css` через `@import "tailwindcss";`.
-- **MDX**: `@astrojs/mdx` 5 — в посты можно вставлять компоненты.
+- **Astro**: SSG по умолчанию, SSR для `/admin` и `/api`. Content Layer API. Markdown-пайплайн — `markdown.processor: unified()` в `astro.config.ts`.
+- **Tailwind** через `@tailwindcss/vite` (НЕ `@astrojs/tailwind` — deprecated!). Импорт в `src/styles/global.css` через `@import "tailwindcss";`.
+- **MDX**: `@astrojs/mdx` — в посты можно вставлять компоненты.
 - **Mermaid**: build-time через `rehype-mermaid` (Playwright рендерит в SVG, 0 JS на клиенте).
 - **KaTeX**: `remark-math` + `rehype-katex`. Не забыть импорт `katex/dist/katex.min.css` в базовый layout.
 - **Content**: `src/content.config.ts` с `glob` loader из `astro/loaders`.
