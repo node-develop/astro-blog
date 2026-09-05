@@ -14,6 +14,7 @@ export const createAuth = () => {
   const githubClientId = process.env.GITHUB_CLIENT_ID;
   const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
   const githubEnabled = Boolean(githubClientId && githubClientSecret);
+  const isProduction = process.env.NODE_ENV === "production";
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -30,6 +31,20 @@ export const createAuth = () => {
     advanced: {
       database: {
         generateId: false,
+      },
+      // `Secure` cookies only in prod: dev/e2e run over plain http://localhost.
+      useSecureCookies: isProduction,
+    },
+    // Brute-force protection for the credential login. Enabled in prod, and
+    // opt-in elsewhere via AUTH_RATE_LIMIT=1 (the e2e suite logs in per test
+    // and would trip the 5/min sign-in rule under `pnpm dev`).
+    // Paths are relative to the auth basePath, trailing slash normalised.
+    rateLimit: {
+      enabled: isProduction || process.env.AUTH_RATE_LIMIT === "1",
+      window: 60,
+      max: 100,
+      customRules: {
+        "/sign-in/email": { window: 60, max: 5 },
       },
     },
     user: {
