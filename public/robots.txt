@@ -1,7 +1,11 @@
-# robots.txt — last reviewed 2026-05-09
+# robots.txt — last reviewed 2026-09-05
 # Owner: a@artka.dev. Policy: allow retrieval/answer crawlers; disallow private surfaces.
 # /admin/ and /api/ are private surfaces. Utility HTML remains crawlable so its
 # noindex directive can be observed.
+#
+# Agent resources: https://artka.dev/llms.txt (index) and
+# https://artka.dev/llms-full.txt (full-text digest, noindex but fetchable).
+# Every post and lesson also has a Markdown twin at <page-url minus slash>.md.
 
 User-agent: GPTBot
 Allow: /
@@ -44,6 +48,56 @@ Disallow: /admin/
 Disallow: /api/
 
 User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Bytespider
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: meta-externalagent
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: MistralAI-User
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Diffbot
 Allow: /
 Disallow: /admin/
 Disallow: /api/

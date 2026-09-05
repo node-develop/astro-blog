@@ -1,0 +1,6 @@
+# security.txt — RFC 9116
+Contact: mailto:a@artka.dev
+Expires: 2027-09-05T00:00:00.000Z
+Preferred-Languages: ru, en
+Canonical: https://artka.dev/.well-known/security.txt
+Policy: https://artka.dev/privacy/
