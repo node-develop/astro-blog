@@ -81,21 +81,21 @@ flowchart LR
 
 If you change an **earlier** layer — all later ones are also recalculated. For example, you add one MCP server → `tools` changes → the entire cache is invalidated.
 
-**How much cache vs no-cache costs** (example: Sonnet 4.6, $3 per 1M input tokens):
+**How much cache vs no-cache costs** (example: Sonnet 4.6, \$3 per 1M input tokens):
 
-| Operation                  | Price                            | When                                      |
-| -------------------------- | -------------------------------- | ----------------------------------------- |
-| Cache **write** (5min TTL) | 1.25 × input = $3.75 / 1M tokens | First request with this prefix            |
-| Cache **read** (hit)       | 0.10 × input = $0.30 / 1M tokens | All subsequent within TTL window          |
-| Cache **write** (1h TTL)   | 2 × input = $6 / 1M tokens       | If you requested `cache_control.ttl="1h"` |
-| No-cache (regular input)   | $3 / 1M tokens                   | If there's no cache at all                |
+| Operation                  | Price                             | When                                      |
+| -------------------------- | --------------------------------- | ----------------------------------------- |
+| Cache **write** (5min TTL) | 1.25 × input = \$3.75 / 1M tokens | First request with this prefix            |
+| Cache **read** (hit)       | 0.10 × input = \$0.30 / 1M tokens | All subsequent within TTL window          |
+| Cache **write** (1h TTL)   | 2 × input = \$6 / 1M tokens       | If you requested `cache_control.ttl="1h"` |
+| No-cache (regular input)   | \$3 / 1M tokens                   | If there's no cache at all                |
 
 **Savings calculation in a real Travel Agent session:**
 
 Say system + CLAUDE.md + tools = 25k tokens. You make 10 requests in 5 minutes.
 
-- **Without cache:** 10 × 25k × $3/M = **$0.75**
-- **With cache:** 1 × 25k × $3.75/M (write) + 9 × 25k × $0.30/M (read) = $0.094 + $0.067 = **$0.16**
+- **Without cache:** 10 × 25k × \$3/M = **\$0.75**
+- **With cache:** 1 × 25k × \$3.75/M (write) + 9 × 25k × \$0.30/M (read) = \$0.094 + \$0.067 = **\$0.16**
 
 Savings — **80%**. This is why prompt cache is a must-have, and losing it is a real pain.
 
