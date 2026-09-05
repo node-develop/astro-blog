@@ -9,6 +9,7 @@ import {
   negotiateRepresentation,
 } from "~/lib/http/content-negotiation";
 import { canonicalPath } from "~/lib/seo/url-policy";
+import { applyPublicHtmlCache } from "~/lib/http/public-cache";
 
 const locale = Astro.url.pathname.startsWith("/en/") ? "en" : "ru";
 const representation = negotiateRepresentation(Astro.request.headers.get("Accept"));
@@ -19,6 +20,7 @@ if (!isApiPath && representation === "text/markdown") {
 
 Astro.response.status = 404;
 appendVary(Astro.response.headers, "Accept", "Accept-Encoding");
+applyPublicHtmlCache(Astro.request, Astro.response.headers);
 
 const copy =
   locale === "en"

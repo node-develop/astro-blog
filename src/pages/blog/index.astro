@@ -19,9 +19,11 @@ import { assignArtVariants } from "~/lib/content/card-art";
 import { bareSlug } from "~/lib/content/slug";
 import { BLOG_PAGE_SIZE } from "~/lib/content/blog-pagination";
 import PostCard from "~/components/PostCard.astro";
+import { applyPublicHtmlCache } from "~/lib/http/public-cache";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const posts = await getOrderedPosts({ locale });
+applyPublicHtmlCache(Astro.request, Astro.response.headers);
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
 const courseHref =
@@ -48,8 +50,10 @@ const breadcrumbsNode = buildBreadcrumbsNode({
   items: breadcrumbItems,
 }) as GraphNode;
 
+// Newest of pubDate/updatedDate across the listed posts — an edited post
+// must bump the index's dateModified, not only a newly published one.
 const latestModified = posts.reduce<Date | null>((acc, p) => {
-  const d = p.entry.data.pubDate;
+  const d = p.entry.data.updatedDate ?? p.entry.data.pubDate;
   return acc && acc.getTime() > d.getTime() ? acc : d;
 }, null);
 

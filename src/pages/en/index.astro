@@ -24,6 +24,7 @@ import {
   notAcceptableResponse,
 } from "~/lib/http/content-negotiation";
 import { canonicalPath, canonicalUrl } from "~/lib/seo/url-policy";
+import { applyPublicHtmlCache } from "~/lib/http/public-cache";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const representation = negotiateRepresentation(Astro.request.headers.get("Accept"));
@@ -61,10 +62,13 @@ if (representation === "text/markdown") {
   );
 }
 appendVary(Astro.response.headers, "Accept", "Accept-Encoding");
+applyPublicHtmlCache(Astro.request, Astro.response.headers);
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
+// Newest of pubDate/updatedDate across the listed posts — an edited post
+// must bump the index's dateModified, not only a newly published one.
 const latestModified = posts.reduce<Date | null>((acc, p) => {
-  const d = p.entry.data.pubDate;
+  const d = p.entry.data.updatedDate ?? p.entry.data.pubDate;
   return acc && acc.getTime() > d.getTime() ? acc : d;
 }, null);
 
