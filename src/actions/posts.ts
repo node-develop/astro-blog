@@ -13,9 +13,14 @@ import {
   searchPostsMeta,
 } from "~/lib/db/repo/posts-meta";
 import { appendRevision } from "~/lib/db/repo/revisions";
-import { serializeFrontmatter, stripLeadingFrontmatter } from "~/lib/content/frontmatter";
+import {
+  serializeFrontmatter,
+  stripLeadingFrontmatter,
+  type Frontmatter,
+} from "~/lib/content/frontmatter";
 import { writePostAtomically } from "~/lib/fs/post-writer";
 import { POSTS_DIR, resolveSafe } from "~/lib/fs/paths";
+import { logger } from "~/lib/logger";
 import { schedulePagefindRebuild } from "~/lib/search/pagefind-rebuild";
 import { assertAdmin } from "./_auth";
 
@@ -64,6 +69,28 @@ export const postUpsertInput = z.object({
     coverAlt: z.string().optional(),
   }),
   body: z.string().default(""),
+});
+
+export type PostFrontmatterInput = z.infer<typeof postUpsertInput>["frontmatter"];
+
+/**
+ * Builds the on-disk `Frontmatter` from validated action input. Shared by
+ * `posts.upsert` and `revisions.restore` so both write paths persist the
+ * same set of fields (summary / keywords / faq included) — a restore must
+ * never silently drop fields that an upsert would have written.
+ */
+export const toPostFrontmatter = (fm: PostFrontmatterInput): Frontmatter => ({
+  title: fm.title,
+  description: fm.description,
+  pubDate: fm.pubDate,
+  tags: fm.tags,
+  draft: fm.draft,
+  ...(fm.updatedDate ? { updatedDate: fm.updatedDate } : {}),
+  ...(fm.cover ? { cover: fm.cover } : {}),
+  ...(fm.coverAlt ? { coverAlt: fm.coverAlt } : {}),
+  ...(fm.summary ? { summary: fm.summary } : {}),
+  ...(fm.keywords.length > 0 ? { keywords: fm.keywords } : {}),
+  ...(fm.faq && fm.faq.length > 0 ? { faq: fm.faq } : {}),
 });
 
 export const posts = {
@@ -123,21 +150,7 @@ export const posts = {
       const warnings: string[] = [];
       if (hadFrontmatter) warnings.push("body_had_frontmatter");
 
-      const fmObject = {
-        title: input.frontmatter.title,
-        description: input.frontmatter.description,
-        pubDate: input.frontmatter.pubDate,
-        tags: input.frontmatter.tags,
-        draft: input.frontmatter.draft,
-        ...(input.frontmatter.updatedDate ? { updatedDate: input.frontmatter.updatedDate } : {}),
-        ...(input.frontmatter.cover ? { cover: input.frontmatter.cover } : {}),
-        ...(input.frontmatter.coverAlt ? { coverAlt: input.frontmatter.coverAlt } : {}),
-        ...(input.frontmatter.summary ? { summary: input.frontmatter.summary } : {}),
-        ...(input.frontmatter.keywords.length > 0 ? { keywords: input.frontmatter.keywords } : {}),
-        ...(input.frontmatter.faq && input.frontmatter.faq.length > 0
-          ? { faq: input.frontmatter.faq }
-          : {}),
-      };
+      const fmObject = toPostFrontmatter(input.frontmatter);
 
       // Step 1: DB transaction — insert revision (clean body, so future
       // rollbacks restore a sanitised file too).
@@ -160,6 +173,10 @@ export const posts = {
       try {
         await writePostAtomically(POSTS_DIR, input.slug, serialized);
       } catch (err) {
+        logger.error(
+          { err, slug: input.slug, revisionId: revision.id },
+          "posts.upsert: file write failed after revision was stored",
+        );
         return {
           ok: false as const,
           revisionId: revision.id,
@@ -184,14 +201,19 @@ export const posts = {
     input: z.object({ slug: z.string().min(1) }),
     handler: async ({ slug }, context) => {
       assertAdmin(context.locals.user as { role?: string | null } | null);
-      for (const ext of [".md", ".mdx"]) {
-        const target = resolveSafe(POSTS_DIR, `${slug}${ext}`);
+      // Remove the RU source and its EN twin (`en/<slug>.md(x)`) — an orphaned
+      // EN file would keep the deleted post alive at /en/blog/<slug>.
+      const removed: string[] = [];
+      for (const rel of [`${slug}.md`, `${slug}.mdx`, `en/${slug}.md`, `en/${slug}.mdx`]) {
+        const target = resolveSafe(POSTS_DIR, rel);
         try {
           await unlink(target);
+          removed.push(rel);
         } catch (err) {
           if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
         }
       }
+      logger.info({ slug, removed }, "posts.delete: removed post files");
       await deleteMeta(slug);
       schedulePagefindRebuild(slug);
       return { ok: true as const };

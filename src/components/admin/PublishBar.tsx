@@ -239,11 +239,43 @@ export default function PublishBar({
 
 export const isAutoTranslateEnabled = readAutoTranslate;
 
-export async function maybeAutoTranslate(collection: Collection, slug: string): Promise<void> {
-  if (!readAutoTranslate()) return;
+export interface AutoTranslateOutcome {
+  readonly status: "disabled" | "translated" | "skipped" | "warned" | "error";
+  /** Human-readable note for the editor UI; null when nothing worth showing. */
+  readonly message: string | null;
+}
+
+/**
+ * Runs translate.one after a save when the author opted in via the toolbar
+ * checkbox. Never throws — auto-translate must not undo a successful save —
+ * but every failure is returned so the caller can show it: a silently
+ * missing EN twin is exactly the kind of "looks like success" we avoid.
+ */
+export async function maybeAutoTranslate(
+  collection: Collection,
+  slug: string,
+): Promise<AutoTranslateOutcome> {
+  if (!readAutoTranslate()) return { status: "disabled", message: null };
   try {
-    await actions.translate.one({ collection, slug, force: false });
-  } catch {
-    /* swallowed — auto-translate is best-effort, don't block save UX */
+    const result = await actions.translate.one({ collection, slug, force: false });
+    if (result.error) {
+      return {
+        status: "error",
+        message: `Автоперевод не удался: ${result.error.message ?? "неизвестная ошибка"}`,
+      };
+    }
+    const data = result.data;
+    if (data.status === "translated") return { status: "translated", message: null };
+    if (data.status === "skipped") return { status: "skipped", message: null };
+    if (data.status === "warned") {
+      return {
+        status: "warned",
+        message: "Автоперевод пропущен: EN-twin защищён (manuallyEdited). Используйте ⟳ Force.",
+      };
+    }
+    return { status: "error", message: `Автоперевод: неожиданный статус ${data.status}` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { status: "error", message: `Автоперевод не удался: ${msg}` };
   }
 }

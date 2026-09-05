@@ -1,7 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro/zod";
-import { dump } from "~/lib/yaml";
-import { writePostAtomically } from "~/lib/fs/post-writer";
+import { writeSiteToDisk } from "~/lib/content/site-io";
 import { SITE_DIR } from "~/lib/fs/paths";
 import { assertAdmin } from "./_auth";
 
@@ -17,18 +16,17 @@ export const site = {
       body: z.string().default(""),
     }),
     handler: async ({ slug, title, body }, context) => {
+      assertAdmin(context.locals.user as { role?: string | null } | null);
       if (slug === "home") {
         throw new ActionError({
           code: "BAD_REQUEST",
           message: "Use home.update for the home page",
         });
       }
-      assertAdmin(context.locals.user as { role?: string | null } | null);
 
-      const fm = `---\n${dump({ title })}---\n\n${body}`;
-
+      // Read-merge-write: keeps description / sourceHash / manuallyEdited etc.
       try {
-        await writePostAtomically(SITE_DIR, slug, fm);
+        await writeSiteToDisk(SITE_DIR, slug, { title, body });
       } catch (err) {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
