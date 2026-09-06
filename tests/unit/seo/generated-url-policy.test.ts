@@ -187,9 +187,18 @@ const auditJsonFeed = (violations: Violation[], file: string): void => {
   });
 };
 
+/**
+ * RFC 6570 URI templates (a schema.org SearchAction urlTemplate quoted in a
+ * post body, for example) are not document URLs: they cannot be fetched and
+ * have no canonical identity, so the text audit leaves them alone.
+ */
+const isUriTemplate = (url: string): boolean => /\{[^}]*\}/.test(url);
+
 const auditText = (violations: Violation[], file: string, contents: string): void => {
   const urls = contents.match(/https?:\/\/(?:www\.)?artka\.dev[^\s<"'\\)\],]*/g) ?? [];
-  urls.forEach((url) => auditUrl(violations, file, url, ORIGIN, "identity"));
+  urls
+    .filter((url) => !isUriTemplate(url))
+    .forEach((url) => auditUrl(violations, file, url, ORIGIN, "identity"));
 };
 
 it.each([
@@ -265,6 +274,24 @@ it("resolves every generated RU and EN lesson link to a built course route", () 
 
   expect(checkedLinks).toBeGreaterThan(100);
   expect(violations).toEqual([]);
+});
+
+it("skips RFC 6570 URI templates in text artifacts but still audits plain URLs", () => {
+  const violations: Violation[] = [];
+
+  auditText(
+    violations,
+    "llms-full.txt",
+    '"target": "https://artka.dev/search/?q={search_term_string}" and https://artka.dev/search?q=x',
+  );
+
+  expect(violations).toEqual([
+    {
+      file: "llms-full.txt",
+      href: "https://artka.dev/search?q=x",
+      resolved: "https://artka.dev/search/",
+    },
+  ]);
 });
 
 it("emits one apex HTTPS slash identity for every internal document URL", async () => {
