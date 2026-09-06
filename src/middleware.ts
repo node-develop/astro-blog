@@ -28,7 +28,7 @@ const adminGuard = defineMiddleware(async (context, next) => {
 
   const user = context.locals.user;
   if (!user) {
-    return context.redirect("/login?next=" + encodeURIComponent(context.url.pathname));
+    return context.redirect("/login/?next=" + encodeURIComponent(context.url.pathname));
   }
   if (user.role !== "admin" && user.role !== "editor") {
     return new Response("Forbidden", {
