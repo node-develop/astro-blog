@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();
@@ -25,7 +25,7 @@ async function gotoWithRetry(page: Page, url: string, maxAttempts = 3): Promise<
 test("admin edits a post, sees revision, restores prior version", async ({ page }) => {
   await login(page);
 
-  await page.goto("/admin/posts");
+  await page.goto("/admin/posts/");
   const firstTitle = page.locator(".post-list__title").first();
   const href = await firstTitle.getAttribute("href");
   expect(href).toBeTruthy();

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("language toggle", () => {
   test("toggle on RU article navigates to EN article", async ({ page }) => {
-    await page.goto("/blog/01-introduction");
+    await page.goto("/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
     // LangToggle renders <a data-set-pref data-lang="en"> when the counterpart exists
@@ -10,28 +10,28 @@ test.describe("language toggle", () => {
     await expect(toggle).toBeVisible();
     await toggle.click();
 
-    await expect(page).toHaveURL(/\/en\/blog\/01-introduction\/?$/);
+    await expect(page).toHaveURL(/\/en\/blog\/local-coding-agent\/?$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
   test("toggle on EN article navigates back to RU", async ({ page }) => {
-    await page.goto("/en/blog/01-introduction");
+    await page.goto("/en/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
     const toggle = page.locator('a[data-set-pref][data-lang="ru"]');
     await expect(toggle).toBeVisible();
     await toggle.click();
 
-    await expect(page).toHaveURL(/\/blog\/01-introduction\/?$/);
+    await expect(page).toHaveURL(/\/blog\/local-coding-agent\/?$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   });
 
   test("toggle sets lang-pref cookie when clicked", async ({ page, context }) => {
-    await page.goto("/blog/01-introduction");
+    await page.goto("/blog/local-coding-agent/");
 
     const toggle = page.locator('a[data-set-pref][data-lang="en"]');
     await toggle.click();
-    await expect(page).toHaveURL(/\/en\/blog\/01-introduction\/?$/);
+    await expect(page).toHaveURL(/\/en\/blog\/local-coding-agent\/?$/);
 
     const cookies = await context.cookies();
     const pref = cookies.find((c) => c.name === "lang-pref");
@@ -55,7 +55,7 @@ test.describe("language toggle", () => {
 
     // e2e-ru-only.md is a test fixture with no EN counterpart, so the toggle
     // degrades to a <button disabled> instead of an <a>.
-    await page.goto("/blog/e2e-ru-only");
+    await page.goto("/blog/e2e-ru-only/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
     const disabled = page.locator("button.lang-toggle[disabled]");

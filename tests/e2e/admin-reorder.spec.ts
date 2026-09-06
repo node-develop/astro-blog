@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();
@@ -40,12 +40,12 @@ async function dragRowDown(page: Page, fromIndex: number): Promise<void> {
 
 test("admin reorder persists across refresh and reflects on public blog", async ({ page }) => {
   await loginAsAdmin(page);
-  await page.goto("/admin/posts");
+  await page.goto("/admin/posts/");
 
   const rows = page.locator(".post-list__item");
   await expect(rows.first()).toBeVisible();
 
-  // The admin list may start with pinned/hidden posts (e.g. hello-world, 01-introduction).
+  // The admin list may start with pinned/hidden posts (e.g. hello-world, local-coding-agent).
   // We need two consecutive rows that are BOTH visible in the public blog (not hidden,
   // not pinned — so their relative order determines their rank on /blog).
   // Scan rows for the first non-pinned pair by checking the "pinned" toggle button state.
@@ -87,7 +87,7 @@ test("admin reorder persists across refresh and reflects on public blog", async 
   await expect(rows.nth(firstIdx + 1).locator(".post-list__title")).toHaveText(firstTitle);
 
   // Public list reflects it: secondTitle is now before firstTitle.
-  await page.goto("/blog");
+  await page.goto("/blog/");
   const publicTitles = page.locator(".post-card__title");
   // Find both titles on the page and verify secondTitle comes first.
   const allTitles = await publicTitles.allInnerTexts();
@@ -98,7 +98,7 @@ test("admin reorder persists across refresh and reflects on public blog", async 
   expect(secondPos).toBeLessThan(firstPos);
 
   // Cleanup: restore original order by dragging back.
-  await page.goto("/admin/posts");
+  await page.goto("/admin/posts/");
   await dragRowDown(page, firstIdx);
   await expect(page.locator(".post-list__status")).toBeVisible({ timeout: 8_000 });
   await expect(page.locator(".post-list__status")).toHaveCount(0, { timeout: 10_000 });

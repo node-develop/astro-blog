@@ -18,7 +18,7 @@ test.describe("site navigation", () => {
   });
 
   test("TOC entry jumps to matching heading and highlights it", async ({ page }) => {
-    await page.goto("/blog/02-context-and-cache");
+    await page.goto("/blog/claude-md-12-rules/");
     const tocEntry = page.locator(".toc__link").first();
     const slug = await tocEntry.getAttribute("data-toc-slug");
     expect(slug).toBeTruthy();

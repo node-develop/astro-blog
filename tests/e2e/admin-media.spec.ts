@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { resolve } from "node:path";
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();
@@ -11,7 +11,7 @@ async function login(page: Page): Promise<void> {
 
 test("admin uploads an image and attaches it as post cover", async ({ page }) => {
   await login(page);
-  await page.goto("/admin/media");
+  await page.goto("/admin/media/");
 
   const fixture = resolve(process.cwd(), "tests/e2e/fixtures/pixel.png");
 
@@ -22,7 +22,7 @@ test("admin uploads an image and attaches it as post cover", async ({ page }) =>
   await expect(page.locator(".media-grid img").first()).toBeVisible({ timeout: 10_000 });
 
   // Open the first post and attach the cover.
-  await page.goto("/admin/posts");
+  await page.goto("/admin/posts/");
   await page.locator(".post-list__title").first().click();
 
   // Wait for the React island to be visible and fully hydrated before interacting.

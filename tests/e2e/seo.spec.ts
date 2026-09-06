@@ -17,7 +17,7 @@ test.describe("SEO: static assets and feeds", () => {
     expect(body).toContain("sitemap-ru.xml");
     expect(body).toContain("sitemap-en.xml");
     expect(body).not.toContain("sitemap-0.xml");
-    expect(body).not.toContain("<lastmod>");
+    expect(body).toContain("<lastmod>");
   });
 
   test("/favicon.svg exists", async ({ request }) => {
@@ -65,7 +65,12 @@ test.describe("SEO: meta tags on rendered pages", () => {
       "content",
       "summary_large_image",
     );
-    await expect(page.locator('meta[name="theme-color"]')).toHaveCount(1);
+    // BaseLayout splits theme-color into light/dark variants (media queries) so
+    // the iOS Safari address bar follows the active colour scheme.
+    const themeColor = page.locator('meta[name="theme-color"]');
+    await expect(themeColor).toHaveCount(2);
+    await expect(themeColor.nth(0)).toHaveAttribute("media", "(prefers-color-scheme: light)");
+    await expect(themeColor.nth(1)).toHaveAttribute("media", "(prefers-color-scheme: dark)");
 
     const ldJson = await page.locator('script[type="application/ld+json"]').first().textContent();
     expect(ldJson).toBeTruthy();

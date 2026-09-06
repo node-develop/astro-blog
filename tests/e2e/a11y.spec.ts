@@ -8,17 +8,17 @@ interface PageDef {
 
 const PAGES: readonly PageDef[] = [
   { path: "/", auth: "public" },
-  { path: "/blog", auth: "public" },
-  { path: "/blog/02-context-and-cache", auth: "public" },
-  { path: "/search", auth: "public" },
-  { path: "/search?q=context", auth: "public" },
-  { path: "/admin/posts", auth: "admin" },
-  { path: "/admin/posts/new", auth: "admin" },
-  { path: "/admin/media", auth: "admin" },
+  { path: "/blog/", auth: "public" },
+  { path: "/blog/claude-md-12-rules/", auth: "public" },
+  { path: "/search/", auth: "public" },
+  { path: "/search/?q=context", auth: "public" },
+  { path: "/admin/posts/", auth: "admin" },
+  { path: "/admin/posts/new/", auth: "admin" },
+  { path: "/admin/media/", auth: "admin" },
 ];
 
 async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();

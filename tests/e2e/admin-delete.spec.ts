@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();
@@ -14,7 +14,7 @@ test("admin creates and then deletes a post", async ({ page }) => {
   await login(page);
 
   // Create.
-  await page.goto("/admin/posts/new");
+  await page.goto("/admin/posts/new/");
   await page.locator(".editor-shell").waitFor({ state: "visible" });
   const slug = `e2edelete${Date.now()}`;
   const slugInput = page.locator('input[type="text"]').first();
@@ -33,7 +33,7 @@ test("admin creates and then deletes a post", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/admin/posts/${slug}$`), { timeout: 10_000 });
 
   // Delete from list.
-  await page.goto("/admin/posts");
+  await page.goto("/admin/posts/");
   const row = page.locator(".post-list__item", { hasText: "Delete me" });
   page.on("dialog", (d) => d.accept());
   const deleteResponse = page.waitForResponse((res) => res.url().includes("_actions/posts"), {

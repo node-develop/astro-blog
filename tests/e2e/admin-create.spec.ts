@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login");
+  await page.goto("/login/");
   await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
   await page.locator('input[name="password"]').fill("e2e-admin-password");
   await page.getByRole("button", { name: /войти/i }).click();
@@ -10,7 +10,7 @@ async function login(page: Page): Promise<void> {
 
 test("admin creates a new post from scratch", async ({ page }) => {
   await login(page);
-  await page.goto("/admin/posts/new");
+  await page.goto("/admin/posts/new/");
   // Wait for the React island to hydrate fully.
   await page.locator(".editor-shell").waitFor({ state: "visible" });
 

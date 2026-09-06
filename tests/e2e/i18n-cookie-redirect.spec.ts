@@ -22,14 +22,14 @@ test.describe("lang-pref cookie redirect", () => {
   test("/blog/X is not redirected even with en cookie", async ({ page, context }) => {
     await context.addCookies([{ name: "lang-pref", value: "en", url: BASE_URL }]);
 
-    await page.goto("/blog/01-introduction");
-    await expect(page).toHaveURL(/\/blog\/01-introduction\/?$/);
+    await page.goto("/blog/local-coding-agent/");
+    await expect(page).toHaveURL(/\/blog\/local-coding-agent\/?$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   });
 
   test("direct visit to /en/blog/X works without cookie", async ({ page }) => {
-    await page.goto("/en/blog/01-introduction");
-    await expect(page).toHaveURL(/\/en\/blog\/01-introduction\/?$/);
+    await page.goto("/en/blog/local-coding-agent/");
+    await expect(page).toHaveURL(/\/en\/blog\/local-coding-agent\/?$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 });
