@@ -2,18 +2,18 @@ import { test, expect } from "@playwright/test";
 
 const PAGES = [
   "/",
-  "/blog",
-  "/blog/local-coding-agent",
-  "/blog/robots-txt-ai-crawlers-2026",
-  "/blog/mermaid-svg-playwright-build-time",
-  "/blog/json-ld-graph-astro",
-  "/about",
-  "/now",
-  "/uses",
-  "/projects",
-  "/projects/astro-blog",
-  "/tags",
-  "/tags/claude-code",
+  "/blog/",
+  "/blog/local-coding-agent/",
+  "/blog/robots-txt-ai-crawlers-2026/",
+  "/blog/mermaid-svg-playwright-build-time/",
+  "/blog/json-ld-graph-astro/",
+  "/about/",
+  "/now/",
+  "/uses/",
+  "/projects/",
+  "/projects/astro-blog/",
+  "/tags/",
+  "/tags/claude-code/",
 ];
 
 test.describe("mobile viewport — no horizontal overflow", () => {

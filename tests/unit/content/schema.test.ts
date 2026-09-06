@@ -20,6 +20,7 @@ const collectPosts = (dir: string): readonly RawPost[] => {
       continue;
     }
     if (!/\.(md|mdx)$/.test(entry.name)) continue;
+    if (entry.name.startsWith("e2e-")) continue; // Playwright fixtures/scratch posts (CLAUDE.md: e2e-* prefix)
     const raw = readFileSync(join(dir, entry.name), "utf8");
     const m = FENCE.exec(raw);
     if (!m || !m[1]) continue;

@@ -5,8 +5,9 @@ test.describe("language toggle", () => {
     await page.goto("/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
-    // LangToggle renders <a data-set-pref data-lang="en"> when the counterpart exists
-    const toggle = page.locator('a[data-set-pref][data-lang="en"]');
+    // LangToggle renders <a data-set-pref data-lang="en"> when the counterpart exists.
+    // Header and mobile drawer each render one; scope to the visible instance.
+    const toggle = page.locator('a[data-set-pref][data-lang="en"]:visible');
     await expect(toggle).toBeVisible();
     await toggle.click();
 
@@ -18,7 +19,7 @@ test.describe("language toggle", () => {
     await page.goto("/en/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
-    const toggle = page.locator('a[data-set-pref][data-lang="ru"]');
+    const toggle = page.locator('a[data-set-pref][data-lang="ru"]:visible');
     await expect(toggle).toBeVisible();
     await toggle.click();
 
@@ -29,7 +30,7 @@ test.describe("language toggle", () => {
   test("toggle sets lang-pref cookie when clicked", async ({ page, context }) => {
     await page.goto("/blog/local-coding-agent/");
 
-    const toggle = page.locator('a[data-set-pref][data-lang="en"]');
+    const toggle = page.locator('a[data-set-pref][data-lang="en"]:visible');
     await toggle.click();
     await expect(page).toHaveURL(/\/en\/blog\/local-coding-agent\/?$/);
 
@@ -40,7 +41,7 @@ test.describe("language toggle", () => {
 
   test("toggle on home page (/) shows link to /en/", async ({ page }) => {
     await page.goto("/");
-    const toggle = page.locator('a[data-set-pref][data-lang="en"]');
+    const toggle = page.locator('a[data-set-pref][data-lang="en"]:visible');
     await expect(toggle).toBeVisible();
     await expect(toggle).toHaveAttribute("href", /\/en\/?/);
   });
@@ -58,7 +59,7 @@ test.describe("language toggle", () => {
     await page.goto("/blog/e2e-ru-only/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
-    const disabled = page.locator("button.lang-toggle[disabled]");
+    const disabled = page.locator("button.lang-toggle[disabled]:visible");
     await expect(disabled).toBeVisible();
 
     // No navigable link with data-set-pref should be present

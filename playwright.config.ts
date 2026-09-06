@@ -22,6 +22,11 @@ export default defineConfig({
     // mobile-overflow tests only need a narrow viewport, not Safari rendering.
     {
       name: "iphone-se",
+      // Public-site specs only: the admin editor is a desktop tool (CodeMirror
+      // island, mouse drag-and-drop reorder) whose Save button never settles as
+      // "stable" under touch emulation; phone support for /admin is not a
+      // requirement this suite enforces.
+      testIgnore: /admin-.*\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 375, height: 667 },
@@ -52,5 +57,7 @@ export default defineConfig({
         reuseExistingServer: true,
         timeout: 120_000,
         env: { ASTRO_DEV_BACKGROUND: "1" },
+        stdout: "pipe",
+        stderr: "pipe",
       },
 });

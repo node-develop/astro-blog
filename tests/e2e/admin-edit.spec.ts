@@ -1,82 +1,47 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  cleanupScratchPosts,
+  clickAction,
+  createScratchPost,
+  expectPostFile,
+  gotoWithRetry,
+  login,
+  openPostEditor,
+  saveButton,
+} from "./helpers/admin";
 
-async function login(page: Page): Promise<void> {
-  await page.goto("/login/");
-  await page.locator('input[name="email"]').fill("e2e-admin@test.dev");
-  await page.locator('input[name="password"]').fill("e2e-admin-password");
-  await page.getByRole("button", { name: /войти/i }).click();
-  await expect(page).toHaveURL(/\/admin\/posts/);
-}
-
-/** Navigate with retry to handle dev-server HMR aborts between tests. */
-async function gotoWithRetry(page: Page, url: string, maxAttempts = 3): Promise<void> {
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      await page.goto(url, { waitUntil: "load", timeout: 10_000 });
-      return;
-    } catch {
-      if (i === maxAttempts - 1)
-        throw new Error(`Failed to navigate to ${url} after ${maxAttempts} attempts`);
-      await page.waitForTimeout(1_000);
-    }
-  }
-}
+test.afterEach(cleanupScratchPosts);
 
 test("admin edits a post, sees revision, restores prior version", async ({ page }) => {
   await login(page);
+  const original = "E2E edit post";
+  const slug = await createScratchPost(page, "edit", original);
 
-  await page.goto("/admin/posts/");
-  const firstTitle = page.locator(".post-list__title").first();
-  const href = await firstTitle.getAttribute("href");
-  expect(href).toBeTruthy();
-  await firstTitle.click();
-  // Wait for React island to hydrate.
-  await page.locator(".editor-shell").waitFor({ state: "visible" });
-
-  // The FrontmatterForm title input is the first text input on the edit page.
+  // On an existing post the FrontmatterForm title is the first text input.
   const titleInput = page.locator('input[type="text"]').first();
-  const original = await titleInput.inputValue();
   const modified = `${original} [edited]`;
   await titleInput.fill(modified);
   await expect(titleInput).toHaveValue(modified);
+  await clickAction(page, saveButton(page));
+  await expectPostFile(slug, (raw) => raw.includes(modified), "edited title written to disk");
 
-  const saveResponse1 = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
-    timeout: 15_000,
-  });
-  await page.getByRole("button", { name: /сохранить/i }).click();
-  await saveResponse1;
-  await expect(page.locator(".editor-shell__hint")).toBeVisible({ timeout: 5_000 });
-
-  // Visit history.
-  const slugMatch = href!.match(/\/admin\/posts\/([^/]+)/);
-  const slug = slugMatch?.[1] ?? "";
-  await gotoWithRetry(page, `/admin/revisions/${slug}`);
-
+  // History lists the revisions; the oldest one is the version before the edit.
+  await gotoWithRetry(page, `/admin/revisions/${slug}/`);
   const items = page.locator(".revision-list__item");
   await expect(items.first()).toBeVisible();
+  await items.last().click();
+  page.on("dialog", (dialog) => void dialog.accept());
+  await clickAction(
+    page,
+    page.getByRole("button", { name: /восстановить/i }),
+    "_actions/revisions",
+  );
+  await expectPostFile(
+    slug,
+    (raw) => raw.includes(original) && !raw.includes("[edited]"),
+    "restored title written to disk",
+  );
 
-  // Restore the second-most-recent revision if one exists.
-  if ((await items.count()) >= 2) {
-    await items.nth(1).click();
-    page.on("dialog", (d) => d.accept());
-    await page.getByRole("button", { name: /восстановить/i }).click();
-    await page.waitForLoadState("load");
-  }
-
-  // Cleanup: edit back to remove the [edited] suffix.
-  await gotoWithRetry(page, `/admin/posts/${slug}`);
-  await page.locator(".editor-shell").waitFor({ state: "visible" });
-  const titleInput2 = page.locator('input[type="text"]').first();
-  const current = await titleInput2.inputValue();
-  const cleaned = current.replace(/ \[edited\]$/, "");
-  if (cleaned !== current) {
-    await titleInput2.fill(cleaned);
-    await expect(titleInput2).toHaveValue(cleaned);
-    const saveResponse2 = page.waitForResponse((res) => res.url().includes("_actions/posts"), {
-      timeout: 15_000,
-    });
-    await page.getByRole("button", { name: /сохранить/i }).click();
-    await saveResponse2;
-    await expect(page.locator(".editor-shell__hint")).toBeVisible({ timeout: 5_000 });
-  }
+  await openPostEditor(page, slug);
+  await expect(page.locator('input[type="text"]').first()).toHaveValue(original);
 });
