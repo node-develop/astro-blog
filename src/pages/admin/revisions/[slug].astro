@@ -19,7 +19,7 @@ const items = raw.map((r) => ({
 <AdminLayout title={`История · ${slug}`}>
   <header class="admin-page-header">
     <h1>История: <code>{slug}</code></h1>
-    <a href={`/admin/posts/${encodeURIComponent(slug)}`}>← К редактированию</a>
+    <a href={`/admin/posts/${encodeURIComponent(slug)}/`}>← К редактированию</a>
   </header>
   {
     items.length === 0 ? (

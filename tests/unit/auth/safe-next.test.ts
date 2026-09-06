@@ -18,7 +18,7 @@ describe("safeNext", () => {
   });
 
   describe("rejects open-redirect payloads", () => {
-    const FALLBACK = "/admin";
+    const FALLBACK = "/admin/";
     it.each([
       ["null", null],
       ["undefined", undefined],

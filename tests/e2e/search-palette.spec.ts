@@ -1,25 +1,25 @@
 import { expect, test } from "@playwright/test";
 
-test("⌘K opens palette and navigates to a result", async ({ page, browserName }) => {
+// Search.astro picks ⌘ vs Ctrl from navigator.platform; Playwright's device
+// emulation keeps the host platform, so derive the modifier from the runner OS.
+const searchShortcut = process.platform === "darwin" ? "Meta+k" : "Control+k";
+
+test("⌘K opens the search modal and navigates to a result", async ({ page }) => {
   await page.goto("/");
-  // CommandPalette is client:idle — wait for hydration before pressing the
-  // shortcut so the keydown listener is actually attached.
-  await page.waitForFunction(
-    () => document.querySelector("astro-island[component-export='default']:not([ssr])") !== null,
-    { timeout: 10_000 },
-  );
-  // Use Meta on WebKit (Mac), Control elsewhere — matches CommandPalette's
-  // navigator.platform check (metaKey on Mac, ctrlKey otherwise).
-  const mod = browserName === "webkit" ? "Meta" : "Control";
-  await page.keyboard.press(`${mod}+k`);
+  const modal = page.locator("[data-search]");
+  await expect(modal).toHaveAttribute("aria-hidden", "true");
 
-  await expect(page.locator("[cmdk-dialog]")).toBeVisible({ timeout: 5_000 });
-  await page.locator("[cmdk-input]").fill("context");
+  await page.keyboard.press(searchShortcut);
+  await expect(modal).toHaveAttribute("aria-hidden", "false");
 
-  const firstItem = page.locator("[cmdk-item]").first();
-  await expect(firstItem).toBeVisible({ timeout: 5_000 });
-  await firstItem.click();
+  // Pagefind index comes from dist/client/pagefind (symlinked by global-setup).
+  await page.locator("[data-search-input]").fill("claude");
+  const firstResult = page.locator(".search__result").first();
+  await expect(firstResult).toBeVisible({ timeout: 10_000 });
+  const href = await firstResult.getAttribute("href");
+  expect(href).toMatch(/^\/.+\/$/);
 
-  // Navigated away from "/"
-  await expect(page).not.toHaveURL(/^https?:\/\/[^/]+\/?$/);
+  await firstResult.click();
+  await expect(page).toHaveURL(href!);
+  await expect(modal).toHaveAttribute("aria-hidden", "true");
 });

@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { load as parseYaml } from "js-yaml";
+import { load as parseYaml } from "../src/lib/yaml";
 import type { ZodError } from "zod";
 import { sha256 } from "../src/lib/translate/hash";
 import { detectDrift, isFixtureSlug, type FileState } from "../src/lib/translate/sync-check";

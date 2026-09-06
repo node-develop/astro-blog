@@ -2,18 +2,18 @@ import { test, expect } from "@playwright/test";
 
 const PAGES = [
   "/",
-  "/blog",
-  "/blog/01-introduction",
-  "/blog/robots-txt-ai-crawlers-2026",
-  "/blog/mermaid-svg-playwright-build-time",
-  "/blog/json-ld-graph-astro",
-  "/about",
-  "/now",
-  "/uses",
-  "/projects",
-  "/projects/astro-blog",
-  "/tags",
-  "/tags/claude-code",
+  "/blog/",
+  "/blog/local-coding-agent/",
+  "/blog/robots-txt-ai-crawlers-2026/",
+  "/blog/mermaid-svg-playwright-build-time/",
+  "/blog/json-ld-graph-astro/",
+  "/about/",
+  "/now/",
+  "/uses/",
+  "/projects/",
+  "/projects/astro-blog/",
+  "/tags/",
+  "/tags/claude-code/",
 ];
 
 test.describe("mobile viewport — no horizontal overflow", () => {
@@ -39,7 +39,7 @@ test.describe("iphone-se (320px)", () => {
   });
 
   test("authority article fits", async ({ page }) => {
-    await page.goto("/blog/robots-txt-ai-crawlers-2026");
+    await page.goto("/blog/robots-txt-ai-crawlers-2026/");
     const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(docWidth).toBeLessThanOrEqual(321);
   });

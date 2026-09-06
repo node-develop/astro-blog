@@ -16,7 +16,13 @@ import CourseSidebar from "~/components/CourseSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
-import { buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
+import {
+  buildBreadcrumbsNode,
+  buildLearningResourceNode,
+  buildWebPageNode,
+  lessonId,
+  type GraphNode,
+} from "~/lib/seo/schema";
 import { mdxComponents } from "~/components/mdx";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
@@ -64,6 +70,18 @@ const breadcrumbsNode = buildBreadcrumbsNode({
   items: breadcrumbItems,
 }) as GraphNode;
 
+const lessonNode = buildLearningResourceNode({
+  locale,
+  canonical,
+  courseCanonical: courseAbs,
+  name: lesson.data.title,
+  description: lesson.data.blurb ?? course.data.blurb,
+  position: index,
+  ...(lesson.data.duration !== undefined ? { durationMinutes: lesson.data.duration } : {}),
+  datePublished: lesson.data.pubDate,
+  teaches: course.data.tags,
+}) as GraphNode;
+
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
@@ -71,7 +89,12 @@ const webPageNode = buildWebPageNode({
   description: lesson.data.blurb ?? course.data.blurb,
   type: "ItemPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
+  mainEntityId: lessonId(canonical),
+  dateModified: lesson.data.pubDate,
 }) as GraphNode;
+
+const courseRssHref = `${localePrefix}/courses/${courseSlug}/rss.xml`;
+const markdownHref = `${localePrefix}/courses/${courseSlug}/${lessonSlug}.md`;
 
 const labels =
   locale === "en"
@@ -100,8 +123,17 @@ const labels =
 <BaseLayout
   title={pageTitle}
   description={lesson.data.blurb}
-  extraSchemaNodes={[breadcrumbsNode, webPageNode]}
+  extraSchemaNodes={[webPageNode, lessonNode, breadcrumbsNode]}
 >
+  <Fragment slot="head">
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={course.data.title}
+      href={courseRssHref}
+    />
+    <link rel="alternate" type="text/markdown" href={markdownHref} title={lesson.data.title} />
+  </Fragment>
   <CourseSidebar slot="sidebar" courseSlug={courseSlug} activeSlug={lessonSlug} />
 
   <article class="lesson" data-course-slug={courseSlug} data-lesson-slug={lessonSlug}>

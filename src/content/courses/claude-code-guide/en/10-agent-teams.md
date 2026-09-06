@@ -230,7 +230,7 @@ gantt
 
 Lead monitors, when idle (`TeammateIdle`) gives small follow-up tasks. After Task 5 completes — `gh pr create` is ready.
 
-⚠️ For such a feature in a regular session you could spend 15-20 minutes on ~$2-5. Via team — same 15-20 minutes of real time, but $10-20 bill. You're buying parallelization of people, not machine time.
+⚠️ For such a feature in a regular session you could spend 15-20 minutes on ~\$2-5. Via team — same 15-20 minutes of real time, but \$10-20 bill. You're buying parallelization of people, not machine time.
 
 ---
 

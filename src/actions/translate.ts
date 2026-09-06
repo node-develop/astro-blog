@@ -12,7 +12,7 @@
  *   - For batch translate we still recommend `pnpm translate` from the CLI.
  */
 import { ActionError, defineAction } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { translateOne } from "~/lib/translate/translate-one";
 import { assertAdmin } from "./_auth";
 

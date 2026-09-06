@@ -239,12 +239,12 @@ flowchart LR
 
 **Расчёт:** subagent на Haiku (Explore) с system_prompt 3k токенов делает 5 turn'ов:
 
-- Turn 1: 3k cache write + 2k input + N output → cache write по $1.25/M = $0.004.
+- Turn 1: 3k cache write + 2k input + N output → cache write по \$1.25/M = \$0.004.
 - Turn 2-5: 3k cache read + N input + N output → дешёво.
 
-Итого один subagent ≈ $0.01-0.05 в зависимости от объёма работы. Не «копейки», но и не банкротство.
+Итого один subagent ≈ \$0.01-0.05 в зависимости от объёма работы. Не «копейки», но и не банкротство.
 
-⚠️ Опасная ситуация: вы запускаете **5 subagents параллельно** на Opus с большими CLAUDE.md и кучей MCP. Каждый — $0.50-2 → итого $5-10 за один assistant turn. Считайте перед пуском.
+⚠️ Опасная ситуация: вы запускаете **5 subagents параллельно** на Opus с большими CLAUDE.md и кучей MCP. Каждый — \$0.50-2 → итого \$5-10 за один assistant turn. Считайте перед пуском.
 
 ```mermaid
 flowchart LR

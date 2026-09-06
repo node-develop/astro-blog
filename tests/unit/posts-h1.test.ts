@@ -26,6 +26,7 @@ const collectPosts = async (): Promise<ReadonlyArray<PostFile>> => {
     }
     for (const f of entries) {
       if (!f.endsWith(".md") && !f.endsWith(".mdx")) continue;
+      if (f.startsWith("e2e-")) continue; // Playwright fixtures/scratch posts (CLAUDE.md: e2e-* prefix)
       const path = join(dir, f);
       const raw = await readFile(path, "utf8");
       out.push({ path, body: stripFrontmatter(raw) });

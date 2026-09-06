@@ -13,10 +13,12 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
   const [body, setBody] = useState(initial.body);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const save = async (): Promise<void> => {
     setStatus("saving");
     setErrorMsg(null);
+    setNotice(null);
     const result = await actions.site.update({ slug, title, body });
     if (result.error) {
       setStatus("error");
@@ -24,7 +26,10 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
       return;
     }
     setStatus("saved");
-    void maybeAutoTranslate("site", slug);
+    // Auto-translate if opted in via PublishBar; failures are shown, not swallowed.
+    void maybeAutoTranslate("site", slug).then((outcome) => {
+      if (outcome.message !== null) setNotice(outcome.message);
+    });
     setTimeout(() => setStatus("idle"), 1200);
   };
 
@@ -58,6 +63,19 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
           </span>
         )}
       </div>
+      {notice && (
+        <div role="status" className="editor-shell__notice">
+          {notice}
+          <button
+            type="button"
+            aria-label="Закрыть уведомление"
+            onClick={() => setNotice(null)}
+            className="editor-shell__notice-close"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <PublishBar collection="site" slug={slug} disabled={status === "saving"} />
 
       <style>{`
@@ -92,6 +110,18 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
         }
         .site-editor__note code {
           color: var(--color-accent);
+        }
+        .editor-shell__notice {
+          display: flex; justify-content: space-between; align-items: center;
+          gap: var(--space-3); padding: var(--space-3) var(--space-4);
+          background: var(--color-bg-elevated);
+          border: 1px solid var(--color-accent); border-radius: var(--radius-md);
+          font-family: var(--font-mono); font-size: var(--fs-xs);
+          color: var(--color-fg);
+        }
+        .editor-shell__notice-close {
+          background: transparent; border: none; cursor: pointer;
+          color: var(--color-fg-muted); font-size: 16px; line-height: 1;
         }
       `}</style>
     </div>

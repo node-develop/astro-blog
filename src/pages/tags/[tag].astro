@@ -30,7 +30,11 @@ const description = t("ru", "tags.archiveDescription").replace("{label}", label)
 const canonical = canonicalUrl(Astro.url.pathname);
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 
+const postUrl = (id: string): string => canonicalUrl(`/blog/${bareSlug(id)}`);
+
 // Blog node for THIS archive — distinct @id per slug; references global Person/Org.
+// Posts are referenced by @id only: redefining each `#blogposting` here with
+// stub fields (no author/body) used to shadow the full node on the post page.
 const blogNode = {
   "@type": "Blog",
   "@id": `${canonical}#blog`,
@@ -40,12 +44,19 @@ const blogNode = {
   inLanguage: "ru-RU",
   author: { "@id": graphIds.person },
   publisher: { "@id": graphIds.organization },
-  blogPost: matches.map((p) => ({
-    "@type": "BlogPosting",
-    "@id": `${canonicalUrl(`/blog/${bareSlug(p.entry.id)}`)}#blogposting`,
-    headline: p.entry.data.title,
-    url: canonicalUrl(`/blog/${bareSlug(p.entry.id)}`),
-    datePublished: p.entry.data.pubDate.toISOString(),
+  blogPost: matches.map((p) => ({ "@id": `${postUrl(p.entry.id)}#blogposting` })),
+};
+
+const itemListNode = {
+  "@type": "ItemList",
+  "@id": `${canonical}#itemlist`,
+  name: title,
+  numberOfItems: matches.length,
+  itemListOrder: "https://schema.org/ItemListOrderDescending",
+  itemListElement: matches.map((p, idx) => ({
+    "@type": "ListItem",
+    position: idx + 1,
+    url: postUrl(p.entry.id),
   })),
 };
 
@@ -67,6 +78,7 @@ const webPageNode = buildWebPageNode({
   description,
   type: "CollectionPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
+  mainEntityId: `${canonical}#itemlist`,
 }) as GraphNode;
 ---
 
@@ -76,7 +88,7 @@ const webPageNode = buildWebPageNode({
   fullWidth={true}
   noSidebar={true}
   noindex={!isTagArchiveIndexable(matches)}
-  extraSchemaNodes={[blogNode, breadcrumbNode, webPageNode]}
+  extraSchemaNodes={[webPageNode, blogNode, itemListNode, breadcrumbNode]}
 >
   <section class="tag-archive">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t("ru", "breadcrumbs.aria")} />

@@ -64,6 +64,13 @@ export const accounts = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     providerId: text("provider_id").notNull(),
+    /**
+     * Better-Auth ≥1.7 identity namespace: `local:credential` for password
+     * logins, `local:oauth:<provider>` for OAuth (see `createLocalAccountIssuer`
+     * / `createOAuthAccountIssuer` in better-auth/db). Sign-in matches on
+     * (issuer, accountId), so rows without it are unreachable.
+     */
+    issuer: text("issuer").notNull(),
     accountId: text("account_id").notNull(),
     password: text("password"),
     accessToken: text("access_token"),
@@ -75,7 +82,10 @@ export const accounts = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({ userIdx: index("accounts_user_idx").on(t.userId) }),
+  (t) => ({
+    userIdx: index("accounts_user_idx").on(t.userId),
+    issuerAccountIdx: uniqueIndex("accounts_issuer_account_idx").on(t.issuer, t.accountId),
+  }),
 );
 
 export const verifications = pgTable(

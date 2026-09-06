@@ -15,6 +15,17 @@ describe("public/robots.txt", () => {
     "PerplexityBot",
     "Perplexity-User",
     "Google-Extended",
+    // Added 2026-09-05: retrieval/answer crawlers that gained traffic share.
+    "CCBot",
+    "Applebot-Extended",
+    "Bytespider",
+    "meta-externalagent",
+    "Meta-ExternalFetcher",
+    "Amazonbot",
+    "cohere-ai",
+    "DuckAssistBot",
+    "MistralAI-User",
+    "Diffbot",
   ];
 
   it.each(namedBots)("declares an explicit User-agent block for %s", (bot) => {
@@ -23,7 +34,7 @@ describe("public/robots.txt", () => {
 
   it("disallows private admin/API routes while leaving noindex utility pages crawlable", () => {
     const blocks = robots.split(/\n\n+/).filter((b) => /^User-agent:/m.test(b));
-    expect(blocks.length).toBeGreaterThanOrEqual(10); // 9 named + catch-all *
+    expect(blocks.length).toBeGreaterThanOrEqual(namedBots.length + 1); // named + catch-all *
     for (const block of blocks) {
       expect(block).toMatch(/^Disallow:\s*\/admin\//m);
       expect(block).toMatch(/^Disallow:\s*\/api\//m);
@@ -34,6 +45,12 @@ describe("public/robots.txt", () => {
 
   it("retains the sitemap directive", () => {
     expect(robots).toMatch(/^Sitemap:\s+https:\/\/artka\.dev\/sitemap-index\.xml\s*$/m);
+  });
+
+  it("points agents at llms.txt / llms-full.txt and carries the review date", () => {
+    expect(robots).toContain("https://artka.dev/llms.txt");
+    expect(robots).toContain("https://artka.dev/llms-full.txt");
+    expect(robots).toMatch(/^# robots\.txt — last reviewed 2026-09-05$/m);
   });
 
   it("keeps the catch-all User-agent: * block last", () => {

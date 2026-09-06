@@ -13,8 +13,8 @@
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import yaml from "js-yaml";
-import { KEY_ORDER, type HomeFrontmatter } from "./home-schema";
+import * as yaml from "~/lib/yaml";
+import { KEY_ORDER, homeFrontmatterSchema, type HomeFrontmatter } from "./home-schema";
 
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
@@ -25,6 +25,26 @@ const readExistingFrontmatter = async (filePath: string): Promise<Record<string,
   if (!m || !m[1]) return {};
   const parsed = yaml.load(m[1]);
   return parsed !== null && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+};
+
+/**
+ * Reads and validates the current on-disk frontmatter of home.md / en/home.md.
+ *
+ * The admin editor must use this instead of `getEntry("site", …)`: the
+ * content layer is a build-time snapshot and goes stale in the SSR runtime
+ * as soon as the editor writes to disk.
+ *
+ * Returns null when the file does not exist. Throws (fail loud) when the
+ * file exists but does not satisfy `homeFrontmatterSchema`.
+ */
+export const readHomeFromDisk = async (filePath: string): Promise<HomeFrontmatter | null> => {
+  if (!existsSync(filePath)) return null;
+  const raw = await readExistingFrontmatter(filePath);
+  const parsed = homeFrontmatterSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(`invalid home frontmatter in ${filePath}: ${parsed.error.message}`);
+  }
+  return parsed.data;
 };
 
 const buildOrderedObject = (data: Record<string, unknown>): Record<string, unknown> => {

@@ -22,8 +22,17 @@ const metaContent = (html: string, name: string): string | undefined => {
   return tag?.match(/\bcontent=["']([^"']+)["']/i)?.[1];
 };
 
+// llms-full.txt now inlines full post bodies, and posts legitimately quote
+// URLs with fragments/queries inside code (e.g. `https://artka.dev/#person`
+// in the JSON-LD article). Only URLs outside code spans/blocks are the
+// site's own emitted links and must follow the canonical policy.
+// Fences are matched line-anchored: prose can mention "```mermaid" inline,
+// which would otherwise desync fence pairing for every later post.
+const stripCode = (text: string): string =>
+  text.replace(/^\s*```[\s\S]*?^\s*```[^\n]*$/gm, " ").replace(/`[^`\n]*`/g, " ");
+
 const internalUrls = (text: string): URL[] =>
-  [...text.matchAll(/https?:\/\/(?:www\.)?artka\.dev[^\s<>"']*/gi)].map(
+  [...stripCode(text).matchAll(/https?:\/\/(?:www\.)?artka\.dev[^\s<>"'`]*/gi)].map(
     ([match]) => new URL(match.replace(/[\])},.;:!?]+$/g, "")),
   );
 
@@ -58,7 +67,9 @@ describe("built utility routes", () => {
         expect(url.hash, url.toString()).toBe("");
         expect(url.pathname, url.toString()).toBe(canonicalPath(url.pathname));
         if (isFileLikePath(url.pathname)) {
-          expect(url.pathname, url.toString()).not.toEndWith("/");
+          // `toEndWith` is not a Vitest matcher; this branch was never reached
+          // before llms-full.txt started listing per-post `.md` twins.
+          expect(url.pathname.endsWith("/"), url.toString()).toBe(false);
         } else {
           expect(url.pathname === "/" || url.pathname.endsWith("/"), url.toString()).toBe(true);
         }

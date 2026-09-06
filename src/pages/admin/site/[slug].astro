@@ -9,7 +9,7 @@ import { SITE_DIR } from "~/lib/fs/paths";
 const { slug } = Astro.params as { slug: string };
 
 // Home page has its own dedicated editor.
-if (slug === "home") return Astro.redirect("/admin/home", 308);
+if (slug === "home") return Astro.redirect("/admin/home/", 308);
 
 const page = await readSiteFromDisk(SITE_DIR, slug);
 if (!page) return new Response("Page not found", { status: 404 });
@@ -25,7 +25,7 @@ const initial = {
     <h1>Редактирование страницы</h1>
     <div class="admin-page-header__meta">
       <code>{slug}</code>
-      <a href="/admin/site">← Все страницы</a>
+      <a href="/admin/site/">← Все страницы</a>
     </div>
   </header>
   <SiteEditor client:load slug={slug} initial={initial} />

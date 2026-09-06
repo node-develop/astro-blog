@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 import { writeHomeToDisk } from "~/lib/content/write-home";
 import { homeFrontmatterSchema, KEY_ORDER } from "~/lib/content/home-schema";
 

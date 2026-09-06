@@ -74,12 +74,15 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
     const note = noticeFromWarnings(result.data.warnings);
     if (note !== null) setNotice(note);
     if (propsSlug === null) {
-      window.location.href = `/admin/posts/${encodeURIComponent(slug)}`;
+      window.location.href = `/admin/posts/${encodeURIComponent(slug)}/`;
       return;
     }
     setStatus("saved");
-    // Fire-and-forget auto-translate if the author opted in via PublishBar.
-    void maybeAutoTranslate("posts", slug);
+    // Auto-translate if the author opted in via PublishBar. The save already
+    // succeeded; a translate failure is surfaced as a notice, not swallowed.
+    void maybeAutoTranslate("posts", slug).then((outcome) => {
+      if (outcome.message !== null) setNotice(outcome.message);
+    });
     setTimeout(() => setStatus("idle"), 1200);
   }
 

@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import node from "@astrojs/node";
 import react from "@astrojs/react";
@@ -8,6 +9,7 @@ import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
 import lazyContentImages from "./src/lib/rehype/lazy-content-images";
+import focusableTables from "./src/lib/rehype/focusable-tables";
 import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
@@ -94,8 +96,12 @@ export default defineConfig({
     },
   },
   redirects: buildLegacyRedirects(),
-  integrations: [
-    mdx({
+  // MDX inherits remark/rehype plugins from `markdown.processor` (Astro 7).
+  integrations: [mdx(), react()],
+  // Astro 7 defaults to the Sätteri pipeline; we depend on the remark/rehype
+  // ecosystem (KaTeX, Mermaid, custom link/heading plugins), so we keep unified().
+  markdown: {
+    processor: unified({
       remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
       rehypePlugins: [
         canonicalInternalLinks,
@@ -108,28 +114,20 @@ export default defineConfig({
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
         lazyContentImages,
+        // a11y: scrollable tables must be keyboard-reachable (WCAG 2.1.1).
+        focusableTables,
       ],
     }),
-    react(),
-  ],
-  markdown: {
     syntaxHighlight: {
       type: "shiki",
       excludeLangs: ["mermaid", "math"],
     },
     shikiConfig: shikiThemes,
-    remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
-    rehypePlugins: [
-      canonicalInternalLinks,
-      rehypeSlug,
-      [rehypeAutolinkHeadings, autolinkOptions],
-      [rehypeExternalLinks, externalLinkPolicy satisfies ExternalLinksOptions],
-      rehypeCodeTitles,
-      rehypeKatex,
-      [rehypeMermaid, { strategy: "img-svg", dark: true }],
-      lazyContentImages,
-    ],
   },
+  // Astro 7 changed the default to "jsx" (strips inter-element whitespace);
+  // keep HTML semantics so inline `<a> <span>` runs render with spaces.
+  compressHTML: true,
+  security: { checkOrigin: true },
   vite: {
     plugins: [tailwindcss(), pagefindDevMiddleware()],
   },

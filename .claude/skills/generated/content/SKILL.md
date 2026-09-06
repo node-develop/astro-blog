@@ -33,29 +33,31 @@ Invoke this skill when the task matches one of these patterns:
 
 Start here when exploring this area:
 
-- **`buildSearchVectorSql`** (Function) — `src/lib/search/vector.ts:15`
-- **`readPostFromDisk`** (Function) — `src/lib/content/post-io.ts:10`
-- **`listPostFiles`** (Function) — `src/lib/content/post-io.ts:24`
-- **`parseFrontmatter`** (Function) — `src/lib/content/frontmatter.ts:15`
-- **`setSearchVector`** (Function) — `src/lib/db/repo/posts-meta.ts:50`
+- **`buildSearchVectorSql`** (Function) — `src/lib/search/vector.ts`
+- **`readPostFromDisk`** (Function) — `src/lib/content/post-io.ts`
+- **`listPostFiles`** (Function) — `src/lib/content/post-io.ts`
+- **`parseFrontmatter`** (Function) — `src/lib/content/frontmatter.ts`
+- **`setSearchVector`** (Function) — `src/lib/db/repo/posts-meta.ts`
 
 ## Key Symbols
 
-| Symbol                 | Type     | File                                | Line |
-| ---------------------- | -------- | ----------------------------------- | ---- |
-| `buildSearchVectorSql` | Function | `src/lib/search/vector.ts`          | 15   |
-| `readPostFromDisk`     | Function | `src/lib/content/post-io.ts`        | 10   |
-| `listPostFiles`        | Function | `src/lib/content/post-io.ts`        | 24   |
-| `parseFrontmatter`     | Function | `src/lib/content/frontmatter.ts`    | 15   |
-| `setSearchVector`      | Function | `src/lib/db/repo/posts-meta.ts`     | 50   |
-| `defaultMetaFor`       | Function | `src/lib/content/loader.ts`         | 10   |
-| `sortWithMeta`         | Function | `src/lib/content/loader.ts`         | 21   |
-| `getOrderedPosts`      | Function | `src/lib/content/loader.ts`         | 36   |
-| `getPostWithMeta`      | Function | `src/lib/content/loader.ts`         | 52   |
-| `serializeFrontmatter` | Function | `src/lib/content/frontmatter.ts`    | 39   |
-| `main`                 | Function | `scripts/backfill-search-vector.ts` | 8    |
-| `coerceDate`           | Function | `src/lib/content/frontmatter.ts`    | 59   |
-| `toIsoDate`            | Function | `src/lib/content/frontmatter.ts`    | 69   |
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`. Frontmatter YAML goes through `src/lib/yaml.ts` (never `js-yaml` directly).
+
+| Symbol                 | Type     | File                                |
+| ---------------------- | -------- | ----------------------------------- |
+| `buildSearchVectorSql` | Function | `src/lib/search/vector.ts`          |
+| `readPostFromDisk`     | Function | `src/lib/content/post-io.ts`        |
+| `listPostFiles`        | Function | `src/lib/content/post-io.ts`        |
+| `parseFrontmatter`     | Function | `src/lib/content/frontmatter.ts`    |
+| `setSearchVector`      | Function | `src/lib/db/repo/posts-meta.ts`     |
+| `defaultMetaFor`       | Function | `src/lib/content/loader.ts`         |
+| `sortWithMeta`         | Function | `src/lib/content/loader.ts`         |
+| `getOrderedPosts`      | Function | `src/lib/content/loader.ts`         |
+| `getPostWithMeta`      | Function | `src/lib/content/loader.ts`         |
+| `serializeFrontmatter` | Function | `src/lib/content/frontmatter.ts`    |
+| `main`                 | Function | `scripts/backfill-search-vector.ts` |
+| `coerceDate`           | Function | `src/lib/content/frontmatter.ts`    |
+| `toIsoDate`            | Function | `src/lib/content/frontmatter.ts`    |
 
 ## Execution Flows
 

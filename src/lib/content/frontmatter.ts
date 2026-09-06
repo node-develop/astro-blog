@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 
 export interface Frontmatter {
   readonly title: string;

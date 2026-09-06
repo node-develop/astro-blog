@@ -119,7 +119,7 @@ The thread had ~6 events. Actually on v2.1.89 there are **28+**. Full list in [0
 
 At the time the thread was written, the latest version might have been Opus 4.6. Since April 16, 2026, the current version is **Opus 4.7**:
 
-- Same pricing ($5/$25 input/output per MTok).
+- Same pricing (\$5/\$25 input/output per MTok).
 - New tokenizer (+ up to 35% tokens on the same texts).
 - Improvement on agentic benchmarks, but expect regressions too — review your evals.
 

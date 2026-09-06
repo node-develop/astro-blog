@@ -31,26 +31,28 @@ Invoke this skill when the task matches one of these patterns:
 
 Start here when exploring this area:
 
-- **`MediaUploader`** (Function) — `src/components/admin/MediaUploader.tsx:7`
-- **`handle`** (Function) — `src/components/admin/MediaUploader.tsx:12`
-- **`FrontmatterForm`** (Function) — `src/components/admin/FrontmatterForm.tsx:20`
-- **`set`** (Function) — `src/components/admin/FrontmatterForm.tsx:21`
-- **`TagInput`** (Function) — `src/components/admin/TagInput.tsx:7`
+- **`MediaUploader`** (Function) — `src/components/admin/MediaUploader.tsx`
+- **`handle`** (Function) — `src/components/admin/MediaUploader.tsx`
+- **`FrontmatterForm`** (Function) — `src/components/admin/FrontmatterForm.tsx`
+- **`set`** (Function) — `src/components/admin/FrontmatterForm.tsx`
+- **`TagInput`** (Function) — `src/components/admin/TagInput.tsx`
 
 ## Key Symbols
 
-| Symbol            | Type     | File                                       | Line |
-| ----------------- | -------- | ------------------------------------------ | ---- |
-| `MediaUploader`   | Function | `src/components/admin/MediaUploader.tsx`   | 7    |
-| `handle`          | Function | `src/components/admin/MediaUploader.tsx`   | 12   |
-| `FrontmatterForm` | Function | `src/components/admin/FrontmatterForm.tsx` | 20   |
-| `set`             | Function | `src/components/admin/FrontmatterForm.tsx` | 21   |
-| `TagInput`        | Function | `src/components/admin/TagInput.tsx`        | 7    |
-| `remove`          | Function | `src/components/admin/TagInput.tsx`        | 21   |
-| `commit`          | Function | `src/components/admin/TagInput.tsx`        | 10   |
-| `onKeyDown`       | Function | `src/components/admin/TagInput.tsx`        | 25   |
-| `RevisionList`    | Function | `src/components/admin/RevisionList.tsx`    | 17   |
-| `restore`         | Function | `src/components/admin/RevisionList.tsx`    | 25   |
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`.
+
+| Symbol            | Type     | File                                       |
+| ----------------- | -------- | ------------------------------------------ |
+| `MediaUploader`   | Function | `src/components/admin/MediaUploader.tsx`   |
+| `handle`          | Function | `src/components/admin/MediaUploader.tsx`   |
+| `FrontmatterForm` | Function | `src/components/admin/FrontmatterForm.tsx` |
+| `set`             | Function | `src/components/admin/FrontmatterForm.tsx` |
+| `TagInput`        | Function | `src/components/admin/TagInput.tsx`        |
+| `remove`          | Function | `src/components/admin/TagInput.tsx`        |
+| `commit`          | Function | `src/components/admin/TagInput.tsx`        |
+| `onKeyDown`       | Function | `src/components/admin/TagInput.tsx`        |
+| `RevisionList`    | Function | `src/components/admin/RevisionList.tsx`    |
+| `restore`         | Function | `src/components/admin/RevisionList.tsx`    |
 
 ## Execution Flows
 

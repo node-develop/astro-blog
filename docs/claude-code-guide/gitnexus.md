@@ -1,6 +1,8 @@
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **astro-blog** (4840 symbols, 5989 relationships, 77 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **astro-blog** (roughly 5k symbols, 6k relationships and 80+ execution flows — counts drift with every commit; `gitnexus://repo/astro-blog/context` or `npx gitnexus analyze` gives the current numbers). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+
+Canonical copy of these rules lives in `AGENTS.md` (repo root); this file is the `@import` target for `CLAUDE.md`. Keep both in sync.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

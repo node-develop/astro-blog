@@ -20,7 +20,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 import { sha256 } from "./hash";
 import { extractProse, reassemble } from "./extract-prose";
 import { translateProse, translateStrings } from "./claude";

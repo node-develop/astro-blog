@@ -32,11 +32,20 @@ import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 import { person } from "~/lib/seo/person";
 import { canonicalPath, canonicalUrl } from "~/lib/seo/url-policy";
+import { twitterHandleFromSameAs } from "~/lib/seo/social";
+// Hashed URLs of the primary serif subsets. Vite dedupes by content, so these
+// resolve to the exact files @fontsource's CSS references — preloading them
+// takes the H1 web-font off the CSS critical path. Latin + Cyrillic only:
+// the other subsets (greek, vietnamese, *-ext) are never used above the fold.
+import serifLatinUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url";
+import serifCyrillicUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-cyrillic-wght-normal.woff2?url";
 
 interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  /** Alt text for og:image / twitter:image. Defaults to the page title. */
+  ogImageAlt?: string;
   ogType?: "website" | "article";
   noindex?: boolean;
   fullWidth?: boolean;
@@ -49,6 +58,7 @@ const {
   title,
   description = "Записки из продакшна — backend, AI agent engineering, distributed systems.",
   ogImage,
+  ogImageAlt,
   ogType = "website",
   noindex = false,
   fullWidth = false,
@@ -80,7 +90,14 @@ const absoluteOgImage = ogImage
     : new URL(ogImage, Astro.site ?? Astro.url).toString()
   : new URL("/og-default.png", Astro.site ?? Astro.url).toString();
 
-const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || undefined;
+// Explicit env override wins; otherwise derive the handle from the X profile
+// listed in person.sameAs so cards attribute correctly without extra config.
+const twitterHandle =
+  import.meta.env.PUBLIC_TWITTER_HANDLE || twitterHandleFromSameAs(person.sameAs) || undefined;
+const imageAlt = ogImageAlt ?? fullTitle;
+// Preload only the subsets this locale paints first: Cyrillic for RU pages,
+// Latin for both (brand, code, EN copy).
+const fontPreloads = locale === "ru" ? [serifCyrillicUrl, serifLatinUrl] : [serifLatinUrl];
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
 
@@ -155,6 +172,11 @@ const socialLabel = (url: string): string => {
          doesn't pay a fresh DNS+TLS handshake on first run. No crossorigin
          flag because the script is loaded as a normal (non-CORS) request. -->
     <link rel="preconnect" href="https://plausible.io" />
+    {
+      fontPreloads.map((href) => (
+        <link rel="preload" as="font" type="font/woff2" href={href} crossorigin="anonymous" />
+      ))
+    }
 
     <!-- Open Graph / Twitter -->
     <meta property="og:title" content={fullTitle} />
@@ -167,10 +189,12 @@ const socialLabel = (url: string): string => {
     <meta property="og:image" content={absoluteOgImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absoluteOgImage} />
+    <meta name="twitter:image:alt" content={imageAlt} />
     {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
     {twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
 
@@ -452,7 +476,7 @@ const socialLabel = (url: string): string => {
       // not assume it's there on first paint.
       const probeAuth = async () => {
         try {
-          const r = await fetch("/api/auth/get-session", { credentials: "same-origin" });
+          const r = await fetch("/api/auth/get-session/", { credentials: "same-origin" });
           if (r.ok) {
             const data = await r.json();
             if (data?.user) document.body.setAttribute("data-auth", "signed-in");

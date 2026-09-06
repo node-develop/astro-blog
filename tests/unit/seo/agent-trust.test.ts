@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { APIContext } from "astro";
 import { describe, expect, it } from "vitest";
+import { GET as getLlmsTxt } from "../../../src/pages/llms.txt";
 import { buildOrganizationNode } from "~/lib/seo/nodes-global";
 import { buildLocaleSitemapEntries, type SitemapInput } from "~/lib/seo/sitemap";
 
@@ -52,8 +54,9 @@ describe("agent trust signals", () => {
     );
   });
 
-  it("gives agents specific when-to-use and retrieval guidance", () => {
-    const llms = readFileSync(repoFile("public", "llms.txt"), "utf8");
+  it("gives agents specific when-to-use and retrieval guidance", async () => {
+    // llms.txt is generated (src/pages/llms.txt.ts), no longer a public/ file.
+    const llms = await (await getLlmsTxt({} as APIContext)).text();
 
     expect(llms).toMatch(/^## When to use artka\.dev$/m);
     expect(llms).toMatch(/^## How agents should use this site$/m);

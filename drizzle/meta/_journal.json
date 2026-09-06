@@ -43,6 +43,13 @@
       "when": 1778333447507,
       "tag": "0005_nebulous_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788642068484,
+      "tag": "0006_account_issuer",
+      "breakpoints": true
     }
   ]
 }

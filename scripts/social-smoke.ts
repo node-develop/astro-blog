@@ -9,7 +9,7 @@
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "../src/lib/yaml";
 import { config as dotenv } from "dotenv";
 import { runPipeline } from "../src/lib/social/pipeline.js";
 import type { Article } from "../src/lib/social/types.js";

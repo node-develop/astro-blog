@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildLocaleSitemapEntries, renderUrlSet, type SitemapInput } from "~/lib/seo/sitemap";
+import {
+  attachAlternates,
+  buildLocaleSitemapEntries,
+  counterpartLocation,
+  latestLastmod,
+  renderSitemapIndex,
+  renderUrlSet,
+  type SitemapInput,
+} from "~/lib/seo/sitemap";
 
 const date = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
 
@@ -114,5 +122,74 @@ describe("URL-set XML", () => {
     <lastmod>2026-07-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>`);
+  });
+});
+
+describe("hreflang alternates", () => {
+  it("cross-links only pages present in both locale inventories, x-default → RU", () => {
+    const ru = buildLocaleSitemapEntries(localeInput("ru"));
+    const en = buildLocaleSitemapEntries({
+      ...localeInput("en"),
+      // EN has no "seo" archive with ≥2 posts → RU /tags/seo/ must not advertise it.
+      tagGroups: new Map([["one-post", [{}]]]),
+    });
+    const ruLinked = attachAlternates(ru, "ru", en);
+    const enLinked = attachAlternates(en, "en", ru);
+
+    const home = ruLinked.find((e) => e.loc === "https://artka.dev/")!;
+    expect(home.alternates).toEqual([
+      { hreflang: "ru", href: "https://artka.dev/" },
+      { hreflang: "en", href: "https://artka.dev/en/" },
+      { hreflang: "x-default", href: "https://artka.dev/" },
+    ]);
+    const post = enLinked.find((e) => e.loc === "https://artka.dev/en/blog/post/")!;
+    expect(post.alternates).toEqual([
+      { hreflang: "ru", href: "https://artka.dev/blog/post/" },
+      { hreflang: "en", href: "https://artka.dev/en/blog/post/" },
+      { hreflang: "x-default", href: "https://artka.dev/blog/post/" },
+    ]);
+    expect(
+      ruLinked.find((e) => e.loc === "https://artka.dev/tags/seo/")!.alternates,
+    ).toBeUndefined();
+    expect(counterpartLocation("https://artka.dev/en/", "en")).toBe("https://artka.dev/");
+    expect(counterpartLocation("https://artka.dev/blog/x/", "ru")).toBe(
+      "https://artka.dev/en/blog/x/",
+    );
+  });
+
+  it("renders xhtml:link alternates inside <url> with the xhtml namespace declared", () => {
+    const xml = renderUrlSet([
+      {
+        loc: "https://artka.dev/blog/post/",
+        alternates: [
+          { hreflang: "ru", href: "https://artka.dev/blog/post/" },
+          { hreflang: "en", href: "https://artka.dev/en/blog/post/" },
+          { hreflang: "x-default", href: "https://artka.dev/blog/post/" },
+        ],
+      },
+    ]);
+    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+    expect(xml).toContain(
+      '    <xhtml:link rel="alternate" hreflang="en" href="https://artka.dev/en/blog/post/" />',
+    );
+    expect(xml).toContain('hreflang="x-default" href="https://artka.dev/blog/post/"');
+  });
+});
+
+describe("sitemap index", () => {
+  it("stamps each child with the newest lastmod of its entries", () => {
+    const entries = buildLocaleSitemapEntries(localeInput("ru"));
+    expect(latestLastmod(entries)).toBe("2026-07-12");
+    expect(latestLastmod([{ loc: "https://artka.dev/" }])).toBeNull();
+    const xml = renderSitemapIndex([
+      { loc: "https://artka.dev/sitemap-ru.xml", entries },
+      { loc: "https://artka.dev/sitemap-en.xml", entries: [{ loc: "https://artka.dev/en/" }] },
+    ]);
+    expect(xml).toContain(
+      "  <sitemap>\n    <loc>https://artka.dev/sitemap-ru.xml</loc>\n    <lastmod>2026-07-12</lastmod>\n  </sitemap>",
+    );
+    expect(xml).toContain(
+      "  <sitemap>\n    <loc>https://artka.dev/sitemap-en.xml</loc>\n  </sitemap>",
+    );
   });
 });

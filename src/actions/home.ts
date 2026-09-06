@@ -1,5 +1,5 @@
 import { defineAction, ActionError } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { join } from "node:path";
 import { SITE_DIR } from "~/lib/fs/paths";
 import { writeHomeToDisk } from "~/lib/content/write-home";
@@ -9,28 +9,34 @@ const SITE_EN_DIR = join(SITE_DIR, "en");
 
 const normaliseOptional = (v: string | undefined): string | undefined => (v === "" ? undefined : v);
 
+/**
+ * Input schema for `home.update`. Exported so unit tests can validate the
+ * contract (tests/unit/actions/home.test.ts) without the action runtime.
+ */
+export const homeUpdateInput = z.object({
+  locale: z.enum(["ru", "en"]),
+  // Required fields — hard min validation, no empty-string normalisation.
+  heroTitle: z.string().min(1),
+  metaTitle: z.string().min(1).max(120),
+  metaDescription: z.string().min(10).max(200),
+  // Optional fields — empty string normalised to undefined so merge-semantics
+  // preserves existing file values rather than overwriting with blank (M-6).
+  heroEyebrow: z.string().optional(),
+  heroLede: z.string().optional(),
+  heroCta: z.string().optional(),
+  courseEyebrow: z.string().optional(),
+  courseTitle: z.string().optional(),
+  courseLede: z.string().optional(),
+  courseCta: z.string().optional(),
+  latestLabel: z.string().optional(),
+  authorLabel: z.string().optional(),
+  authorBio: z.string().optional(),
+  authorLinksAria: z.string().optional(),
+});
+
 export const home = {
   update: defineAction({
-    input: z.object({
-      locale: z.enum(["ru", "en"]),
-      // Required fields — hard min validation, no empty-string normalisation.
-      heroTitle: z.string().min(1),
-      metaTitle: z.string().min(1).max(120),
-      metaDescription: z.string().min(10).max(200),
-      // Optional fields — empty string normalised to undefined so merge-semantics
-      // preserves existing file values rather than overwriting with blank (M-6).
-      heroEyebrow: z.string().optional(),
-      heroLede: z.string().optional(),
-      heroCta: z.string().optional(),
-      courseEyebrow: z.string().optional(),
-      courseTitle: z.string().optional(),
-      courseLede: z.string().optional(),
-      courseCta: z.string().optional(),
-      latestLabel: z.string().optional(),
-      authorLabel: z.string().optional(),
-      authorBio: z.string().optional(),
-      authorLinksAria: z.string().optional(),
-    }),
+    input: homeUpdateInput,
     handler: async (input, context) => {
       assertAdmin(context.locals.user as { role?: string | null } | null);
 

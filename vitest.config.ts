@@ -1,7 +1,7 @@
 import { getViteConfig } from "astro/config";
-import type { UserConfig } from "vitest/config";
+import type { ViteUserConfig } from "vitest/config";
 
-const testConfig: UserConfig["test"] = {
+const testConfig: NonNullable<ViteUserConfig["test"]> = {
   globals: true,
   environment: "node",
   include: [

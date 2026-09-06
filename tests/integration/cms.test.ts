@@ -8,6 +8,10 @@ describe("cms integration", () => {
 
   beforeAll(async () => {
     env = await bootTestDb();
+    // The file I/O test below deliberately uses the production `db` client
+    // (FK constraints must hold for appendRevision / ensureMeta); point it at
+    // the same container instead of relying on a developer's .env.
+    process.env.DATABASE_URL = env.container.getConnectionUri();
   }, 180_000);
 
   afterAll(async () => {

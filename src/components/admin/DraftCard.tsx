@@ -15,13 +15,7 @@ const CHANNEL_LABEL: Record<SocialChannel, string> = {
 };
 
 type DraftStatus =
-  | "generating"
-  | "pending"
-  | "sending"
-  | "sent"
-  | "failed"
-  | "superseded"
-  | "skipped";
+  "generating" | "pending" | "sending" | "sent" | "failed" | "superseded" | "skipped";
 
 export type DraftRow = {
   id: string;

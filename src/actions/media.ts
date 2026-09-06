@@ -1,5 +1,5 @@
 import { ActionError, defineAction } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import probeSync from "probe-image-size/sync.js";
 import { writeMediaToPublic } from "~/lib/fs/media-writer";
 import { UPLOADS_DIR } from "~/lib/fs/paths";

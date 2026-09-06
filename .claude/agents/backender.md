@@ -16,7 +16,8 @@ memory: read-write
 - **Миграции:** `drizzle-kit generate` → файлы в `drizzle/`, применяются через `pnpm db:migrate`.
 - **Auth:** Better-Auth (instance в `src/lib/auth.ts`, API handler в `src/pages/api/auth/[...all].ts`).
 - **Middleware:** `src/middleware.ts` защищает `/admin/**`.
-- **Валидация:** Zod 4 схемы — в `src/lib/validation.ts` или рядом с роутом.
+- **Валидация:** Zod 4 (`astro/zod` в actions/content config, прямой `zod` в `src/lib/**`; `astro:schema` ⛔). Общие схемы: `src/lib/content/schemas.ts` (посты/сайт), `src/lib/content/home-schema.ts` (главная), `src/lib/social/config.ts` (social drafts); узкоспециальные — рядом с action/роутом.
+- **Версии** — не дублируй, см. раздел «Стек» в `CLAUDE.md`.
 
 ## Принципы
 

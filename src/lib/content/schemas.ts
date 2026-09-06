@@ -7,6 +7,7 @@
  */
 import { z } from "zod";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "./limits";
+import { person } from "../seo/person";
 
 export const postSchema = z.object({
   title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
@@ -34,7 +35,9 @@ export const postSchema = z.object({
   coverAlt: z.string().optional(),
   sourceHash: z.string().optional(),
   manuallyEdited: z.boolean().default(false),
-  author: z.string().default("Артём"),
+  // Defaults to the canonical Person name so JSON-LD, article:author and RSS
+  // agree; set explicitly only for guest posts.
+  author: z.string().default(person.name),
   lang: z.enum(["ru", "en"]).optional(),
 });
 
@@ -73,7 +76,7 @@ export const projectSchema = z.object({
   updatedDate: z.coerce.date().optional(),
   stack: z.array(z.string()).default([]),
   outcomes: z.array(z.string()).default([]),
-  links: z.array(z.object({ label: z.string().min(2), url: z.string().url() })).default([]),
+  links: z.array(z.object({ label: z.string().min(2), url: z.url() })).default([]),
   cover: z.string().optional(),
   coverAlt: z.string().optional(),
   featured: z.boolean().default(false),

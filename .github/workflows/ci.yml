@@ -20,13 +20,19 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Advisory only: surfaces known-vulnerable prod deps without blocking the
+      # pipeline. Dependabot (.github/dependabot.yml) owns the actual bumps.
+      - name: Audit production dependencies (non-blocking)
+        run: pnpm audit --prod --audit-level=high
+        continue-on-error: true
+
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Build and verify fresh SEO output
         run: pnpm verify:seo-build
 
-      - name: Unit tests (Postgres/Testcontainers suites run locally)
+      - name: Unit tests (Postgres/Testcontainers suites run in the integration job)
         run: pnpm exec vitest run --exclude 'tests/integration/**'
 
       - name: Production standalone smoke tests
@@ -41,3 +47,24 @@ jobs:
       - run: pnpm typecheck
 
       - run: pnpm lint
+
+  # Postgres-backed suites (Testcontainers). Docker is available on GitHub-hosted
+  # ubuntu runners, so no service container is needed. The two suites that do
+  # not need Postgres already run in `validate` and are excluded here.
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Integration tests (Testcontainers Postgres)
+        run: pnpm exec vitest run tests/integration --exclude tests/integration/production-server.smoke.test.ts --exclude tests/integration/seo-utility-routes.test.ts

@@ -53,7 +53,7 @@ faq:
       OAI-SearchBot, in 2025 Perplexity-User appeared separately from PerplexityBot, in 2026 Anthropic introduced
       Claude-Web in addition to ClaudeBot. A six-month audit cycle covers the natural drift speed of the ecosystem.
 lang: en
-sourceHash: 605232348c32e3b14ce403808c6ddb2cccd62199dd7d70dadc977dbcbad66d27
+sourceHash: c835472d660b66189b6fce2e7b02a12f461ecadbbff97c191c805bca12dcc982
 manuallyEdited: false
 ---
 
@@ -283,15 +283,15 @@ The real `public/llms.txt` of the site:
 
 ## Authoritative pages
 
-- [About the author](https://artka.dev/about): bio, expertise, contact
-- [Now](https://artka.dev/now): currently in flight
-- [Uses](https://artka.dev/uses): public toolchain
-- [Projects](https://artka.dev/projects): portfolio with architecture and outcomes
+- [About the author](https://artka.dev/about/): bio, expertise, contact
+- [Now](https://artka.dev/now/): currently in flight
+- [Uses](https://artka.dev/uses/): public toolchain
+- [Projects](https://artka.dev/projects/): portfolio with architecture and outcomes
 
 ## Content
 
-- [Blog index (RU)](https://artka.dev/blog): all articles, source of truth
-- [Blog index (EN)](https://artka.dev/en/blog): English translations
+- [Blog index (RU)](https://artka.dev/blog/): all articles, source of truth
+- [Blog index (EN)](https://artka.dev/en/blog/): English translations
 - [RSS RU](https://artka.dev/rss.xml): full text
 - [RSS EN](https://artka.dev/en/rss.xml): full text
 - [Sitemap](https://artka.dev/sitemap-index.xml): RU + EN with hreflang

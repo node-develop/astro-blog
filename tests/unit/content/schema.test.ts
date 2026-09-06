@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 
 const POSTS_DIR = join(process.cwd(), "src/content/posts");
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---/;
@@ -20,6 +20,7 @@ const collectPosts = (dir: string): readonly RawPost[] => {
       continue;
     }
     if (!/\.(md|mdx)$/.test(entry.name)) continue;
+    if (entry.name.startsWith("e2e-")) continue; // Playwright fixtures/scratch posts (CLAUDE.md: e2e-* prefix)
     const raw = readFileSync(join(dir, entry.name), "utf8");
     const m = FENCE.exec(raw);
     if (!m || !m[1]) continue;

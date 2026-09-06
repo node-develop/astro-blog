@@ -243,16 +243,17 @@ describe("production standalone server", () => {
         })),
       );
 
-      // Astro's standalone static handler runs before repository middleware. Until the edge
-      // canonicalizes these variants, preserve exact diagnostics rather than claiming a redirect
-      // contract that this adapter cannot provide without a custom server.
+      // Since Astro 6, endpoints whose route ends in a file extension are only served
+      // without a trailing slash regardless of `trailingSlash`; the slash variant is a
+      // plain 404 (no redirect). Pin that so a regression to 500 (Astro 5 behaviour)
+      // or an accidental duplicate-content 200 is caught.
       expect(fileVariantResults).toEqual(
         [
-          ["/llms-full.txt/", "/llms-full.txt", 200],
-          ["/rss.xml/", "/rss.xml", 500],
-          ["/feed.json/", "/feed.json", 500],
-          ["/sitemap-index.xml/", "/sitemap-index.xml", 500],
-          ["/sitemap-ru.xml/", "/sitemap-ru.xml", 500],
+          ["/llms-full.txt/", "/llms-full.txt", 404],
+          ["/rss.xml/", "/rss.xml", 404],
+          ["/feed.json/", "/feed.json", 404],
+          ["/sitemap-index.xml/", "/sitemap-index.xml", 404],
+          ["/sitemap-ru.xml/", "/sitemap-ru.xml", 404],
         ].map(([variant, canonical, adapterStatus]) => ({
           variant,
           canonical,
@@ -360,6 +361,13 @@ describe("production standalone server", () => {
       expect(check.headers.get("location")).toBeNull();
       await expect(check.json()).resolves.toMatchObject({ pass: false, feedback: "Bad JSON." });
 
+      // Better-Auth does not accept trailing slashes, but `trailingSlash: "always"`
+      // forces every client to use them. The handler must strip the slash: a 404
+      // here means nobody can log in (this regressed silently in production once).
+      const ok = await responseFor(server.origin, "/api/auth/ok/");
+      expect(ok.status, server.output()).toBe(200);
+      await expect(ok.json()).resolves.toEqual({ ok: true });
+
       for (const pathname of [
         "/api/auth/sign-in/email/",
         "/api/auth/sign-in/social/",
@@ -370,7 +378,7 @@ describe("production standalone server", () => {
           headers: { "content-type": "application/json" },
           body: "{",
         });
-        expect([301, 302, 307, 308], pathname + "\n" + server.output()).not.toContain(
+        expect([301, 302, 307, 308, 404], pathname + "\n" + server.output()).not.toContain(
           response.status,
         );
         expect(response.headers.get("location"), pathname).toBeNull();

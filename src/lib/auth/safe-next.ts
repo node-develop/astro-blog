@@ -4,7 +4,7 @@
  * A01:2021 Broken Access Control (open redirect).
  *
  * Returns a same-origin path when the input is safe, otherwise the
- * `fallback` (defaults to "/admin").
+ * `fallback` (defaults to "/admin/", canonical under trailingSlash: "always").
  *
  * Rejects:
  *   - empty / null / non-string
@@ -14,7 +14,7 @@
  *     ("/\evil.com", "/%5cevil.com", "/%5Cevil.com")
  *   - any value that doesn't parse as a same-origin path
  */
-export const safeNext = (raw: string | null | undefined, fallback = "/admin"): string => {
+export const safeNext = (raw: string | null | undefined, fallback = "/admin/"): string => {
   if (!raw || typeof raw !== "string") return fallback;
   if (!raw.startsWith("/")) return fallback;
   // "//evil.com" → protocol-relative; browsers treat as cross-origin.

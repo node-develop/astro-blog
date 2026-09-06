@@ -28,10 +28,13 @@ const adminGuard = defineMiddleware(async (context, next) => {
 
   const user = context.locals.user;
   if (!user) {
-    return context.redirect("/login?next=" + encodeURIComponent(context.url.pathname));
+    return context.redirect("/login/?next=" + encodeURIComponent(context.url.pathname));
   }
   if (user.role !== "admin" && user.role !== "editor") {
-    return new Response("Forbidden", { status: 403 });
+    return new Response("Forbidden", {
+      status: 403,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
   return next();
 });
@@ -75,10 +78,13 @@ const securityHeaders = defineMiddleware(async (context, next) => {
   return response;
 });
 
+// `securityHeaders` goes FIRST: it awaits `next()` and decorates whatever
+// comes back, so it must wrap the whole chain — otherwise the redirects and
+// the 403 short-circuits returned by the guards below skip it.
 export const onRequest = sequence(
+  securityHeaders,
   canonicalHostNormalization,
   i18nRootRedirect,
   authContext,
   adminGuard,
-  securityHeaders,
 );

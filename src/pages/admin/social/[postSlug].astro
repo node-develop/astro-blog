@@ -9,7 +9,7 @@ import type { CriticNote } from "~/lib/social/types";
 import DraftCard, { type DraftRow } from "~/components/admin/DraftCard";
 
 const { postSlug } = Astro.params;
-if (!postSlug) return Astro.redirect("/admin/social");
+if (!postSlug) return Astro.redirect("/admin/social/");
 
 const rows = await db
   .select()
@@ -17,12 +17,12 @@ const rows = await db
   .where(and(eq(socialPosts.postSlug, postSlug), eq(socialPosts.postCollection, "posts")))
   .orderBy(socialPosts.channel);
 
-if (rows.length === 0) return Astro.redirect("/admin/social");
+if (rows.length === 0) return Astro.redirect("/admin/social/");
 ---
 
 <AdminLayout title={`Social drafts: ${postSlug}`}>
   <header class="detail-page-header">
-    <a href="/admin/social" class="detail-back">← Back to all batches</a>
+    <a href="/admin/social/" class="detail-back">← Back to all batches</a>
     <h1 class="detail-title">/posts/{postSlug}</h1>
     <p class="detail-meta">
       {rows.length} draft{rows.length === 1 ? "" : "s"} · last updated
@@ -43,8 +43,7 @@ if (rows.length === 0) return Astro.redirect("/admin/social");
           threadTail: row.threadTail as string[] | null,
           mediaUrl: row.mediaUrl,
           criticAnnotations: row.criticAnnotations as
-            | import("~/lib/social/types").CriticNote[]
-            | null,
+            import("~/lib/social/types").CriticNote[] | null,
           externalUrl: row.externalUrl,
           errorMessage: row.errorMessage,
         };

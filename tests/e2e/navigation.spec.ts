@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("site navigation", () => {
-  test("sidebar links to a post and marks it active", async ({ page }) => {
-    await page.goto("/");
+  test("course sidebar links to a lesson and marks it active", async ({ page }, testInfo) => {
+    // CourseSidebar is the only `slot="sidebar"` provider since the course
+    // launch (May 2026) retired the post list on "/". The desktop aside is
+    // hidden on phones, where the drawer test below covers navigation.
+    test.skip(testInfo.project.name === "iphone-se", "desktop-only sidebar");
+    await page.goto("/courses/claude-code-guide/");
 
-    // Scope to the desktop aside — the mobile drawer renders a duplicate that
-    // lives inside a <dialog> (hidden by default) and would time out on click.
     const firstLink = page.locator(".layout__sidebar .sidebar__link").first();
     const href = await firstLink.getAttribute("href");
     expect(href).toBeTruthy();
@@ -17,8 +19,10 @@ test.describe("site navigation", () => {
     await expect(activeLink).toHaveAttribute("href", href!);
   });
 
-  test("TOC entry jumps to matching heading and highlights it", async ({ page }) => {
-    await page.goto("/blog/02-context-and-cache");
+  test("TOC entry jumps to matching heading and highlights it", async ({ page }, testInfo) => {
+    // BaseLayout hides .layout__toc under 1024px; the rail is desktop-only.
+    test.skip(testInfo.project.name === "iphone-se", "desktop-only TOC rail");
+    await page.goto("/blog/claude-md-12-rules/");
     const tocEntry = page.locator(".toc__link").first();
     const slug = await tocEntry.getAttribute("data-toc-slug");
     expect(slug).toBeTruthy();
@@ -43,7 +47,8 @@ test.describe("site navigation", () => {
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
 
-    await page.locator("[data-drawer-close]").click();
+    // Backdrop and the ✕ button both close the drawer; use the explicit button.
+    await page.locator(".drawer__close[data-drawer-close]").click();
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 });

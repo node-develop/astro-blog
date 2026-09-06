@@ -1,4 +1,29 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+type LdNode = Record<string, unknown> & {
+  readonly "@type"?: string | readonly string[];
+  readonly "@id"?: string;
+};
+
+/** Flattens every ld+json script on the page into its @graph nodes. */
+const ldNodes = async (page: Page): Promise<readonly LdNode[]> => {
+  const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+  return scripts.flatMap((raw) => {
+    const parsed = JSON.parse(raw) as LdNode & { readonly "@graph"?: readonly LdNode[] };
+    return Array.isArray(parsed["@graph"]) ? parsed["@graph"] : [parsed];
+  });
+};
+
+const hasType = (node: LdNode, type: string): boolean =>
+  Array.isArray(node["@type"]) ? node["@type"].includes(type) : node["@type"] === type;
+
+/** Follows a `{ "@id": … }` reference to its graph node; inline objects pass through. */
+const resolveRef = (nodes: readonly LdNode[], ref: unknown): LdNode | undefined => {
+  if (!ref || typeof ref !== "object") return undefined;
+  const id = (ref as LdNode)["@id"];
+  if (typeof id !== "string") return ref as LdNode;
+  return nodes.find((node) => node["@id"] === id) ?? (ref as LdNode);
+};
 
 test.describe("SEO: static assets and feeds", () => {
   test("/robots.txt is served and points at sitemap", async ({ request }) => {
@@ -17,7 +42,7 @@ test.describe("SEO: static assets and feeds", () => {
     expect(body).toContain("sitemap-ru.xml");
     expect(body).toContain("sitemap-en.xml");
     expect(body).not.toContain("sitemap-0.xml");
-    expect(body).not.toContain("<lastmod>");
+    expect(body).toContain("<lastmod>");
   });
 
   test("/favicon.svg exists", async ({ request }) => {
@@ -65,13 +90,16 @@ test.describe("SEO: meta tags on rendered pages", () => {
       "content",
       "summary_large_image",
     );
-    await expect(page.locator('meta[name="theme-color"]')).toHaveCount(1);
+    // BaseLayout splits theme-color into light/dark variants (media queries) so
+    // the iOS Safari address bar follows the active colour scheme.
+    const themeColor = page.locator('meta[name="theme-color"]');
+    await expect(themeColor).toHaveCount(2);
+    await expect(themeColor.nth(0)).toHaveAttribute("media", "(prefers-color-scheme: light)");
+    await expect(themeColor.nth(1)).toHaveAttribute("media", "(prefers-color-scheme: dark)");
 
-    const ldJson = await page.locator('script[type="application/ld+json"]').first().textContent();
-    expect(ldJson).toBeTruthy();
-    const parsed = JSON.parse(ldJson!);
-    expect(parsed["@type"]).toBe("WebSite");
-    expect(parsed.inLanguage).toBe("ru-RU");
+    const website = (await ldNodes(page)).find((node) => hasType(node, "WebSite"));
+    expect(website).toBeDefined();
+    expect(website?.inLanguage).toBe("ru-RU");
   });
 
   test("post page emits BlogPosting + BreadcrumbList + article meta", async ({ page }) => {
@@ -81,16 +109,15 @@ test.describe("SEO: meta tags on rendered pages", () => {
     await expect(page.locator('meta[property="article:published_time"]')).toHaveCount(1);
     await expect(page.locator('meta[property="article:author"]')).toHaveCount(1);
 
-    const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
-    const types = scripts.map((s) => JSON.parse(s)["@type"]);
-    expect(types).toContain("BlogPosting");
-    expect(types).toContain("BreadcrumbList");
-
-    const blogPosting = scripts.map((s) => JSON.parse(s)).find((j) => j["@type"] === "BlogPosting");
-    expect(blogPosting.headline).toBeTruthy();
-    expect(blogPosting.datePublished).toBeTruthy();
-    expect(blogPosting.author?.name).toBeTruthy();
-    expect(blogPosting.publisher?.name).toBe("artka.dev");
+    // One @graph per page: BlogPosting points at #person / #brand by @id.
+    const nodes = await ldNodes(page);
+    const blogPosting = nodes.find((node) => hasType(node, "BlogPosting"));
+    expect(blogPosting).toBeDefined();
+    expect(nodes.some((node) => hasType(node, "BreadcrumbList"))).toBe(true);
+    expect(blogPosting?.headline).toBeTruthy();
+    expect(blogPosting?.datePublished).toBeTruthy();
+    expect(resolveRef(nodes, blogPosting?.author)?.name).toBeTruthy();
+    expect(resolveRef(nodes, blogPosting?.publisher)?.name).toBe("artka.dev");
   });
 
   test("hreflang only emitted when EN counterpart exists", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { graphIds, type Locale } from "./nodes-global";
+import { graphIds, websiteId, type Locale } from "./nodes-global";
 
 const inLang = (locale: Locale): "ru-RU" | "en-US" => (locale === "ru" ? "ru-RU" : "en-US");
 
@@ -18,7 +18,7 @@ export const buildCollectionPageNode = (input: CollectionPageInput) => ({
   name: input.name,
   description: input.description,
   inLanguage: inLang(input.locale),
-  isPartOf: { "@id": graphIds.website },
+  isPartOf: { "@id": websiteId(input.locale) },
   author: { "@id": graphIds.person },
   hasPart: input.itemUrls.map((u) => ({ "@id": `${u}#creativework` })),
   ...(input.primaryImageOfPage

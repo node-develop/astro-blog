@@ -1,0 +1,12 @@
+/* TEAM */
+Author: Artyom Kashuta (Артём Кашута)
+Site: https://artka.dev/
+Contact: a@artka.dev
+Location: remote
+
+/* SITE */
+Last update: 2026-09-05
+Languages: Russian (source), English (translations)
+Standards: HTML5, JSON-LD, RSS 2.0, JSON Feed 1.1, llms.txt
+Components: Astro, TypeScript, Tailwind CSS, PostgreSQL, Node.js
+Agents: https://artka.dev/llms.txt

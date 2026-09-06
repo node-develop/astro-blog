@@ -26,8 +26,7 @@ export type SocialEnv = z.infer<typeof SocialEnvSchema>;
 
 /** Validates env. Returns Zod result; do NOT throw — caller decides. */
 export const validateSocialEnv = ():
-  | { ok: true; env: SocialEnv }
-  | { ok: false; issues: string[] } => {
+  { ok: true; env: SocialEnv } | { ok: false; issues: string[] } => {
   const r = SocialEnvSchema.safeParse(process.env);
   if (r.success) return { ok: true, env: r.data };
   return {

@@ -3,7 +3,7 @@ export const prerender = false;
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { safeNext } from "~/lib/auth/safe-next";
 
-if (Astro.locals.user) return Astro.redirect("/admin");
+if (Astro.locals.user) return Astro.redirect("/admin/");
 // Validate ?next=... server-side: reject anything that would bounce the user
 // to a third-party origin (CWE-601 open redirect). The same `next` is rendered
 // into both the form and the GitHub OAuth callback button below, so a single
@@ -81,7 +81,7 @@ const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB
         const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
         const data = new FormData(form);
-        const callback = form.dataset.callback || "/admin";
+        const callback = form.dataset.callback || "/admin/";
         try {
           const res = await fetch("/api/auth/sign-in/email/", {
             method: "POST",
@@ -115,7 +115,7 @@ const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB
             credentials: "same-origin",
             body: JSON.stringify({
               provider: "github",
-              callbackURL: githubBtn.dataset.callback || "/admin",
+              callbackURL: githubBtn.dataset.callback || "/admin/",
             }),
           });
           const data = (await res.json()) as { url?: string };

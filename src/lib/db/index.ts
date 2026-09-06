@@ -24,8 +24,22 @@ const getDb = (): Database => {
   return cached;
 };
 
+/**
+ * Schema-only metadata (`db._`) that adapters read at construction time
+ * (Better-Auth ≥1.7 inspects `db._.schema` when `drizzleAdapter(db)` is
+ * called). Serving it from a client-less instance keeps request paths that
+ * never query (e.g. `/login` without a session cookie) independent of
+ * `DATABASE_URL`, while any real query still fails loud via `getDb()`.
+ */
+const schemaOnly = drizzle.mock({ schema });
+
 export const db: Database = new Proxy({} as Database, {
-  get: (_target, prop) => Reflect.get(getDb() as object, prop),
+  get: (_target, prop) => {
+    if (prop === "_" && !cached && !process.env.DATABASE_URL) {
+      return Reflect.get(schemaOnly as object, prop);
+    }
+    return Reflect.get(getDb() as object, prop);
+  },
 });
 
 export { schema };

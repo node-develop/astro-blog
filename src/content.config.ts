@@ -1,7 +1,9 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { courses as course, lessons as lesson } from "~/lib/courses/schema";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "~/lib/content/limits";
+import { person } from "~/lib/seo/person";
 
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/posts" }),
@@ -26,7 +28,8 @@ const posts = defineCollection({
     coverAlt: z.string().optional(),
     sourceHash: z.string().optional(),
     manuallyEdited: z.boolean().default(false),
-    author: z.string().default("Артём"),
+    // Keep in sync with src/lib/content/schemas.ts (canonical author name).
+    author: z.string().default(person.name),
     lang: z.enum(["ru", "en"]).optional(),
   }),
 });
@@ -70,7 +73,7 @@ const projects = defineCollection({
     updatedDate: z.coerce.date().optional(),
     stack: z.array(z.string()).default([]),
     outcomes: z.array(z.string()).default([]),
-    links: z.array(z.object({ label: z.string().min(2), url: z.string().url() })).default([]),
+    links: z.array(z.object({ label: z.string().min(2), url: z.url() })).default([]),
     cover: z.string().optional(),
     coverAlt: z.string().optional(),
     featured: z.boolean().default(false),

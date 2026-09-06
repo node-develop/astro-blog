@@ -11,7 +11,7 @@
  */
 import { ActionError, defineAction } from "astro:actions";
 import type { ActionAPIContext } from "astro:actions";
-import { z } from "astro:schema";
+import { z } from "astro/zod";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { relative, isAbsolute } from "node:path";
@@ -21,6 +21,8 @@ import { assertAdmin } from "./_auth";
 import { isSocialEnabled } from "~/lib/social/config";
 import { generateHandler as generateSocialDrafts } from "./socialDrafts.js";
 import { logger as log } from "~/lib/logger";
+import { buildIndexNowPayload, indexNowKeyFromEnv, submitIndexNow } from "~/lib/seo/indexnow";
+import { canonicalPath } from "~/lib/seo/url-policy";
 
 interface RepoConfig {
   readonly token: string;
@@ -55,6 +57,63 @@ const COLLECTION_LABEL: Record<TranslateCollection, string> = {
   projects: "project",
   courses: "course",
   lessons: "lesson",
+};
+
+/**
+ * Public URLs affected by publishing `slug` in `collection` — the page itself
+ * (RU + EN twin when present) plus the listing pages that embed it. Pure, so
+ * the IndexNow ping can be unit-tested without git or network.
+ */
+export const publishedUrlsFor = (
+  collection: TranslateCollection,
+  slug: string,
+  hasEnTwin: boolean,
+): ReadonlyArray<string> => {
+  const pair = (ru: string, en: string): string[] => (hasEnTwin ? [ru, en] : [ru]);
+  const paths = ((): string[] => {
+    switch (collection) {
+      case "posts":
+        return [...pair(`/blog/${slug}`, `/en/blog/${slug}`), "/blog", "/en/blog"];
+      case "site":
+        return slug === "home" ? ["/", "/en"] : pair(`/${slug}`, `/en/${slug}`);
+      case "projects":
+        return [...pair(`/projects/${slug}`, `/en/projects/${slug}`), "/projects", "/en/projects"];
+      case "courses":
+        return pair(`/courses/${slug}`, `/en/courses/${slug}`);
+      case "lessons": {
+        const [course, lesson] = slug.split("/");
+        return [
+          ...pair(`/courses/${course}/${lesson}`, `/en/courses/${course}/${lesson}`),
+          `/courses/${course}`,
+        ];
+      }
+    }
+  })();
+  return paths.map(canonicalPath);
+};
+
+/**
+ * Best-effort IndexNow ping. The content goes live only after the CI build +
+ * Dokploy deploy (~2-3 min); IndexNow is a hint that schedules a crawl, so an
+ * early ping is fine. Never throws — a failed ping must not fail a publish.
+ */
+const pingIndexNow = async (
+  collection: TranslateCollection,
+  slug: string,
+  hasEnTwin: boolean,
+): Promise<void> => {
+  const key = indexNowKeyFromEnv();
+  if (!key) {
+    log.info({ slug, collection }, "indexnow skipped: INDEXNOW_KEY not set");
+    return;
+  }
+  try {
+    const payload = buildIndexNowPayload(publishedUrlsFor(collection, slug, hasEnTwin), key);
+    const result = await submitIndexNow(fetch, payload);
+    log[result.ok ? "info" : "warn"]({ slug, collection, ...result }, "indexnow ping");
+  } catch (err) {
+    log.warn({ slug, collection, err }, "indexnow ping failed");
+  }
 };
 
 export type PublishOneInput = {
@@ -159,6 +218,8 @@ export const publishOneHandler = async (
     } else if (input.collection === "posts" && !isSocialEnabled()) {
       log.info({ slug: input.slug }, "social skipped: feature flag off");
     }
+
+    await pingIndexNow(input.collection, input.slug, existsSync(enPath));
 
     return {
       ok: true as const,

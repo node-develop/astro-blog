@@ -5,13 +5,14 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { buildLandingNodes } from "~/lib/seo/landing";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const entry = await getEntry("site", "privacy");
 if (!entry) return new Response(null, { status: 404 });
 const { Content } = await render(entry);
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = new URL("/", Astro.site ?? Astro.url).toString();
 const description =
   entry.data.description ?? "Как artka.dev обрабатывает аналитику, настройки и обращения.";
