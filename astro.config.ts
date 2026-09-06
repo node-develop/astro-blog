@@ -9,6 +9,7 @@ import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
 import lazyContentImages from "./src/lib/rehype/lazy-content-images";
+import focusableTables from "./src/lib/rehype/focusable-tables";
 import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
@@ -113,6 +114,8 @@ export default defineConfig({
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
         lazyContentImages,
+        // a11y: scrollable tables must be keyboard-reachable (WCAG 2.1.1).
+        focusableTables,
       ],
     }),
     syntaxHighlight: {

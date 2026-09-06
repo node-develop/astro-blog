@@ -40,11 +40,11 @@
   --color-bg-subtle: #e7dfcd; /* subtle wash, code blocks */
   --color-fg: #1a1714; /* ink */
   --color-fg-muted: #5a544c; /* secondary text */
-  --color-fg-subtle: #8a8278; /* tertiary, captions */
+  --color-fg-subtle: #666059; /* tertiary, captions — AA (≥4.5:1) on bg, bg-elevated, bg-subtle */
   --color-border: #d8cfb8; /* hairlines */
   --color-border-strong: #b8ad94; /* emphasized dividers */
-  --color-accent: #c2410c; /* burnt sienna */
-  --color-accent-hover: #9a3308;
+  --color-accent: #a63409; /* burnt sienna — AA as text on accent-soft / bg-elevated */
+  --color-accent-hover: #8a2d07;
   --color-accent-soft: #f0d9c5; /* sienna washed onto paper */
   --color-accent-subtle: color-mix(in srgb, var(--color-accent) 12%, transparent);
   --color-danger: #c0392b;
@@ -99,7 +99,7 @@
   --color-bg-subtle: #2a261e;
   --color-fg: #e8e2d4;
   --color-fg-muted: #9a9388;
-  --color-fg-subtle: #6b665d;
+  --color-fg-subtle: #948d80; /* AA on every dark surface */
   --color-border: #2e2a22;
   --color-border-strong: #3f3a30;
   --color-accent: #e87a4d; /* lifted sienna for dark */

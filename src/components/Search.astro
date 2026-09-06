@@ -52,7 +52,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
       <kbd class="search__kbd">esc</kbd>
     </div>
 
-    <div class="search__results" data-search-results role="listbox" aria-live="polite">
+    <div class="search__results" data-search-results aria-live="polite">
       <p class="search__hint" data-search-hint>{hint}</p>
     </div>
 
@@ -395,7 +395,13 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
         a.addEventListener("click", () => close());
         return a;
       });
-      resultEls.forEach((el) => list.appendChild(el));
+      // role="option" needs a listbox parent, and a listbox may only contain
+      // options — so the listbox exists only while there are results and the
+      // hint paragraph stays outside it (axe: aria-required-children/-parent).
+      const listbox = document.createElement("div");
+      listbox.setAttribute("role", "listbox");
+      resultEls.forEach((el) => listbox.appendChild(el));
+      list.appendChild(listbox);
     });
   }
 
