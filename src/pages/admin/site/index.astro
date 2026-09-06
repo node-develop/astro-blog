@@ -27,7 +27,7 @@ const fmt = new Intl.DateTimeFormat("ru-RU", {
       <span class="home-card__label">Главная страница</span>
       <span class="home-card__slug"><code>home</code></span>
     </div>
-    <a href="/admin/home" class="home-card__edit">Редактировать</a>
+    <a href="/admin/home/" class="home-card__edit">Редактировать</a>
   </div>
 
   {
@@ -52,7 +52,7 @@ const fmt = new Intl.DateTimeFormat("ru-RU", {
               <td>{page.title}</td>
               <td class="site-table__date">{fmt.format(page.mtime)}</td>
               <td>
-                <a href={`/admin/site/${encodeURIComponent(page.slug)}`} class="site-table__edit">
+                <a href={`/admin/site/${encodeURIComponent(page.slug)}/`} class="site-table__edit">
                   Редактировать
                 </a>
               </td>

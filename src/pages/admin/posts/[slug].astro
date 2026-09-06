@@ -37,7 +37,7 @@ const initial = {
     <h1>Редактирование</h1>
     <div class="admin-page-header__meta">
       <code>{slug}</code>
-      <a href={`/admin/revisions/${encodeURIComponent(slug)}`}>История</a>
+      <a href={`/admin/revisions/${encodeURIComponent(slug)}/`}>История</a>
     </div>
   </header>
   <EditorShell client:load slug={slug} initial={initial} />

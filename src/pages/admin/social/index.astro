@@ -38,7 +38,7 @@ const batches = await db
         {batches.map((b) => (
           <li class="social-item">
             <div class="social-item__top">
-              <a href={`/admin/social/${b.slug}`} class="social-item__slug">
+              <a href={`/admin/social/${b.slug}/`} class="social-item__slug">
                 /{b.collection}/{b.slug}
               </a>
               <time class="social-item__time" datetime={new Date(b.lastUpdated).toISOString()}>

@@ -82,7 +82,7 @@ function SortableRow({
         {String(index + 1).padStart(2, "0")}
       </span>
       <div className="post-list__body">
-        <a href={`/admin/posts/${encodeURIComponent(item.slug)}`} className="post-list__title">
+        <a href={`/admin/posts/${encodeURIComponent(item.slug)}/`} className="post-list__title">
           {item.title}
         </a>
         <p className="post-list__desc">{item.description}</p>

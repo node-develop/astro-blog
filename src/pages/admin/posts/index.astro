@@ -40,7 +40,7 @@ const initial: PostListItem[] = sorted.map((p) => ({
 <AdminLayout title="Статьи">
   <header class="admin-page-header">
     <h1>Статьи</h1>
-    <a href="/admin/posts/new" class="admin-button">Новая статья</a>
+    <a href="/admin/posts/new/" class="admin-button">Новая статья</a>
   </header>
 
   <PostList client:load initial={initial} />

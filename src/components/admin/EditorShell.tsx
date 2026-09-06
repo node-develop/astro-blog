@@ -74,7 +74,7 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
     const note = noticeFromWarnings(result.data.warnings);
     if (note !== null) setNotice(note);
     if (propsSlug === null) {
-      window.location.href = `/admin/posts/${encodeURIComponent(slug)}`;
+      window.location.href = `/admin/posts/${encodeURIComponent(slug)}/`;
       return;
     }
     setStatus("saved");
