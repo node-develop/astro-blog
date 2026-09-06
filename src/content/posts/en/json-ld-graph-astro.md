@@ -51,7 +51,7 @@ faq:
       to BaseLayout via extraSchemaNodes={[creativeWorkNode, breadcrumbNode]}. Global Person/Organization/WebSite nodes
       stay the same; only the page-level contribution changes.
 lang: en
-sourceHash: 3354dc9edd24eab7c26736f6e7f368411d7086e2be1546ec27a8ec65498f05a1
+sourceHash: 8b618adf12d85569219093c700f9b86ccff3a139628fe892c91d0b54c94cbba7
 manuallyEdited: false
 ---
 
@@ -436,7 +436,7 @@ The actual JSON-LD of the page `/blog/01-introduction/`, extracted from `dist/cl
       "@type": "Person",
       "@id": "https://artka.dev/#person",
       "name": "Артём Кашута",
-      "url": "https://artka.dev/about",
+      "url": "https://artka.dev/about/",
       "jobTitle": "Software engineer · backend & AI agent engineering",
       "knowsAbout": ["Claude Code", "AI agent engineering", "Node.js", "TypeScript", "Astro", "…"],
       "email": "a@artka.dev",
@@ -444,7 +444,7 @@ The actual JSON-LD of the page `/blog/01-introduction/`, extracted from `dist/cl
         {
           "@type": "CreativeWork",
           "name": "Claude Code Guide (RU, 14 частей)",
-          "url": "https://artka.dev/blog"
+          "url": "https://artka.dev/blog/"
         }
       ]
     },
@@ -463,7 +463,7 @@ The actual JSON-LD of the page `/blog/01-introduction/`, extracted from `dist/cl
       "publisher": { "@id": "https://artka.dev/#brand" },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://artka.dev/search?q={search_term_string}",
+        "target": "https://artka.dev/search/?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     },
@@ -484,7 +484,7 @@ The actual JSON-LD of the page `/blog/01-introduction/`, extracted from `dist/cl
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://artka.dev/" },
-        { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://artka.dev/blog" },
+        { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://artka.dev/blog/" },
         { "@type": "ListItem", "position": 3, "name": "01. Что такое Claude Code…" }
       ]
     },

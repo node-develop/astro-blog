@@ -258,15 +258,15 @@ $ curl -A "GPTBot" -s -o /dev/null -w "%{http_code}\n" \
 
 ## Authoritative pages
 
-- [About the author](https://artka.dev/about): bio, expertise, contact
-- [Now](https://artka.dev/now): currently in flight
-- [Uses](https://artka.dev/uses): public toolchain
-- [Projects](https://artka.dev/projects): portfolio with architecture and outcomes
+- [About the author](https://artka.dev/about/): bio, expertise, contact
+- [Now](https://artka.dev/now/): currently in flight
+- [Uses](https://artka.dev/uses/): public toolchain
+- [Projects](https://artka.dev/projects/): portfolio with architecture and outcomes
 
 ## Content
 
-- [Blog index (RU)](https://artka.dev/blog): all articles, source of truth
-- [Blog index (EN)](https://artka.dev/en/blog): English translations
+- [Blog index (RU)](https://artka.dev/blog/): all articles, source of truth
+- [Blog index (EN)](https://artka.dev/en/blog/): English translations
 - [RSS RU](https://artka.dev/rss.xml): full text
 - [RSS EN](https://artka.dev/en/rss.xml): full text
 - [Sitemap](https://artka.dev/sitemap-index.xml): RU + EN with hreflang

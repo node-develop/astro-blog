@@ -412,7 +412,7 @@ $ git show 5ed281c~1:src/layouts/PostLayout.astro | grep -c application/ld+json 
       "@type": "Person",
       "@id": "https://artka.dev/#person",
       "name": "Артём Кашута",
-      "url": "https://artka.dev/about",
+      "url": "https://artka.dev/about/",
       "jobTitle": "Software engineer · backend & AI agent engineering",
       "knowsAbout": ["Claude Code", "AI agent engineering", "Node.js", "TypeScript", "Astro", "…"],
       "email": "a@artka.dev",
@@ -420,7 +420,7 @@ $ git show 5ed281c~1:src/layouts/PostLayout.astro | grep -c application/ld+json 
         {
           "@type": "CreativeWork",
           "name": "Claude Code Guide (RU, 14 частей)",
-          "url": "https://artka.dev/blog"
+          "url": "https://artka.dev/blog/"
         }
       ]
     },
@@ -439,7 +439,7 @@ $ git show 5ed281c~1:src/layouts/PostLayout.astro | grep -c application/ld+json 
       "publisher": { "@id": "https://artka.dev/#brand" },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://artka.dev/search?q={search_term_string}",
+        "target": "https://artka.dev/search/?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     },
@@ -460,7 +460,7 @@ $ git show 5ed281c~1:src/layouts/PostLayout.astro | grep -c application/ld+json 
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://artka.dev/" },
-        { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://artka.dev/blog" },
+        { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://artka.dev/blog/" },
         { "@type": "ListItem", "position": 3, "name": "01. Что такое Claude Code…" }
       ]
     },
