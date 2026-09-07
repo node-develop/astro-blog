@@ -71,25 +71,25 @@ const tagline = locale === "en" ? "notes from production" : "записки из
         <span aria-hidden="true">⌘K</span>
         <span class="visually-hidden">{t(locale, "nav.search")}</span>
       </button>
-
-      <button
-        type="button"
-        class="site-header__drawer-btn"
-        aria-label={t(locale, "drawer.openAria")}
-        aria-controls="site-drawer"
-        aria-expanded="false"
-        data-drawer-trigger
-        onclick="window.dispatchEvent(new CustomEvent('mobile-drawer:toggle'))"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M4 6h16M4 12h16M4 18h16"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"></path>
-        </svg>
-      </button>
     </div>
+
+    <button
+      type="button"
+      class="site-header__drawer-btn"
+      aria-label={t(locale, "drawer.openAria")}
+      aria-controls="site-drawer"
+      aria-expanded="false"
+      data-drawer-trigger
+      onclick="window.dispatchEvent(new CustomEvent('mobile-drawer:toggle'))"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 6h16M4 12h16M4 18h16"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"></path>
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -172,6 +172,12 @@ const tagline = locale === "en" ? "notes from production" : "записки из
 
   .site-header__drawer-btn {
     display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin-inline-start: var(--space-2);
     background: transparent;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -207,19 +213,18 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     border: 0;
   }
 
-  /* Tablet / landscape mobile (768-1023px): keep the inline nav with tighter
-     gaps; show the drawer button as a redundant alternative. */
   @media (max-width: 1023px) {
     .site-header__drawer-btn {
       display: inline-flex;
     }
     .site-header__nav {
-      margin-left: auto;
-      gap: var(--space-3);
-      font-size: var(--fs-xs);
+      display: none;
+    }
+    .site-header__actions {
+      margin-inline-start: auto;
     }
   }
-  /* Narrow mobile (≤767px): hide inline nav; drawer carries it. */
+  /* Keep the menu separate from the compact utility controls. */
   @media (max-width: 767px) {
     .site-header__inner {
       padding: var(--space-3) var(--space-4);
@@ -231,8 +236,8 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     .site-header__tagline {
       display: none;
     }
-    .site-header__nav {
-      display: none;
+    .site-header__actions {
+      gap: var(--space-2);
     }
   }
 </style>

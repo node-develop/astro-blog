@@ -112,3 +112,12 @@ describe("checkCounterpartExists", () => {
     },
   );
 });
+
+it.each([
+  ["/blog", "ru"],
+  ["/blog/", "ru"],
+  ["/en/blog", "en"],
+  ["/en/blog/", "en"],
+] as const)("blog index %s has a counterpart", async (path, locale) => {
+  expect(await checkCounterpartExists(path, locale)).toBe(true);
+});

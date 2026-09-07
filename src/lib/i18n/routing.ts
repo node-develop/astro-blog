@@ -54,6 +54,7 @@ export const checkCounterpartExists = async (
   if (canonical === "/login/" || canonical.startsWith("/admin/") || canonical.startsWith("/api/")) {
     return false;
   }
+  if (canonical === BLOG_PREFIX_RU || canonical === BLOG_PREFIX_EN) return true;
   const tagSlug = tagArchiveSlug(canonical);
   if (tagSlug !== null) return tagArchivePairIndexable(tagSlug);
   if (currentLocale === "ru" && pathname.startsWith(BLOG_PREFIX_RU)) {
