@@ -8,8 +8,10 @@
 import { z } from "zod";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "./limits";
 import { person } from "../seo/person";
+import { apiFrontmatterFields } from "../content-api/contract";
 
 export const postSchema = z.object({
+  ...apiFrontmatterFields,
   title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
   description: z.string().min(POST_LIMITS.description.min).max(POST_LIMITS.description.max),
   // TL;DR — answer-first 60–280-char card rendered above the post body.

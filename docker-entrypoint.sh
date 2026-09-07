@@ -19,4 +19,7 @@ else
 fi
 
 echo "[entrypoint] starting astro server..."
+if [ -n "$CONTENT_WORKER_SECRET" ]; then
+  node ./scripts/content-worker.mjs &
+fi
 exec node ./dist/server/entry.mjs

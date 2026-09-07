@@ -8,6 +8,15 @@ import { person } from "~/lib/seo/person";
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/posts" }),
   schema: z.object({
+    // Optional metadata supplied by the versioned content API.
+    seoTitle: z.string().max(120).optional(),
+    seoDescription: z.string().max(200).optional(),
+    socialImage: z.string().url().optional(),
+    socialImageAlt: z.string().optional(),
+    socialImageWidth: z.number().int().positive().optional(),
+    socialImageHeight: z.number().int().positive().optional(),
+    coverCaption: z.string().optional(),
+    apiRevision: z.string().uuid().optional(),
     title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
     description: z.string().min(POST_LIMITS.description.min).max(POST_LIMITS.description.max),
     summary: z.string().min(POST_LIMITS.summary.min).max(POST_LIMITS.summary.max).optional(),

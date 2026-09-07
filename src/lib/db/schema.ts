@@ -15,6 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CriticNote } from "~/lib/social/types";
+import type { ArticleDocument, ApiScope } from "../content-api/contract";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -269,3 +270,104 @@ export type SocialPost = typeof socialPosts.$inferSelect;
 export type NewSocialPost = typeof socialPosts.$inferInsert;
 
 export { primaryKey };
+
+// Versioned external content ingestion. Markdown remains the public site's build input.
+export const contentApiKeys = pgTable("content_api_keys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  scopes: jsonb("scopes").$type<ApiScope[]>().notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
+  windowCount: integer("window_count").notNull().default(0),
+});
+
+export const contentAssets = pgTable("content_assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  hash: text("hash").notNull().unique(),
+  url: text("url").notNull(),
+  objectKey: text("object_key").notNull(),
+  mimeType: text("mime_type").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  keyId: uuid("key_id")
+    .notNull()
+    .references(() => contentApiKeys.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const contentArticles = pgTable(
+  "content_articles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    externalId: text("external_id").notNull(),
+    lang: text("lang").notNull(),
+    slug: text("slug").notNull(),
+    version: integer("version").notNull().default(1),
+    document: jsonb("document").$type<ArticleDocument>().notNull(),
+    baseManualRevisionId: integer("base_manual_revision_id").notNull().default(0),
+    baseRemoteHash: text("base_remote_hash"),
+    publishedContent: text("published_content"),
+    publishedVersion: integer("published_version"),
+    firstPublishedAt: timestamp("first_published_at", { withTimezone: true }),
+    keyId: uuid("key_id")
+      .notNull()
+      .references(() => contentApiKeys.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    identity: uniqueIndex("content_articles_external_lang_idx").on(t.externalId, t.lang),
+    address: uniqueIndex("content_articles_slug_lang_idx").on(t.slug, t.lang),
+  }),
+);
+
+export const contentPublications = pgTable(
+  "content_publications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "restrict" }),
+    version: integer("version").notNull(),
+    content: text("content").notNull(),
+    baseRemoteHash: text("base_remote_hash"),
+    state: text("state")
+      .$type<"queued" | "publishing" | "published" | "failed">()
+      .notNull()
+      .default("queued"),
+    commitSha: text("commit_sha"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    error: jsonb("error").$type<{ code: string; message: string }>(),
+    keyId: uuid("key_id")
+      .notNull()
+      .references(() => contentApiKeys.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pending: index("content_publications_pending_idx").on(t.state, t.nextAttemptAt),
+    article: index("content_publications_article_idx").on(t.articleId, t.createdAt),
+    oneActive: uniqueIndex("content_publications_one_active_idx")
+      .on(t.articleId)
+      .where(sql`${t.state} in ('queued', 'publishing')`),
+  }),
+);
+
+export const contentApiRequests = pgTable(
+  "content_api_requests",
+  {
+    keyId: uuid("key_id")
+      .notNull()
+      .references(() => contentApiKeys.id, { onDelete: "cascade" }),
+    idempotencyKey: text("idempotency_key").notNull(),
+    requestHash: text("request_hash").notNull(),
+    response: jsonb("response").$type<Record<string, unknown>>().notNull(),
+    status: integer("status").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.keyId, t.idempotencyKey] }) }),
+);

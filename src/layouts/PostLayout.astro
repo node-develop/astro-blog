@@ -143,10 +143,12 @@ const formattedUpdatedDate = updatedDate
 ---
 
 <BaseLayout
-  title={title}
-  description={description}
-  ogImage={ogImagePath}
-  ogImageAlt={title}
+  title={post.data.seoTitle ?? title}
+  description={post.data.seoDescription ?? description}
+  ogImage={post.data.socialImage ?? ogImagePath}
+  ogImageAlt={post.data.socialImageAlt ?? title}
+  ogImageWidth={post.data.socialImageWidth}
+  ogImageHeight={post.data.socialImageHeight}
   ogType="article"
   noSidebar={true}
   extraSchemaNodes={[webPageNode, blogPostingNode, breadcrumbNode, faqNode]}
@@ -165,6 +167,7 @@ const formattedUpdatedDate = updatedDate
 
   <article
     class="post"
+    data-content-revision={post.data.apiRevision}
     data-pagefind-body
     data-pagefind-filter={pagefindFilter}
     data-pagefind-meta={`title:${title}`}
@@ -220,6 +223,7 @@ const formattedUpdatedDate = updatedDate
             decoding="async"
             fetchpriority="high"
           />
+          {post.data.coverCaption && <figcaption>{post.data.coverCaption}</figcaption>}
         </figure>
       ) : (
         <div class="post__art">
