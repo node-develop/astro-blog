@@ -83,7 +83,7 @@ export const ALL: APIRoute = ({ request, params }) =>
         (tx) => createArticle(tx, input.article, input.mode, key.id),
       );
       return jsonResponse(result.data, result.status, {
-        location: `/api/v1/articles/${result.data.id}`,
+        location: `/api/v1/articles/${result.data.id}/`,
       });
     }
     const articleMatch = /^articles\/([^/]+)(\/publish)?$/.exec(path);

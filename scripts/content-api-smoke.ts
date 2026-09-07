@@ -136,6 +136,7 @@ try {
   const first = await fetch(`${base}/api/v1/articles/`, request);
   assert.equal(first.status, 201, await first.clone().text());
   const saved = await first.json();
+  assert.equal(first.headers.get("location"), `/api/v1/articles/${saved.id}/`);
   const second = await fetch(`${base}/api/v1/articles/`, request);
   assert.equal((await second.json()).id, saved.id);
   assert.equal((await fetch(`${base}/api/v1/articles/${saved.id}/`)).status, 401);
