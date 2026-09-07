@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import yaml from "js-yaml";
+import * as yaml from "~/lib/yaml";
 import { resolve } from "node:path";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, type Database } from "../db";
@@ -43,7 +43,7 @@ export const publicationView = (job: Publication) => ({
   error: job.error,
   createdAt: job.createdAt.toISOString(),
   updatedAt: job.updatedAt.toISOString(),
-  statusUrl: `/api/v1/publications/${job.id}`,
+  statusUrl: `/api/v1/publications/${job.id}/`,
 });
 export const articleView = (article: Article) => ({
   id: article.id,

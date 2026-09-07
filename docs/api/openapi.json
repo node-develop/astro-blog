@@ -11,7 +11,7 @@
     }
   ],
   "paths": {
-    "/articles": {
+    "/articles/": {
       "post": {
         "summary": "Create an article",
         "description": "Required scope: articles:write (+ articles:publish for mode=publish). 60 requests/minute/key.",
@@ -165,7 +165,7 @@
         }
       }
     },
-    "/articles/validate": {
+    "/articles/validate/": {
       "post": {
         "summary": "Validate without saving",
         "description": "Required scope: articles:write. 60 requests/minute/key.",
@@ -299,7 +299,7 @@
         }
       }
     },
-    "/articles/{id}": {
+    "/articles/{id}/": {
       "get": {
         "summary": "Read document, latest manual revision and remote content",
         "description": "Required scope: articles:read. 60 requests/minute/key.",
@@ -594,7 +594,7 @@
         }
       }
     },
-    "/articles/{id}/publish": {
+    "/articles/{id}/publish/": {
       "post": {
         "summary": "Publish current version or retry a failed publication",
         "description": "Required scope: articles:publish. 60 requests/minute/key.",
@@ -757,7 +757,7 @@
         }
       }
     },
-    "/publications/{id}": {
+    "/publications/{id}/": {
       "get": {
         "summary": "Read publication status",
         "description": "Required scope: articles:read. 60 requests/minute/key.",
@@ -891,7 +891,7 @@
         }
       }
     },
-    "/media": {
+    "/media/": {
       "post": {
         "summary": "Upload image bytes; repeated bytes return the same asset",
         "description": "Required scope: media:write. 60 requests/minute/key.",

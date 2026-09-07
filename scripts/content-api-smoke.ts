@@ -133,13 +133,13 @@ try {
       article: { ...input.article, slug: `${slug}-private`, externalId: `${slug}-private` },
     }),
   };
-  const first = await fetch(`${base}/api/v1/articles`, request);
+  const first = await fetch(`${base}/api/v1/articles/`, request);
   assert.equal(first.status, 201, await first.clone().text());
   const saved = await first.json();
-  const second = await fetch(`${base}/api/v1/articles`, request);
+  const second = await fetch(`${base}/api/v1/articles/`, request);
   assert.equal((await second.json()).id, saved.id);
-  assert.equal((await fetch(`${base}/api/v1/articles/${saved.id}`)).status, 401);
-  const read = await fetch(`${base}/api/v1/articles/${saved.id}`, {
+  assert.equal((await fetch(`${base}/api/v1/articles/${saved.id}/`)).status, 401);
+  const read = await fetch(`${base}/api/v1/articles/${saved.id}/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   assert.equal(read.status, 200);

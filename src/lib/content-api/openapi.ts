@@ -79,7 +79,7 @@ export const openApiDocument = {
   },
   servers: [{ url: "/api/v1" }],
   paths: {
-    "/articles": {
+    "/articles/": {
       post: operation(
         "Create an article",
         "articles:write (+ articles:publish for mode=publish)",
@@ -87,7 +87,7 @@ export const openApiDocument = {
         [once],
       ),
     },
-    "/articles/validate": {
+    "/articles/validate/": {
       post: operation(
         "Validate without saving",
         "articles:write",
@@ -96,7 +96,7 @@ export const openApiDocument = {
         "ValidationResult",
       ),
     },
-    "/articles/{id}": {
+    "/articles/{id}/": {
       get: operation(
         "Read document, latest manual revision and remote content",
         "articles:read",
@@ -110,7 +110,7 @@ export const openApiDocument = {
         [id, once],
       ),
     },
-    "/articles/{id}/publish": {
+    "/articles/{id}/publish/": {
       post: operation(
         "Publish current version or retry a failed publication",
         "articles:publish",
@@ -118,7 +118,7 @@ export const openApiDocument = {
         [id, once],
       ),
     },
-    "/publications/{id}": {
+    "/publications/{id}/": {
       get: operation(
         "Read publication status",
         "articles:read",
@@ -127,7 +127,7 @@ export const openApiDocument = {
         "PublicationStatus",
       ),
     },
-    "/media": {
+    "/media/": {
       post: {
         ...operation(
           "Upload image bytes; repeated bytes return the same asset",

@@ -5,6 +5,7 @@ API принимает **готовые статьи**. Исследование
 - Base URL: `https://artka.dev/api/v1`
 - [OpenAPI 3.1](api/openapi.json), [JSON Schema статьи](api/article.schema.json), [пример запроса](api/article.example.json).
 - Актуальная спецификация доступна по `GET /api/v1/openapi.json`.
+- Адреса операций заканчиваются на `/`: передавайте его явно, чтобы POST не попадал на редирект. Исключение — `openapi.json`.
 - Формат JSON, UTF-8. Неизвестные поля отклоняются. Размер JSON-запроса — до 1 MiB, тело статьи — до 200 000 символов.
 
 ## Быстрый старт для агента
@@ -16,13 +17,13 @@ export CONTENT_API_BASE=https://artka.dev/api/v1
 # CONTENT_API_TOKEN передаётся через secret manager.
 
 # Проверить документ без сохранения.
-curl --fail-with-body "$CONTENT_API_BASE/articles/validate" \
+curl --fail-with-body "$CONTENT_API_BASE/articles/validate/" \
   -H "Authorization: Bearer $CONTENT_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data-binary @docs/api/article.example.json
 
 # Создать черновик. Сохраняйте этот ключ для повторов ТОГО ЖЕ запроса.
-curl --fail-with-body "$CONTENT_API_BASE/articles" \
+curl --fail-with-body "$CONTENT_API_BASE/articles/" \
   -H "Authorization: Bearer $CONTENT_API_TOKEN" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: research-content-api-example-v1' \
@@ -46,7 +47,7 @@ curl --fail-with-body "$CONTENT_API_BASE/articles" \
   "publication": {
     "id": "<publication UUID>",
     "state": "queued",
-    "statusUrl": "/api/v1/publications/<publication UUID>"
+    "statusUrl": "/api/v1/publications/<publication UUID>/"
   },
   "warnings": []
 }
@@ -78,7 +79,7 @@ curl --fail-with-body "$CONTENT_API_BASE/articles" \
 В одной статье допускается до 30 изображений. Изображение сначала загружается **сырыми байтами**, не JSON/base64 и не multipart:
 
 ```bash
-curl --fail-with-body "$CONTENT_API_BASE/media" \
+curl --fail-with-body "$CONTENT_API_BASE/media/" \
   -H "Authorization: Bearer $CONTENT_API_TOKEN" \
   -H 'Content-Type: image/png' \
   --data-binary @cover.png
@@ -105,13 +106,13 @@ API не импортирует и не перезаписывает сущес�
 ## Публикация и повторы
 
 ```bash
-curl --fail-with-body "$CONTENT_API_BASE/articles/$ARTICLE_ID/publish" \
+curl --fail-with-body "$CONTENT_API_BASE/articles/$ARTICLE_ID/publish/" \
   -H "Authorization: Bearer $CONTENT_API_TOKEN" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: article-publication-v1' \
   --data '{"expectedVersion":1}'
 
-curl --fail-with-body "$CONTENT_API_BASE/publications/$PUBLICATION_ID" \
+curl --fail-with-body "$CONTENT_API_BASE/publications/$PUBLICATION_ID/" \
   -H "Authorization: Bearer $CONTENT_API_TOKEN"
 ```
 
@@ -135,7 +136,7 @@ curl --fail-with-body "$CONTENT_API_BASE/publications/$PUBLICATION_ID" \
 3. Обеспечить публичное чтение объектов `articles/*` через указанный HTTPS URL. Ключу сервера достаточно записи в этот префикс. Удаление объектов отдельно от статей не предоставляется — это сохраняет старые версии и предотвращает битые картинки.
 4. Задать `CONTENT_WORKER_SECRET` (случайный секрет минимум 32 символа), `SITE_URL`, существующие `GITHUB_PAT`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME`, `GITHUB_DEFAULT_BRANCH`.
 5. Проверить существующий GitHub Actions workflow и `DOKPLOY_WEBHOOK_URL`. Токен GitHub должен иметь запись содержимого репозитория и запускать push workflows. Сборка без работающего deploy webhook не завершит публикацию.
-6. В Docker worker запускается автоматически при наличии CONTENT_WORKER_SECRET. Локально запустить `pnpm dev` и `pnpm content:worker`. Роут `POST /api/v1/_worker` предназначен только для worker-secret, не для ключей агентов.
+6. В Docker worker запускается автоматически при наличии CONTENT_WORKER_SECRET. Локально запустить `pnpm dev` и `pnpm content:worker`. Роут `POST /api/v1/_worker/` предназначен только для worker-secret, не для ключей агентов.
 
 Создание/отзыв ключей (операторская CLI, без публичного административного API):
 
