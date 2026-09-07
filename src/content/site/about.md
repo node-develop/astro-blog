@@ -38,7 +38,7 @@ data-пайплайны, LLM/agent workflows и cloud-инфра. Работаю
 - Миграция **20+ микросервисов** с Kafka / GraphQL Federation на gRPC contracts →
   **−32% межсервисного latency**.
 - Полная observability с нуля (OpenTelemetry → Collector → Prometheus → Grafana,
-  плюс Mimir для traces) → **−45% MTTR**.
+  плюс Mimir для метрик) → **−45% MTTR**.
 - Event sourcing на Apache Kafka в 20+ сервисах → **+50% scalability**.
 - Лидерство кросс-функциональной командой из 8 инженеров (3 BE, 2 FE, 3 QA) и 1 BA.
 
@@ -63,7 +63,7 @@ data-пайплайны, LLM/agent workflows и cloud-инфра. Работаю
   устройство Claude Code изнутри: harness, context window, skills, hooks, MCP,
   subagents, модели, антипаттерны. RU + EN, интерактивные упражнения, сертификат
   при 100% прогрессе.
-- **[artka.dev](/projects/astro-blog)** — этот сайт. Astro 5 + PostgreSQL +
+- **[artka.dev](/projects/astro-blog)** — этот сайт. Astro 7 + PostgreSQL +
   Drizzle, билингв RU/EN, SSG + динамическая админка, рендер Mermaid и LaTeX
   на build-time, on-demand PNG-сертификаты через Satori.
 - **[AI agent engineering writeups](/blog)** — постмортемы и разборы агентских

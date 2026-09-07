@@ -1,4 +1,4 @@
-# robots.txt — last reviewed 2026-09-05
+# robots.txt — last reviewed 2026-09-07
 # Owner: a@artka.dev. Policy: allow retrieval/answer crawlers; disallow private surfaces.
 # /admin/ and /api/ are private surfaces. Utility HTML remains crawlable so its
 # noindex directive can be observed.
@@ -27,12 +27,12 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-User-agent: Claude-Web
+User-agent: Claude-SearchBot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-User-agent: anthropic-ai
+User-agent: Claude-User
 Allow: /
 Disallow: /admin/
 Disallow: /api/

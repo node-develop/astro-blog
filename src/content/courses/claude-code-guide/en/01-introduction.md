@@ -1,190 +1,47 @@
 ---
-title: "01. What is Claude Code: harness, agent loop, and your place in it"
-blurb: "Claude Code is a harness around an LLM, not the model itself. The model decides which tool to call; the harness executes it, returns the result, and runs the agent loop until the final answer."
+title: "Claude Code: model, tools and execution environment"
+blurb:
+  Separate the model from tools and execution, then verify a small task. The course uses Travel Agent as a
+  teaching design, not a production-ready service.
 pubDate: 2026-04-23
 order: 1
 locale: en
+updatedDate: 2026-09-07
 ---
 
-> Before diving into `CLAUDE.md`, skills, and subagents, we need to agree on terminology. Otherwise, discussions about "cache" and "context" turn into arguments about different entities.
+Separate Claude Code into three parts: the model proposes actions, tools read and change the environment, and the application manages execution. A model name alone does not describe that workflow. The [Claude Code architecture guide](https://code.claude.com/docs/en/how-claude-code-works) explains this distinction.
 
----
+## Locate the failure
 
-## 1.1. Chatbot vs agent
-
-**Chatbot** — this is `model.complete(messages)`. It takes text and returns text. If you want it to read something, you copy the file contents into the prompt yourself.
-
-**Agent** — this is a loop where the model:
-
-1. Receives a user request.
-2. Decides which **tool** to call (Read a file, Bash command, code search).
-3. Gets the tool result back.
-4. Decides: either call another tool or respond to the user.
-
-This loop is called the **agent loop**. In Claude Code, it's hardcoded into the CLI (harness).
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant H as Harness (Claude Code CLI)
-  participant M as Model (via Anthropic API)
-  participant T as Tools (Read/Bash/MCP/...)
-
-  U->>H: prompt
-  H->>M: messages + system + tools
-  loop Agent loop
-    M-->>H: tool_use (e.g., Read("./CLAUDE.md"))
-    H->>T: execute
-    T-->>H: result
-    H->>M: tool_result
-    M-->>H: either another tool_use or final text
-  end
-  H-->>U: final answer
-```
-
-**Key insight:** the model doesn't do anything on your machine by itself. All actions — reading files, running commands, calling MCPs — are **tool calls** executed by the harness. The model only decides _what_ to call.
-
----
-
-## 1.2. What is harness
-
-**Harness** — this is a local program (Claude Code CLI or IDE plugin) that:
-
-| Function               | What it does                                                             |
-| ---------------------- | ------------------------------------------------------------------------ |
-| Prompt assembly        | Concatenates system prompt + CLAUDE.md + skills + history + tool results |
-| Tool dispatch          | Receives `tool_use` from model, executes it, returns result              |
-| Permission gating      | Asks user permission for "dangerous" tools (Bash, Edit)                  |
-| Cache management       | Marks cacheable blocks, updates TTL                                      |
-| Subagent orchestration | Launches child sessions on `Agent` tool call                             |
-| Hooks                  | Triggers your scripts on lifecycle events                                |
-| MCP transport          | Supports stdio/SSE/HTTP connections to MCP servers                       |
-
-Harness is **not the model**. The model is in Anthropic's cloud. Harness is the model's eyes, hands, and memory.
+An agent fixing trip-date validation might misunderstand the requirement, read the wrong file, encounter a denied tool call, or edit code without testing it. All look like “the task failed,” but each needs a different correction.
 
 ```mermaid
 flowchart LR
-  subgraph local["Your computer"]
-    cli["Claude Code CLI<br/>(harness)"]
-    fs["File system"]
-    sh["Shell"]
-    mcp["MCP servers<br/>(local processes)"]
-  end
-  subgraph cloud["Anthropic Cloud"]
-    api["Anthropic API"]
-    model["Claude<br/>Opus 4.7 / Sonnet 4.6 / Haiku 4.5"]
-  end
-  cli <--> api
-  api <--> model
-  cli <--> fs
-  cli <--> sh
-  cli <--> mcp
+  R[Requirement] --> M[Model decision]
+  M --> T[Tool call]
+  T --> E[Execution result]
+  E --> M
+  M --> V[Verification]
 ```
 
-⚠️ This is important to understand: when we say "the model read a file" — this is shorthand for "the model made a tool_use Read call, the harness read the file, returned the contents in tool_result, the model saw this in the next step". The model has no direct disk access.
+Preserve significant actions alongside the answer: files read, changes made, checks run and their results. Do not copy a complete log containing secrets into the report.
 
----
+## The course example
 
-## 1.3. What actually makes up the "context" in each request
+Travel Agent is a teaching design for a trip-planning service. It starts with prepared itinerary fixtures. Provider search, bookings and payments require separate implementations. This course does not provide a published production repository for that service; package names describe a proposed layout.
 
-Each request to the Anthropic API contains:
+The example lets us discuss a concrete task without placing real orders. A user supplies cities, dates and a budget; the service returns options and explains constraints. Missing information should remain explicit rather than becoming an invented price or seat availability.
 
-```python
-messages.create(
-  model="claude-opus-4-7",
-  system=[                       # ← кэшируемый префикс
-    {"type": "text", "text": SYSTEM_PROMPT},                # ~4.2k токенов
-    {"type": "text", "text": CLAUDE_MD_CONCAT},             # ваши memory-файлы
-    {"type": "text", "text": LOADED_SKILLS},                # SKILL.md тех скиллов, что подгружены
-  ],
-  tools=[...],                   # ← кэшируемый префикс (определения всех tools)
-  messages=[                     # ← НЕ кэшируется целиком, только префикс
-    {"role": "user", "content": "..."},
-    {"role": "assistant", "content": [{"type": "tool_use", ...}]},
-    {"role": "user", "content": [{"type": "tool_result", ...}]},
-    ...
-  ],
-)
-```
+## First exercise
 
-📘 From docs (`how-claude-code-works`): "Claude's context window holds your conversation history, file contents, command outputs, CLAUDE.md, auto memory, loaded skills, and system instructions".
+Choose a small repository you know. Record `claude --version`, the starting commit and verification commands from its README. Ask the agent to locate one feature’s handler, explain its inputs and propose a check without changing files.
 
-This is all — one long document for the model. The size of this document is measured in **tokens** and limited by the **context window** (200k for Haiku, 1M for Sonnet/Opus with beta flag).
+Compare the answer with the source. It should cite real paths, distinguish observations from assumptions and avoid claiming unexecuted tests. Investigate invented references before expanding the task.
 
-See details in [02-context-and-cache.md](./02-context-and-cache).
+Then request a small change with an acceptance criterion: invalid date ranges are rejected while an existing valid request still succeeds. Review the diff and run the check yourself.
 
----
+## Define the outcome
 
-## 1.4. Versions and releases
+Code generation is an intermediate step. The outcome is verified behavior with a clear boundary: what was checked, against which data, and what remains outside the task. Context size and a more expensive model cannot replace this evidence.
 
-As of 04.23.2026, current versions are:
-
-- **Claude Code** v2.1.89 (CLI, IDE plugins)
-- **Default models on Anthropic API:**
-  - `opus` → Opus 4.7 (released 04.16.2026)
-  - `sonnet` → Sonnet 4.6
-  - `haiku` → Haiku 4.5
-- **On Bedrock/Vertex/Foundry** defaults are shifted: `opus`→4.6, `sonnet`→4.5 (new models arrive later).
-
-🧪 **Agent Teams** — experimental feature, requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. See [10-agent-teams.md](./10-agent-teams).
-
-⚠️ **Opus 4.7** has a new tokenizer — on the same texts it consumes up to 35% more tokens than Opus 4.6. If you're upgrading from 4.6 — recalculate your limit estimates.
-
----
-
-## 1.5. End-to-end example: Travel Agent
-
-One project runs through the entire guide — **Travel Agent**. This is an AI service for travel planning:
-
-```mermaid
-flowchart TB
-  subgraph fe["Frontend (React + Vite + TS)"]
-    chat["Chat interface"]
-    map["Route map"]
-    cards["Flight/hotel cards"]
-  end
-  subgraph be["Backend (Node + Hono + TS)"]
-    api["REST/SSE API"]
-    sdk["Anthropic SDK<br/>(claude-opus-4-7)"]
-    pg["Postgres<br/>(users, saved routes)"]
-    redis["Redis<br/>(API response cache)"]
-  end
-  subgraph mcp["MCP servers"]
-    flights["flights-mcp<br/>(Amadeus / Duffel API)"]
-    hotels["hotels-mcp<br/>(Booking / Hotellook)"]
-    weather["weather-mcp<br/>(OpenMeteo)"]
-    docs["docs-mcp<br/>(our wiki / Confluence)"]
-  end
-  fe --> api
-  api --> sdk
-  api --> pg
-  api --> redis
-  sdk -. tool calls .-> flights
-  sdk -. tool calls .-> hotels
-  sdk -. tool calls .-> weather
-  sdk -. tool calls .-> docs
-```
-
-In each chapter we'll answer the question: **"How do I apply this to Travel Agent?"** — with concrete config snippets, code, or CLAUDE.md.
-
-In [12-travel-agent-blueprint.md](./12-travel-agent-blueprint) the final repository structure with all artifacts comes together.
-
----
-
-## 1.6. Quick reference of CLI commands used in the guide
-
-| Command                 | What it does                              | Chapter                                                     |
-| ----------------------- | ----------------------------------------- | ----------------------------------------------------------- |
-| `/context`              | Visualizes current window fill            | [02](./02-context-and-cache)                                |
-| `/compact [hint]`       | Compresses history, frees space           | [02](./02-context-and-cache)                                |
-| `/clear`                | Full session reset (restarts, cache lost) | [02](./02-context-and-cache)                                |
-| `/model [name]`         | Switch model in current session           | [02](./02-context-and-cache), [10](./11-models-and-pricing) |
-| `/agents`               | Subagent manager                          | [09](./09-subagents)                                        |
-| `/plugin install <ref>` | Install plugin from marketplace           | [07](./07-plugins)                                          |
-| `/mcp`                  | List connected MCP servers                | [06](./06-mcp)                                              |
-| `/permissions`          | Current allow/deny rules                  | [05](./05-hooks)                                            |
-| `/release-notes`        | Changes in version                        | —                                                           |
-
----
-
-**Next →** [02. Context window and prompt cache](./02-context-and-cache)
+Next: [context and caching](/en/courses/claude-code-guide/02-context-and-cache/).

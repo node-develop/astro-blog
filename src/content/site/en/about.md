@@ -1,6 +1,6 @@
 ---
 title: About me
-sourceHash: d09384e790126b5424508598ae168e9ed2716f26a9d7b715d1a5a4835fdb0992
+sourceHash: 53a35e4999b8f01d7f07c25bd02ecb2d10f0ee40b4e1261496708e8a8632be67
 manuallyEdited: false
 ---
 
@@ -23,7 +23,7 @@ Artyom Kashuta. Full-stack and AI engineer. **7+ years running production system
 
 - Platforms at **700 RPS** with **<150 ms latency** for **>15k MAU** — Wallet and sportsbook/casino integrations at 9RED.
 - Migrated **20+ microservices** from Kafka / GraphQL Federation to gRPC contracts → **−32% inter-service latency**.
-- Full observability from scratch (OpenTelemetry → Collector → Prometheus → Grafana, plus Mimir for traces) → **−45% MTTR**.
+- Full observability from scratch (OpenTelemetry → Collector → Prometheus → Grafana, plus Mimir for metrics) → **−45% MTTR**.
 - Event sourcing on Apache Kafka across 20+ services → **+50% scalability**.
 - Led cross-functional team of 8 engineers (3 BE, 2 FE, 3 QA) and 1 BA.
 
@@ -40,7 +40,7 @@ Detailed list with rationales — on the [/uses](/uses) page.
 ## What I've Written
 
 - **[Claude Code Guide](/courses/claude-code-guide)** — 14-lesson course on Claude Code internals: harness, context window, skills, hooks, MCP, subagents, models, antipatterns. RU + EN, interactive exercises, certificate on 100% completion.
-- **[artka.dev](/projects/astro-blog)** — this site. Astro 5 + PostgreSQL + Drizzle, bilingual RU/EN, SSG + dynamic admin panel, Mermaid and LaTeX rendering at build-time, on-demand PNG certificates via Satori.
+- **[artka.dev](/projects/astro-blog)** — this site. Astro 7 + PostgreSQL + Drizzle, bilingual RU/EN, SSG + dynamic admin panel, Mermaid and LaTeX rendering at build-time, on-demand PNG certificates via Satori.
 - **[AI agent engineering writeups](/blog)** — postmortems and breakdowns of agentic systems: tool design, evaluation, production failure modes.
 
 What I'm working on right now — on the [/now](/now) page.

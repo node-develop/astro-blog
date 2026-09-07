@@ -1,5 +1,13 @@
 import { buildLegacyRedirects } from "~/lib/seo/redirects";
 import { canonicalPath } from "~/lib/seo/url-policy";
+import gscLegacyCourses from "../../fixtures/seo/gsc-legacy-course-urls.json";
+
+it("recovers every broken nested lesson URL observed in Search Console", () => {
+  expect(buildLegacyRedirects()).toMatchObject(gscLegacyCourses);
+  for (const destination of Object.values(gscLegacyCourses)) {
+    expect(buildLegacyRedirects()).not.toHaveProperty(destination);
+  }
+});
 
 it("defines one Astro route per normalized legacy source", () => {
   const redirects = buildLegacyRedirects();

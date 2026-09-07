@@ -1,0 +1,58 @@
+file,title_before,words_before,disposition
+src/content/courses/claude-code-guide/01-introduction.md,"01. Что такое Claude Code: harness, agent loop и ваше место в нём",907,reviewed; editorial revision
+src/content/courses/claude-code-guide/02-context-and-cache.md,02. Контекстное окно и prompt cache,1530,reviewed; editorial revision
+src/content/courses/claude-code-guide/03-claude-md.md,"03. CLAUDE.md: уровни, импорты, авто-память",1532,reviewed; editorial revision
+src/content/courses/claude-code-guide/04-skills.md,"04. Skills: SKILL.md, scripts, references",1898,reviewed; editorial revision
+src/content/courses/claude-code-guide/05-hooks.md,05. Hooks: детерминированный контроль над agent loop,1640,reviewed; editorial revision
+src/content/courses/claude-code-guide/06-mcp.md,06. MCP-серверы,1589,reviewed; editorial revision
+src/content/courses/claude-code-guide/07-plugins.md,07. Plugins: упаковка skills + hooks + agents + MCP,844,reviewed; editorial revision
+src/content/courses/claude-code-guide/08-tool-calls-and-loop.md,08. Tool calls и agent loop под капотом,1136,reviewed; editorial revision
+src/content/courses/claude-code-guide/09-subagents.md,09. Subagents: изолированные агентные циклы,1771,reviewed; editorial revision
+src/content/courses/claude-code-guide/10-agent-teams.md,10. Agent Teams (экспериментально),1172,reviewed; editorial revision
+src/content/courses/claude-code-guide/11-models-and-pricing.md,11. Модели и pricing,1173,reviewed; editorial revision
+src/content/courses/claude-code-guide/12-travel-agent-blueprint.md,12. Travel Agent с нуля: blueprint,2349,reviewed; editorial revision
+src/content/courses/claude-code-guide/13-best-practices.md,13. Best practices: ежедневная рутина и антипаттерны,1663,reviewed; editorial revision
+src/content/courses/claude-code-guide/14-claims-verification.md,14. Проверка утверждений из исходного треда,1856,reviewed; editorial revision
+src/content/courses/claude-code-guide/_index.md,Claude Code Guide,347,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/01-introduction.md,"01. What is Claude Code: harness, agent loop, and your place in it",970,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/02-context-and-cache.md,02. Context window and prompt cache,1654,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/03-claude-md.md,"03. CLAUDE.md: levels, imports, auto-memory",1622,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/04-skills.md,"04. Skills: SKILL.md, scripts, references",2037,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/05-hooks.md,05. Hooks: deterministic control over agent loop,1733,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/06-mcp.md,06. MCP Servers,1681,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/07-plugins.md,07. Plugins: packaging skills + hooks + agents + MCP,917,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/08-tool-calls-and-loop.md,08. Tool calls and agent loop under the hood,1238,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/09-subagents.md,09. Subagents: isolated agent cycles,1920,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/10-agent-teams.md,10. Agent Teams (experimental),1253,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/11-models-and-pricing.md,11. Models and pricing,1222,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/12-travel-agent-blueprint.md,12. Travel Agent from Scratch: blueprint,2388,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/13-best-practices.md,13. Best practices: daily routine and anti-patterns,1806,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/14-claims-verification.md,14. Verifying Claims from the Original Thread,2019,reviewed; editorial revision
+src/content/courses/claude-code-guide/en/_index.md,Claude Code Guide,376,reviewed; editorial revision
+src/content/posts/claude-md-12-rules.md,12 правил для CLAUDE.md: расширение Karpathy на ошибки 2026 года,1768,reviewed; editorial revision
+src/content/posts/claude.md,Claude Code: глубокий гайд для разработчиков,692,keep; unpublished draft
+src/content/posts/en/claude-md-12-rules.md,12 Rules for CLAUDE.md: Extending Karpathy for 2026 Failure Modes,1960,reviewed; editorial revision
+src/content/posts/en/json-ld-graph-astro.md,JSON-LD @graph in Astro: from duplicated inline-blocks to a single citable-node,2837,reviewed; editorial revision
+src/content/posts/en/local-coding-agent.md,ds4 by antirez: local coding agent on DeepSeek V4 Flash that runs on MacBook,2518,reviewed; editorial revision
+src/content/posts/en/mermaid-svg-playwright-build-time.md,"Mermaid → SVG via Playwright at build time: cold start, cache, and SSG cost",2138,reviewed; editorial revision
+src/content/posts/en/robots-txt-ai-crawlers-2026.md,"robots.txt in the age of AI crawlers: GPTBot, ClaudeBot, PerplexityBot — reality 2026",2497,reviewed; editorial revision
+src/content/posts/json-ld-graph-astro.md,JSON-LD @graph в Astro: от дублирующихся inline-блоков к единому citable-узлу,2569,reviewed; editorial revision
+src/content/posts/local-coding-agent.md,"ds4 от antirez: локальный coding agent на DeepSeek V4 Flash, который работает на MacBook",2271,reviewed; editorial revision
+src/content/posts/mermaid-svg-playwright-build-time.md,"Mermaid → SVG через Playwright на билд-тайме: холодный старт, кэш и стоимость SSG",1950,reviewed; editorial revision
+src/content/posts/robots-txt-ai-crawlers-2026.md,"robots.txt в эпоху AI-краулеров: GPTBot, ClaudeBot, PerplexityBot — реальность 2026",2215,reviewed; editorial revision
+src/content/projects/astro-blog.md,artka.dev (этот блог),228,reviewed; editorial revision
+src/content/projects/claude-code-guide.md,"Claude Code Guide (RU, 14 частей)",147,reviewed; editorial revision
+src/content/projects/en/astro-blog.md,artka.dev (this blog),261,reviewed; editorial revision
+src/content/projects/en/claude-code-guide.md,"Claude Code Guide (EN, 14 parts)",168,reviewed; editorial revision
+src/content/site/about.md,Обо мне,514,keep; contact/privacy/home or factual site-page correction
+src/content/site/contact.md,Контакты,225,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/about.md,About me,530,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/contact.md,Contact,265,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/home.md,Home,0,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/now.md,Now,512,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/privacy.md,Privacy,458,keep; contact/privacy/home or factual site-page correction
+src/content/site/en/uses.md,What I Use,739,keep; contact/privacy/home or factual site-page correction
+src/content/site/home.md,Главная,0,keep; contact/privacy/home or factual site-page correction
+src/content/site/now.md,Сейчас,459,keep; contact/privacy/home or factual site-page correction
+src/content/site/privacy.md,Конфиденциальность,386,keep; contact/privacy/home or factual site-page correction
+src/content/site/uses.md,Что я использую,685,keep; contact/privacy/home or factual site-page correction

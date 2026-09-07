@@ -34,11 +34,12 @@ describe("independent review follow-ups", () => {
     expect(lessons).toBeGreaterThan(overview);
   });
 
-  it("marks both localized course landings as updated on 2026-08-24", () => {
+  it("keeps the substantive review date synchronized across course landings", () => {
     const ru = source("src/content/courses/claude-code-guide/_index.md");
     const en = source("src/content/courses/claude-code-guide/en/_index.md");
 
-    expect(ru).toMatch(/^updatedDate: 2026-08-24$/m);
-    expect(en).toMatch(/^updatedDate: 2026-08-24$/m);
+    const reviewDate = ru.match(/^updatedDate: (\d{4}-\d{2}-\d{2})$/m)?.[1];
+    expect(reviewDate).toBeDefined();
+    expect(en.match(/^updatedDate: (\d{4}-\d{2}-\d{2})$/m)?.[1]).toBe(reviewDate);
   });
 });

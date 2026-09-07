@@ -1,11 +1,12 @@
 ---
 title: What I Use
+description: Editors, backend, infrastructure and AI tools, including the current stack of this blog.
 lang: en
-sourceHash: 1e2617fdb283e4b7eca8940a3d51783e29bca77afa17c9e47022e24d34811f77
+sourceHash: f36cc44472043eecefd6309abbeb86e3420953887b36272f8cdfa4b8f20876fd
 manuallyEdited: false
 ---
 
-> Snapshot as of 2026-05-09. I specify versions where they affect reproducibility.
+> Personal toolkit snapshot: 2026-05-09. This site’s stack was corrected on 2026-09-07.
 
 ## Editors / IDE
 
@@ -17,7 +18,7 @@ manuallyEdited: false
   EXPLAIN plans, migrations in diff mode against drizzle-kit / alembic.
 - **Cursor** — agentic editor for experimenting with code agents outside Claude Code.
 - **Claude Code (CLI)** — daily driver for large tasks. Runs from any repo, context from `CLAUDE.md`. WebStorm/PyCharm + Claude Code — two modes of work: manual surgical and agentic batch mode.
-- **TMUX** — terminal editor for quick edits.
+- **tmux** — a terminal multiplexer for multiple sessions.
 
 ## AI / LLM
 
@@ -34,11 +35,11 @@ manuallyEdited: false
 ## Backend
 
 - **Python 3.13 + FastAPI** — primary stack for production AI/agent services and retrieval pipelines. Pydantic validation, async-first.
-- **Node.js 24 LTS + TypeScript 5.9** — TS 6 currently breaks `@astrojs/check` and `zod-to-ts`. Fastify for high-throughput services; Express for legacy.
+- **Node.js 24 LTS + TypeScript 6** — the stack used by this blog. Fastify for high-throughput services; Express for legacy.
 - **gRPC** — inter-service communication. On the previous project, migrating 20+ microservices from Kafka/GraphQL Federation to gRPC gave −32% latency.
 - **REST, GraphQL, webhooks** — where appropriate.
 - **Event sourcing on Apache Kafka** — for high-throughput systems with audit requirements. Idempotency via outbox pattern and dedup keys.
-- **Astro 5** — public part and admin islands of this blog.
+- **Astro 7** — public part and admin islands of this blog.
 - **Better-Auth** — auth infrastructure with PostgreSQL adapter. Used on the admin panel + course progress sync.
 - **Zod 4** — all DTOs and validation on the TypeScript stack.
 - **Drizzle ORM + drizzle-kit** — schema-first in TypeScript, migrations in SQL.
@@ -64,7 +65,7 @@ manuallyEdited: false
 ## Observability
 
 - **OpenTelemetry → Collector → Prometheus → Grafana** — full-stack telemetry, built from scratch at the previous job. SLO/SLI dashboards, alerts, error budgets. Gave −45% MTTR.
-- **Grafana Mimir** — long-term storage for traces.
+- **Grafana Mimir** — long-term storage for metrics.
 - **Pino** — structured logs, JSON to stdout.
 - **Sentry** — production errors, source maps in build.
 - **Plausible** — cookie-free analytics, DNT-aware. Cloud instance.
@@ -75,7 +76,7 @@ manuallyEdited: false
 - **Satori + Resvg** — per-post / per-landing OG image and course certificate generation in PNG directly on the server.
 - **rehype-mermaid + Playwright** — Mermaid diagrams render to SVG at build time. Cold start is cold, cache is aggressive.
 - **rehype-katex** — LaTeX → KaTeX, build time.
-- **Vitest 3 + Playwright** — unit + e2e tests.
+- **Vitest 5 + Playwright** — unit + e2e tests.
 
 ---
 
