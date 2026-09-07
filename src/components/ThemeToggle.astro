@@ -124,5 +124,15 @@ const ariaLabel = t(locale, "theme.toggle.aria");
     });
   }
 
+  // Transfer the current choice before the incoming document is displayed.
+  document.addEventListener("astro:before-swap", (event) => {
+    const nextRoot = event.newDocument.documentElement;
+    if (document.documentElement.dataset.theme === "dark") {
+      nextRoot.dataset.theme = "dark";
+    } else {
+      nextRoot.removeAttribute("data-theme");
+    }
+  });
+
   document.addEventListener("astro:page-load", initThemeToggle);
 </script>
