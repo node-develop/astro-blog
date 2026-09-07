@@ -1,41 +1,11 @@
-/**
- * Phase 5 fix — replaces src/styles/code-themes.css.
- *
- * BUG (in the prior version):
- *   .prose :is(pre, pre code, pre code span) {
- *     background-color: var(--shiki-light-bg);
- *   }
- *
- * Shiki stamps `--shiki-light-bg` / `--shiki-dark-bg` as INLINE STYLE on
- * the <pre> element only. CSS variables inherit, so on every inner
- * <span class="line"> and every per-token <span> the variable resolved
- * to the same value, and the rule above painted a solid background
- * RECTANGLE per span. On the light theme white-on-white hid the bug; on
- * dark theme each span drew a white block, producing the staircase of
- * white bars over a dark pre background that the user reported.
- *
- * Fix:
- *   - Background only on <pre>. Never on <code> or inner spans.
- *   - Spans only get `color`, `font-style`, `font-weight`,
- *     `text-decoration` — those Shiki-emitted vars are per-token and
- *     should be applied per token.
- *
- * Also takes the chance to:
- *   - Tighten contrast on dark: token bg should fall through to the
- *     pre's --color-bg-subtle, which is already set.
- *   - Add a soft inner shadow on hover to hint copy-button affordance
- *     (kept tasteful, only in dark).
- *   - Make `pre code` a flex column so .line items don't get extra
- *     baseline gaps from inline-block whitespace.
- */
-
 /* ---- DEFAULT (light, paper) ----------------------------------- */
-.prose :is(pre code, pre code span) {
-  color: var(--shiki-light);
-  font-style: var(--shiki-light-font-style);
-  font-weight: var(--shiki-light-font-weight);
-  text-decoration: var(--shiki-light-text-decoration);
-  /* No background here — spans inherit transparent over the pre. */
+/* Keep the background on pre; inherited Shiki backgrounds must not paint tokens. */
+.prose pre.astro-code,
+.prose pre.astro-code span {
+  color: var(--shiki-light, inherit);
+  font-style: var(--shiki-light-font-style, normal);
+  font-weight: var(--shiki-light-font-weight, normal);
+  text-decoration: var(--shiki-light-text-decoration, none);
 }
 
 .prose pre {
@@ -52,24 +22,25 @@
 
 .prose pre code {
   display: block;
+  color: inherit;
   background: transparent;
   padding: 0;
   border: 0;
-  /* Allow .line spans to flow as a block sequence — avoids inline-block
-     whitespace gaps between rows. */
+  white-space: pre;
 }
 
 .prose pre code .line {
-  display: block;
-  min-height: 1lh;
+  /* Shiki already emits newline text nodes between its line spans. */
+  display: inline;
 }
 
 /* ---- DARK ----------------------------------------------------- */
-:root[data-theme="dark"] .prose :is(pre code, pre code span) {
-  color: var(--shiki-dark);
-  font-style: var(--shiki-dark-font-style);
-  font-weight: var(--shiki-dark-font-weight);
-  text-decoration: var(--shiki-dark-text-decoration);
+:root[data-theme="dark"] .prose pre.astro-code,
+:root[data-theme="dark"] .prose pre.astro-code span {
+  color: var(--shiki-dark, inherit);
+  font-style: var(--shiki-dark-font-style, normal);
+  font-weight: var(--shiki-dark-font-weight, normal);
+  text-decoration: var(--shiki-dark-text-decoration, none);
 }
 
 :root[data-theme="dark"] .prose pre {
