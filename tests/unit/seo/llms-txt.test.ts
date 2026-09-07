@@ -110,7 +110,7 @@ describe("llms.txt endpoint", () => {
     expect(response.headers.get("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(response.headers.get("Cache-Control")).toBe("public, max-age=3600");
     expect(body).toMatch(/^# artka\.dev$/m);
-    expect(body).toMatch(/^## When to use artka\.dev$/m);
+    expect(body).toContain("**When to use artka.dev**");
     // Was "< 4096" for the static file; the generated index now enumerates every
     // post, twin and lesson, so the ceiling is raised (still a small index).
     expect(Buffer.byteLength(body, "utf8")).toBeGreaterThan(1_000);

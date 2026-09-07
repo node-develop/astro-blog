@@ -18,11 +18,11 @@ authorBio: >-
   Full-stack & AI engineer. 7+ years in backend and distributed systems. Currently exploring Claude Code, LangGraph, and
   production AI agents.
 authorLinksAria: Links to author profiles
-metaTitle: Claude Code, LLM agents, and backend — Artyom Kashuta
+metaTitle: artka.dev — Artyom Kashuta | AI agents and backend
 metaDescription: >-
-  Artyom Kashuta — Full-stack & AI engineer. Notes on Claude Code, LLM agents, RAG pipelines, and production backend.
+  artka.dev — the personal technical blog of Artyom Kashuta. Notes on Claude Code, LLM agents, RAG pipelines, and production backend.
   Claude Code Guide course — 14 lessons.
 lang: en
-sourceHash: 075028113932d9c7255c7765a4931b84b5670b920b96bb5ae57a9e6783f3f8f7
+sourceHash: efb523b849379f014e207da9f435d698d7a7ed2ceaaeba54c089cd75972e5dc2
 manuallyEdited: false
 ---
