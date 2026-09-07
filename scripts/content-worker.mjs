@@ -19,7 +19,7 @@ while (!stopped) {
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { authorization: `Bearer ${secret}` },
+      headers: { authorization: `Bearer ${secret}`, "content-type": "application/json" },
       signal: AbortSignal.timeout(120_000),
     });
     if (!response.ok) console.error(`Content worker HTTP ${response.status}`);
