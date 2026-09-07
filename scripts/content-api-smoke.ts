@@ -64,6 +64,7 @@ try {
     created.push(path!);
   }
   await build();
+  execFileSync("pnpm", ["translate:check"], { stdio: "pipe" });
   const html = await readFile(`dist/client/blog/${slug}/index.html`, "utf8");
   assert(html.includes(`data-content-revision="${marker}"`));
   assert(html.includes("Smoke SEO title | artka.dev"));
