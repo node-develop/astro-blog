@@ -1,83 +1,43 @@
 ---
-title: What I Use
-description: Editors, backend, infrastructure and AI tools, including the current stack of this blog.
+title: What I use
+description: "My development tools: editors, Claude Code and Codex, TypeScript, Python, PostgreSQL, and infrastructure for personal projects."
 lang: en
-sourceHash: f36cc44472043eecefd6309abbeb86e3420953887b36272f8cdfa4b8f20876fd
+sourceHash: d639c5a5c8d4f5c96c66898c20508234b23e0d44a9670dd459fb6d1e6e7fc251
 manuallyEdited: false
 ---
 
-> Personal toolkit snapshot: 2026-05-09. This site’s stack was corrected on 2026-09-07.
+Updated September 7, 2026.
 
-## Editors / IDE
+These are the tools I work with and what I use them for. The combination changes between projects. My first consideration is how easily I can build, test, and maintain the result.
 
-- **WebStorm 2026.2** — primary IDE for TypeScript / Node.js / frontend. Refactoring,
-  symbol navigation, debugging, built-in database tool — everything in one place,
-  no context switching.
-- **PyCharm 2026.2** — primary IDE for Python (FastAPI, scripts, eval pipelines).
-- **DataGrip 2026.2** — separate instance for PostgreSQL work: schema, indexes,
-  EXPLAIN plans, migrations in diff mode against drizzle-kit / alembic.
-- **Cursor** — agentic editor for experimenting with code agents outside Claude Code.
-- **Claude Code (CLI)** — daily driver for large tasks. Runs from any repo, context from `CLAUDE.md`. WebStorm/PyCharm + Claude Code — two modes of work: manual surgical and agentic batch mode.
-- **tmux** — a terminal multiplexer for multiple sessions.
+## Editing and working with code
 
-## AI / LLM
+**WebStorm and PyCharm** are my editors for TypeScript and Python. I use them for navigation, debugging, and refactoring. **DataGrip** is for database work: exploring a schema, writing queries, and reading execution plans.
 
-- **Claude Code** — daily driver. Opus 4.7 (1M context) for large refactorings and planning, Sonnet for most tasks, Haiku 4.5 for the RU→EN translation pipeline.
-- **Cursor** — parallel AI editor; useful where the built-in chat is closer to the code than the CLI cycle.
-- **Anthropic, OpenAI, Gemini SDK** — direct runtime calls when fine-grained token/latency control is needed (`/api/check` for CodeChallenge, eval suites, retrieval services).
-- **LangGraph** — orchestration of multi-step agent workflows. Clear state machines on top of tool-use loops.
-- **LangChain** — basic primitives (chains, prompts, output parsers, retrievers).
-- **LangSmith** — traces, eval datasets, regression suites. Without it, agent quality degrades imperceptibly with each prompt tweak.
-- **n8n, Make** — simple solutions for integrations and automation where a full service isn't needed.
-- **MCP servers** — GitNexus (code graph), llm-wiki (personal wiki), computer-use (when needed). Connected via `.mcp.json`.
-- **Skill / agent / hook system** — fine-tuning Claude Code for each repo: see `.claude/`. Pre-tool hooks, custom skills, subagents for parallel tasks.
+**Claude Code and Codex** help me explore codebases, implement changes, and review code. **Cursor** is also in my toolkit for working with AI inside an editor. I check the result by reviewing the diff, running tests, and using the application.
 
-## Backend
+**Git and GitHub** handle version history and pull requests. I use worktrees to keep separate tasks from getting mixed together in one branch. **tmux** helps me manage several terminal sessions.
 
-- **Python 3.13 + FastAPI** — primary stack for production AI/agent services and retrieval pipelines. Pydantic validation, async-first.
-- **Node.js 24 LTS + TypeScript 6** — the stack used by this blog. Fastify for high-throughput services; Express for legacy.
-- **gRPC** — inter-service communication. On the previous project, migrating 20+ microservices from Kafka/GraphQL Federation to gRPC gave −32% latency.
-- **REST, GraphQL, webhooks** — where appropriate.
-- **Event sourcing on Apache Kafka** — for high-throughput systems with audit requirements. Idempotency via outbox pattern and dedup keys.
-- **Astro 7** — public part and admin islands of this blog.
-- **Better-Auth** — auth infrastructure with PostgreSQL adapter. Used on the admin panel + course progress sync.
-- **Zod 4** — all DTOs and validation on the TypeScript stack.
-- **Drizzle ORM + drizzle-kit** — schema-first in TypeScript, migrations in SQL.
+## Backend and data
 
-## Data
+My core languages are **TypeScript with Node.js** and **Python with FastAPI**. I use TypeScript for web services and integrations, and Python for AI services, data processing, and automation.
 
-- **PostgreSQL 18 + PostGIS** — the only database needed for 99% of tasks. FTS, JSONB, partial indexes, EXPLAIN-first approach.
-- **MongoDB, DynamoDB** — where a document model or AWS-native approach is needed.
-- **Redis** — caches, rate limiting, dedup keys, pub/sub for realtime.
-- **Apache Kafka** — event sourcing, inter-service exchange on high load.
-- **RabbitMQ** — task queues, RPC, fan-out.
-- **ORMs:** Drizzle (TS), Prisma, Sequelize.
+**PostgreSQL** is my primary relational database. I like starting with a clear schema, constraints, and straightforward SQL. This blog uses **Drizzle** for its schema and migrations, and **Zod** to validate input.
 
-## Cloud / orchestration
+I've also worked with **Redis, Kafka, and gRPC** in more complex systems. They serve specific needs: caching, events, and service communication. That combination can be unnecessary for a small project.
 
-- **AWS** — EKS, S3, RDS, CloudWatch.
-- **Kubernetes** — production workloads, HPA by custom metrics from Prometheus.
-- **Docker (multi-stage, `node:24-bookworm-slim`)** — no alpine for projects with native modules. Images in ghcr.io / private ECR.
-- **GitLab CI/CD** — on commercial projects.
-- **GitHub Actions** — on opensource and personal projects. For the blog — image in ghcr.io.
-- **Dokploy** — deploy the blog via webhook after successful push to main, migrations on container startup.
+## AI and automation
 
-## Observability
+I use the **Anthropic, OpenAI, and Gemini** APIs when an application needs a model. The choice depends on the task, output quality, response time, and cost. A model's name alone tells me little about whether it will suit a product.
 
-- **OpenTelemetry → Collector → Prometheus → Grafana** — full-stack telemetry, built from scratch at the previous job. SLO/SLI dashboards, alerts, error budgets. Gave −45% MTTR.
-- **Grafana Mimir** — long-term storage for metrics.
-- **Pino** — structured logs, JSON to stdout.
-- **Sentry** — production errors, source maps in build.
-- **Plausible** — cookie-free analytics, DNT-aware. Cloud instance.
+My toolkit includes **LangGraph** for multi-step workflows, **LangSmith** for inspecting runs and evaluating responses, and **n8n** for integrations and automation. I use **MCP** to connect tools to agents, and **GitNexus** to explore relationships in code.
 
-## Content build (this blog)
+Project instructions, skills, and hooks help make useful actions repeatable. I try to add them for a specific need and keep the configuration understandable.
 
-- **Pagefind** — static index for ⌘K search. Built after `astro build`.
-- **Satori + Resvg** — per-post / per-landing OG image and course certificate generation in PNG directly on the server.
-- **rehype-mermaid + Playwright** — Mermaid diagrams render to SVG at build time. Cold start is cold, cache is aggressive.
-- **rehype-katex** — LaTeX → KaTeX, build time.
-- **Vitest 5 + Playwright** — unit + e2e tests.
+## What runs this site
 
----
+The public pages are built with **Astro**. Articles live in Markdown; **KaTeX** handles formulas, **Mermaid** handles diagrams, and **Pagefind** provides article search.
 
-If anything here interests you — write to [a@artka.dev](mailto:a@artka.dev).
+**Docker, GitHub Actions, and Dokploy** handle builds and deployment. Publication images are stored in **Cloudflare R2**, and application data is in PostgreSQL. **Vitest** and **Playwright** check the code.
+
+The [project page](/en/projects/astro-blog/) covers the implementation in more detail. If you'd like to discuss any of these tools, [get in touch](/en/contact/).

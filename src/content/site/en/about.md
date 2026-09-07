@@ -1,60 +1,41 @@
 ---
 title: About me
-sourceHash: 53a35e4999b8f01d7f07c25bd02ecb2d10f0ee40b4e1261496708e8a8632be67
+description: "Artyom Kashuta is a full-stack and AI engineer. My background, approach to software development, and work with AI agents."
+lang: en
+sourceHash: 3a92f4f741159f723ae4119b137cd22e86e8dfffd5fadefc0fb131f05ed42e6c
 manuallyEdited: false
 ---
 
-## Who I Am
+I'm Artyom Kashuta, a full-stack and AI engineer. I build web applications, APIs, and tools that automate everyday work, mainly with TypeScript and Python.
 
-Artyom Kashuta. Full-stack and AI engineer. **7+ years running production systems** — APIs, data pipelines, LLM/agent workflows, and cloud infrastructure. Remote-first.
+I enjoy taking a product from an initial idea to a working system: understanding the problem, designing a solution, writing the code, and getting it into use. Shipping brings another set of questions: how to find failures, assess quality, and keep improving the system.
 
-**Currently:** AI Automation Engineer at [TaxDome](https://taxdome.com) — designing and delivering end-to-end LLM/agent workflows in Python and TypeScript, building eval systems and retrieval pipelines over internal documents and CRM data.
+## Background
 
-**Previously:** Staff Engineer and Team Lead at 9RED (ex. Pari) — tech-led cross-domain platform architecture and numerous API integrations serving **>15,000 MAU** and **700 RPS per instance**.
+My experience includes AI automation at [TaxDome](https://taxdome.com) and working as a Staff Engineer and Team Lead at 9RED. I've worked on integrations, payment services, communication between microservices, and observability, and have led a development team.
 
-## What I Do
+In AI, I'm especially interested in agents that work with tools and data: searching documents, connecting external systems, and completing multi-step tasks. That involves both model behavior and familiar engineering concerns: API contracts, permissions, retries, and error handling.
 
-- **AI agent engineering.** End-to-end workflows with LangGraph, LangChain, and LangSmith. Direct OpenAI / Anthropic / Gemini API calls where fine-grained token, latency, and cache control matters. Eval systems and prompt-regression suites via LangSmith traces, structured outputs, and golden datasets — to keep agent quality from degrading as prompts and models evolve.
-- **Retrieval & RAG.** Chunking, embeddings, hybrid search, reranking over internal documents and CRM data. FastAPI services, consumer-side agents.
-- **Backend and distributed systems.** Python (FastAPI), TypeScript / Node.js (Fastify), event sourcing on Apache Kafka, inter-service communication via gRPC, observability through OpenTelemetry → Prometheus → Grafana → Mimir.
-- **AI MVP development.** Backend + lightweight frontend + AWS infrastructure in Docker — to quickly validate hypotheses and cut time-to-value.
+## How I work
 
-## What I've Measurably Built
+I start by understanding what someone needs to accomplish. Then I look for the simplest solution that can deliver that result and be tested. A new library or service needs to justify the complexity it adds.
 
-- Platforms at **700 RPS** with **<150 ms latency** for **>15k MAU** — Wallet and sportsbook/casino integrations at 9RED.
-- Migrated **20+ microservices** from Kafka / GraphQL Federation to gRPC contracts → **−32% inter-service latency**.
-- Full observability from scratch (OpenTelemetry → Collector → Prometheus → Grafana, plus Mimir for metrics) → **−45% MTTR**.
-- Event sourcing on Apache Kafka across 20+ services → **+50% scalability**.
-- Led cross-functional team of 8 engineers (3 BE, 2 FE, 3 QA) and 1 BA.
+I use AI development tools extensively, from exploring unfamiliar code to implementation and review. I want to keep changes understandable: a clear task, a manageable scope, tests, and a check of the running application. A successful build doesn't necessarily mean the original problem is solved.
 
-## Stack
+I prefer small functions, explicit dependencies, and code that makes sense without a long explanation. In a team, I value direct discussion, timely feedback, and taking responsibility for the outcome.
 
-- **Languages:** Python, TypeScript / Node.js, JavaScript, SQL (PostgreSQL / PostGIS).
-- **Backend:** FastAPI, Fastify, Express; microservices, event sourcing, gRPC, REST, GraphQL, webhooks.
-- **AI / LLM:** OpenAI, Anthropic, Gemini APIs; LangGraph, LangChain, LangSmith (evals & tracing); RAG, embeddings, vector & hybrid search; agentic frameworks; prompt engineering. **Claude Code and Cursor — daily drivers.** n8n, Make.
-- **Data:** PostgreSQL, PostGIS, MongoDB, DynamoDB, Redis; Apache Kafka, RabbitMQ; ORMs — Prisma, Sequelize, Drizzle.
-- **Cloud / observability:** AWS (EKS, S3, RDS, CloudWatch), Docker, Kubernetes, GitLab CI/CD, GitHub Actions; OpenTelemetry, Prometheus, Grafana, Mimir.
+## Why this site exists
 
-Detailed list with rationales — on the [/uses](/uses) page.
+This is where I collect what I learn about software development, AI agents, and my own projects. I want each writeup to leave the reader with something useful: an idea, an example, or a way to test their own approach.
 
-## What I've Written
+- [Articles](/en/blog/) — notes on development tools, Astro, and working with AI.
+- [Claude Code course](/en/courses/claude-code-guide/) — 14 lessons on context, instructions, tools, and checking an agent's work.
+- [Projects](/en/projects/) — a closer look at things I've built, including this site.
 
-- **[Claude Code Guide](/courses/claude-code-guide)** — 14-lesson course on Claude Code internals: harness, context window, skills, hooks, MCP, subagents, models, antipatterns. RU + EN, interactive exercises, certificate on 100% completion.
-- **[artka.dev](/projects/astro-blog)** — this site. Astro 7 + PostgreSQL + Drizzle, bilingual RU/EN, SSG + dynamic admin panel, Mermaid and LaTeX rendering at build-time, on-demand PNG certificates via Satori.
-- **[AI agent engineering writeups](/blog)** — postmortems and breakdowns of agentic systems: tool design, evaluation, production failure modes.
+I write in Russian and English. For current priorities, see [Now](/en/now/). My development tools are on [Uses](/en/uses/).
 
-What I'm working on right now — on the [/now](/now) page.
+## Get in touch
 
-## Education and Languages
+Email me at [a@artka.dev](mailto:a@artka.dev) or reach out on [Telegram](https://t.me/akv6020) to talk about software, AI tools, or something you've read here.
 
-- **Elbrus Coding Bootcamp** — Full-stack Developer Certificate, Moscow, 2019–2020.
-- **English** — Advanced (C1) · **Russian** — Native.
-
-## Contact
-
-- Email: [a@artka.dev](mailto:a@artka.dev)
-- GitHub: [github.com/node-develop](https://github.com/node-develop)
-- LinkedIn: [linkedin.com/in/artem-kashuta](https://www.linkedin.com/in/artem-kashuta/)
-- X: [@artkadev](https://x.com/artkadev)
-- Telegram: [@akv6020](https://t.me/akv6020)
-- RSS: [RU](/rss.xml) · [EN](/en/rss.xml)
+You can find my code on [GitHub](https://github.com/node-develop) and my professional profile on [LinkedIn](https://www.linkedin.com/in/artem-kashuta/).

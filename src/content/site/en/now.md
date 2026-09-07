@@ -1,46 +1,31 @@
 ---
 title: Now
-description: >-
-  What I'm doing right now — AI Automation in TaxDome, eval systems, retrieval pipelines, and evolution of the
-  blog/personal MCP tools. Updated roughly once a month.
-sourceHash: 06b2b8e6653d280fe5ef2140a25042e25c1d028306fd661d587b62432454f5db
+description: "What I am working on in September 2026: my personal site, practical writing, and tools for developing software with AI."
+lang: en
+sourceHash: c57d270a811ded9173c1b0d189dad52f6cf372557eead1d3fd49c01182fe8eb1
 manuallyEdited: false
 ---
 
-> Last updated: 2026-05-09
+Updated September 7, 2026.
 
-This is a page in the spirit of [nownownow.com](https://nownownow.com): what's in focus right
-now, without plans for a decade.
+My personal projects currently revolve around this site and practical ways to use AI tools in software development.
 
-## Work
+## Building artka.dev
 
-**AI Automation Engineer (contract), [TaxDome](https://taxdome.com)** —
-since January 2026.
+I'm bringing my articles, learning materials, and projects together in Russian and English. I want this to be a place people return to for clear explanations and useful examples.
 
-I design and deliver end-to-end LLM/agent workflows in Python and TypeScript:
-LangGraph for orchestration, LangChain for core components, n8n for glue.
-Direct calls to OpenAI / Anthropic / Gemini APIs where fine-grained token
-and latency control is needed.
+I recently added a publishing API so external tools can submit article text, images, and metadata in a consistent format. The site also gives me a working project for trying ideas, from content organization to builds and deployment. The [project page](/en/projects/astro-blog/) explains how it fits together.
 
-Current focus:
+## Improving the material
 
-- **Eval systems.** Prompt regression suites via LangSmith traces, structured
-  outputs, and golden datasets — to prevent agent quality degradation
-  as prompts and models evolve.
-- **Retrieval pipelines.** Chunking, embeddings, hybrid search, reranking
-  over internal documents and CRM data. Services on FastAPI, agents —
-  on the consumer side.
-- **AI MVP end-to-end.** Backend + lightweight frontend + AWS infrastructure in Docker —
-  to quickly validate hypotheses and cut time-to-value.
-- **Continuous reassessment** of new models, agentic frameworks, and tooling
-  (Claude Code, Cursor) — what works as a daily driver for the team.
+I've revised the articles and [Claude Code course](/en/courses/claude-code-guide/), updating instructions, removing unsupported claims, and making the limits of teaching examples clearer.
 
-## Personal projects — September 7, 2026 update
+Next, I want to add more writeups that readers can reproduce: a small problem, the code, verification results, and an account of what didn't work. My near-term topics are agents using tools and content publishing with Astro.
 
-- **artka.dev.** The content API is deployed with a contract, images and a publishing queue. See [OpenAPI](/api/v1/openapi.json).
-- **Claude Code Guide.** All 14 lessons were revised, correcting commands and configuration and separating teaching examples from production implementations.
-- **Content quality.** Five articles were updated in Russian and English. Reproducible writeups with code and verification results are next.
+## Working with coding agents
 
-Employment information above belongs to the dated May snapshot; it does not establish a September role or employer change.
+I use Claude Code and Codex for development. I'm exploring which context they actually need, where instructions and automated checks help, and where it makes more sense to make a decision myself.
 
-Use [contact](/en/contact/) for feedback.
+This is part of working on real projects: define the task, review the changes, run the application, and check whether the original problem is solved.
+
+If you're working on something similar or spot an error in the material, [get in touch](/en/contact/). My background and approach are on [About me](/en/about/).

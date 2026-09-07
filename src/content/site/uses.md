@@ -1,103 +1,40 @@
 ---
 title: Что я использую
-description: "Редакторы, backend, инфраструктура и AI-инструменты: личный набор и актуальный стек этого блога."
+description: "Мои инструменты для разработки: редакторы, Claude Code и Codex, TypeScript, Python, PostgreSQL и инфраструктура личных проектов."
 ---
 
-> Личный набор — снимок на 2026-05-09. Сведения о стеке этого сайта уточнены 2026-09-07.
+Обновлено 7 сентября 2026.
 
-## Редакторы / IDE
+Здесь собраны инструменты, с которыми я работаю, и задачи, для которых они мне нужны. Набор меняется от проекта к проекту. В первую очередь смотрю на то, насколько удобно писать, проверять и поддерживать решение.
 
-- **WebStorm 2026.2** — основной IDE для TypeScript / Node.js / фронта. Refactoring,
-  навигация по символам, отладка, встроенный database tool — всё в одном месте,
-  без переключений.
-- **PyCharm 2026.2** — основной IDE для Python (FastAPI, скрипты, eval-пайплайны).
-- **DataGrip 2026.2** — отдельный инстанс для PostgreSQL-работы: схема, индексы,
-  EXPLAIN-планы, миграции в режиме diff против drizzle-kit / alembic.
-- **Cursor** — agentic-редактор для experiment'ов с агентами кода вне Claude Code.
-- **Claude Code (CLI)** — daily driver для крупных задач. Запускается из любого
-  репо, контекст из `CLAUDE.md`. WebStorm/PyCharm + Claude Code — два режима
-  работы: ручной хирургический и агентный батч-режим.
-- **tmux** — мультиплексор терминала для нескольких сессий.
+## Редактор и работа с кодом
 
-## AI / LLM
+**WebStorm и PyCharm** — для TypeScript и Python. Использую их для навигации по проекту, отладки и рефакторинга. **DataGrip** — для работы с базой: посмотреть схему, написать запрос, изучить план выполнения.
 
-- **Claude Code** — daily driver. Opus 4.7 (1M context) для крупных рефакторингов
-  и планирования, Sonnet для большинства задач, Haiku 4.5 для пайплайна
-  переводов RU→EN.
-- **Cursor** — параллельный AI-редактор; полезен там, где встроенный chat ближе
-  к коду, чем CLI-цикл.
-- **Anthropic, OpenAI, Gemini SDK** — прямые вызовы из рантайма, когда нужно
-  тонкое управление токенами/латенси (`/api/check` для CodeChallenge, eval-suites,
-  retrieval-сервисы).
-- **LangGraph** — оркестрация многошаговых agent workflows. Чёткие state-машины
-  поверх tool-use loop'ов.
-- **LangChain** — базовые примитивы (chains, prompts, output parsers, retrievers).
-- **LangSmith** — traces, eval-датасеты, regression suites. Без него agent quality
-  деградирует незаметно с каждой подкруткой промпта.
-- **n8n, Make** — простые решения для интеграций и автоматизации, где не нужен полноценный
-  service.
-- **MCP-серверы** — GitNexus (граф кода), llm-wiki (личная wiki), computer-use
-  (когда нужно). Подключаются через `.mcp.json`.
-- **Skill / agent / hook system** — тонкая настройка Claude Code под каждый репо:
-  см. `.claude/`. Pre-tool hooks, custom skills, subagents для параллельных задач.
+**Claude Code и Codex** — для задач с AI-агентами: разобраться в кодовой базе, подготовить изменения, найти проблемы на ревью. **Cursor** тоже есть в моём наборе для работы с AI прямо в редакторе. Результат проверяю через diff, тесты и запуск приложения.
 
-## Backend
+**Git и GitHub** — история изменений и pull requests. Для отдельных задач использую worktrees, чтобы параллельная работа не смешивалась в одной ветке. **tmux** помогает держать несколько терминальных сессий.
 
-- **Python 3.13 + FastAPI** — основной стек для production AI/agent-сервисов
-  и retrieval-пайплайнов. Pydantic-валидация, async-first.
-- **Node.js 24 LTS + TypeScript 6** — стек этого блога. Fastify для high-throughput сервисов; Express для legacy.
-- **gRPC** — межсервисная коммуникация. На прошлом проекте миграция 20+
-  микросервисов с Kafka/GraphQL Federation на gRPC дала −32% latency.
-- **REST, GraphQL, webhooks** — там, где они уместны.
-- **Event sourcing на Apache Kafka** — для систем с высокой пропускной способностью
-  и audit-требованиями. Идемпотентность через outbox pattern и dedup-keys.
-- **Astro 7** — публичная часть и админка-острова этого блога.
-- **Better-Auth** — auth-инфраструктура с PostgreSQL-адаптером. Используется
-  на админке + course progress sync.
-- **Zod 4** — все DTO и валидация на TypeScript-стеке.
-- **Drizzle ORM + drizzle-kit** — schema-first в TypeScript, миграции в SQL.
+## Backend и данные
 
-## Data
+Основной набор — **TypeScript с Node.js** и **Python с FastAPI**. На TypeScript пишу веб-сервисы и интеграции; Python использую для AI-сервисов, обработки данных и автоматизации.
 
-- **PostgreSQL 18 + PostGIS** — единственная БД, нужная 99% задач. FTS, JSONB,
-  partial indexes, EXPLAIN-первый подход.
-- **MongoDB, DynamoDB** — там, где нужна document-модель или AWS-нативность.
-- **Redis** — кэши, rate limit, dedup-keys, pub/sub для realtime.
-- **Apache Kafka** — event sourcing, межсервисный обмен на high-load.
-- **RabbitMQ** — task queues, RPC, fan-out.
-- **ORMs:** Drizzle (TS), Prisma, Sequelize.
+**PostgreSQL** — основная реляционная база. Мне удобно начинать с понятной схемы, ограничений и обычных SQL-запросов. **Drizzle** использую в этом блоге для схемы и миграций, **Zod** — для проверки входных данных.
 
-## Cloud / оркестрация
+В более сложных системах работал с **Redis, Kafka и gRPC**. Это инструменты под конкретные задачи — кэширование, события и взаимодействие сервисов. Для небольшого проекта такой набор может быть избыточным.
 
-- **AWS** — EKS, S3, RDS, CloudWatch.
-- **Kubernetes** — production-нагрузки, HPA по custom metrics из Prometheus.
-- **Docker (multi-stage, `node:24-bookworm-slim`)** — никаких alpine для
-  проектов с native-модулями. Образы в ghcr.io / private ECR.
-- **GitLab CI/CD** — на коммерческих проектах.
-- **GitHub Actions** — на opensource и личных проектах. Для блога — образ в ghcr.io.
-- **Dokploy** — деплой блога через webhook после успешного push в main,
-  миграции при старте контейнера.
+## AI и автоматизация
 
-## Observability
+Использую API **Anthropic, OpenAI и Gemini**, когда модель нужна внутри приложения. Выбор зависит от задачи, качества ответа, времени выполнения и стоимости. Название модели само по себе мало говорит о том, подойдёт ли она конкретному продукту.
 
-- **OpenTelemetry → Collector → Prometheus → Grafana** — full-stack telemetry,
-  собранная с нуля на прошлой работе. SLO/SLI-дашборды, алерты, error budgets.
-  Дала −45% MTTR.
-- **Grafana Mimir** — долговременное хранение метрик.
-- **Pino** — структурированные логи, JSON в stdout.
-- **Sentry** — production-ошибки, source maps в build.
-- **Plausible** — аналитика без cookies, DNT-aware. Cloud-инстанс.
+В моём наборе есть **LangGraph** для многошаговых сценариев, **LangSmith** для просмотра выполнения и оценки ответов, **n8n** для интеграций и автоматизации. **MCP** использую для подключения инструментов к агентам, **GitNexus** — для изучения связей в коде.
 
-## Сборка контента (этот блог)
+Инструкции проекта, skills и hooks помогают повторять полезные действия. Стараюсь добавлять их под конкретную потребность и держать конфигурацию понятной.
 
-- **Pagefind** — статический индекс для ⌘K-поиска. Билдится после `astro build`.
-- **Satori + Resvg** — генерация per-post / per-landing OG-картинок и сертификатов
-  курсов в PNG прямо на сервере.
-- **rehype-mermaid + Playwright** — Mermaid-диаграммы рендерятся в SVG на
-  build-time. Cold-start холодный, кэш агрессивный.
-- **rehype-katex** — LaTeX → KaTeX, build-time.
-- **Vitest 5 + Playwright** — unit + e2e тесты.
+## Как устроен этот сайт
 
----
+Публичные страницы собраны на **Astro**. Статьи храню в Markdown; **KaTeX** отвечает за формулы, **Mermaid** — за диаграммы, **Pagefind** — за поиск по статьям.
 
-Если что-то отсюда интересно — пишите на [a@artka.dev](mailto:a@artka.dev).
+**Docker, GitHub Actions и Dokploy** используются для сборки и развёртывания. Изображения для публикаций хранятся в **Cloudflare R2**, данные приложения — в PostgreSQL. Код проверяют **Vitest** и **Playwright**.
+
+Подробнее о решениях и устройстве — на [странице проекта](/projects/astro-blog/). Если хотите обсудить какой-то из инструментов, [напишите мне](/contact/).
