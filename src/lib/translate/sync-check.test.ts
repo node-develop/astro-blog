@@ -129,3 +129,19 @@ describe("detectDrift", () => {
     expect(result.warnings).toEqual(["manual-stale"]);
   });
 });
+
+it.each([false, true])("allows independently managed API locales (EN exists: %s)", (enExists) => {
+  expect(
+    detectDrift([
+      {
+        slug: "api-article",
+        ruHash: "new",
+        enHash: enExists ? "old" : null,
+        enExists,
+        enManual: false,
+        ruDraft: false,
+        apiManaged: true,
+      },
+    ]),
+  ).toEqual({ missing: [], drift: [], warnings: [] });
+});

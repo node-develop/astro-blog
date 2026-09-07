@@ -10,6 +10,7 @@ import { postSchema, siteSchema, projectSchema } from "../src/lib/content/schema
 
 interface FrontmatterPeek {
   readonly draft?: boolean;
+  readonly apiRevision?: string;
   readonly sourceHash?: string;
   readonly manuallyEdited?: boolean;
 }
@@ -84,9 +85,18 @@ const main = async (): Promise<void> => {
     const ruHash = sha256(ruSrc);
     const ruFm = peekFrontmatter(ruSrc);
     const ruDraft = ruFm.draft === true;
+    const apiManaged = typeof ruFm.apiRevision === "string";
     const enPath = join(PATHS.postsEnDir, file);
     if (!existsSync(enPath)) {
-      states.push({ slug, ruHash, enHash: null, enExists: false, enManual: false, ruDraft });
+      states.push({
+        slug,
+        ruHash,
+        enHash: null,
+        enExists: false,
+        enManual: false,
+        ruDraft,
+        apiManaged,
+      });
       continue;
     }
     const enSrc = await readFile(enPath, "utf8");
@@ -98,6 +108,7 @@ const main = async (): Promise<void> => {
       enExists: true,
       enManual: enFm.manuallyEdited === true,
       ruDraft,
+      apiManaged,
     });
   }
 

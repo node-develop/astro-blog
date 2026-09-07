@@ -15,6 +15,7 @@ import { serializeArticle } from "../src/lib/content-api/markdown";
 
 const slug = `api-smoke-${Date.now()}`;
 const marker = randomUUID();
+const workerSecret = randomBytes(48).toString("base64url");
 const token = `artka_${randomBytes(32).toString("base64url")}`;
 const input = JSON.parse(await readFile("docs/api/article.example.json", "utf8"));
 const document = articleDocumentSchema.parse({
@@ -64,6 +65,7 @@ try {
     created.push(path!);
   }
   await build();
+  execFileSync("pnpm", ["translate:check"], { stdio: "pipe" });
   const html = await readFile(`dist/client/blog/${slug}/index.html`, "utf8");
   assert(html.includes(`data-content-revision="${marker}"`));
   assert(html.includes("Smoke SEO title | artka.dev"));
@@ -96,7 +98,7 @@ try {
       ...process.env,
       DATABASE_URL: container.getConnectionUri(),
       GITHUB_PAT: "",
-      CONTENT_WORKER_SECRET: "",
+      CONTENT_WORKER_SECRET: workerSecret,
       HOST: "127.0.0.1",
       PORT: String(port),
       SITE_URL: "https://artka.dev",
@@ -122,6 +124,12 @@ try {
   const specResponse = await fetch(`${base}/api/v1/openapi.json`);
   assert.equal(specResponse.status, 200);
   assert.equal((await specResponse.json()).openapi, "3.1.0");
+  const workerResponse = await fetch(`${base}/api/v1/_worker/`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${workerSecret}`, "content-type": "application/json" },
+  });
+  assert.equal(workerResponse.status, 200, await workerResponse.clone().text());
+  assert.deepEqual(await workerResponse.json(), { worked: false });
   const request = {
     method: "POST",
     headers: {

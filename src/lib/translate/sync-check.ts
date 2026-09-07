@@ -8,6 +8,8 @@ export interface FileState {
   readonly enExists: boolean;
   readonly enManual: boolean;
   readonly ruDraft: boolean;
+  /** API writers own each locale independently of the legacy RU → EN pipeline. */
+  readonly apiManaged?: boolean;
 }
 
 export interface DriftReport {
@@ -21,7 +23,7 @@ export const detectDrift = (files: readonly FileState[]): DriftReport => {
   const drift: string[] = [];
   const warnings: string[] = [];
   for (const f of files) {
-    if (f.ruDraft || isFixtureSlug(f.slug)) continue;
+    if (f.apiManaged || f.ruDraft || isFixtureSlug(f.slug)) continue;
     if (!f.enExists) {
       missing.push(f.slug);
       continue;
