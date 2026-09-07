@@ -116,6 +116,6 @@ describe("content API contract and rendering", () => {
   });
   it("exposes the same strict article schema in OpenAPI", () => {
     expect(openApiDocument.components.schemas.ArticleDocument.additionalProperties).toBe(false);
-    expect(openApiDocument.paths["/articles"].post.parameters).toHaveLength(1);
+    expect(openApiDocument.paths["/articles/"].post.parameters).toHaveLength(1);
   });
 });
