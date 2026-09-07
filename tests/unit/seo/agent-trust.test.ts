@@ -58,8 +58,8 @@ describe("agent trust signals", () => {
     // llms.txt is generated (src/pages/llms.txt.ts), no longer a public/ file.
     const llms = await (await getLlmsTxt({} as APIContext)).text();
 
-    expect(llms).toMatch(/^## When to use artka\.dev$/m);
-    expect(llms).toMatch(/^## How agents should use this site$/m);
+    expect(llms).toContain("**When to use artka.dev**");
+    expect(llms).toContain("**How agents should use this site**");
     expect(llms).toContain("Claude Code internals");
     expect(llms).toContain("https://artka.dev/contact/");
     expect(llms).toContain("https://artka.dev/privacy/");
