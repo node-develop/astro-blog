@@ -192,7 +192,7 @@ describe("production standalone server", () => {
       }
 
       const llms = await responseFor(server.origin, "/llms.txt");
-      await expect(llms.text()).resolves.toContain("## When to use artka.dev");
+      await expect(llms.text()).resolves.toContain("**When to use artka.dev**");
 
       const courseLanding = await html(server.origin, "/courses/claude-code-guide/");
       expect(courseLanding).toContain("Зачем этот курс");
