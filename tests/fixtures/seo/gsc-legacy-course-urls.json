@@ -1,0 +1,17 @@
+{
+  "/courses/claude-code-guide/01-introduction/02-context-and-cache/": "/courses/claude-code-guide/02-context-and-cache/",
+  "/courses/claude-code-guide/01-introduction/05-hooks/": "/courses/claude-code-guide/05-hooks/",
+  "/courses/claude-code-guide/01-introduction/12-travel-agent-blueprint/": "/courses/claude-code-guide/12-travel-agent-blueprint/",
+  "/courses/claude-code-guide/02-context-and-cache/03-claude-md/": "/courses/claude-code-guide/03-claude-md/",
+  "/courses/claude-code-guide/06-mcp/07-plugins/": "/courses/claude-code-guide/07-plugins/",
+  "/courses/claude-code-guide/08-tool-calls-and-loop/09-subagents/": "/courses/claude-code-guide/09-subagents/",
+  "/courses/claude-code-guide/09-subagents/10-agent-teams/": "/courses/claude-code-guide/10-agent-teams/",
+  "/en/blog/12-travel-agent-blueprint/04-skills/": "/en/courses/claude-code-guide/04-skills/",
+  "/en/courses/claude-code-guide/01-introduction/09-subagents/": "/en/courses/claude-code-guide/09-subagents/",
+  "/en/courses/claude-code-guide/02-context-and-cache/03-claude-md/": "/en/courses/claude-code-guide/03-claude-md/",
+  "/en/courses/claude-code-guide/08-tool-calls-and-loop/09-subagents/": "/en/courses/claude-code-guide/09-subagents/",
+  "/en/courses/claude-code-guide/11-models-and-pricing/12-travel-agent-blueprint/": "/en/courses/claude-code-guide/12-travel-agent-blueprint/",
+  "/en/courses/claude-code-guide/12-travel-agent-blueprint/07-plugins/": "/en/courses/claude-code-guide/07-plugins/",
+  "/en/courses/claude-code-guide/12-travel-agent-blueprint/13-best-practices/": "/en/courses/claude-code-guide/13-best-practices/",
+  "/en/courses/claude-code-guide/14-claims-verification/02-context-and-cache/": "/en/courses/claude-code-guide/02-context-and-cache/"
+}

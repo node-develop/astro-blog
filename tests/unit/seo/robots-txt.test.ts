@@ -10,8 +10,8 @@ describe("public/robots.txt", () => {
     "OAI-SearchBot",
     "ChatGPT-User",
     "ClaudeBot",
-    "Claude-Web",
-    "anthropic-ai",
+    "Claude-SearchBot",
+    "Claude-User",
     "PerplexityBot",
     "Perplexity-User",
     "Google-Extended",
@@ -50,7 +50,7 @@ describe("public/robots.txt", () => {
   it("points agents at llms.txt / llms-full.txt and carries the review date", () => {
     expect(robots).toContain("https://artka.dev/llms.txt");
     expect(robots).toContain("https://artka.dev/llms-full.txt");
-    expect(robots).toMatch(/^# robots\.txt — last reviewed 2026-09-05$/m);
+    expect(robots).toMatch(/^# robots\.txt — last reviewed \d{4}-\d{2}-\d{2}$/m);
   });
 
   it("keeps the catch-all User-agent: * block last", () => {

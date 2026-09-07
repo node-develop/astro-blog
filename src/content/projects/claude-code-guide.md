@@ -1,41 +1,39 @@
 ---
-title: Claude Code Guide (RU, 14 частей)
-description: "Серия из четырнадцати статей про устройство Claude Code: harness/agent loop, context, skills, hooks, MCP, subagents, модели и антипаттерны."
-role: "Author, editor, translator (RU → EN)"
+title: Claude Code Guide — 14 уроков
+description:
+  Курс на русском и английском про контекст, инструменты, hooks, MCP и проверку результатов с учебными
+  упражнениями.
+role: Author, editor, translator (RU → EN)
 status: maintained
 pubDate: 2026-04-01
-updatedDate: 2026-05-09
+updatedDate: 2026-09-07
 featured: true
 stack:
-  - Markdown / MDX
-  - Mermaid (build-time)
+  - Markdown
+  - Mermaid
   - Astro content collections
-  - Bilingual pipeline (Claude Haiku 4.5)
+  - RU / EN
 outcomes:
-  - "14 частей, ~80 тысяч знаков на RU. Покрытие от harness/agent loop до антипаттернов."
-  - "Полный EN-перевод с per-key hash tracking; CI-гвард не даёт пушнуть RU без commit'а EN-двойника."
-  - "Каждая часть — самостоятельный артефакт для цитирования: TL;DR + чёткие подзаголовки."
+  - 14 тематических уроков на двух языках.
+  - Учебные примеры отделены от готового production-кода.
+  - Карта исправлений и ссылки на первичные источники.
 links:
-  - label: Index (RU)
-    url: https://artka.dev/blog
-  - label: Index (EN)
-    url: https://artka.dev/en/blog
+  - label: Course (RU)
+    url: https://artka.dev/courses/claude-code-guide/
+  - label: Course (EN)
+    url: https://artka.dev/en/courses/claude-code-guide/
 ---
 
-## Контекст
+## Задача курса
 
-Большая часть туториалов по Claude Code — либо «поставь и пиши», либо «вот мой workflow». Не хватало материала, который объясняет, **как оно устроено внутри**: что такое harness, как считается context window, чем skill отличается от agent'а, как hooks вклиниваются в lifecycle.
+Объяснить ответственность модели и приложения: управление контекстом, вызовы инструментов, обработку ошибок и проверку результата. Курс рассчитан на разработчика, который может выполнить небольшое упражнение в тестовом репозитории.
 
-## Структура
+## Редактура сентября 2026
 
-14 частей, каждая 3000–8000 знаков: введение и harness/agent loop; context window; CLAUDE.md и system context; skills; hooks; MCP-серверы и tool-design; subagents; models (Opus/Sonnet/Haiku); plan mode; worktrees; cost mechanics; Travel Agent blueprint; best practices; verification of claims.
+Пересмотрены все 14 уроков. Исправлены неподходящие SDK-примеры, устаревшие команды и ошибочные обещания защиты через hooks. Travel Agent обозначен как учебный blueprint, а не готовый сервис бронирований. Неподтверждённые проценты эффективности убраны.
 
-## Что узнал
+Начать можно с [введения](/courses/claude-code-guide/01-introduction/), а перечень исправлений находится в [уроке 14](/courses/claude-code-guide/14-claims-verification/).
 
-- Перевод через LLM-pipeline даёт стабильное качество ровно до тех пор, пока RU остаётся coherent — любая mid-sentence правка ломает hash.
-- Mermaid-диаграммы в техническом тексте окупаются: они становятся частью извлекаемого LLM'ами контента.
-- TL;DR-блоки в начале (вводятся в EPIC C) повышают вероятность цитирования больше, чем правильные H-заголовки.
+## Что развивать дальше
 
-## Что дальше
-
-EPIC C parent-spec'а: добавить `summary`/`faq` frontmatter и MDX-компоненты в существующие 14 частей.
+Добавлять проверяемые мини-проекты с зафиксированными версиями, тестовыми данными и результатами запусков. Длина урока сама по себе не подтверждает полезность: читатель должен уметь повторить действие и распознать неуспех.

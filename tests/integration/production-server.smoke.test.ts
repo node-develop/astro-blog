@@ -223,7 +223,7 @@ describe("production standalone server", () => {
         const courseEntry = [...sitemapBody.matchAll(/<url>([\s\S]*?)<\/url>/g)]
           .map((match) => match[1] ?? "")
           .find((entry) => entry.includes(`<loc>${courseUrl}</loc>`));
-        expect(courseEntry, pathname).toContain("<lastmod>2026-08-24</lastmod>");
+        expect(courseEntry, pathname).toContain("<lastmod>2026-09-07</lastmod>");
       }
 
       const fileVariantResults = await Promise.all(

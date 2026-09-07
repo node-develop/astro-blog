@@ -1,8 +1,9 @@
 ---
 title: Что я использую
+description: "Редакторы, backend, инфраструктура и AI-инструменты: личный набор и актуальный стек этого блога."
 ---
 
-> Снимок на 2026-05-09. Версии указываю там, где они влияют на воспроизводимость.
+> Личный набор — снимок на 2026-05-09. Сведения о стеке этого сайта уточнены 2026-09-07.
 
 ## Редакторы / IDE
 
@@ -16,7 +17,7 @@ title: Что я использую
 - **Claude Code (CLI)** — daily driver для крупных задач. Запускается из любого
   репо, контекст из `CLAUDE.md`. WebStorm/PyCharm + Claude Code — два режима
   работы: ручной хирургический и агентный батч-режим.
-- **TMUX** — терминальный редактор для быстрых правок.
+- **tmux** — мультиплексор терминала для нескольких сессий.
 
 ## AI / LLM
 
@@ -44,14 +45,13 @@ title: Что я использую
 
 - **Python 3.13 + FastAPI** — основной стек для production AI/agent-сервисов
   и retrieval-пайплайнов. Pydantic-валидация, async-first.
-- **Node.js 24 LTS + TypeScript 5.9** — TS 6 пока ломает `@astrojs/check`
-  и `zod-to-ts`. Fastify для high-throughput сервисов; Express для legacy.
+- **Node.js 24 LTS + TypeScript 6** — стек этого блога. Fastify для high-throughput сервисов; Express для legacy.
 - **gRPC** — межсервисная коммуникация. На прошлом проекте миграция 20+
   микросервисов с Kafka/GraphQL Federation на gRPC дала −32% latency.
 - **REST, GraphQL, webhooks** — там, где они уместны.
 - **Event sourcing на Apache Kafka** — для систем с высокой пропускной способностью
   и audit-требованиями. Идемпотентность через outbox pattern и dedup-keys.
-- **Astro 5** — публичная часть и админка-острова этого блога.
+- **Astro 7** — публичная часть и админка-острова этого блога.
 - **Better-Auth** — auth-инфраструктура с PostgreSQL-адаптером. Используется
   на админке + course progress sync.
 - **Zod 4** — все DTO и валидация на TypeScript-стеке.
@@ -83,7 +83,7 @@ title: Что я использую
 - **OpenTelemetry → Collector → Prometheus → Grafana** — full-stack telemetry,
   собранная с нуля на прошлой работе. SLO/SLI-дашборды, алерты, error budgets.
   Дала −45% MTTR.
-- **Grafana Mimir** — long-term storage для traces.
+- **Grafana Mimir** — долговременное хранение метрик.
 - **Pino** — структурированные логи, JSON в stdout.
 - **Sentry** — production-ошибки, source maps в build.
 - **Plausible** — аналитика без cookies, DNT-aware. Cloud-инстанс.
@@ -96,7 +96,7 @@ title: Что я использую
 - **rehype-mermaid + Playwright** — Mermaid-диаграммы рендерятся в SVG на
   build-time. Cold-start холодный, кэш агрессивный.
 - **rehype-katex** — LaTeX → KaTeX, build-time.
-- **Vitest 3 + Playwright** — unit + e2e тесты.
+- **Vitest 5 + Playwright** — unit + e2e тесты.
 
 ---
 
