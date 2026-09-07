@@ -88,16 +88,9 @@ const auditUrl = (
   }
 };
 
-const JSON_IDENTITY_KEYS = new Set([
-  "@id",
-  "url",
-  "mainEntityOfPage",
-  "isPartOf",
-  "item",
-  "image",
-  "contentUrl",
-  "thumbnailUrl",
-]);
+const JSON_IDENTITY_KEYS = new Set(["@id", "url", "mainEntityOfPage", "isPartOf", "item"]);
+// Public media can live on a CDN. These URLs are not document identities.
+const JSON_MEDIA_KEYS = new Set(["image", "contentUrl", "thumbnailUrl"]);
 
 const collectJsonIdentityUrls = (value: unknown, urls: string[]): void => {
   if (Array.isArray(value)) {
@@ -105,7 +98,9 @@ const collectJsonIdentityUrls = (value: unknown, urls: string[]): void => {
     return;
   }
   if (value && typeof value === "object") {
+    if ((value as Record<string, unknown>)["@type"] === "ImageObject") return;
     Object.entries(value).forEach(([key, item]) => {
+      if (JSON_MEDIA_KEYS.has(key)) return;
       if (JSON_IDENTITY_KEYS.has(key) && typeof item === "string") {
         urls.push(item);
         return;
@@ -233,6 +228,35 @@ it("allows an ordinary external content link while enforcing a valid file identi
   auditUrl(violations, fixture, "https://artka.dev/rss.xml", ORIGIN, "identity");
 
   expect(violations).toEqual([]);
+});
+
+it("allows CDN media in JSON-LD while retaining document identity checks", () => {
+  const urls: string[] = [];
+  const externalPage = "https://preview.example/blog/example/";
+  collectJsonIdentityUrls(
+    {
+      "@graph": [
+        {
+          "@type": "BlogPosting",
+          "@id": externalPage,
+          url: externalPage,
+          image: { "@type": "ImageObject", url: "https://media.tgapps.cloud/articles/cover.webp" },
+          thumbnailUrl: "https://media.tgapps.cloud/articles/thumb.webp",
+        },
+        {
+          "@type": "ImageObject",
+          "@id": "https://media.tgapps.cloud/articles/cover.webp",
+          contentUrl: "https://media.tgapps.cloud/articles/cover.webp",
+        },
+      ],
+    },
+    urls,
+  );
+  expect(urls).toEqual([externalPage, externalPage]);
+  const violations: Violation[] = [];
+  urls.forEach((url) => auditUrl(violations, "fixture.html", url, ORIGIN, "identity"));
+  expect(violations).toHaveLength(1);
+  expect(violations[0]?.href).toBe(externalPage);
 });
 
 it("resolves every generated RU and EN lesson link to a built course route", () => {
