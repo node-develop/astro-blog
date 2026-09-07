@@ -50,6 +50,13 @@
       "when": 1788642068484,
       "tag": "0006_account_issuer",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788784017962,
+      "tag": "0007_spotty_gargoyle",
+      "breakpoints": true
     }
   ]
 }

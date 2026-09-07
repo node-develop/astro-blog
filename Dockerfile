@@ -51,6 +51,7 @@ COPY --from=builder --chown=astro:astro /app/package.json ./package.json
 COPY --from=builder --chown=astro:astro /app/drizzle ./drizzle
 COPY --from=builder --chown=astro:astro /app/scripts/migrate-prod.mjs ./scripts/migrate-prod.mjs
 COPY --from=builder --chown=astro:astro /app/scripts/backfill-prod.mjs ./scripts/backfill-prod.mjs
+COPY --from=builder --chown=astro:astro /app/scripts/content-worker.mjs ./scripts/content-worker.mjs
 COPY --from=builder --chown=astro:astro /app/src/content/posts ./src/content/posts
 COPY --from=builder --chown=astro:astro /app/src/content/site ./src/content/site
 COPY --from=builder --chown=astro:astro /app/src/content/projects ./src/content/projects

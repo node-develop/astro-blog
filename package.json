@@ -9,6 +9,9 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "content:key": "tsx scripts/content-api-key.ts",
+    "content:worker": "node --env-file=.env scripts/content-worker.mjs",
+    "content:smoke": "tsx scripts/content-api-smoke.ts",
     "start": "astro dev",
     "prebuild": "rm -f public/pagefind",
     "build": "astro build --force && pnpm pagefind:rebuild",
@@ -106,7 +109,9 @@
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
     "vfile": "^6.0.3",
-    "zod": "^4.5.4"
+    "zod": "^4.5.4",
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "sharp": "^0.35.4"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
