@@ -89,21 +89,6 @@
   color: var(--color-fg-muted);
 }
 
-/* ── Shiki dual-theme swap ────────────────────────────────────── */
-.astro-code,
-.astro-code span {
-  color: var(--shiki-light);
-  background-color: var(--shiki-light-bg, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  .astro-code,
-  .astro-code span {
-    color: var(--shiki-dark);
-    background-color: var(--shiki-dark-bg, transparent);
-  }
-}
-
 /* ── Code block container (variant B: craft left stripe) ─────── */
 .code-block {
   position: relative;
@@ -121,7 +106,6 @@
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: transparent;
   padding: var(--space-4) var(--space-5);
   overflow-x: auto;
 }
