@@ -31,6 +31,7 @@ export const lessons = defineCollection({
     blurb: z.string().optional(),
     duration: z.coerce.number().optional(),
     pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
     order: z.number().optional(),
     locale: z.enum(["ru", "en"]).default("ru"),
   }),

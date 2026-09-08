@@ -193,11 +193,14 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       position: 2,
       durationMinutes: 25,
       datePublished: new Date("2026-04-23T00:00:00.000Z"),
+      dateModified: new Date("2026-09-08T00:00:00.000Z"),
       teaches: ["claude-code", "guide"],
     });
     expect(node["@type"]).toBe("LearningResource");
     expect(node["@id"]).toBe(`${lessonUrls[1]}#lesson`);
     expect(node.learningResourceType).toBe("lesson");
+    expect(node.datePublished).toBe("2026-04-23T00:00:00.000Z");
+    expect(node.dateModified).toBe("2026-09-08T00:00:00.000Z");
     expect(node.position).toBe(2);
     expect(node.timeRequired).toBe("PT25M");
     expect(node.isPartOf).toEqual({ "@id": courseId(courseCanonical) });
@@ -216,6 +219,7 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       position: 1,
     });
     expect(node).not.toHaveProperty("timeRequired");
+    expect(node).not.toHaveProperty("dateModified");
     expect(node).not.toHaveProperty("teaches");
   });
 });

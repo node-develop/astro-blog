@@ -286,6 +286,7 @@ export interface LearningResourceNodeInput {
   /** Lesson duration in minutes (frontmatter `duration`). Optional. */
   readonly durationMinutes?: number;
   readonly datePublished?: Date;
+  readonly dateModified?: Date;
   /** What the lesson teaches — course tags or a short topic list. */
   readonly teaches?: ReadonlyArray<string>;
 }
@@ -308,6 +309,7 @@ export const buildLearningResourceNode = (input: LearningResourceNodeInput) => {
     publisher: { "@id": graphIds.organization },
     ...(timeRequired ? { timeRequired } : {}),
     ...(input.datePublished ? { datePublished: input.datePublished.toISOString() } : {}),
+    ...(input.dateModified ? { dateModified: input.dateModified.toISOString() } : {}),
     ...(input.teaches && input.teaches.length > 0 ? { teaches: input.teaches.join(", ") } : {}),
   };
 };
