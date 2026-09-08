@@ -61,6 +61,9 @@ describe("CI indexing recovery gates", () => {
     expect(
       position("pnpm exec vitest run tests/integration/seo-utility-routes.test.ts"),
     ).toBeGreaterThan(position("pnpm test:production-smoke"));
+    expect(position("pnpm exec vitest run tests/integration/course-dates.test.ts")).toBeGreaterThan(
+      position("pnpm verify:seo-build"),
+    );
     expect(position("pnpm translate:check")).toBeGreaterThan(
       position("pnpm exec vitest run tests/integration/seo-utility-routes.test.ts"),
     );
@@ -94,8 +97,9 @@ describe("CI integration job", () => {
     expect(commands).toContain("pnpm install --frozen-lockfile");
     expect(vitest).toBeDefined();
     expect(vitest).toContain("tests/integration");
-    // These two run in `validate` against the production build; keep them out here.
+    // These suites run in `validate` against the production build; keep them out here.
     expect(vitest).toContain("--exclude tests/integration/production-server.smoke.test.ts");
     expect(vitest).toContain("--exclude tests/integration/seo-utility-routes.test.ts");
+    expect(vitest).toContain("--exclude tests/integration/course-dates.test.ts");
   });
 });
