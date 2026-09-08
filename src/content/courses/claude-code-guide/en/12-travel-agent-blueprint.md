@@ -6,10 +6,10 @@ blurb:
 pubDate: 2026-04-23
 order: 12
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-This blueprint proposes a teaching project. It is not a repository you can clone into a working booking system. The previous version included unsuitable SDK imports and missing implementations; those snippets have been removed rather than presented as ready-to-run code.
+We have looked at instructions, tools and helpers separately. Now put them together in a small trip planner: a form, prepared route data, and later a model that can interpret requests. This is a plan for building your own project, not a ready-to-run booking repository.
 
 ## Smallest useful outcome
 
@@ -35,7 +35,7 @@ packages/trips/    fixture search
 fixtures/          clearly labeled itinerary data
 ```
 
-These are proposed directories. Define actual build and test commands in the project’s package.json rather than assuming the course provides them.
+The `fixtures` directory holds prepared data for repeatable tests. These are proposed directories. Define actual build and test commands in the project’s package.json rather than assuming the course provides them.
 
 ## Contract before interface
 
@@ -45,13 +45,13 @@ Test valid and reversed date ranges, unknown cities, unsupported currencies and 
 
 ## Add MCP and the model
 
-Expose search through MCP when multiple clients need the same interface. Test the client without a model using the [MCP lesson](/en/courses/claude-code-guide/06-mcp/), then add the bounded [agent loop](/en/courses/claude-code-guide/08-tool-calls-and-loop/).
+Expose search through MCP when multiple clients need the same interface; a single application does not require that extra layer. Test the client without a model using the [MCP lesson](/en/courses/claude-code-guide/06-mcp/), then add the bounded [agent loop](/en/courses/claude-code-guide/08-tool-calls-and-loop/).
 
 Keep server-side validation. Model output is not trusted input. Observe request, tool call, tool result and final response. Log identifiers and diagnostic fields rather than personal documents by default.
 
 ## Before using a real provider
 
-Implement the current integration, secret handling, access rules, timeouts, limits, cancellation and duplicate-operation protection. Booking additionally needs user confirmation and idempotency. Those are explicit next-stage tasks, not hidden capabilities of the diagram.
+Implement the current integration, secret handling, access rules, timeouts, limits, cancellation and duplicate-operation protection. Booking additionally needs user confirmation and idempotency: retrying the same request must not create a second booking. Those are explicit next-stage tasks, not hidden capabilities of the diagram.
 
 The teaching project is complete when every fixture scenario has a predictable response, failures terminate and users can tell which data is synthetic.
 

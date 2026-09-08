@@ -79,6 +79,7 @@ const lessonNode = buildLearningResourceNode({
   position: index,
   ...(lesson.data.duration !== undefined ? { durationMinutes: lesson.data.duration } : {}),
   datePublished: lesson.data.pubDate,
+  dateModified: lesson.data.updatedDate ?? lesson.data.pubDate,
   teaches: course.data.tags,
 }) as GraphNode;
 
@@ -90,7 +91,7 @@ const webPageNode = buildWebPageNode({
   type: "ItemPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
   mainEntityId: lessonId(canonical),
-  dateModified: lesson.data.pubDate,
+  dateModified: lesson.data.updatedDate ?? lesson.data.pubDate,
 }) as GraphNode;
 
 const courseRssHref = `${localePrefix}/courses/${courseSlug}/rss.xml`;

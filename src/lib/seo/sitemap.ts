@@ -116,7 +116,7 @@ export const buildLocaleSitemapEntries = (input: SitemapInput): readonly UrlEntr
         loc: canonicalUrl(
           `${prefix}/courses/${lessonCourseSlug(entry.id)}/${lessonBareSlug(entry.id)}/`,
         ),
-        lastmod: dateOnly(entry.data.pubDate),
+        lastmod: dateOnly(entry.data.updatedDate ?? entry.data.pubDate),
         changefreq: "monthly",
         priority: 0.7,
       })),

@@ -4,10 +4,10 @@ blurb: Build a minimal plugin with one skill, validate it locally and document d
 pubDate: 2026-04-23
 order: 7
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A plugin helps reuse skills, hooks or agents across projects. Package components after they work independently. Packaging an incorrect hook only distributes the mistake more widely.
+Copying a skill into several projects soon leaves you with several different versions. A plugin packages working skills, hooks or agents so they can be reused together. Start with one skill you already know how to test.
 
 ## Minimal layout
 
@@ -34,7 +34,7 @@ claude plugin validate ./trip-toolkit
 claude --plugin-dir ./trip-toolkit
 ```
 
-Check local loading before distribution. Directory conventions and commands are documented in the [plugin guide](https://code.claude.com/docs/en/plugins) and [reference](https://code.claude.com/docs/en/plugins-reference).
+Validation checks the package structure; `--plugin-dir` loads it for the session. Invoke its skill as `/trip-toolkit:review-contract` and supply the API endpoint. Plugin skills use the package name as a prefix. Directory conventions and commands are documented in the [plugin guide](https://code.claude.com/docs/en/plugins) and [reference](https://code.claude.com/docs/en/plugins-reference).
 
 ## Verify behavior
 
@@ -52,4 +52,4 @@ Version behavioral changes and call out new tools or access requirements in the 
 
 Move the package into a fresh temporary directory and follow its README. Every missing step is a documentation defect. A local plugin is sufficient until installation is reproducible; a marketplace is not required for this exercise.
 
-The former speculative github-style installation commands and unsupported manifest assumptions have been removed. Next: [tool calls](/en/courses/claude-code-guide/08-tool-calls-and-loop/).
+Next: [tool calls](/en/courses/claude-code-guide/08-tool-calls-and-loop/).

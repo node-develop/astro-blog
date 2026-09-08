@@ -28,6 +28,10 @@ describe.each([375, 1440])("theme navigation at %ipx", (width) => {
       const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme });
       try {
         const page = await context.newPage();
+        // Keep the navigation test independent of the production avatar host.
+        await page.route("https://artka.dev/avatar-512.png", (route) =>
+          route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
+        );
         const swaps: string[] = [];
         await page.exposeFunction("recordThemeSwap", (theme: string) => swaps.push(theme));
         await page.addInitScript(() => {
@@ -85,6 +89,10 @@ it("preserves the in-memory choice during navigation when storage is blocked", a
       });
     });
     const page = await context.newPage();
+    // Keep the navigation test independent of the production avatar host.
+    await page.route("https://artka.dev/avatar-512.png", (route) =>
+      route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
+    );
     await page.goto(server.origin + "/about/");
     await page.locator("[data-theme-toggle]").first().click();
     await page.locator('.site-footer a[href="/now/"]').click();
@@ -99,6 +107,10 @@ it.each([320, 375, 768, 1024, 1440])(
   "keeps the header and footer compact at %ipx",
   async (width) => {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
+    // Keep the navigation test independent of the production avatar host.
+    await page.route("https://artka.dev/avatar-512.png", (route) =>
+      route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
+    );
     try {
       await page.goto(server.origin + "/about/");
       const footer = page.locator(".site-footer");
@@ -138,6 +150,10 @@ it.each([375, 1440])(
     });
     try {
       const page = await context.newPage();
+      // Keep the navigation test independent of the production avatar host.
+      await page.route("https://artka.dev/avatar-512.png", (route) =>
+        route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
+      );
       await page.goto(server.origin + "/blog/");
       await page.locator("[data-theme-toggle]").first().click();
       for (const route of ["/en/blog/", "/blog/"]) {

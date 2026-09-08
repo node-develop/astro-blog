@@ -6,12 +6,12 @@ blurb:
 pubDate: 2026-04-23
 order: 10
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A team helps when work can genuinely proceed independently. If a backend waits for a schema and tests wait for the backend, three workers do not make that chain parallel.
+Suppose one agent implements shared itinerary links while another builds the button. They can work independently after agreeing on the response format. If a backend waits for a schema and tests wait for the backend, three workers do not make that chain parallel.
 
-The [agent teams documentation](https://code.claude.com/docs/en/agent-teams) describes coordinated sessions and experimental limitations. Check activation against your version. The old course’s speculative team commands and automatic source-file locking claims have been removed. Task-claim locking is not protection against every edit to a source file.
+The [agent teams documentation](https://code.claude.com/docs/en/agent-teams) describes coordinated sessions and experimental limitations. Check activation against your version. Claiming a task does not lock the corresponding source files against other participants. Assign file ownership explicitly.
 
 ## Divide a feature
 
@@ -30,7 +30,7 @@ Two workers help only when there is enough independent work. Delegating one sent
 
 Assign files, expected outcomes, fixtures and a handoff procedure. Tell workers that other changes exist and must be preserved.
 
-When two participants need the same file, choose one owner or sequence their changes. Do not rely on the nonexistent lock API described in the previous version.
+When two participants need the same file, choose one owner or sequence their changes. Keep shared-file edits sequential unless one participant owns the combined change.
 
 ## Verify integration
 

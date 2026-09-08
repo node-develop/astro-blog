@@ -6,18 +6,18 @@ blurb:
 pubDate: 2026-04-23
 order: 2
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
 Context is the material available to the model in a request. Conversation history is one source of that material. Prompt caching reuses a processed request prefix; it is neither permanent conversational memory nor free execution.
 
-Available context depends on the model, account and provider. The course’s previous fixed 200k assumption and claim that `opusplan` cannot use 1M are obsolete. Consult [model configuration](https://code.claude.com/docs/en/model-config) and inspect your active session.
+Use `/context` to inspect context consumption in Claude Code. Available capacity depends on the model and access conditions; check [model configuration](https://code.claude.com/docs/en/model-config) rather than relying on a remembered fixed limit.
 
 ## Separate cost components
 
 For an API application, calculate ordinary input, cache writes, cache reads and output independently, using the provider’s applicable rates. Save usage for every request. History can grow across turns, so multiplying one short request by the number of turns does not produce an accurate session total.
 
-In Claude Code, `/cost` describes the current session and `/usage` concerns usage limits. Reconcile the actual bill with the billing system. The [cost documentation](https://code.claude.com/docs/en/costs) explains differences between payment arrangements.
+Current Claude Code combines session information and plan limits in `/usage`; `/cost` is an alias, as the [commands reference](https://code.claude.com/docs/en/commands) explains. The client-side dollar figure is an estimate rather than an authoritative bill. Reconcile the actual bill with the billing system. The [cost documentation](https://code.claude.com/docs/en/costs) explains differences between payment arrangements.
 
 ## Investigate a cache miss
 
@@ -27,7 +27,7 @@ Also inspect unnecessary content: database dumps, repeated file output and irrel
 
 ## Exercise: repeat a request
 
-In a test API project, send the same safe task twice with an identical prefix and the documented caching configuration. Save usage and duration. Change part of the prefix and repeat. Label each observation with the model and request time. Do not treat subscription limits as if they were API token charges.
+Imagine a long set of trip-planning instructions followed by different cities and dates. That repeated beginning is the prefix. In a test API project, enable caching using the [Anthropic caching guide](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) and send the same task twice with that prefix. The prefix must meet the chosen model’s minimum cacheable length: a short greeting is not a useful test. Save the response’s `usage` token counters, including cache reads and writes, and request duration. Change part of the prefix and repeat. Label each observation with the model and request time. Do not treat subscription limits as if they were API token charges.
 
 The experiment should report observations rather than a promised percentage saving. Explain which costs it includes and which it excludes.
 

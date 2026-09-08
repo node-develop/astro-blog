@@ -6,10 +6,10 @@ blurb:
 pubDate: 2026-04-23
 order: 9
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A subagent fits a bounded task with a compact result: locate handlers, inspect a contract or investigate a failing test. If it needs the whole conversation and constant clarification, delegation may cost more than direct work.
+While the main agent edits date validation, a helper can locate relevant tests and return a concise finding. Such a subagent fits a bounded task: locate handlers, inspect a contract or investigate a failing test. If it needs the whole conversation and constant clarification, delegation may cost more than direct work.
 
 ## Minimal definition
 
@@ -31,7 +31,7 @@ Find the current contract before suggesting changes.
 
 Ask the main agent to use contract-reader for a specific endpoint. State the goal and expected output rather than relying on implicit context.
 
-The [subagent reference](https://code.claude.com/docs/en/sub-agents) documents supported fields. Memory uses scopes rather than the old course’s read-only/read-write values. Explore should not be assumed permanently tied to Haiku; defaults have changed across versions.
+The [subagent reference](https://code.claude.com/docs/en/sub-agents) documents supported fields. A definition-based helper starts from its own instructions and the task you supply. Forked subagents can inherit the main conversation instead; check support in the installed version. Memory scopes are `user`, `project` or `local`, not read-only/read-write access modes. The `tools` field in this definition restricts the helper’s tool set; it differs from a skill’s `allowed-tools` permission grant.
 
 ## Verify the handoff
 

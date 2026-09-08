@@ -122,6 +122,7 @@ export const renderLessonMarkdown = (
     canonical: canonicalUrl(`${prefix}/courses/${courseSlug}/${lessonSlugOf(lesson)}/`),
     author: person.name,
     pubDate: lesson.data.pubDate,
+    updatedDate: lesson.data.updatedDate,
     tags: course.data.tags,
     extra: [
       ["course", JSON.stringify(course.data.title)],

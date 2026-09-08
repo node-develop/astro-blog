@@ -50,6 +50,21 @@ const localeInput = (locale: "ru" | "en"): SitemapInput => ({
 });
 
 describe("locale sitemap inventory", () => {
+  it("uses a lesson revision date", () => {
+    const entries = buildLocaleSitemapEntries({
+      ...localeInput("ru"),
+      lessonEntries: [
+        {
+          id: "course/01-lesson",
+          data: {
+            pubDate: date("2026-03-10"),
+            updatedDate: date("2026-09-08"),
+          },
+        },
+      ],
+    });
+    expect(entries.find((entry) => entry.loc.endsWith("/01-lesson/"))?.lastmod).toBe("2026-09-08");
+  });
   it("includes complete RU indexable content with content-derived dates", () => {
     const entries = buildLocaleSitemapEntries(localeInput("ru"));
     const ruUrls = entries.map((entry) => entry.loc);

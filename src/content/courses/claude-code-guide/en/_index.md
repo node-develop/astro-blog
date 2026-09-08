@@ -1,14 +1,12 @@
 ---
 title: Claude Code Guide
-blurb:
-  "A 14-lesson course on Claude Code internals: harness, context window, prompt cache, skills, hooks, MCP,
-  subagents, models, anti-patterns. Built around an end-to-end Travel Agent example."
+blurb: "14 lessons on Claude Code: context, instructions, skills, hooks, MCP and helpers. Practical exercises using a small trip planner."
 level: intermediate
 status: published
 duration: 14 short lessons and exercises
 locale: en
 pubDate: 2026-04-23
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 tags:
   - claude-code
   - guide
@@ -16,18 +14,20 @@ tags:
 
 ## Why this course
 
-Developers who want to distinguish model output from application responsibility: context, tools, permissions and verification.
+Claude Code can read a project, edit files and run commands. This course explains how it chooses actions, what enters its context and how to verify the outcome.
 
-There are 14 short lessons. Follow them in order or choose a topic. Each includes a concrete verification exercise. Travel Agent is a teaching architecture using fixtures, not a ready-made production repository.
+You should be comfortable with a terminal, Git and a simple API. Specialized terms are explained when they appear; command and configuration names retain their exact spelling.
+
+## How to work through it
+
+Start with the first three lessons: the agent’s workflow, context and project instructions. Continue with skills, hooks and MCP. The second half covers helpers, cost and a small application design.
+
+Each lesson includes a practical check. The trip planner uses prepared data and makes no real bookings. The course does not provide a separate ready-made repository.
 
 ## Recurring principles
 
-Separate model output from execution results. Check instructions against the installed version. Preserve successful and failed runs. Distinguish a teaching design from a completed service.
+Define the expected behavior, then test it on a clear example. Distinguish a model’s answer from an executed action. Keep failed results as well as successful ones: they reveal the limits of a solution.
 
-## September 7, 2026 revision
+Commands and settings were checked against official sources on September 8, 2026. Client versions and access conditions change, so technical explanations include links for rechecking. The [last lesson](/en/courses/claude-code-guide/14-claims-verification/) explains how to assess technical advice yourself.
 
-Obsolete settings, speculative commands and incorrect SDK examples have been corrected. Fixed saving percentages, absolute hook protection and automatic source-file locking claims have been removed. See the [correction record in lesson 14](/en/courses/claude-code-guide/14-claims-verification/).
-
-Record tool versions and exercise results. Documentation explains the contract; a local run checks your configuration. These provide complementary evidence.
-
-Report an exact statement and reproducible example through [contact](/en/contact/).
+Report an inaccurate statement with the lesson URL and an example through [contact](/en/contact/).
