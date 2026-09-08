@@ -6,10 +6,10 @@ blurb:
 pubDate: 2026-04-23
 order: 4
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A skill fits a repeated procedure: reviewing a contract, preparing a PR description or investigating a recurring error. Start with something you can perform manually. Otherwise SKILL.md becomes a wish list without an observable outcome.
+Suppose you ask for the same API review before every change. A skill stores that procedure in SKILL.md so you can invoke it again. Other useful examples include reviewing a contract, preparing a PR description or investigating a recurring error. Start with something you can perform manually. Otherwise SKILL.md becomes a wish list without an observable outcome.
 
 ## Example: review an API contract
 
@@ -31,15 +31,15 @@ Review the requested endpoint contract.
 5. Distinguish reading a test from executing it.
 ```
 
-Invoke `/review-contract` and describe the endpoint. Begin with a local fixture where the schema requires a date but the handler accepts an empty string. The expected result is that discrepancy, not generic validation advice.
+Invoke `/review-contract` and describe the endpoint. Begin with a prepared local example where the schema requires a date but the handler accepts an empty string. The expected result is that discrepancy, not generic validation advice.
 
 ## Configuration boundaries
 
-The [skills reference](https://code.claude.com/docs/en/skills) documents supported fields. `disable-model-invocation` reserves invocation for the user. `allowed-tools` pre-approves tools; it does not make them the only available tools or create a sandbox. `context: fork` changes conversational context, not filesystem isolation.
+The [skills reference](https://code.claude.com/docs/en/skills) documents supported fields. `disable-model-invocation` reserves invocation for the user. `allowed-tools` pre-approves listed tools for the turn that invokes the skill; current documentation says the grant ends when the user sends the next message. It does not remove the remaining tools or create a sandbox. `context: fork` changes conversational context, not filesystem isolation.
 
 Verify fields against the installed version rather than choosing plausible names. Claude Code skills and packages for other clients can support different configuration.
 
-## Improve from observed failures
+## Improve the procedure one failure at a time
 
 If the agent cannot locate a schema, add its actual path. Move lengthy references into separate files with a clear condition for reading them. Document a bundled script’s inputs, outputs and local verification.
 

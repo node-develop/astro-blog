@@ -1,58 +1,56 @@
 ---
-title: How to verify claims about Claude Code
-blurb:
-  Verify commands, configuration and benchmarks. A correction record and evidence checklist for assessing technical
-  material.
+title: How to check advice about Claude Code
+blurb: Verify commands, settings and model comparisons with a specific claim, an appropriate source and a small experiment.
 pubDate: 2026-04-23
 order: 14
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A documentation link at the end of an article does not establish every claim. Connect each factual statement to a source and a check. This lesson replaces the previous unconditional verification table, which itself contained incorrect claims.
+An article says a setting prevents the agent from changing files. Before applying it to a work project, find out what that setting actually controls. A documentation link at the bottom of the page does not establish every claim in the article.
 
-## Corrections
+Start with a precise question. “Does this field restrict the available tools?” is easier to verify than “Are skills safe?”
 
-| Previous claim                               | Correction                                      |
-| -------------------------------------------- | ----------------------------------------------- |
-| Imports reduce startup context               | Imported text loads; imports organize files     |
-| Skill allowed-tools is a strict whitelist    | It pre-approves tools                           |
-| Subagent memory uses read-only               | Use documented memory scopes                    |
-| Teams automatically lock edited source files | Task claiming does not protect each source file |
-| action:block is a universal hook decision    | The protocol depends on the event               |
-| .mcp.local.json stores standard local scope  | Local MCP configuration is in ~/.claude.json    |
-| /cost reports yesterday’s spending           | It describes the current session                |
-| Every task saves a fixed percentage          | Measure actual usage and conditions             |
+## Find the right source
 
-Relevant lessons provide details and sources. These corrections are not a promise that future client versions remain identical.
+For Claude Code commands, use the [CLI reference](https://code.claude.com/docs/en/cli-reference) and `claude --help`. For skill settings, use the [skills documentation](https://code.claude.com/docs/en/skills). A similarly named field in another client may behave differently.
 
-## Three kinds of evidence
+For a library, choose an example matching the installed package version. For cost, use your provider’s pricing and payment terms. A publication date tells you how old advice is, not whether it still works.
 
-Documentation describes the supported contract. Source code explains a particular implementation. A run demonstrates behavior in one environment. When they disagree, preserve versions and a minimal example rather than selecting the convenient answer.
+## Use three kinds of evidence
 
-Check commands through help, frontmatter against the correct client, SDK examples against a pinned package and prices against provider billing.
+Documentation describes supported behavior. Source code, when available, explains a particular implementation. A run shows what happened in your environment with the inputs you chose.
 
-## Record a claim
+If they disagree, preserve the versions and a small reproduction. The difference may reveal a bug, an environment limitation or a version mismatch. Do not discard an inconvenient result.
+
+## Run a small experiment
+
+Take the hook from lesson five. The claim is that it runs after a successful Edit call. Test the script directly, then test the event in Claude Code. Change the matcher so it no longer matches and repeat.
+
+If your check reports success in both cases, it cannot distinguish a working configuration from a broken one. That is not a useful confirmation.
+
+Record the experiment:
 
 ```text
 Claim:
-Version and environment:
-Primary source and review date:
-Minimal example:
+Client version and environment:
+Source and review date:
+Steps:
+Expected result:
 Observed result:
 Not verified:
 ```
 
-Complete this for “the hook runs after Edit.” Reproduce success, then deliberately break the matcher. If the check cannot distinguish them, it is insufficient.
+## Read model comparisons carefully
 
-## Assess benchmarks
+Look for the tasks, success criteria, number of attempts and whether failures were retained. Fast text generation and fast completion of a programming task measure different things.
 
-Look for task definitions, success criteria, attempts, raw results and environment details. Confidence cannot replace missing evidence. Generation speed and time to a completed programming task are different measurements.
+Someone else’s benchmark can suggest what to try. It cannot promise the same savings in your project. Repeat several of your own tasks using the [cost comparison exercise](/en/courses/claude-code-guide/11-models-and-pricing/).
 
-This revision removes unsupported percentages, speculative commands and the claim of a ready-made Travel Agent. Teaching examples and unperformed experiments are labeled explicitly.
+## How this course was reviewed
 
-## Report an error
+The material was checked against official sources on September 8, 2026. Proposed application designs are labeled as exercises. Documentation review does not mean every paid integration was executed: distinguish a teaching example, a local check and a run against a real provider.
 
-Send the URL, exact statement, tool version and minimal example through [contact](/en/contact/). Omit secrets and full work logs containing other people’s data.
+To report an error, send the lesson URL, exact statement and a reproducible example through [contact](/en/contact/). Leave out secrets and complete work logs. A specific report makes a specific correction possible.
 
 Return to the [course index](/en/courses/claude-code-guide/).

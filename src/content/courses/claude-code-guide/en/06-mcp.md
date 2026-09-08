@@ -6,10 +6,10 @@ blurb:
 pubDate: 2026-04-23
 order: 6
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-MCP defines a protocol for tools and data. A successful connection does not prove that a tool returns correct prices, validates input or has appropriate access.
+If itinerary search already exists, MCP provides a way to expose it to an assistant. MCP defines the exchange for tools and data. A successful connection does not prove that a tool returns correct prices, validates input or has appropriate access.
 
 ## Connect a local fixture server
 
@@ -21,9 +21,9 @@ claude mcp get trip-fixtures
 claude mcp list
 ```
 
-Open `/mcp` in the session and inspect the available tools. The [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp) distinguishes local/user configuration in `~/.claude.json` from project configuration in `.mcp.json`. The previously recommended `.mcp.local.json` is not that standard store.
+Open `/mcp` in the session and inspect the available tools. The [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp) distinguishes local/user configuration in `~/.claude.json` from project configuration in `.mcp.json`. The local scope makes a setting specific to the current project and user; it is not a restriction on the tool’s own permissions.
 
-For remote servers, use the documented HTTP transport. Legacy HTTP+SSE and Streamable HTTP are different; the old claim that HTTP excludes server messages was incorrect. Consult the [MCP transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
+For remote servers, use the documented HTTP transport. Streamable HTTP supports server messages and differs from legacy HTTP+SSE. Consult the [MCP transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
 
 ## Define the fixture contract
 
@@ -33,7 +33,7 @@ Test valid input, an unknown city, an invalid date and no results. An empty resu
 
 ## Verify the SDK separately
 
-Do not mix Python and TypeScript client examples. The previous TypeScript snippet imported ClientSession from an inappropriate path and has been removed. Start from the [official TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk), pin a version and test the connection without an LLM first.
+Do not mix Python and TypeScript client examples. Start from the [official TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk), pin a version and test the connection without an LLM first.
 
 Your production backend still needs client lifecycle management, connection cleanup, timeouts and conversion from MCP responses to the model API’s format. Claude Code does not implement those parts of your application automatically.
 

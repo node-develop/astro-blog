@@ -6,14 +6,14 @@ blurb:
 pubDate: 2026-04-23
 order: 3
 locale: en
-updatedDate: 2026-09-07
+updatedDate: 2026-09-08
 ---
 
-A useful CLAUDE.md answers questions the agent would otherwise guess: where the code lives, how to verify a change and which project constraints matter. Copying the entire documentation into the root file obscures those answers.
+If every new conversation starts with the same project explanation, put the stable parts in CLAUDE.md. The file should answer practical questions: where the code lives, how to verify a change and which project constraints matter. Copying the entire documentation into the root file obscures those answers.
 
 The [memory documentation](https://code.claude.com/docs/en/memory) recommends concise instructions. `@path` imports load text rather than creating a free reference store. MEMORY.md startup limits are a separate mechanism and should not be applied to CLAUDE.md.
 
-## A starting template
+## Start with a small instruction file
 
 ```markdown
 # Trip planner
@@ -34,13 +34,13 @@ Report the check actually run and its result.
 
 Once the project exists, replace the generic verification sentence with its real command. Do not paste `pnpm test` into instructions for a project without that script.
 
-## Organize details deliberately
+## Where longer explanations belong
 
 Keep common constraints near the root and subsystem details near the relevant code or in a reference document. An occasional procedure can become a skill. Distinguish a reference link from an import of the entire document: their startup context costs differ.
 
 Do not treat conflicting instructions as a reliable last-rule-wins configuration system. Resolve contradictions in their source files.
 
-## Exercise: verify every instruction
+## Check the instructions against your project
 
 Create an instruction-to-evidence table. A command needs a successful run, a path needs an existing file, and a restriction needs an architectural reason or team agreement.
 
