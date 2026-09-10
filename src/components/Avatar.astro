@@ -7,11 +7,11 @@
  *   - md:  64 × 64   — about page sidebar
  *   - lg: 144 × 144  — about page hero
  *
- * Image source is the single canonical Person.image
- * (/public/avatar-512.png — 512 × 500, PNG, ≥112×112 raster as Google
- * Rich Results requires for Person.image). When the owner ships a
- * higher-quality photo or an additional WebP/AVIF variant, swap it
- * in here and the rest of the site picks it up automatically.
+ * Person.image (/public/avatar-512.png) stays the canonical raster for
+ * Google's ≥112×112 Person.image requirement and the JSON feed, but the
+ * markup below serves the pre-generated 64/128/288 WebP/AVIF ladder
+ * (see public/AVATAR-README.md) so the browser never fetches the full
+ * 228 KB PNG to paint a 32–144 px circle.
  *
  * No JS, just CSS for the framed-circle treatment.
  */
@@ -30,18 +30,31 @@ const dim = size === "sm" ? 32 : size === "md" ? 64 : 144;
 // On the lg variant we want a sharp render at 2× — browsers will pick
 // the right dimension; the source is 512 px so this is well within range.
 const eager = size === "lg";
+const sizes = size === "lg" ? "144px" : size === "md" ? "64px" : "32px";
 ---
 
 <figure class={`avatar avatar--${size}`} data-framed={framed ? "true" : undefined}>
-  <img
-    src={person.image}
-    width={dim}
-    height={dim}
-    alt={alt}
-    loading={eager ? "eager" : "lazy"}
-    decoding="async"
-    class="avatar__img"
-  />
+  <picture>
+    <source
+      type="image/avif"
+      srcset="/avatar-64.avif 64w, /avatar-128.avif 128w, /avatar-288.avif 288w"
+      sizes={sizes}
+    />
+    <source
+      type="image/webp"
+      srcset="/avatar-64.webp 64w, /avatar-128.webp 128w, /avatar-288.webp 288w"
+      sizes={sizes}
+    />
+    <img
+      src="/avatar-128.webp"
+      width={dim}
+      height={dim}
+      alt={alt}
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      class="avatar__img"
+    />
+  </picture>
 </figure>
 
 <style>

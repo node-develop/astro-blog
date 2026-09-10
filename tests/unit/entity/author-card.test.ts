@@ -15,9 +15,15 @@ describe("src/components/AuthorCard.astro", () => {
     expect(src).toMatch(/import\s+\{[^}]*t[^}]*\}\s+from\s+["']~\/i18n["']/);
     expect(src).toMatch(/getLocaleFromPath/);
   });
-  it("renders an avatar image using person.image", () => {
-    expect(src).toMatch(/person\.image/);
+  it("renders a responsive <picture> avatar, not the raw 512px PNG", () => {
+    expect(src).toMatch(/<picture>/);
     expect(src).toMatch(/<img[^>]+alt=/);
+    const img = src.match(/<img\b[^>]*\/?>(?!<\/picture>)/)?.[0] ?? "";
+    expect(img).not.toMatch(/avatar-512\.png/);
+    expect(img).not.toMatch(/person\.image/);
+    // person.image remains the schema source of truth (Google Person.image raster).
+    const personSrc = readFileSync(join(process.cwd(), "src/lib/seo/person.ts"), "utf8");
+    expect(personSrc).toMatch(/avatar-512\.png/);
   });
   it("links to /about and /projects (locale-aware)", () => {
     expect(src).toMatch(/\/about/);
