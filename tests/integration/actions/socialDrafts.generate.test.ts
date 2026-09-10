@@ -97,14 +97,23 @@ describe("socialDrafts.generate", () => {
       mockCtx(),
     );
     expect(r.ok).toBe(true);
-    if (r.ok) {
-      // Give void pipeline a moment to complete (mock resolves instantly).
+    // The pipeline runs as a detached promise; a fixed sleep raced it under
+    // full-suite load (flaked locally in pre-push). Poll for the eventual
+    // state instead, bounded so a stuck pipeline still fails loudly.
+    const readRows = () =>
+      env.db.select().from(socialPosts).where(eq(socialPosts.postSlug, TEST_SLUG));
+    const deadline = Date.now() + 5_000;
+    let rows = await readRows();
+    while (
+      Date.now() < deadline &&
+      !(rows.length === 3 && rows.every((row) => row.status === "pending"))
+    ) {
       await new Promise((res) => setTimeout(res, 50));
+      rows = await readRows();
     }
-    const rows = await env.db.select().from(socialPosts).where(eq(socialPosts.postSlug, TEST_SLUG));
     expect(rows.length).toBe(3);
     // After pipeline resolves they should be "pending" (mock ok:true).
-    expect(rows.every((r) => r.status === "pending")).toBe(true);
+    expect(rows.every((row) => row.status === "pending")).toBe(true);
   });
 
   it("supersedes old rows with a different sourceHash", async () => {

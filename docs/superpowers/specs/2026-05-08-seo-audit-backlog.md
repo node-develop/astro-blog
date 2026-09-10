@@ -431,7 +431,7 @@ Sanity-check против кода: см. секцию **Audit reconciliation** 
 **Files:**
 - `src/layouts/BaseLayout.astro` (head, до `<Analytics>`)
 **Acceptance:**
-- [ ] В `<head>` стоит `<link rel="preconnect" href="https://plausible.io" crossorigin>` (или хост из SEO-3).
+- [ ] ~~В `<head>` стоит `<link rel="preconnect" href="https://plausible.io" crossorigin>` (или хост из SEO-3).~~ **Removed 2026-09-10**: this preconnect sat ahead of the render-blocking `<link rel="stylesheet">` and the two `Highest`-priority font preloads on the LCP critical path (Chrome dispatches `preconnect` immediately on parse, competing for the same throttled pipe). Plausible loads via `Analytics.astro` as a `defer`red, DNT-gated, `Low`-priority script — it does not need to win that race.
 - [ ] Lighthouse Performance "Preconnect to required origins" — pass.
 **Depends on:** SEO-3
 

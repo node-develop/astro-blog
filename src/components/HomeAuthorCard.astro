@@ -39,7 +39,19 @@ const socialLabel = (url: string): string => {
 
 <section class="home-author" aria-labelledby="home-author-name" id="me">
   <a href={aboutHref} class="home-author__avatar" aria-hidden="true" tabindex="-1">
-    <img src={person.image} alt="" width="64" height="64" loading="lazy" decoding="async" />
+    <picture>
+      <source
+        type="image/avif"
+        srcset="/avatar-64.avif 64w, /avatar-128.avif 128w, /avatar-288.avif 288w"
+        sizes="(max-width: 600px) 48px, 64px"
+      />
+      <source
+        type="image/webp"
+        srcset="/avatar-64.webp 64w, /avatar-128.webp 128w, /avatar-288.webp 288w"
+        sizes="(max-width: 600px) 48px, 64px"
+      />
+      <img src="/avatar-128.webp" alt="" width="64" height="64" loading="lazy" decoding="async" />
+    </picture>
   </a>
   <div class="home-author__body">
     <p class="home-author__label">{label}</p>

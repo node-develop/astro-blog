@@ -1,4 +1,5 @@
 ---
+import "~/styles/content.css";
 import BaseLayout from "./BaseLayout.astro";
 import CardArt from "~/components/CardArt.astro";
 import PostTOC from "~/components/PostTOC.astro";
@@ -28,13 +29,17 @@ import {
 import type { CollectionEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
 import { canonicalUrl } from "~/lib/seo/url-policy";
+// KaTeX CSS is per-page, not global (see src/lib/remark/flag-math.ts) — it
+// only ships on posts that actually contain math.
+import katexHref from "katex/dist/katex.min.css?url";
 
 interface Props {
   post: CollectionEntry<"posts">;
   headings: readonly MarkdownHeading[];
+  hasMath?: boolean;
 }
 
-const { post, headings } = Astro.props;
+const { post, headings, hasMath = false } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, keywords, cover, coverAlt, summary, faq } =
   post.data;
 const locale = getLocaleFromPath(Astro.url.pathname);
@@ -159,6 +164,7 @@ const formattedUpdatedDate = updatedDate
     <meta property="article:author" content={authorName} />
     {tags.map((tag: string) => <meta property="article:tag" content={tag} />)}
     <link rel="alternate" type="text/markdown" href={markdownHref} title={title} />
+    {hasMath && <link rel="stylesheet" href={katexHref} />}
   </Fragment>
 
   <PostTOC slot="toc" headings={headings} />
@@ -177,7 +183,26 @@ const formattedUpdatedDate = updatedDate
       {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
       <div class="post__byline" itemscope itemtype="https://schema.org/Person">
         <a href={aboutHref} class="post__byline-avatar" aria-hidden="true" tabindex="-1">
-          <img src={person.image} alt="" width="32" height="32" loading="lazy" decoding="async" />
+          <picture>
+            <source
+              type="image/avif"
+              srcset="/avatar-64.avif 64w, /avatar-128.avif 128w, /avatar-288.avif 288w"
+              sizes="32px"
+            />
+            <source
+              type="image/webp"
+              srcset="/avatar-64.webp 64w, /avatar-128.webp 128w, /avatar-288.webp 288w"
+              sizes="32px"
+            />
+            <img
+              src="/avatar-64.webp"
+              alt=""
+              width="32"
+              height="32"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
         </a>
         <a href={aboutHref} class="post__byline-name" itemprop="name">{person.name}</a>
         <span class="post__byline-sep" aria-hidden="true">·</span>

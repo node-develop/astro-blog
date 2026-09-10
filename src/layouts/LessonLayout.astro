@@ -10,6 +10,7 @@
  *
  * Persists `lastVisited`, `completed`, `bookmarks` via course-progress.
  */
+import "~/styles/content.css";
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import CourseSidebar from "~/components/CourseSidebar.astro";
@@ -25,6 +26,9 @@ import {
 } from "~/lib/seo/schema";
 import { mdxComponents } from "~/components/mdx";
 import { canonicalUrl } from "~/lib/seo/url-policy";
+// KaTeX CSS is per-page, not global (see src/lib/remark/flag-math.ts) — it
+// only ships on lessons that actually contain math.
+import katexHref from "katex/dist/katex.min.css?url";
 
 interface Props {
   course: CollectionEntry<"course">;
@@ -35,9 +39,10 @@ interface Props {
   total: number;
   /** Astro Content component returned by `entry.render()`. Optional fallback to slot. */
   Content?: unknown;
+  hasMath?: boolean;
 }
 
-const { course, lesson, prev, next, index, total, Content } = Astro.props;
+const { course, lesson, prev, next, index, total, Content, hasMath = false } = Astro.props;
 const ContentComponent = Content as unknown as (props: { components?: unknown }) => unknown;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const localePrefix = locale === "en" ? "/en" : "";
@@ -134,6 +139,7 @@ const labels =
       href={courseRssHref}
     />
     <link rel="alternate" type="text/markdown" href={markdownHref} title={lesson.data.title} />
+    {hasMath && <link rel="stylesheet" href={katexHref} />}
   </Fragment>
   <CourseSidebar slot="sidebar" courseSlug={courseSlug} activeSlug={lessonSlug} />
 
