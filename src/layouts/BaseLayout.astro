@@ -139,6 +139,11 @@ const socialLabel = (url: string): string => {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {
+      fontPreloads.map((href) => (
+        <link rel="preload" as="font" type="font/woff2" href={href} crossorigin="anonymous" />
+      ))
+    }
     <script is:inline>
       (function () {
         try {
@@ -166,16 +171,6 @@ const socialLabel = (url: string): string => {
           <link rel="alternate" hreflang="x-default" href={ruVariant} />
         </>
       )
-    }
-
-    <!-- Preconnect to analytics origin so the deferred Plausible script
-         doesn't pay a fresh DNS+TLS handshake on first run. No crossorigin
-         flag because the script is loaded as a normal (non-CORS) request. -->
-    <link rel="preconnect" href="https://plausible.io" />
-    {
-      fontPreloads.map((href) => (
-        <link rel="preload" as="font" type="font/woff2" href={href} crossorigin="anonymous" />
-      ))
     }
 
     <!-- Open Graph / Twitter -->

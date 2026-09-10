@@ -24,9 +24,9 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { Content, headings } = await render(post);
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
 ---
 
-<PostLayout post={post} headings={headings}>
+<PostLayout post={post} headings={headings} hasMath={remarkPluginFrontmatter.hasMath === true}>
   <Content components={mdxComponents} />
 </PostLayout>

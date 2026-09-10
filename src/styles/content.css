@@ -1,0 +1,39 @@
+/* Second Tailwind entry point for `.prose` content pages (posts, courses,
+ * lessons, entity pages). Split out of global.css so pages that never
+ * render markdown (/, /blog/, /tags, 404, /admin) don't ship typography
+ * CSS. `@tailwindcss/typography` moves here with it — the plugin only
+ * emits `.prose` where it's registered, and the `--tw-prose-*` vars in
+ * prose.css are inert without it.
+ *
+ * `theme(reference)` emits no `:root` block: the theme vars are already
+ * emitted by global.css, which every page loading this file also loads.
+ * `source(none)` + explicit `@source` prevents re-scanning/re-emitting the
+ * full utility set — this codebase is essentially class-token CSS, not
+ * Tailwind utilities (the only utility-heavy page is src/pages/login.astro,
+ * which does not import this file).
+ */
+/* Declare the full layer order before any Tailwind import. Astro links this
+ * chunk BEFORE the global chunk on content pages; without this line the
+ * first `@layer` seen by the browser would be `theme` + `utilities` from
+ * this file, `base` (preflight) would be declared later and therefore win
+ * over `.prose` typography — h2 collapses to body size, margins to 0.
+ * `properties` must stay first: Tailwind 4 emits `@property` registrations
+ * for its custom properties (used by gradients, shadows, etc.) into that
+ * layer, and it is the lowest layer in Tailwind's own cascade order. */
+@layer properties, theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme) theme(reference);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@plugin "@tailwindcss/typography";
+/* Only the bare `prose` class from @tailwindcss/typography is used across
+ * the 15 content files that load this stylesheet. Scanning ../layouts,
+ * ../pages, and ../components (as before) pulled in unrelated utilities
+ * used elsewhere in the app (e.g. `.collapse`, `.visible`, `.my-6`) into
+ * every article's CSS. `@source inline("prose")` scans nothing on disk and
+ * only ever emits the one class this file actually needs. */
+@source inline("prose");
+
+/* Preserve today's cascade order: prose.additions -> prose rules ->
+ * code-themes (previously global.css:11 prose.css, :12 code-themes.css). */
+@import "./prose.css";
+@import "./code-themes.css";

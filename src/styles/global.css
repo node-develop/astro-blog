@@ -1,15 +1,9 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 @import "./tokens.css";
 
-/* Self-hosted variable fonts */
-@import "@fontsource-variable/source-serif-4";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/jetbrains-mono";
-
-@import "./prose.css";
-@import "./code-themes.css";
+/* Self-hosted variable fonts — latin + cyrillic only, see fonts.css */
+@import "./fonts.css";
 
 @theme {
   --font-sans: var(--font-sans);
@@ -69,9 +63,6 @@ samp {
   font-family: var(--font-mono);
   font-size: 0.95em;
 }
-
-/* Preserve KaTeX layer */
-@import "katex/dist/katex.min.css";
 
 /* View Transitions — title morph between blog index and post */
 ::view-transition-old(root),
