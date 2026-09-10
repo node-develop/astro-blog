@@ -40,6 +40,7 @@
     "social:recover": "tsx scripts/social-recover.ts",
     "social:smoke": "tsx scripts/social-smoke.ts",
     "voice:draft": "tsx scripts/voice-draft.ts",
+    "assets:avatar": "tsx scripts/generate-avatar.ts",
     "prepare": "husky"
   },
   "lint-staged": {
