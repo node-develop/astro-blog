@@ -6,6 +6,7 @@ import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import remarkMath from "remark-math";
 import remarkStripFrontmatterDuplicates from "./src/lib/remark/strip-frontmatter-duplicates";
+import remarkFlagMath from "./src/lib/remark/flag-math";
 import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
 import lazyContentImages from "./src/lib/rehype/lazy-content-images";
@@ -102,7 +103,12 @@ export default defineConfig({
   // ecosystem (KaTeX, Mermaid, custom link/heading plugins), so we keep unified().
   markdown: {
     processor: unified({
-      remarkPlugins: [remarkStripFrontmatterDuplicates, remarkMath, remarkStripMdSuffix],
+      remarkPlugins: [
+        remarkStripFrontmatterDuplicates,
+        remarkMath,
+        remarkFlagMath,
+        remarkStripMdSuffix,
+      ],
       rehypePlugins: [
         canonicalInternalLinks,
         rehypeSlug,

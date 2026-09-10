@@ -50,3 +50,4 @@ public/pagefind
 .gitnexus
 src/content/posts/e2e-*.md
 src/content/posts/e2enew*.md
+.lighthouse/

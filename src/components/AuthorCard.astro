@@ -10,15 +10,27 @@ const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
 
 <aside class="author-card" aria-label={t(locale, "authorCard.aboutLabel")}>
   <a href={`${aboutHref}#me`} class="author-card__avatar-link" aria-hidden="true" tabindex="-1">
-    <img
-      src={person.image}
-      alt=""
-      width="56"
-      height="56"
-      class="author-card__avatar"
-      loading="lazy"
-      decoding="async"
-    />
+    <picture>
+      <source
+        type="image/avif"
+        srcset="/avatar-64.avif 64w, /avatar-128.avif 128w, /avatar-288.avif 288w"
+        sizes="(max-width: 600px) 48px, 56px"
+      />
+      <source
+        type="image/webp"
+        srcset="/avatar-64.webp 64w, /avatar-128.webp 128w, /avatar-288.webp 288w"
+        sizes="(max-width: 600px) 48px, 56px"
+      />
+      <img
+        src="/avatar-128.webp"
+        alt=""
+        width="56"
+        height="56"
+        class="author-card__avatar"
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
   </a>
   <div class="author-card__body">
     <p class="author-card__label">{t(locale, "authorCard.aboutLabel")}</p>

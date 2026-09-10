@@ -1,33 +1,47 @@
-# AVATAR — drop-in instructions
+# Avatar assets
 
-The Avatar component (`src/components/Avatar.astro`) loads your photo
-in this order:
+`public/avatar-512.png` is the canonical raster and stays exactly as-is:
 
-1. /me.webp ← preferred (smallest, modern browsers)
-2. /me.jpg ← fallback for older clients
-3. /me-fallback.svg ← always shipped, sienna disc with «АК» monogram
+- It is `Person.image` in `src/lib/seo/person.ts` — Google's Rich Results
+  guidance for `Person.image` requires a raster of at least 112×112 px, so
+  this file must remain a real (non-tiny) PNG at a stable, unhashed URL.
+- It also feeds `src/lib/feeds/build-json-feed.ts` (`avatar: person.image`).
 
-To use your real photo: place TWO files in `public/`:
+Do not delete or resize `avatar-512.png` in place. If the photo changes,
+replace this file and re-run the generator below.
 
-public/me.jpg — 288 × 288 px (2× retina for the lg variant)
-public/me.webp — same image, WebP encoded
+## Responsive ladder
 
-Optimization recipe (one-liner, requires `cwebp` and `imagemagick`):
+`avatar-{64,128,288}.{webp,avif}` (6 files) are pre-generated, committed
+variants used by `<picture>` markup in `Avatar.astro`, `HomeAuthorCard.astro`,
+and `AuthorCard.astro` so the browser never has to download the full 512×500
+PNG (228 KB) to paint a 32–144 px circle.
 
-# Start from any source image.jpg/png — square crop is cleanest.
+Coverage by rendered CSS box × device pixel ratio:
 
-convert source.jpg -resize 288x288^ -gravity center -extent 288x288 -strip -quality 88 public/me.jpg
-cwebp -q 82 public/me.jpg -o public/me.webp
+| Rendered size                            | @1x source | @2x source |
+| ---------------------------------------- | ---------- | ---------- |
+| 32px (Avatar sm, PostLayout byline)      | 64         | 128        |
+| 48px (mobile HomeAuthorCard/AuthorCard)  | 64         | 128        |
+| 56px (AuthorCard desktop)                | 64         | 128        |
+| 64px (Avatar md, HomeAuthorCard desktop) | 64         | 128        |
+| 144px (Avatar lg)                        | 128        | 288        |
 
-Or via `sharp-cli`:
+## Regenerating
 
-npx sharp-cli -i source.jpg -o public/me.jpg resize 288 288 -- jpeg.quality 88
-npx sharp-cli -i source.jpg -o public/me.webp resize 288 288 -- webp.quality 82
+```
+pnpm assets:avatar
+```
 
-If you don't drop your photo in, the SVG monogram fallback will render
-gracefully — no broken image icons.
+Runs `scripts/generate-avatar.ts` (sharp, `fit: "cover"`, `position:
+"attention"`, WebP quality 82, AVIF quality 55/effort 6). The script is
+idempotent — it skips a target whose mtime is already newer than the
+source. These files are **committed to git**, not produced during the
+Docker build; there is no sharp dependency in the production image.
 
-Where the avatar appears (after this Phase 5 patch):
+## Housekeeping note
 
-- /about — lg (144×144), framed, with sienna underline
-- Header (optional — uncomment in Header.astro patch) — sm (32×32)
+`public/avatar.jpg` has zero references in `src/`, `tests/`, or `docs/`
+(verified by grep). It looks like a leftover from an earlier avatar
+implementation and is a candidate for deletion — do that in its own
+commit, not bundled with this asset ladder.

@@ -15,7 +15,7 @@ memory: read-write
 - **Tailwind** через `@tailwindcss/vite` (НЕ `@astrojs/tailwind` — deprecated!). Импорт в `src/styles/global.css` через `@import "tailwindcss";`.
 - **MDX**: `@astrojs/mdx` — в посты можно вставлять компоненты.
 - **Mermaid**: build-time через `rehype-mermaid` (Playwright рендерит в SVG, 0 JS на клиенте).
-- **KaTeX**: `remark-math` + `rehype-katex`. Не забыть импорт `katex/dist/katex.min.css` в базовый layout.
+- **KaTeX**: `remark-math` + `rehype-katex`. CSS per-page, не глобально: `src/lib/remark/flag-math.ts` ставит `hasMath` во frontmatter, layouts (`PostLayout`/`LessonLayout`/`CourseLayout`) эмиттят `<link>` на `katex/dist/katex.min.css?url` только когда `hasMath === true`. Никогда не импортировать её глобально (global.css/BaseLayout).
 - **Content**: `src/content.config.ts` с `glob` loader из `astro/loaders`.
 
 ## Принципы

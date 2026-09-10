@@ -37,6 +37,7 @@
     "social:recover": "tsx scripts/social-recover.ts",
     "social:smoke": "tsx scripts/social-smoke.ts",
     "voice:draft": "tsx scripts/voice-draft.ts",
+    "assets:avatar": "tsx scripts/generate-avatar.ts",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -142,6 +143,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "sharp": "^0.35.4",
     "testcontainers": "^12.1.0",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",

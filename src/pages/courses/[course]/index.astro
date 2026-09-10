@@ -36,9 +36,9 @@ const { course, lessons } = Astro.props as {
   course: CollectionEntry<"course">;
   lessons: CollectionEntry<"lesson">[];
 };
-const { Content } = await render(course);
+const { Content, remarkPluginFrontmatter } = await render(course);
 ---
 
-<CourseLayout course={course} lessons={lessons}>
+<CourseLayout course={course} lessons={lessons} hasMath={remarkPluginFrontmatter.hasMath === true}>
   <Content />
 </CourseLayout>
