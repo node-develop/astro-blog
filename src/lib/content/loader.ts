@@ -49,10 +49,11 @@ const fallbackMetaForBuild = (slug: string): PostMeta => {
   };
 };
 
+/** Public lists are newest first; editorial order and pins do not override publication dates. */
 export const sortWithMeta = (posts: readonly PostWithMeta[]): readonly PostWithMeta[] =>
   [...posts].sort((a, b) => {
-    if (a.meta.pinned !== b.meta.pinned) return a.meta.pinned ? -1 : 1;
-    return a.meta.order - b.meta.order;
+    const byDate = b.entry.data.pubDate.getTime() - a.entry.data.pubDate.getTime();
+    return byDate || a.entry.id.localeCompare(b.entry.id, "en");
   });
 
 const matchesLocale = (id: string, locale: Locale): boolean =>

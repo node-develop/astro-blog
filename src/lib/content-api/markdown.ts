@@ -1,3 +1,4 @@
+import { format } from "prettier";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
@@ -55,13 +56,13 @@ export interface RenderAsset {
   width: number;
   height: number;
 }
-export const serializeArticle = (
+export const serializeArticle = async (
   document: ArticleDocument,
   assets: readonly RenderAsset[],
   revision: string,
   publishedAt: Date,
   updatedAt?: Date,
-): string => {
+): Promise<string> => {
   const byId = new Map(assets.map((asset) => [asset.id, asset]));
   const cover = document.cover && byId.get(document.cover.assetId);
   const social = document.socialImage ? byId.get(document.socialImage.assetId) : cover;
@@ -163,5 +164,11 @@ export const serializeArticle = (
         ],
       })
     : "";
-  return `---\n${yaml.dump(frontmatter, { lineWidth: 120, skipInvalid: true })}---\n\n${body}\n${sources}${related}`;
+  return format(
+    `---\n${yaml.dump(frontmatter, { lineWidth: 120, skipInvalid: true })}---\n\n${body}\n${sources}${related}`,
+    {
+      parser: "markdown",
+      printWidth: 100,
+    },
+  );
 };

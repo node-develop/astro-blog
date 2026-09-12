@@ -90,31 +90,29 @@ describe("defaultMetaFor", () => {
 });
 
 describe("sortWithMeta", () => {
-  it("places pinned first even if order is larger", () => {
+  it("puts a new API article above old pinned and manually ordered posts without mutating input", () => {
+    const newest = {
+      ...fakeEntry("new-api"),
+      data: { ...fakeEntry("new-api").data, pubDate: new Date("2026-09-12") },
+    };
+    const old = {
+      ...fakeEntry("old-pinned"),
+      data: { ...fakeEntry("old-pinned").data, updatedDate: new Date("2026-10-01") },
+    };
     const items: PostWithMeta[] = [
-      { entry: fakeEntry("a"), meta: fakeMeta("a", 1) },
-      { entry: fakeEntry("b"), meta: fakeMeta("b", 100, true) },
+      { entry: old, meta: fakeMeta("old-pinned", 1, true) },
+      { entry: newest, meta: fakeMeta("new-api", 2_000_000_000) },
     ];
-    const sorted = sortWithMeta(items);
-    expect(sorted[0]?.meta.slug).toBe("b");
-    expect(sorted[1]?.meta.slug).toBe("a");
+    expect(sortWithMeta(items).map((item) => item.entry.id)).toEqual(["new-api", "old-pinned"]);
+    expect(items[0]?.entry.id).toBe("old-pinned");
   });
 
-  it("orders by numeric order ascending within pinned groups", () => {
+  it("uses the slug as a deterministic tie-breaker when publication dates match", () => {
     const items: PostWithMeta[] = [
-      { entry: fakeEntry("a"), meta: fakeMeta("a", 3) },
-      { entry: fakeEntry("b"), meta: fakeMeta("b", 1) },
-      { entry: fakeEntry("c"), meta: fakeMeta("c", 2) },
+      { entry: fakeEntry("b"), meta: fakeMeta("b", 1, true) },
+      { entry: fakeEntry("a"), meta: fakeMeta("a", 2_000_000_000) },
     ];
-    expect(sortWithMeta(items).map((i) => i.meta.slug)).toEqual(["b", "c", "a"]);
-  });
-
-  it("is stable when orders collide", () => {
-    const items: PostWithMeta[] = [
-      { entry: fakeEntry("a"), meta: fakeMeta("a", 1) },
-      { entry: fakeEntry("b"), meta: fakeMeta("b", 1) },
-    ];
-    expect(sortWithMeta(items).map((i) => i.meta.slug)).toEqual(["a", "b"]);
+    expect(sortWithMeta(items).map((item) => item.entry.id)).toEqual(["a", "b"]);
   });
 });
 
