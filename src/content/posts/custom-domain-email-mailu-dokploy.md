@@ -6,7 +6,7 @@ description: >-
 summary: >-
   Я собрал доменную почту на существующем VPS, используя Resend из Lenny’s Product Pass. Рассказываю про Mailu в
   Dokploy, исправление сети и сертификатов, отдельный Google-аккаунт и подключение к Почте на Mac.
-pubDate: '2026-09-12T12:36:48.815Z'
+pubDate: "2026-09-12T12:36:48.815Z"
 lang: ru
 draft: false
 tags:
@@ -55,14 +55,14 @@ faq:
       Google и ключ Resend в эти поля не вводятся.
     question: Какой пароль и серверы указывать в Почте на Mac?
 apiRevision: 577cfcc8-1ceb-4108-8bc9-7696c22506b1
-seoTitle: 'Почта на своём домене: Mailu, Dokploy, Resend и Google-вход'
+seoTitle: "Почта на своём домене: Mailu, Dokploy, Resend и Google-вход"
 seoDescription: >-
   Пошаговая настройка Mailu на VPS через Dokploy: Cloudflare DNS, Resend SMTP, сертификаты, Google Cloud Identity Free и
   подключение Apple Mail.
 cover: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp
-coverAlt: 'Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи.'
+coverAlt: "Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи."
 socialImage: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp
-socialImageAlt: 'Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи.'
+socialImageAlt: "Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи."
 socialImageWidth: 1729
 socialImageHeight: 910
 ---
@@ -426,15 +426,15 @@ flowchart TB
 
 ## Источники
 
-* [Mailu 2024.06: Docker Compose setup](https://mailu.io/2024.06/compose/setup.html)
-* [Mailu 2024.06: Configuration reference](https://mailu.io/2024.06/configuration.html)
-* [Mailu 2024.06: Reverse proxies](https://mailu.io/2024.06/reverse.html)
-* [Mailu 2024.06: Setup and external checks](https://mailu.io/2024.06/setup.html)
-* [Cloudflare: Set up a full DNS zone](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
-* [Cloudflare: Email DNS records](https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/)
-* [Dokploy: Docker Compose](https://docs.dokploy.com/docs/core/docker-compose)
-* [Resend: Send with SMTP](https://resend.com/docs/send-with-smtp)
-* [Resend: Account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)
-* [Google: Set up Cloud Identity](https://docs.cloud.google.com/identity/docs/how-to/set-up-cloud-identity-admin)
-* [Google: Compare Cloud Identity editions](https://docs.cloud.google.com/identity/docs/editions)
-* [Lenny’s Product Pass: partner offers and eligibility](https://www.lennysproductpass.com/)
+- [Mailu 2024.06: Docker Compose setup](https://mailu.io/2024.06/compose/setup.html)
+- [Mailu 2024.06: Configuration reference](https://mailu.io/2024.06/configuration.html)
+- [Mailu 2024.06: Reverse proxies](https://mailu.io/2024.06/reverse.html)
+- [Mailu 2024.06: Setup and external checks](https://mailu.io/2024.06/setup.html)
+- [Cloudflare: Set up a full DNS zone](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
+- [Cloudflare: Email DNS records](https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/)
+- [Dokploy: Docker Compose](https://docs.dokploy.com/docs/core/docker-compose)
+- [Resend: Send with SMTP](https://resend.com/docs/send-with-smtp)
+- [Resend: Account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)
+- [Google: Set up Cloud Identity](https://docs.cloud.google.com/identity/docs/how-to/set-up-cloud-identity-admin)
+- [Google: Compare Cloud Identity editions](https://docs.cloud.google.com/identity/docs/editions)
+- [Lenny’s Product Pass: partner offers and eligibility](https://www.lennysproductpass.com/)

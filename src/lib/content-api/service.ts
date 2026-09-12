@@ -204,7 +204,7 @@ export const enqueuePublication = async (tx: Tx, article: Article, keyId: string
     previous?.state === "failed" && previous.commitSha && previous.version === article.version
       ? hash(previous.content)
       : article.baseRemoteHash;
-  const content = serializeArticle(
+  const content = await serializeArticle(
     article.document,
     assets,
     id,

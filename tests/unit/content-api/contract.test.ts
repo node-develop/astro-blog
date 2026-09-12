@@ -7,6 +7,7 @@ import { postSchema } from "../../../src/lib/content/schemas";
 import { openApiDocument } from "../../../src/lib/content-api/openapi";
 import * as yaml from "~/lib/yaml";
 import sharp from "sharp";
+import { check, resolveConfig } from "prettier";
 
 const document = articleDocumentSchema.parse({
   externalId: "test-source-1",
@@ -50,10 +51,10 @@ describe("content API contract and rendering", () => {
     expect(result.body).toContain("$x^2$");
     expect(result.body).toContain("| 1 | 2 |");
   });
-  it("produces build-compatible frontmatter and escapes source labels", () => {
+  it("produces build-compatible frontmatter and escapes source labels", async () => {
     const id = "349ad05b-41ae-4b63-93ab-d7679c82c886";
     const image = { id, url: "https://cdn.example/image.png", width: 800, height: 600 };
-    const raw = serializeArticle(
+    const raw = await serializeArticle(
       {
         ...document,
         cover: { assetId: id, alt: "Cover" },
@@ -73,6 +74,26 @@ describe("content API contract and rendering", () => {
     expect(raw).toContain("https://cdn.example/image.png");
     expect(raw).not.toContain("asset:");
     expect(raw).toContain("\\<script>");
+  });
+  it("formats generated RU and EN documents exactly as the repository CI expects", async () => {
+    for (const lang of ["ru", "en"] as const) {
+      const raw = await serializeArticle(
+        {
+          ...document,
+          lang,
+          description: "Long description ".repeat(10),
+          faq: [{ question: "A question?", answer: "A long answer ".repeat(12) }],
+          body: "## Example\n\n* first\n* second\n\n| a | b |\n| - | - |\n| 1 | 2 |\n",
+        },
+        [],
+        "revision",
+        new Date("2026-09-12T12:00:00Z"),
+      );
+      const config = await resolveConfig("src/content/posts/example.md");
+      expect(await check(raw, { ...config, parser: "markdown" })).toBe(true);
+      expect(raw).toContain("## Example");
+      expect(raw).toContain(lang === "ru" ? "## Источники" : "## Sources");
+    }
   });
   it("fully decodes images and rejects corruption, MIME mismatches and SVG", async () => {
     const png = await sharp({ create: { width: 1, height: 1, channels: 3, background: "red" } })

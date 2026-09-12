@@ -38,7 +38,7 @@ const document = articleDocumentSchema.parse({
     },
   ],
 });
-const fixture = serializeArticle(
+const fixture = await serializeArticle(
   document,
   [{ id: marker, url: "https://cdn.example.test/smoke.webp", width: 800, height: 600 }],
   marker,

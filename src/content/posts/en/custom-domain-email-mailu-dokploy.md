@@ -7,7 +7,7 @@ summary: >-
   I used an existing VPS and Resend access from Lenny’s Product Pass to set up custom domain email. This is my Mailu and
   Dokploy configuration, the network and TLS fixes, and the separate Google identity I added while keeping mail on my
   server.
-pubDate: '2026-09-12T12:36:26.137Z'
+pubDate: "2026-09-12T12:36:26.137Z"
 lang: en
 draft: false
 tags:
@@ -435,15 +435,15 @@ I still need to restore the mailbox and configuration in a separate environment,
 
 ## Sources
 
-* [Mailu 2024.06: Docker Compose setup](https://mailu.io/2024.06/compose/setup.html)
-* [Mailu 2024.06: Configuration reference](https://mailu.io/2024.06/configuration.html)
-* [Mailu 2024.06: Reverse proxies](https://mailu.io/2024.06/reverse.html)
-* [Mailu 2024.06: Setup and external checks](https://mailu.io/2024.06/setup.html)
-* [Cloudflare: Set up a full DNS zone](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
-* [Cloudflare: Email DNS records](https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/)
-* [Dokploy: Docker Compose](https://docs.dokploy.com/docs/core/docker-compose)
-* [Resend: Send with SMTP](https://resend.com/docs/send-with-smtp)
-* [Resend: Account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)
-* [Google: Set up Cloud Identity](https://docs.cloud.google.com/identity/docs/how-to/set-up-cloud-identity-admin)
-* [Google: Compare Cloud Identity editions](https://docs.cloud.google.com/identity/docs/editions)
-* [Lenny’s Product Pass: partner offers and eligibility](https://www.lennysproductpass.com/)
+- [Mailu 2024.06: Docker Compose setup](https://mailu.io/2024.06/compose/setup.html)
+- [Mailu 2024.06: Configuration reference](https://mailu.io/2024.06/configuration.html)
+- [Mailu 2024.06: Reverse proxies](https://mailu.io/2024.06/reverse.html)
+- [Mailu 2024.06: Setup and external checks](https://mailu.io/2024.06/setup.html)
+- [Cloudflare: Set up a full DNS zone](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
+- [Cloudflare: Email DNS records](https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/)
+- [Dokploy: Docker Compose](https://docs.dokploy.com/docs/core/docker-compose)
+- [Resend: Send with SMTP](https://resend.com/docs/send-with-smtp)
+- [Resend: Account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)
+- [Google: Set up Cloud Identity](https://docs.cloud.google.com/identity/docs/how-to/set-up-cloud-identity-admin)
+- [Google: Compare Cloud Identity editions](https://docs.cloud.google.com/identity/docs/editions)
+- [Lenny’s Product Pass: partner offers and eligibility](https://www.lennysproductpass.com/)
