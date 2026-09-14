@@ -146,7 +146,7 @@
     "lint-staged": "^17.5.0",
     "msw": "^2.15.0",
     "playwright": "^1.63.0",
-    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-astro": "^1.0.0",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "testcontainers": "^12.1.0",
     "tsx": "^4.23.13",
