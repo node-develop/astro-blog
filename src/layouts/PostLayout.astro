@@ -3,6 +3,7 @@ import "~/styles/content.css";
 import BaseLayout from "./BaseLayout.astro";
 import CardArt from "~/components/CardArt.astro";
 import PostTOC from "~/components/PostTOC.astro";
+import MobilePostTOC from "~/components/MobilePostTOC.astro";
 import AuthorCard from "~/components/AuthorCard.astro";
 import ReadingProgress from "~/components/ReadingProgress.astro";
 import PrevNext from "~/components/PrevNext.astro";
@@ -170,6 +171,8 @@ const formattedUpdatedDate = updatedDate
   <PostTOC slot="toc" headings={headings} />
 
   <ReadingProgress targetSelector=".post" />
+
+  <MobilePostTOC headings={headings} />
 
   <article
     class="post"
