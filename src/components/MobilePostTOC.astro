@@ -1,0 +1,104 @@
+---
+import type { MarkdownHeading } from "astro";
+import { buildTocTree } from "~/lib/posts/toc";
+import { t } from "~/i18n";
+import { getLocaleFromPath } from "~/lib/i18n/routing";
+
+interface Props {
+  headings: readonly MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
+const tree = buildTocTree(headings);
+---
+
+{
+  tree.length > 0 && (
+    <details class="mobile-toc" data-pagefind-ignore>
+      <summary class="mobile-toc__summary">{t(locale, "post.toc")}</summary>
+      <nav aria-label={t(locale, "post.tocAria")}>
+        <ol class="mobile-toc__list">
+          {tree.map((node) => (
+            <li>
+              <a href={`#${node.slug}`} class="mobile-toc__link">
+                {node.text}
+              </a>
+              {node.children.length > 0 && (
+                <ol class="mobile-toc__sublist">
+                  {node.children.map((child) => (
+                    <li>
+                      <a href={`#${child.slug}`} class="mobile-toc__link">
+                        {child.text}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
+  )
+}
+
+<style>
+  .mobile-toc {
+    display: none;
+    max-width: var(--col-content);
+    margin-bottom: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+  }
+  .mobile-toc__summary {
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-fg);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .mobile-toc__summary::marker {
+    color: var(--color-accent);
+  }
+  .mobile-toc__summary:focus-visible,
+  .mobile-toc__link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  .mobile-toc__list,
+  .mobile-toc__sublist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .mobile-toc__list {
+    padding: 0 var(--space-4) var(--space-3);
+  }
+  .mobile-toc__sublist {
+    margin-left: var(--space-3);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--color-border);
+  }
+  .mobile-toc__link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: var(--space-2);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .mobile-toc__link:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+  @media (max-width: 1023px) {
+    .mobile-toc {
+      display: block;
+    }
+  }
+</style>
