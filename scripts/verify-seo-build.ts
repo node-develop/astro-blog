@@ -4,6 +4,8 @@ import { extname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { stripVTControlCharacters } from "node:util";
 import { person } from "../src/lib/seo/person";
+import { findDanglingGraphRefs, graphNodesOf } from "../src/lib/seo/graph-refs";
+import { isLocale } from "../src/i18n";
 
 type SeoBuildViolation = {
   readonly label: string;
@@ -87,6 +89,95 @@ export const assertFontPreloadsResolved = async (
   return preloadHrefs
     .filter((href) => !cssContents.some((css) => css.includes(href)))
     .map((href) => `font preload href not found in any emitted CSS: ${href}`);
+};
+
+/** `safeJsonLd` escapes `<` and `>`, so a block can never contain `</script>`. */
+const JSON_LD_BLOCK =
+  /<script\b[^>]*\btype=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+const HTML_LANG = /<html\b[^>]*\blang=["']([^"']*)["']/i;
+
+const builtHtmlFiles = async (distClientDir: string): Promise<string[] | null> => {
+  const entries = await readdir(distClientDir, { recursive: true, withFileTypes: true }).catch(
+    () => null,
+  );
+  return entries === null
+    ? null
+    : entries
+        .filter((entry) => !entry.isDirectory() && entry.name.endsWith(".html"))
+        .map((entry) => relative(distClientDir, join(entry.parentPath, entry.name)))
+        .sort();
+};
+
+/**
+ * Fail-loud guard against a JSON-LD `@graph` that points at nothing.
+ *
+ * Two dangling references shipped for months because nothing ever looked at
+ * the markup: `BlogPosting.isPartOf` on every post named a `Blog` node the
+ * post page did not emit, and `CollectionPage.hasPart` on the portfolio named
+ * nodes that live on the project pages. Both parse, both validate, both
+ * resolve to nothing — exactly the shape of error that looks like success.
+ *
+ * The rule itself lives in `src/lib/seo/graph-refs.ts` as pure data in / data
+ * out, because only part of the site can be checked from `dist`: `/`, `/blog/`
+ * and their EN twins are rendered on demand (`prerender = false`) and never
+ * reach the build output. Those pages are covered by the production server
+ * smoke test, which feeds the same function the HTML it fetches.
+ */
+export const assertNoDanglingGraphRefs = async (
+  distClientDir: string = DIST_CLIENT_DIR,
+): Promise<string[]> => {
+  const files = await builtHtmlFiles(distClientDir);
+  if (files === null) return [`build output is unreadable: ${distClientDir}`];
+
+  const issues: string[] = [];
+  let pagesWithJsonLd = 0;
+
+  for (const file of files) {
+    const page = file.split(sep).join("/");
+    const html = await readFile(join(distClientDir, file), "utf8");
+    const blocks = [...html.matchAll(JSON_LD_BLOCK)].map((match) => match[1] ?? "");
+    // A page without JSON-LD is not an error: plenty of routes emit none.
+    if (blocks.length === 0) continue;
+    pagesWithJsonLd += 1;
+
+    const lang = HTML_LANG.exec(html)?.[1];
+    if (!isLocale(lang)) {
+      issues.push(
+        `${page}: carries JSON-LD but <html lang> is ${JSON.stringify(lang ?? null)}, not a site ` +
+          `locale — the cross-locale exception cannot be applied to it`,
+      );
+      continue;
+    }
+
+    blocks.forEach((block, index) => {
+      const label = blocks.length === 1 ? page : `${page} (block ${index + 1})`;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(block);
+      } catch (error) {
+        issues.push(
+          `${label}: JSON-LD does not parse (${error instanceof Error ? error.message : String(error)})`,
+        );
+        return;
+      }
+      for (const ref of findDanglingGraphRefs({ graph: graphNodesOf(parsed), locale: lang })) {
+        issues.push(`${label}: ${ref.path} -> ${ref.id}`);
+      }
+    });
+  }
+
+  // One page without JSON-LD is fine; a whole build without any means this
+  // guard looked at nothing (BaseLayout emits a graph on every page) — the
+  // extractor went blind, e.g. the markup of the <script> tag changed. Same
+  // stance as "no font preload <link> found on probe page" above.
+  if (pagesWithJsonLd === 0) {
+    issues.push(
+      `no JSON-LD block found in any of ${files.length} built page(s) under ${distClientDir} — ` +
+        `nothing was checked`,
+    );
+  }
+
+  return issues;
 };
 
 const OG_SOURCE_ROOTS: ReadonlyArray<string> = ["src/lib/og", "src/pages/og"];
@@ -254,7 +345,15 @@ const runBuild = async (): Promise<number> => {
   for (const issue of fontIssues) {
     console.error(`[seo-build] font preload: ${issue}`);
   }
-  return fontIssues.length === 0 ? 0 : 1;
+
+  // Both output guards run on every green build: one `pnpm build` costs
+  // minutes, so a run must report everything it can see, not the first thing.
+  const graphIssues = await assertNoDanglingGraphRefs();
+  for (const issue of graphIssues) {
+    console.error(`[seo-build] dangling graph ref: ${issue}`);
+  }
+
+  return fontIssues.length === 0 && graphIssues.length === 0 ? 0 : 1;
 };
 
 const entrypoint = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;

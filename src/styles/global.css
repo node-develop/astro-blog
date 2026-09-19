@@ -9,6 +9,7 @@
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
+  --font-code: var(--font-code);
 
   --color-bg: var(--color-bg);
   --color-bg-elevated: var(--color-bg-elevated);
@@ -56,11 +57,11 @@ body {
   border-radius: var(--radius-sm);
 }
 
-/* Use mono for code even outside prose. */
+/* Use the code face for code even outside prose. */
 code,
 kbd,
 samp {
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
   font-size: 0.95em;
 }
 

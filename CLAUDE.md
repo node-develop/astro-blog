@@ -153,6 +153,7 @@ When making changes to content:
 - Hand-edited EN file → add `manuallyEdited: true` to its frontmatter to protect from regen.
 - e2e fixtures → name with `e2e-*` prefix; the guard and orchestrator skip them automatically.
 - CI runs `pnpm translate:check`; do not push without committing the regenerated EN files.
+- Courses and lessons are NOT covered by `pnpm translate`: write the EN twin by hand as `src/content/courses/<course>/en/<file>.md` with `locale: en`. `pnpm translate:check` fails on a missing or orphaned twin of a course, lesson, project or site page, and `checkCounterpartExists` answers from the collections, so a page without a twin gets no hreflang and a disabled language toggle instead of advertising a 404.
 
 Spec: `docs/superpowers/specs/2026-04-27-bilingual-ru-en-design.md`
 Plan: `docs/superpowers/plans/2026-04-27-bilingual-ru-en.md`

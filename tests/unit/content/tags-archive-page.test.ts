@@ -19,9 +19,17 @@ describe.each([
     expect(source).toMatch(/locale:\s*"en"/);
   });
 
-  it("emits a Blog node with blogPost listing", () => {
-    expect(source).toMatch(/"@type":\s*"Blog"/);
-    expect(source).toMatch(/blogPost:/);
+  it("lists the archive's posts through the shared ItemList builder, not by hand", () => {
+    // The template used to assemble its own `Blog` node whose `blogPost` was a
+    // list of bare {"@id": "<post>#blogposting"} references to nodes that live
+    // on the post pages, plus a hand-written ItemList. One shared builder in
+    // src/lib/seo/nodes-page.ts now emits the list with embedded typed entries.
+    // What the built archives actually emit is asserted rule-level in
+    // tests/unit/seo/item-list-markup.test.ts; this case keeps a second,
+    // hand-rolled implementation from growing back in the template.
+    expect(source).toMatch(/buildPostItemListNode/);
+    expect(source).not.toMatch(/blogPost:/);
+    expect(source).not.toMatch(/"@type":\s*"ItemList"/);
   });
 
   it("uses BreadcrumbList linking back to /tags index", () => {

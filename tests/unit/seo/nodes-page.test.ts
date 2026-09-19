@@ -6,7 +6,10 @@ import {
   buildFaqPageNode,
   buildCourseNode,
   buildLearningResourceNode,
+  buildPostItemListNode,
   courseId,
+  itemListId,
+  lessonId,
   minutesToIsoDuration,
   parseWorkloadToIsoDuration,
 } from "~/lib/seo/nodes-page";
@@ -134,14 +137,82 @@ describe("buildWebPageNode", () => {
   });
 });
 
+describe("buildPostItemListNode", () => {
+  const canonical = "https://artka.dev/blog/";
+  const items = [
+    { url: "https://artka.dev/blog/alpha/", headline: "Альфа" },
+    { url: "https://artka.dev/blog/beta/", headline: "Бета" },
+  ];
+
+  it("addresses the list by canonical and counts what it was given", () => {
+    const node = buildPostItemListNode({ locale: "ru", canonical, name: "Блог", items });
+    expect(node["@type"]).toBe("ItemList");
+    expect(node["@id"]).toBe(itemListId(canonical));
+    expect(itemListId(canonical)).toBe("https://artka.dev/blog/#itemlist");
+    expect(node.name).toBe("Блог");
+    expect(node.inLanguage).toBe("ru-RU");
+    expect(node.numberOfItems).toBe(items.length);
+    expect(node.itemListOrder).toBe("https://schema.org/ItemListOrderDescending");
+  });
+
+  it("keeps the given order and numbers positions 1..n", () => {
+    const node = buildPostItemListNode({ locale: "en", canonical, name: "Blog", items });
+    expect(node.itemListElement.map((el) => el.position)).toEqual([1, 2]);
+    expect(node.itemListElement.map((el) => el.url)).toEqual(items.map((i) => i.url));
+
+    const reversed = buildPostItemListNode({
+      locale: "en",
+      canonical,
+      name: "Blog",
+      items: [...items].reverse(),
+    });
+    expect(reversed.itemListElement.map((el) => el.url)).toEqual(
+      [...items].reverse().map((i) => i.url),
+    );
+  });
+
+  // The rule the whole builder exists for: a post lives on its own page, so a
+  // bare {"@id": …} here would resolve to nothing in this page's @graph.
+  it("embeds a minimal typed BlogPosting instead of a bare @id reference", () => {
+    const node = buildPostItemListNode({ locale: "ru", canonical, name: "Блог", items });
+    for (const [idx, element] of node.itemListElement.entries()) {
+      const item = element.item as Record<string, unknown>;
+      expect(Object.keys(item)).not.toEqual(["@id"]);
+      expect(item["@type"]).toBe("BlogPosting");
+      expect(item["@id"]).toBe(`${items[idx]!.url}#blogposting`);
+      expect(item.url).toBe(items[idx]!.url);
+      expect(item.headline).toBe(items[idx]!.headline);
+    }
+  });
+
+  it("survives an empty list without inventing entries", () => {
+    const node = buildPostItemListNode({ locale: "en", canonical, name: "Blog", items: [] });
+    expect(node.numberOfItems).toBe(0);
+    expect(node.itemListElement).toEqual([]);
+  });
+
+  it("honours an explicit order", () => {
+    const node = buildPostItemListNode({
+      locale: "en",
+      canonical,
+      name: "Blog",
+      items,
+      order: "Ascending",
+    });
+    expect(node.itemListOrder).toBe("https://schema.org/ItemListOrderAscending");
+  });
+});
+
 describe("buildCourseNode / buildLearningResourceNode", () => {
   const courseCanonical = "https://artka.dev/courses/claude-code-guide/";
   const lessonUrls = [
     "https://artka.dev/courses/claude-code-guide/01-introduction/",
     "https://artka.dev/courses/claude-code-guide/02-context-and-cache/",
   ];
+  const lessons = lessonUrls.map((url, index) => ({ url, name: `Lesson ${index + 1}` }));
+  const courseName = "Claude Code Guide";
 
-  it("emits a free online Course with workload, level and lesson @id references", () => {
+  it("emits a free online Course with workload, level and its lessons as defined parts", () => {
     const node = buildCourseNode({
       locale: "ru",
       canonical: courseCanonical,
@@ -149,7 +220,7 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       description: "Курс",
       level: "intermediate",
       workload: "~6 часов",
-      lessonUrls,
+      lessons,
       datePublished: new Date("2026-04-23T00:00:00.000Z"),
       dateModified: new Date("2026-08-24T00:00:00.000Z"),
     });
@@ -165,7 +236,18 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
     expect(node.hasCourseInstance).toEqual([
       { "@type": "CourseInstance", courseMode: "online", courseWorkload: "PT6H" },
     ]);
-    expect(node.hasPart).toEqual(lessonUrls.map((u) => ({ "@id": `${u}#lesson` })));
+    // Each part DEFINES the lesson under the id the lesson page uses: a bare
+    // {"@id"} would point at a node this page does not publish.
+    expect(node.hasPart).toEqual(
+      lessons.map((lesson, index) => ({
+        "@type": "LearningResource",
+        "@id": lessonId(lesson.url),
+        url: lesson.url,
+        name: lesson.name,
+        position: index + 1,
+      })),
+    );
+    expect(node.numberOfLessons).toBe(node.hasPart.length);
     expect(node.dateModified).toBe("2026-08-24T00:00:00.000Z");
   });
 
@@ -177,17 +259,18 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       description: "D",
       level: "beginner",
       workload: "self-paced",
-      lessonUrls: [],
+      lessons: [],
     });
     expect(node.hasCourseInstance[0]).toEqual({ "@type": "CourseInstance", courseMode: "online" });
     expect(node.educationalLevel).toBe("Beginner");
   });
 
-  it("emits a LearningResource lesson linked to its course by @id", () => {
+  it("emits a LearningResource lesson that names its course as a defined node", () => {
     const node = buildLearningResourceNode({
       locale: "en",
       canonical: lessonUrls[1]!,
       courseCanonical,
+      courseName,
       name: "02. Context",
       description: "Lesson",
       position: 2,
@@ -203,7 +286,14 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
     expect(node.dateModified).toBe("2026-09-08T00:00:00.000Z");
     expect(node.position).toBe(2);
     expect(node.timeRequired).toBe("PT25M");
-    expect(node.isPartOf).toEqual({ "@id": courseId(courseCanonical) });
+    // Same id as the full Course node on the course page, but defined here too:
+    // the lesson page does not publish that node, so a bare reference dangles.
+    expect(node.isPartOf).toEqual({
+      "@type": "Course",
+      "@id": courseId(courseCanonical),
+      url: courseCanonical,
+      name: courseName,
+    });
     expect(node.inLanguage).toBe("en-US");
     expect(node.isAccessibleForFree).toBe(true);
     expect(node.teaches).toBe("claude-code, guide");
@@ -214,6 +304,7 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       locale: "ru",
       canonical: lessonUrls[0]!,
       courseCanonical,
+      courseName,
       name: "01",
       description: "L",
       position: 1,

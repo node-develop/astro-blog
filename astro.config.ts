@@ -137,8 +137,13 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss(), pagefindDevMiddleware()],
   },
+  // Every internal link is still a prefetch candidate, but `viewport` made the
+  // browser fetch all 45 links on /blog/ (~317 KB against a 9.5 KB page) just
+  // for scrolling to the footer. `hover` charges only for links the cursor
+  // actually approaches — and phones, which have no hover, stop paying at all.
+  // Links that must never be prefetched opt out with data-astro-prefetch="false".
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: "viewport",
+    defaultStrategy: "hover",
   },
 });

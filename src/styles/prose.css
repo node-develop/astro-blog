@@ -46,7 +46,7 @@
 
 .prose code,
 .prose pre {
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
   font-size: var(--fs-sm);
 }
 
@@ -121,7 +121,9 @@
 }
 
 .code-block__lang {
-  font-family: var(--font-mono);
+  /* Code-block chrome: only ever rendered next to a <pre>, so the code face
+     is already being downloaded for this page. */
+  font-family: var(--font-code);
   font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);

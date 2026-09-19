@@ -17,8 +17,10 @@
  * site at once and is invisible in the HTML, so `scripts/verify-seo-build.ts`
  * fails the build on any person-shaped string literal under `src/lib/og/`.
  *
- * Fonts live in `public/fonts/og/`; the renderer needs the binary, not a
- * CSS @font-face.
+ * Fonts live in `src/assets/og-fonts/` (build-only — never served publicly
+ * from `public/`); the renderer needs the binary, not a CSS @font-face.
+ * Every caller here runs at build time (SSG, no `prerender = false`), so the
+ * font files never need to exist in the runtime Docker image.
  *
  * Layout: 1200×630, paper bg, sienna rule, Source Serif 4 title,
  * JetBrains Mono eyebrow, Inter byline. Follows Direction A.
@@ -51,7 +53,7 @@ let fontCache: FontBuffers | null = null;
 const loadFonts = async (): Promise<FontBuffers> => {
   if (fontCache) return fontCache;
   const root = process.cwd();
-  const dir = join(root, "public", "fonts", "og");
+  const dir = join(root, "src", "assets", "og-fonts");
   fontCache = {
     serifBold: await readFile(join(dir, "SourceSerif4-SemiBold.ttf")),
     mono: await readFile(join(dir, "JetBrainsMono-Medium.ttf")),

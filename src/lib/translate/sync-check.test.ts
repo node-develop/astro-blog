@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectDrift } from "./sync-check";
+import { detectDrift, detectMissingTwins, type TwinState } from "./sync-check";
 
 describe("detectDrift", () => {
   it("returns no issues when all RU posts have matching EN twins", () => {
@@ -144,4 +144,60 @@ it.each([false, true])("allows independently managed API locales (EN exists: %s)
       },
     ]),
   ).toEqual({ missing: [], drift: [], warnings: [] });
+});
+
+describe("detectMissingTwins", () => {
+  const paired: TwinState = {
+    collection: "lessons",
+    slug: "claude-code-guide/01-introduction",
+    ru: "built",
+    en: "built",
+  };
+
+  it("reports nothing when every page has its twin", () => {
+    expect(detectMissingTwins([paired])).toEqual({ missingEn: [], missingRu: [], unbuilt: [] });
+  });
+
+  it("flags a lesson published in Russian only", () => {
+    const result = detectMissingTwins([
+      paired,
+      { collection: "lessons", slug: "claude-code-guide/15-new", ru: "built", en: "absent" },
+    ]);
+    expect(result.missingEn).toEqual(["lessons/claude-code-guide/15-new"]);
+    expect(result.missingRu).toEqual([]);
+    expect(result.unbuilt).toEqual([]);
+  });
+
+  it("flags an EN twin left without its RU source, for every collection", () => {
+    const result = detectMissingTwins([
+      { collection: "projects", slug: "old-project", ru: "absent", en: "built" },
+      { collection: "courses", slug: "old-course", ru: "absent", en: "built" },
+      { collection: "site", slug: "uses", ru: "absent", en: "built" },
+    ]);
+    expect(result.missingRu).toEqual(["projects/old-project", "courses/old-course", "site/uses"]);
+    expect(result.missingEn).toEqual([]);
+  });
+
+  it("flags a twin file the page route would not build, naming the side", () => {
+    const result = detectMissingTwins([
+      { collection: "lessons", slug: "claude-code-guide/02-cache", ru: "built", en: "unbuilt" },
+      { collection: "courses", slug: "claude-code-guide", ru: "unbuilt", en: "built" },
+    ]);
+    expect(result.unbuilt).toEqual([
+      "lessons/claude-code-guide/02-cache (en)",
+      "courses/claude-code-guide (ru)",
+    ]);
+    // The file is there, so it is not reported a second time as missing.
+    expect(result.missingEn).toEqual([]);
+    expect(result.missingRu).toEqual([]);
+  });
+
+  it("ignores e2e fixtures, as a slug or as the lesson part of one", () => {
+    const result = detectMissingTwins([
+      { collection: "projects", slug: "e2e-ru-only", ru: "built", en: "absent" },
+      { collection: "lessons", slug: "claude-code-guide/e2e-lesson", ru: "built", en: "absent" },
+      { collection: "lessons", slug: "e2e-course/01-intro", ru: "absent", en: "built" },
+    ]);
+    expect(result).toEqual({ missingEn: [], missingRu: [], unbuilt: [] });
+  });
 });
