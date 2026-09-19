@@ -53,7 +53,7 @@ cover: /og-default.png
 coverAlt: artka.dev — technical blog
 draft: false
 lang: en
-sourceHash: b885289ea0c2b587288956864ff0b66c25eb63d37d744b5caa01cb12af4c307d
+sourceHash: f944c52e899ea5358e7fa0d390d2965b5077bb89991c341d8ef46184c13c88c6
 manuallyEdited: false
 updatedDate: 2026-09-19
 ---
