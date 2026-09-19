@@ -67,6 +67,7 @@ This is the approach documented in [Dokploy issue #3494](https://github.com/Dokp
 ## What did NOT work (do not retry)
 
 - Referencing `blog-compress` from the application's own routers in `dynamic/blog-blog-xekukc.yml` (Dokploy → application → Advanced → Traefik), with the definition either in that file or in `middlewares.yml`. The file was written to disk and read inside the Traefik container, and Traefik was reloaded, but neither `compress` nor a throwaway `headers` probe middleware ever showed up in responses. Router-level middleware edits to the per-application file do not take effect on this setup; the entryPoint-level attachment does. Dokploy also regenerates that file whenever a domain is edited, so anything hand-written there is lost.
+  Scope of this finding, narrowed on 2026-09-19: it applies to the Dokploy-owned per-application file only. A hand-written router with its own router-level middleware in a **separate** file under `dynamic/` does work (see `dokploy-static-cache.md`).
 - Verifying with `curl -I` (HEAD): Traefik does not compress a bodiless HEAD response, so the header is absent even when compression works. Use GET (below).
 
 ## Verify
