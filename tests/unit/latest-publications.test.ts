@@ -19,8 +19,11 @@ const mainOf = (html: string): string => html.match(/<main\b[^>]*>([\s\S]*?)<\/m
 // The archive is only as discoverable as the markup a crawler receives with no
 // JavaScript: the lazy-loaded fragments carry `X-Robots-Tag: noindex` and there
 // is no server-rendered link to them. So the assertions below are about the
-// *rendered* first page, and they derive every boundary from BLOG_PAGE_SIZE and
-// the feed itself — never from a hard-coded article count.
+// *rendered* first page. The rule — every published post is a plain link in
+// that markup — is checked against the feed alone, because an expectation built
+// from BLOG_PAGE_SIZE agrees with any page size, including the one that hid
+// posts. BLOG_PAGE_SIZE is used only for the mechanics of the lazy loader.
+// Nothing here is a hard-coded article count.
 describe("latest publications in the built site", () => {
   it("puts every article a crawler must see into the server-rendered markup", async () => {
     const server = await startProductionServer({
@@ -57,9 +60,22 @@ describe("latest publications in the built site", () => {
           feedPaths.slice(0, BLOG_PAGE_SIZE),
         );
 
-        // Page 2 exists exactly when the archive outgrows one page. While it
-        // fits, the index must not arm a sentinel that would fetch a 404 — and
-        // nothing may be stranded behind the noindex fragments.
+        // The rule itself. The feed is the whole archive (it is not paginated),
+        // so any post missing here is reachable only through the noindex
+        // fragments. This goes red if the page size is lowered, and on the day
+        // the archive outgrows it: then either raise BLOG_PAGE_SIZE or add
+        // server-rendered, indexable links to the later pages and extend this
+        // check to follow them.
+        const crawlable = new Set(articleLinks(mainOf(blogHtml), prefix));
+        expect(
+          feedPaths.filter((path) => !crawlable.has(path)),
+          `${prefix}/blog/ strands posts behind the noindex fragments`,
+        ).toEqual([]);
+
+        // Lazy-loader mechanics only (the branch below does not guard
+        // reachability): page 2 exists exactly when the archive outgrows one
+        // page, and while it fits the index must not arm a sentinel that would
+        // fetch a 404.
         const next = await fetchWithTimeout(`${server.origin}${prefix}/blog/partials/2/`);
         if (feedPaths.length > BLOG_PAGE_SIZE) {
           expect(next.status).toBe(200);
