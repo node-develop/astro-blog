@@ -11,6 +11,7 @@ import {
   buildWebPageNode,
   type GraphNode,
 } from "~/lib/seo/schema";
+import { bareProjectSlug, projectOgPath } from "~/lib/og/project-pages";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
 type Project = CollectionEntry<"projects">;
@@ -63,6 +64,9 @@ const webPageNode = buildWebPageNode({
   description: entry.data.description,
   type: "ItemPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
+  // The page exists to present this one work; without mainEntity the
+  // CreativeWork node sits in the graph attached to nothing.
+  mainEntityId: `${canonical}#creativework`,
   ...(entry.data.updatedDate ? { dateModified: entry.data.updatedDate } : {}),
 }) as GraphNode;
 
@@ -76,6 +80,7 @@ const projectLinkHref = (url: string): string =>
   noSidebar={true}
   title={entry.data.title}
   description={entry.data.description}
+  ogImage={projectOgPath(bareProjectSlug(entry.id), locale)}
   ogType="article"
   extraSchemaNodes={[creativeWorkNode, breadcrumbNode, webPageNode]}
 >

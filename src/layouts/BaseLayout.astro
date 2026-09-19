@@ -27,7 +27,7 @@ import MobileDrawer from "~/components/MobileDrawer.astro";
 import SkipLink from "~/components/SkipLink.astro";
 import Search from "~/components/Search.astro";
 import Analytics from "~/components/Analytics.astro";
-import { t } from "~/i18n";
+import { t, type StringKey } from "~/i18n";
 import { getLocaleFromPath, getCounterpart, checkCounterpartExists } from "~/lib/i18n/routing";
 import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 import { person } from "~/lib/seo/person";
@@ -53,6 +53,12 @@ interface Props {
   /** Drop the left sidebar column entirely (home page editorial layout). */
   noSidebar?: boolean;
   extraSchemaNodes?: ReadonlyArray<GraphNode | null>;
+  /**
+   * Third-party origins the page fetches a first-screen asset from (an
+   * off-site cover image, for example). Absolute http(s) origins only;
+   * anything else — and this site's own origin — is ignored.
+   */
+  preconnect?: ReadonlyArray<string>;
 }
 
 const {
@@ -67,7 +73,27 @@ const {
   fullWidth = false,
   noSidebar = false,
   extraSchemaNodes = [],
+  preconnect = [],
 } = Astro.props;
+
+// Origins worth a handshake before the markup that needs them is parsed.
+// Only absolute http(s) URLs survive, reduced to their origin and deduped;
+// our own origin is dropped because the document itself already opened it.
+const selfOrigin = (Astro.site ?? Astro.url).origin;
+const preconnectOrigins = [
+  ...new Set(
+    preconnect.flatMap((value) => {
+      let parsed: URL;
+      try {
+        parsed = new URL(value);
+      } catch {
+        return [];
+      }
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return [];
+      return parsed.origin === selfOrigin ? [] : [parsed.origin];
+    }),
+  ),
+];
 
 // Brand suffix — a <title> ends with " | artka.dev" unless it already contains
 // the brand or the suffix would push the title past the SERP budget. Pages
@@ -95,6 +121,14 @@ const counterpartExists = await checkCounterpartExists(Astro.url.pathname, local
 const ruVariant = locale === "ru" ? canonical : canonicalUrl(counterpartPath);
 const enVariant = locale === "en" ? canonical : canonicalUrl(counterpartPath);
 
+// An hreflang cluster is a claim that both addresses are the same page, open
+// to indexing. A noindexed member makes the whole cluster look broken, and a
+// 404 (the runtime not-found route renders this layout too) would invite the
+// crawler to check a second address that also does not exist. Either way the
+// alternates are withheld — counterpartExists alone is not enough.
+const indexableCluster = !noindex && Astro.response.status !== 404;
+const showAlternates = counterpartExists && indexableCluster;
+
 const ogLocale = locale === "ru" ? "ru_RU" : "en_US";
 const ogLocaleAlternate = locale === "ru" ? "en_US" : "ru_RU";
 
@@ -118,24 +152,42 @@ const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
 
 const localePrefix = locale === "en" ? "/en" : "";
+
+interface FooterLink {
+  readonly href: string;
+  readonly key: StringKey;
+  /** `"false"` opts the link out of prefetching; `undefined` drops the attribute. */
+  readonly prefetch: "false" | undefined;
+}
+
+// ClientRouter only ever navigates to an HTML document, so prefetching a feed,
+// a sitemap or any other file spends bytes on a navigation that can never
+// happen (rss.xml + feed.json alone are ~47 KB). `trailingSlash: "always"`
+// means every real page path ends in "/", so a file extension on the last
+// segment is what marks a link as a non-HTML resource.
+const isDocumentHref = (href: string): boolean => !/\.[a-z0-9]+$/i.test(href);
+
+const footerLink = (href: string, key: StringKey): FooterLink => ({
+  href,
+  key,
+  prefetch: isDocumentHref(href) ? undefined : "false",
+});
+
 const footerLinks = {
   about: [
-    { href: canonicalPath(`${localePrefix}/about`), key: "nav.about" },
-    { href: canonicalPath(`${localePrefix}/contact`), key: "nav.contact" },
-    { href: canonicalPath(`${localePrefix}/privacy`), key: "nav.privacy" },
-    { href: canonicalPath(`${localePrefix}/now`), key: "nav.now" },
-    { href: canonicalPath(`${localePrefix}/uses`), key: "nav.uses" },
-    { href: canonicalPath(`${localePrefix}/projects`), key: "nav.projects" },
+    footerLink(canonicalPath(`${localePrefix}/about`), "nav.about"),
+    footerLink(canonicalPath(`${localePrefix}/contact`), "nav.contact"),
+    footerLink(canonicalPath(`${localePrefix}/privacy`), "nav.privacy"),
+    footerLink(canonicalPath(`${localePrefix}/now`), "nav.now"),
+    footerLink(canonicalPath(`${localePrefix}/uses`), "nav.uses"),
+    footerLink(canonicalPath(`${localePrefix}/projects`), "nav.projects"),
   ],
   read: [
-    { href: canonicalPath(`${localePrefix}/blog`), key: "nav.posts" },
-    {
-      href: canonicalPath(`${localePrefix}/courses/claude-code-guide`),
-      key: "footer.link.course",
-    },
-    { href: canonicalPath(`${localePrefix}/tags`), key: "footer.link.tags" },
-    { href: rssHref, key: "footer.link.rss" },
-    { href: jsonFeedHref, key: "footer.link.json" },
+    footerLink(canonicalPath(`${localePrefix}/blog`), "nav.posts"),
+    footerLink(canonicalPath(`${localePrefix}/courses/claude-code-guide`), "footer.link.course"),
+    footerLink(canonicalPath(`${localePrefix}/tags`), "footer.link.tags"),
+    footerLink(rssHref, "footer.link.rss"),
+    footerLink(jsonFeedHref, "footer.link.json"),
   ],
 } as const;
 
@@ -155,6 +207,14 @@ const socialLabel = (url: string): string => {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {
+      preconnectOrigins.map((origin) => (
+        <>
+          <link rel="preconnect" href={origin} crossorigin />
+          <link rel="dns-prefetch" href={origin} />
+        </>
+      ))
+    }
     {
       fontPreloads.map((href) => (
         <link rel="preload" as="font" type="font/woff2" href={href} crossorigin="anonymous" />
@@ -180,10 +240,10 @@ const socialLabel = (url: string): string => {
     {noindex && <meta name="robots" content="noindex,follow" />}
     <link rel="canonical" href={canonical} />
     {
-      counterpartExists && (
+      showAlternates && (
         <>
-          <link rel="alternate" hreflang="ru-RU" href={ruVariant} />
-          <link rel="alternate" hreflang="en-US" href={enVariant} />
+          <link rel="alternate" hreflang="ru" href={ruVariant} />
+          <link rel="alternate" hreflang="en" href={enVariant} />
           <link rel="alternate" hreflang="x-default" href={ruVariant} />
         </>
       )
@@ -289,7 +349,9 @@ const socialLabel = (url: string): string => {
               {
                 footerLinks.about.map((l) => (
                   <li>
-                    <a href={l.href}>{t(locale, l.key)}</a>
+                    <a href={l.href} data-astro-prefetch={l.prefetch}>
+                      {t(locale, l.key)}
+                    </a>
                   </li>
                 ))
               }
@@ -301,7 +363,9 @@ const socialLabel = (url: string): string => {
               {
                 footerLinks.read.map((l) => (
                   <li>
-                    <a href={l.href}>{t(locale, l.key)}</a>
+                    <a href={l.href} data-astro-prefetch={l.prefetch}>
+                      {t(locale, l.key)}
+                    </a>
                   </li>
                 ))
               }

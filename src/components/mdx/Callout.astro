@@ -89,7 +89,10 @@ const labelByType: Record<CalloutType, string> = {
     margin-bottom: 0;
   }
   .callout__body :global(code) {
-    font-family: var(--font-mono);
+    /* Real inline code — must match the code face used elsewhere in prose,
+       otherwise `foo` inside a callout renders in a different family than
+       the same `foo` one paragraph above. */
+    font-family: var(--font-code);
     font-size: 0.92em;
   }
 

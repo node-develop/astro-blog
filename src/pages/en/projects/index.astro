@@ -19,7 +19,12 @@ const projects = [...allProjects].sort((a, b) => {
 
 const bareSlug = (id: string): string => id.replace(/^en\//, "").replace(/\.md$/, "");
 const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
-const itemUrls = projects.map((p) => canonicalUrl(`${projectsHref}${bareSlug(p.id)}`));
+// Title travels with the URL: the CollectionPage names each project inline
+// so its `hasPart` entries resolve inside this page's own graph.
+const listedProjects = projects.map((p) => ({
+  url: canonicalUrl(`${projectsHref}${bareSlug(p.id)}`),
+  name: p.data.title,
+}));
 const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 
@@ -33,7 +38,8 @@ const collectionNode: GraphNode = buildCollectionPageNode({
   canonical,
   name: t(locale, "projects.title"),
   description: t(locale, "meta.projects.description"),
-  itemUrls,
+  items: listedProjects,
+  breadcrumbId: `${canonical}#breadcrumbs`,
 });
 
 const breadcrumbsNode = buildBreadcrumbsNode({

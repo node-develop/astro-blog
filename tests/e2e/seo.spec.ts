@@ -122,8 +122,10 @@ test.describe("SEO: meta tags on rendered pages", () => {
 
   test("hreflang only emitted when EN counterpart exists", async ({ page }) => {
     await page.goto("/blog/local-coding-agent/");
-    const ru = page.locator('link[rel="alternate"][hreflang="ru-RU"]');
-    const en = page.locator('link[rel="alternate"][hreflang="en-US"]');
+    // Bare ISO-639 codes, matching the sitemap. `en-US` would exclude every
+    // English reader outside the US and send them to x-default (the RU page).
+    const ru = page.locator('link[rel="alternate"][hreflang="ru"]');
+    const en = page.locator('link[rel="alternate"][hreflang="en"]');
     const xDefault = page.locator('link[rel="alternate"][hreflang="x-default"]');
     await expect(ru).toHaveCount(1);
     await expect(en).toHaveCount(1);
@@ -134,4 +136,15 @@ test.describe("SEO: meta tags on rendered pages", () => {
     await page.goto("/login/");
     await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(0);
   });
+
+  // A cluster whose members are closed to indexing is a broken cluster, and a
+  // cluster of two 404s invites the crawler to check a second dead address.
+  // Both pages below render through BaseLayout with noindex set.
+  for (const pathname of ["/search/", "/en/search/", "/__does-not-exist__/"]) {
+    test(`no hreflang alternates on ${pathname}`, async ({ page }) => {
+      await page.goto(pathname);
+      await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(1);
+      await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(0);
+    });
+  }
 });

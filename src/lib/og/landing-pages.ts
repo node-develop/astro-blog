@@ -16,8 +16,20 @@ import { t } from "~/i18n";
 import { type Locale } from "~/i18n";
 import { OG_BRAND_UPPER } from "./brand";
 
+// `contact` and `privacy` are service pages, not entity pages: they need a
+// card that says which section of the site they belong to, nothing more.
+// They are listed here rather than given a third mechanism of their own.
 export type LandingPage =
-  "home" | "blog" | "tags" | "about" | "now" | "uses" | "projects" | "course-ccg";
+  | "home"
+  | "blog"
+  | "tags"
+  | "about"
+  | "now"
+  | "uses"
+  | "projects"
+  | "course-ccg"
+  | "contact"
+  | "privacy";
 
 interface LandingMeta {
   readonly page: LandingPage;
@@ -38,6 +50,8 @@ const RU_SECTIONS: Record<LandingPage, string> = {
   uses: "USES",
   projects: "ПРОЕКТЫ",
   "course-ccg": "КУРС",
+  contact: "КОНТАКТЫ",
+  privacy: "КОНФИДЕНЦИАЛЬНОСТЬ",
 };
 
 const EN_SECTIONS: Record<LandingPage, string> = {
@@ -49,6 +63,8 @@ const EN_SECTIONS: Record<LandingPage, string> = {
   uses: "USES",
   projects: "PROJECTS",
   "course-ccg": "COURSE",
+  contact: "CONTACT",
+  privacy: "PRIVACY",
 };
 
 const PAGES: ReadonlyArray<LandingPage> = [
@@ -60,6 +76,8 @@ const PAGES: ReadonlyArray<LandingPage> = [
   "uses",
   "projects",
   "course-ccg",
+  "contact",
+  "privacy",
 ];
 
 const eyebrowFor = (page: LandingPage, locale: Locale): string =>
@@ -83,6 +101,10 @@ const staticTitleFor = (page: LandingPage, locale: Locale): string | null => {
       return t(locale, "nav.uses");
     case "projects":
       return t(locale, "projects.title");
+    case "contact":
+      return t(locale, "nav.contact");
+    case "privacy":
+      return t(locale, "nav.privacy");
     default:
       return null;
   }

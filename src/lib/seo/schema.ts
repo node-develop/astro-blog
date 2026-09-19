@@ -39,6 +39,8 @@ export {
   buildBreadcrumbListNode,
   buildBreadcrumbsNode,
   buildWebPageNode,
+  buildPostItemListNode,
+  itemListId,
   buildFaqPageNode,
   buildCourseNode,
   buildLearningResourceNode,
@@ -47,6 +49,7 @@ export {
   minutesToIsoDuration,
   parseWorkloadToIsoDuration,
   type BreadcrumbItem,
+  type PostListEntry,
   type WebPageType,
 } from "./nodes-page";
 export { buildBlogNode } from "./nodes-global";

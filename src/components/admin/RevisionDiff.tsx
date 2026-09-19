@@ -29,7 +29,7 @@ export default function RevisionDiff({ oldBody, newBody }: Props): React.JSX.Ele
       })}
       <style>{`
         .diff {
-          font-family: var(--font-mono); font-size: var(--fs-xs);
+          font-family: var(--font-code); font-size: var(--fs-xs);
           line-height: 1.5;
           padding: var(--space-4);
           background: var(--color-bg-elevated);

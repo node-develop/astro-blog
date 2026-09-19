@@ -3,11 +3,14 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  assertNoDanglingGraphRefs,
   assertOgAuthorNames,
   assertSeoBuildOutput,
   diagnoseSeoBuildOutput,
 } from "./verify-seo-build";
 import { person } from "../src/lib/seo/person";
+import { graphIds } from "../src/lib/seo/nodes-global";
+import { safeJsonLd } from "../src/lib/seo/json-ld";
 
 describe("assertSeoBuildOutput", () => {
   it("accepts clean build output", () => {
@@ -246,5 +249,161 @@ describe("assertOgAuthorNames", () => {
 
   it("passes on the OG sources actually in the repo", async () => {
     expect(await assertOgAuthorNames()).toEqual([]);
+  });
+});
+
+/**
+ * The rule itself is unit-tested in `src/lib/seo/graph-refs.test.ts`; these
+ * cover the part only the script owns — finding the pages in `dist/client`,
+ * pulling the JSON-LD out of the HTML, and deciding what counts as broken.
+ */
+describe("assertNoDanglingGraphRefs", () => {
+  let dist = "";
+
+  const POST = "https://artka.dev/blog/example/";
+
+  const page = async (rel: string, lang: string, jsonLd: readonly string[]): Promise<void> => {
+    const full = join(dist, rel);
+    await mkdir(dirname(full), { recursive: true });
+    const blocks = jsonLd
+      .map((body) => `<script type="application/ld+json">${body}</script>`)
+      .join("");
+    await writeFile(
+      full,
+      `<!doctype html><html lang="${lang}"><head>${blocks}</head></html>`,
+      "utf8",
+    );
+  };
+
+  const graph = (nodes: readonly unknown[]): string =>
+    safeJsonLd({ "@context": "https://schema.org", "@graph": nodes });
+
+  const CLOSED_GRAPH = [
+    { "@type": "Blog", "@id": graphIds.blogRu, url: "https://artka.dev/blog/" },
+    { "@type": "BlogPosting", "@id": `${POST}#blogposting`, isPartOf: { "@id": graphIds.blogRu } },
+  ];
+
+  beforeEach(async () => {
+    dist = await mkdtemp(join(tmpdir(), "seo-graph-refs-"));
+  });
+
+  afterEach(async () => {
+    await rm(dist, { recursive: true, force: true });
+  });
+
+  it("accepts a page whose graph resolves against itself", async () => {
+    await page("blog/example/index.html", "ru", [graph(CLOSED_GRAPH)]);
+
+    expect(await assertNoDanglingGraphRefs(dist)).toEqual([]);
+  });
+
+  it("names the page, the node path and the id of a dangling isPartOf", async () => {
+    await page("blog/example/index.html", "ru", [
+      graph([
+        {
+          "@type": "BlogPosting",
+          "@id": `${POST}#blogposting`,
+          isPartOf: { "@id": graphIds.blogRu },
+        },
+      ]),
+    ]);
+
+    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
+      `blog/example/index.html: BlogPosting.isPartOf -> ${graphIds.blogRu}`,
+    ]);
+  });
+
+  it("reports JSON-LD that does not parse", async () => {
+    await page("broken/index.html", "ru", ["{ not json }"]);
+
+    const issues = await assertNoDanglingGraphRefs(dist);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("broken/index.html: JSON-LD does not parse");
+  });
+
+  const plainPage = async (rel: string): Promise<void> => {
+    const full = join(dist, rel);
+    await mkdir(dirname(full), { recursive: true });
+    await writeFile(full, '<!doctype html><html lang="ru"><body>hi</body></html>', "utf8");
+  };
+
+  it("is silent about a page that emits no JSON-LD next to pages that do", async () => {
+    await page("blog/example/index.html", "ru", [graph(CLOSED_GRAPH)]);
+    await plainPage("plain/index.html");
+
+    expect(await assertNoDanglingGraphRefs(dist)).toEqual([]);
+  });
+
+  it("refuses to pass a build in which it found no JSON-LD at all", async () => {
+    // Every real page carries a graph, so "nothing found" means the extractor
+    // went blind (say, the <script> markup changed) — not that all is well.
+    await plainPage("plain/index.html");
+    await plainPage("other/index.html");
+
+    const issues = await assertNoDanglingGraphRefs(dist);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("no JSON-LD block found in any of 2 built page(s)");
+  });
+
+  it("applies each page's own locale to the cross-locale exception", async () => {
+    // The same reference: allowed from an English page, broken on a Russian one.
+    await page("en/blog/example/index.html", "en", [
+      graph([
+        {
+          "@type": "WebSite",
+          "@id": graphIds.websiteEn,
+          translationOfWork: { "@id": graphIds.websiteRu },
+        },
+      ]),
+    ]);
+    await page("blog/example/index.html", "ru", [
+      graph([
+        {
+          "@type": "WebSite",
+          "@id": graphIds.websiteEn,
+          translationOfWork: { "@id": graphIds.websiteRu },
+        },
+      ]),
+    ]);
+
+    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
+      `blog/example/index.html: WebSite.translationOfWork -> ${graphIds.websiteRu}`,
+    ]);
+  });
+
+  it("refuses a page that carries JSON-LD under a lang the site does not have", async () => {
+    await page("de/index.html", "de", [graph(CLOSED_GRAPH)]);
+
+    const issues = await assertNoDanglingGraphRefs(dist);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("not a site locale");
+  });
+
+  it("checks every JSON-LD block on a page that emits more than one", async () => {
+    await page("multi/index.html", "ru", [
+      graph(CLOSED_GRAPH),
+      graph([
+        {
+          "@type": "WebPage",
+          "@id": "https://artka.dev/multi/#webpage",
+          about: { "@id": graphIds.person },
+        },
+      ]),
+    ]);
+
+    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
+      `multi/index.html (block 2): WebPage.about -> ${graphIds.person}`,
+    ]);
+  });
+
+  it("reports an unreadable build output instead of passing", async () => {
+    const missing = join(dist, "never-built");
+
+    expect(await assertNoDanglingGraphRefs(missing)).toEqual([
+      `build output is unreadable: ${missing}`,
+    ]);
   });
 });

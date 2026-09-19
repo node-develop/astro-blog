@@ -74,7 +74,7 @@ try {
   assert(html.includes("https://cdn.example.test/smoke.webp"));
   assert(html.includes("Smoke cover caption"));
   assert(html.includes('property="og:image:width" content="800"'));
-  assert(html.includes('hreflang="en-US"'));
+  assert(html.includes('hreflang="en"'));
   assert(html.includes('"BlogPosting"'));
   assert(html.includes('"FAQPage"'));
   assert(!html.includes("asset:"));

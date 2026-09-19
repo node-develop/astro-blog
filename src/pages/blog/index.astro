@@ -9,7 +9,9 @@ import { t } from "~/i18n";
 import {
   buildBlogNode,
   buildBreadcrumbsNode,
+  buildPostItemListNode,
   buildWebPageNode,
+  itemListId,
   type GraphNode,
 } from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
@@ -50,6 +52,20 @@ const breadcrumbsNode = buildBreadcrumbsNode({
   items: breadcrumbItems,
 }) as GraphNode;
 
+// The site's main list of articles, in the markup. Built from `initialPosts`,
+// i.e. exactly the cards this page server-renders and links: the lazily
+// fetched fragments carry `X-Robots-Tag: noindex` and no crawler sees them,
+// so promising them here would describe a page that is not served.
+const itemListNode = buildPostItemListNode({
+  locale,
+  canonical,
+  name: t(locale, "blog.title"),
+  items: initialPosts.map((p: PostWithMeta) => ({
+    url: canonicalUrl(`${blogHref}${bareSlug(p.entry.id)}`),
+    headline: p.entry.data.title,
+  })),
+}) as GraphNode;
+
 // Newest of pubDate/updatedDate across the listed posts — an edited post
 // must bump the index's dateModified, not only a newly published one.
 const latestModified = posts.reduce<Date | null>((acc, p) => {
@@ -68,6 +84,7 @@ const webPageNode = buildWebPageNode({
   type: "CollectionPage",
   dateModified: latestModified,
   breadcrumbId: `${canonical}#breadcrumbs`,
+  mainEntityId: itemListId(canonical),
   primaryImageOfPage,
 }) as GraphNode;
 ---
@@ -78,7 +95,7 @@ const webPageNode = buildWebPageNode({
   ogImage={ogImagePath}
   fullWidth={true}
   noSidebar={true}
-  extraSchemaNodes={[blogNode, breadcrumbsNode, webPageNode]}
+  extraSchemaNodes={[blogNode, breadcrumbsNode, webPageNode, itemListNode]}
 >
   <section class="list">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />

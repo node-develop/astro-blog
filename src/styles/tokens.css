@@ -12,7 +12,16 @@
   /* ── Typography ───────────────────────────────────────────── */
   --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Decorative monospace — logo, eyebrows, labels, footer headings, numerals.
+     Deliberately system-only: these appear on pages that contain no code, and
+     a webfont here downloaded 52 KB of JetBrains Mono for pure ornament. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* Real code only — code / pre / kbd / samp and the code-block chrome.
+     This is the ONLY token that names the JetBrains webfont, so the woff2 is
+     fetched only by pages that actually render code. */
+  --font-code:
+    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    monospace;
 
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;

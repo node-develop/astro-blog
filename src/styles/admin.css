@@ -2,7 +2,9 @@
   height: 70vh;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-family: var(--font-mono);
+  /* CodeMirror renders the markdown source itself — real code, and the admin
+     is auth-gated and never crawled, so it keeps the JetBrains face. */
+  font-family: var(--font-code);
   font-size: var(--fs-sm);
   background: var(--color-bg);
 }
