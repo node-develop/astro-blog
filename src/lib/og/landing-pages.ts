@@ -51,7 +51,7 @@ const RU_SECTIONS: Record<LandingPage, string> = {
   projects: "ПРОЕКТЫ",
   "course-ccg": "КУРС",
   contact: "КОНТАКТЫ",
-  privacy: "ПРИВАТНОСТЬ",
+  privacy: "КОНФИДЕНЦИАЛЬНОСТЬ",
 };
 
 const EN_SECTIONS: Record<LandingPage, string> = {
