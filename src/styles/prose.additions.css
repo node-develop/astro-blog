@@ -187,7 +187,8 @@
 
 .prose .rehype-code-title {
   display: inline-block;
-  font-family: var(--font-mono);
+  /* Code-block chrome: emitted only immediately before a <pre>. */
+  font-family: var(--font-code);
   font-size: var(--fs-xs);
   font-weight: 500;
   color: var(--color-fg-subtle);
