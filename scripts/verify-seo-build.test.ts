@@ -136,6 +136,114 @@ describe("assertOgAuthorNames", () => {
     expect(await assertOgAuthorNames(["src/lib/og"], root)).toEqual([]);
   });
 
+  // Built in code so no editor or formatter can quietly turn it into a space.
+  const NBSP = String.fromCharCode(0xa0);
+
+  it.each([
+    ["the Cyrillic canonical name", person.alternateName, `const a = "${person.alternateName}";`],
+    ["a foreign Cyrillic name", "Кто Другой", 'const a = "Кто Другой";'],
+    ["a template literal", "Someone Else", "const a = `by Someone Else · ${x}`;"],
+    ["a single-quoted literal", "Someone Else", "const a = 'Someone Else';"],
+    [
+      "a name joined by a real non-breaking space",
+      person.name.replace(" ", NBSP),
+      `const a = "${person.name.replace(" ", NBSP)}";`,
+    ],
+  ])("rejects a name planted as %s", async (_shape, name, planted) => {
+    await write("src/lib/og/og-image.ts", `${CLEAN_OG_IMAGE}${planted}\n`);
+
+    const issues = await assertOgAuthorNames(["src/lib/og"], root);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain(name);
+  });
+
+  it("gives a copy of the Cyrillic canonical name the same advice as a copy of person.name", async () => {
+    const adviceFor = async (name: string): Promise<string> => {
+      await write("src/lib/og/og-image.ts", `${CLEAN_OG_IMAGE}const a = "${name}";\n`);
+      const issues = await assertOgAuthorNames(["src/lib/og"], root);
+      expect(issues).toHaveLength(1);
+      return (issues[0] ?? "").replaceAll(name, "<name>");
+    };
+
+    expect(await adviceFor(person.alternateName)).toBe(await adviceFor(person.name));
+    expect(await adviceFor("Кто Другой")).not.toBe(await adviceFor(person.name));
+  });
+
+  it("scans nested route folders under the default roots", async () => {
+    const nested = "src/pages/og/lesson/[course]/[lesson].png.ts";
+    await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
+    await write(nested, 'export const card = { byline: "Someone Else" };\n');
+
+    const issues = await assertOgAuthorNames(undefined, root);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain(nested);
+  });
+
+  it("rejects a fallback that keeps the person import but no longer reads person.name", async () => {
+    await write(
+      "src/lib/og/og-image.ts",
+      CLEAN_OG_IMAGE.replace("override ?? person.name", "override ?? person.jobTitle"),
+    );
+
+    const issues = await assertOgAuthorNames(["src/lib/og"], root);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("person.name");
+  });
+
+  it("rejects a person.name that no longer comes from the person module", async () => {
+    await write(
+      "src/lib/og/og-image.ts",
+      CLEAN_OG_IMAGE.replace(
+        'import { person } from "~/lib/seo/person";',
+        'const person = { name: "" };',
+      ),
+    );
+
+    const issues = await assertOgAuthorNames(["src/lib/og"], root);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("person.name");
+  });
+
+  it.each(["tsx", "jsx", "js", "mjs", "astro", "json"])(
+    "refuses a .%s file under an OG root instead of skipping it",
+    async (ext) => {
+      await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
+      await write(`src/lib/og/card.${ext}`, 'export const byline = "Someone Else";\n');
+
+      const issues = await assertOgAuthorNames(["src/lib/og"], root);
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toContain(`src/lib/og/card.${ext}`);
+    },
+  );
+
+  it("ignores extensionless OS dotfiles but still scans a dot-prefixed source file", async () => {
+    await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
+    await write("src/lib/og/.DS_Store", "Someone Else");
+    expect(await assertOgAuthorNames(["src/lib/og"], root)).toEqual([]);
+
+    await write("src/lib/og/.hidden.ts", 'export const guest = "Someone Else";\n');
+    const issues = await assertOgAuthorNames(["src/lib/og"], root);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("src/lib/og/.hidden.ts");
+  });
+
+  it("still scans the .ts sibling of a file type it cannot read", async () => {
+    await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
+    await write("src/lib/og/card.tsx", "export const Card = () => <div>Someone Else</div>;\n");
+    await write("src/lib/og/guest.ts", 'export const guest = "Someone Else";\n');
+
+    const issues = await assertOgAuthorNames(["src/lib/og"], root);
+
+    expect(issues).toHaveLength(2);
+    expect(issues.filter((issue) => issue.includes("src/lib/og/card.tsx"))).toHaveLength(1);
+    expect(issues.filter((issue) => issue.includes("src/lib/og/guest.ts"))).toHaveLength(1);
+  });
+
   it("passes on the OG sources actually in the repo", async () => {
     expect(await assertOgAuthorNames()).toEqual([]);
   });

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
-import { join, resolve, sep } from "node:path";
+import { extname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { stripVTControlCharacters } from "node:util";
 import { person } from "../src/lib/seo/person";
@@ -112,9 +112,33 @@ const STRING_LITERAL = /"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|`((?:[^`\\]|
  */
 const NAME_LIKE = /(?<![\p{L}\p{N}_])\p{Lu}\p{Ll}+[ \u00A0]\p{Lu}\p{Ll}+(?![\p{L}\p{N}_])/u;
 
+/**
+ * File types the literal scan can actually read. JSX text in a .tsx/.astro
+ * card is not a string literal at all, so widening this list is not enough —
+ * teach the scanner the new syntax first.
+ */
+const OG_SCANNED_EXTENSIONS: ReadonlySet<string> = new Set([".ts"]);
+
+/**
+ * Every file under the root, whatever its type: a file the scanner cannot
+ * read must be reported, not dropped. A recursive readdir also lists the
+ * folders themselves (`landing`, `[course]`), hence the Dirent filter.
+ *
+ * The one exception is an extensionless dotfile (`.DS_Store`, `.gitkeep`): the
+ * OS or git puts those there, no module can import them, and refusing them
+ * would turn the guard red on a developer's Mac for nothing. `.hidden.ts` has
+ * an extension and is scanned like any other source.
+ */
+const isOsDotfile = (name: string): boolean => name.startsWith(".") && extname(name) === "";
+
 const ogSourceFiles = async (dir: string): Promise<string[] | null> => {
-  const names = await readdir(dir, { recursive: true }).catch(() => null);
-  return names === null ? null : names.filter((name) => name.endsWith(".ts")).sort();
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true }).catch(() => null);
+  return entries === null
+    ? null
+    : entries
+        .filter((entry) => !entry.isDirectory() && !isOsDotfile(entry.name))
+        .map((entry) => relative(dir, join(entry.parentPath, entry.name)))
+        .sort();
 };
 
 /**
@@ -142,8 +166,17 @@ export const assertOgAuthorNames = async (
     }
 
     for (const name of files) {
-      const source = await readFile(join(dir, name), "utf8");
       const label = `${root}/${name.split(sep).join("/")}`;
+      if (!OG_SCANNED_EXTENSIONS.has(extname(name))) {
+        issues.push(
+          `${label}: unscanned file type under an OG root. The byline guard only reads ` +
+            `${[...OG_SCANNED_EXTENSIONS].join(", ")} string literals, so a name in this file would ` +
+            `pass silently — extend the scanner in scripts/verify-seo-build.ts before adding it.`,
+        );
+        continue;
+      }
+
+      const source = await readFile(join(dir, name), "utf8");
 
       for (const match of source.matchAll(STRING_LITERAL)) {
         const literal = match[1] ?? match[2] ?? match[3] ?? "";

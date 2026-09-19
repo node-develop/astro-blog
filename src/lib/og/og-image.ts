@@ -69,7 +69,11 @@ const COLORS = {
   border: "#d6cdbf",
 } as const;
 
-const tree = (input: OgInput): Record<string, unknown> => ({
+/**
+ * Satori element tree of a card. Exported so the byline rule (default =
+ * canonical author, override respected) is testable without rendering a PNG.
+ */
+export const ogTree = (input: OgInput): Record<string, unknown> => ({
   type: "div",
   props: {
     style: {
@@ -181,7 +185,7 @@ const tree = (input: OgInput): Record<string, unknown> => ({
 
 export const renderOg = async (input: OgInput): Promise<Buffer> => {
   const fonts = await loadFonts();
-  const svg = await satori(tree(input) as never, {
+  const svg = await satori(ogTree(input) as never, {
     width: 1200,
     height: 630,
     fonts: [
