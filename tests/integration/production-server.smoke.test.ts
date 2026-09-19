@@ -2,12 +2,19 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { findDanglingGraphRefs, graphNodesOf } from "~/lib/seo/graph-refs";
 import {
   fetchWithTimeout,
   startProductionServer,
   stopServer,
   waitForOutput,
 } from "./production-server.helpers";
+
+/** Raw text of every `application/ld+json` block in a page. */
+const jsonLdBlocks = (body: string): readonly string[] =>
+  [...body.matchAll(/<script\b[^>]*\btype="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(
+    (match) => match[1] ?? "",
+  );
 
 const responseFor = async (
   origin: string,
@@ -226,6 +233,30 @@ describe("production standalone server", () => {
         expect(written, dictionary).not.toBe(i18nString(dictionary, "blog.title"));
         const title = documentTitle(await html(server.origin, pathname));
         expect(title.startsWith(written), pathname + ": " + title).toBe(true);
+      }
+
+      // The build guard (scripts/verify-seo-build.ts) walks dist, and these four
+      // pages never reach it: they are rendered on demand. Same rule, same
+      // function, fed from the running server instead: every bare {"@id"}
+      // reference resolves inside the page's own graph.
+      for (const [pathname, locale] of [
+        ["/", "ru"],
+        ["/en/", "en"],
+        ["/blog/", "ru"],
+        ["/en/blog/", "en"],
+      ] as const) {
+        const blocks = jsonLdBlocks(await html(server.origin, pathname));
+        expect(blocks.length, pathname + " has no JSON-LD to check").toBeGreaterThan(0);
+        for (const block of blocks) {
+          const dangling = findDanglingGraphRefs({
+            graph: graphNodesOf(JSON.parse(block)),
+            locale,
+          });
+          expect(
+            dangling.map((ref) => `${ref.path} -> ${ref.id}`),
+            pathname,
+          ).toEqual([]);
+        }
       }
 
       expect(await redirect(server.origin, "/blog")).toEqual({ status: 301, location: "/blog/" });
