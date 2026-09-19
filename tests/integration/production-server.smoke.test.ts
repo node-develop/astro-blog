@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -48,6 +49,14 @@ const visibleMainText = (body: string): string =>
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+/** hreflang codes declared by `<link rel="alternate">` in a served document. */
+const hreflangValues = (body: string): readonly string[] =>
+  [...body.matchAll(/<link\b[^>]*>/gi)]
+    .map(([tag]) => tag)
+    .filter((tag) => /\brel="alternate"/i.test(tag))
+    .map((tag) => /\bhreflang="([^"]*)"/i.exec(tag)?.[1])
+    .filter((value): value is string => value !== undefined);
 
 const expectNegotiatedVary = (response: Response): void => {
   const tokens = (response.headers.get("vary") ?? "")
@@ -350,8 +359,30 @@ describe("production standalone server", () => {
         const trustPage = await html(server.origin, pathname);
         expect(visibleMainText(trustPage).length, pathname).toBeGreaterThan(500);
         expect(trustPage).toContain(`rel="canonical" href="https://artka.dev${pathname}"`);
-        expect(trustPage).toContain('hreflang="ru-RU"');
-        expect(trustPage).toContain('hreflang="en-US"');
+        // Page markup and sitemap speak one set of language codes: bare
+        // ISO-639 `ru`/`en`, not region-scoped `ru-RU`/`en-US` (which would
+        // hand every English reader outside the US to x-default → the RU page).
+        expect(trustPage).toContain('hreflang="ru"');
+        expect(trustPage).toContain('hreflang="en"');
+        // Positive control for the helper: the "no alternates" checks below
+        // compare against an empty list, which a regex that matches nothing
+        // would satisfy just as well. An open page must yield the full cluster.
+        expect(new Set(hreflangValues(trustPage)), pathname).toEqual(
+          new Set(["ru", "en", "x-default"]),
+        );
+      }
+
+      // Pages closed to indexing declare no language cluster: a cluster with a
+      // noindexed member reads as broken. Search is server-rendered, so it never
+      // reaches dist/client and only a request against the built server can see
+      // it — every prerendered noindex page (thin tag archives) already has no
+      // counterpart, and would pass with or without the rule.
+      for (const pathname of ["/search/", "/en/search/"]) {
+        const closedPage = await html(server.origin, pathname);
+        // Precondition, not decoration: if search ever opens to indexing this
+        // fails loudly instead of leaving the assertion below with nothing to say.
+        expect(closedPage, pathname).toContain('name="robots" content="noindex,follow"');
+        expect(hreflangValues(closedPage), pathname).toEqual([]);
       }
 
       const missingPath = "/__agent-readiness-missing__/";
@@ -365,6 +396,18 @@ describe("production standalone server", () => {
       const html404Body = await html404.text();
       expect(html404Body).toContain("Страница не найдена");
       expect(html404Body).toContain('name="robots" content="noindex,follow"');
+      // A typo in somebody's link must not spawn a second address for the
+      // crawler to chase: the not-found page declares no language cluster,
+      // because both members of it would 404 as well.
+      expect(hreflangValues(html404Body)).toEqual([]);
+
+      // Same rule for an address nothing in the build could have anticipated.
+      const randomMissing = `/${randomUUID()}/`;
+      const randomMissingResponse = await responseFor(server.origin, randomMissing, {
+        headers: { Accept: "text/html" },
+      });
+      expect(randomMissingResponse.status, randomMissing).toBe(404);
+      expect(hreflangValues(await randomMissingResponse.text()), randomMissing).toEqual([]);
 
       const html404Head = await responseFor(server.origin, missingPath, {
         method: "HEAD",
