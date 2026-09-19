@@ -40,14 +40,20 @@ export const getStaticPaths: GetStaticPaths = async () => {
   for (const locale of ["ru", "en"] as const) {
     const wantEnglish = locale === "en";
 
-    for (const course of courses.filter((c) => isEnglish(c) === wantEnglish)) {
+    for (const course of courses.filter(
+      (c: CollectionEntry<"course">) => isEnglish(c) === wantEnglish,
+    )) {
       const courseSlug = courseSlugOf(course, locale);
       const prefix = wantEnglish ? `${courseSlug}/en/` : `${courseSlug}/`;
       const ordered = lessons
-        .filter((l) => isEnglish(l) === wantEnglish && l.id.startsWith(prefix))
-        .sort((a, b) => orderOf(a) - orderOf(b));
+        .filter(
+          (l: CollectionEntry<"lesson">) => isEnglish(l) === wantEnglish && l.id.startsWith(prefix),
+        )
+        .sort(
+          (a: CollectionEntry<"lesson">, b: CollectionEntry<"lesson">) => orderOf(a) - orderOf(b),
+        );
 
-      ordered.forEach((lesson, i) => {
+      ordered.forEach((lesson: CollectionEntry<"lesson">, i: number) => {
         const params = {
           course: courseSlug,
           lesson: lessonOgSlug(lesson.id.replace(/^.*\//, ""), locale),
