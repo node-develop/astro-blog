@@ -5,6 +5,7 @@ import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { t } from "~/i18n";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { landingOgPath } from "~/lib/og/landing-pages";
 import { buildLandingNodes } from "~/lib/seo/landing";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
@@ -37,6 +38,7 @@ const nodes = buildLandingNodes({
 <BaseLayout
   title={pageTitle}
   description={description}
+  ogImage={landingOgPath("contact", locale)}
   fullWidth={true}
   noSidebar={true}
   extraSchemaNodes={nodes}
