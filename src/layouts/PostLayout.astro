@@ -16,6 +16,7 @@ import { t } from "~/i18n";
 import { person } from "~/lib/seo/person";
 import { resolveTagLabel, getTagDict } from "~/lib/content/tags";
 import { bareSlug } from "~/lib/content/slug";
+import { postOgPath } from "~/lib/og/post-pages";
 import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
 import { getReadingTime, formatReadingTime } from "~/lib/posts/reading-time";
@@ -46,7 +47,9 @@ const { title, description, pubDate, updatedDate, tags, keywords, cover, coverAl
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = canonicalUrl(Astro.url.pathname);
 const slug = bareSlug(post.id);
-const ogImagePath = `/og/${slug}.png`;
+// Locale-suffixed: the EN page must not inherit the RU card. Shape owned
+// by postOgPath() and emitted by src/pages/og/[slug].png.ts.
+const ogImagePath = postOgPath(slug, locale);
 // Agent-readable twin of this page (see src/pages/blog/[slug].md.ts).
 const markdownHref = `${locale === "en" ? "/en" : ""}/blog/${slug}.md`;
 // Frontmatter `author` defaults to the canonical person name; an explicit

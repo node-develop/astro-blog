@@ -14,6 +14,7 @@
 import { getEntry } from "astro:content";
 import { t } from "~/i18n";
 import { type Locale } from "~/i18n";
+import { OG_BRAND_UPPER } from "./brand";
 
 export type LandingPage =
   "home" | "blog" | "tags" | "about" | "now" | "uses" | "projects" | "course-ccg";
@@ -25,26 +26,29 @@ interface LandingMeta {
   readonly eyebrow: string;
 }
 
-const RU_EYEBROWS: Record<LandingPage, string> = {
-  home: "ARTKA.DEV · ГЛАВНАЯ",
-  blog: "ARTKA.DEV · СТАТЬИ",
-  tags: "ARTKA.DEV · ТЕМЫ",
-  about: "ARTKA.DEV · ОБ АВТОРЕ",
-  now: "ARTKA.DEV · СЕЙЧАС",
-  uses: "ARTKA.DEV · USES",
-  projects: "ARTKA.DEV · ПРОЕКТЫ",
-  "course-ccg": "ARTKA.DEV · КУРС",
+// Section label only — the brand half of the eyebrow comes from
+// OG_BRAND_UPPER so the wordmark on a card can never drift from the
+// canonical origin the site is served on.
+const RU_SECTIONS: Record<LandingPage, string> = {
+  home: "ГЛАВНАЯ",
+  blog: "СТАТЬИ",
+  tags: "ТЕМЫ",
+  about: "ОБ АВТОРЕ",
+  now: "СЕЙЧАС",
+  uses: "USES",
+  projects: "ПРОЕКТЫ",
+  "course-ccg": "КУРС",
 };
 
-const EN_EYEBROWS: Record<LandingPage, string> = {
-  home: "ARTKA.DEV · HOME",
-  blog: "ARTKA.DEV · POSTS",
-  tags: "ARTKA.DEV · TOPICS",
-  about: "ARTKA.DEV · ABOUT",
-  now: "ARTKA.DEV · NOW",
-  uses: "ARTKA.DEV · USES",
-  projects: "ARTKA.DEV · PROJECTS",
-  "course-ccg": "ARTKA.DEV · COURSE",
+const EN_SECTIONS: Record<LandingPage, string> = {
+  home: "HOME",
+  blog: "POSTS",
+  tags: "TOPICS",
+  about: "ABOUT",
+  now: "NOW",
+  uses: "USES",
+  projects: "PROJECTS",
+  "course-ccg": "COURSE",
 };
 
 const PAGES: ReadonlyArray<LandingPage> = [
@@ -59,7 +63,7 @@ const PAGES: ReadonlyArray<LandingPage> = [
 ];
 
 const eyebrowFor = (page: LandingPage, locale: Locale): string =>
-  locale === "ru" ? RU_EYEBROWS[page] : EN_EYEBROWS[page];
+  `${OG_BRAND_UPPER} · ${locale === "ru" ? RU_SECTIONS[page] : EN_SECTIONS[page]}`;
 
 /**
  * Returns title strings for pages that still use strings.json.

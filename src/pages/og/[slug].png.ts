@@ -1,46 +1,65 @@
 /**
- * Static OG-image route: emits /og/<slug>.png at build time for every post.
+ * Static OG-image route: emits one PNG per post PER LOCALE at build time,
+ * at `/og/<slug>-<locale>.png` (see `postOgPath()` for the shape and why
+ * both locales carry the suffix).
  *
- * Drop at: src/pages/og/[slug].png.ts
- *
- * The locale variants share slugs (RU and EN have separate posts under
- * the same slug name). This route resolves locale by checking which
- * locale has the post; if both have it, RU wins (default site lang).
- * Adjust if you'd rather emit `/og/<slug>.<locale>.png`.
+ * Before this, the route stripped the `en/` prefix and de-duplicated by bare
+ * slug with the RU list iterated first, so `/blog/<slug>/` and
+ * `/en/blog/<slug>/` pointed at the same file and every EN article was
+ * shared with a card in Russian. Nothing failed: the image existed, it was
+ * simply the wrong one.
  */
 import type { APIRoute, GetStaticPaths } from "astro";
+import { getCollection, type CollectionEntry } from "astro:content";
 import { renderOg } from "~/lib/og/og-image";
-import { getOrderedPosts } from "~/lib/content/loader";
+import { OG_BRAND_UPPER } from "~/lib/og/brand";
+import { bareSlug } from "~/lib/content/slug";
+import { postOgSlug } from "~/lib/og/post-pages";
 
-const bareSlug = (id: string): string => id.replace(/^en\//, "");
+type Post = CollectionEntry<"posts">;
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const ru = await getOrderedPosts({ locale: "ru" });
-  const en = await getOrderedPosts({ locale: "en" });
+  // Same visibility rule as src/pages/blog/[...slug].astro and its en/ twin:
+  // every non-draft post, enumerated through getCollection. The curated
+  // getOrderedPosts() drops posts hidden from lists, so using it here left
+  // those pages pointing at a card that was never emitted — an og:image 404
+  // that no page-level check can see.
+  const posts = await getCollection("posts", (entry: Post) => !entry.data.draft);
 
-  const seen = new Set<string>();
-  const paths: Array<{ params: { slug: string }; props: { title: string; eyebrow?: string } }> = [];
+  const paths: Array<{ params: { slug: string }; props: { title: string; eyebrow: string } }> = [];
+  // Fail loud on a name clash instead of letting the later post overwrite the
+  // earlier one's card. `<slug>-<locale>` cannot collide today; this guard is
+  // what keeps a future change to the shape from reintroducing the silent
+  // overwrite that made EN posts render a Russian title.
+  const claimedBy = new Map<string, string>();
 
-  for (const list of [ru, en]) {
-    for (const p of list) {
-      const slug = bareSlug(p.entry.id);
-      if (seen.has(slug)) continue;
-      seen.add(slug);
-      const tags = (p.entry.data.tags as string[] | undefined) ?? [];
-      const year = p.entry.data.pubDate.getFullYear();
-      const eyebrow = tags[0] ? `${tags[0].toUpperCase()} · ${year}` : `ARTKA.DEV · ${year}`;
-      paths.push({
-        params: { slug },
-        props: { title: p.entry.data.title, eyebrow },
-      });
+  for (const post of posts) {
+    const locale = post.id.startsWith("en/") ? "en" : "ru";
+    const slug = postOgSlug(bareSlug(post.id), locale);
+
+    const clash = claimedBy.get(slug);
+    if (clash !== undefined) {
+      throw new Error(
+        `[og] image path collision at /og/${slug}.png: claimed by both "${clash}" and ` +
+          `"${post.id}". Two posts would share one card, so one of them would be shared ` +
+          `with the other's title and language. Rename one slug, or change postOgSlug() ` +
+          `in src/lib/og/post-pages.ts to a shape that cannot collide.`,
+      );
     }
+    claimedBy.set(slug, post.id);
+
+    const tags = post.data.tags;
+    const year = post.data.pubDate.getFullYear();
+    const eyebrow = tags[0] ? `${tags[0].toUpperCase()} · ${year}` : `${OG_BRAND_UPPER} · ${year}`;
+    paths.push({ params: { slug }, props: { title: post.data.title, eyebrow } });
   }
+
   return paths;
 };
 
 export const GET: APIRoute = async ({ props }) => {
-  const { title, eyebrow } = props as { title: string; eyebrow?: string };
-  const png = await renderOg(eyebrow ? { title, eyebrow } : { title });
+  const { title, eyebrow } = props as { title: string; eyebrow: string };
+  const png = await renderOg({ title, eyebrow });
   return new Response(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",

@@ -1,20 +1,24 @@
 /**
  * og-image — per-post Open Graph image generator.
  *
- * Strategy: build-time SSG via Astro endpoints. Each post route
- * emits a sibling `.png` at `/og/<slug>.png` rendered with Satori +
- * @resvg/resvg-js. No runtime dependency, no edge function.
+ * Strategy: build-time SSG via Astro endpoints. Each page that wants a
+ * card emits a sibling `.png` rendered with Satori + @resvg/resvg-js.
+ * No runtime dependency, no edge function.
  *
- * Usage:
- *   1. pnpm add satori @resvg/resvg-js
- *   2. Drop `og-image.ts` into `src/lib/og/`.
- *   3. Drop the route file into `src/pages/og/[slug].png.ts`.
- *   4. In BaseHead.astro, set:
- *        <meta property="og:image" content={`${siteUrl}/og/${slug}.png`} />
- *        <meta name="twitter:image" content={`${siteUrl}/og/${slug}.png`} />
- *   5. Place font files in `public/fonts/og/` (or import from
- *      @fontsource-variable). The renderer needs the binary, not a
- *      CSS @font-face.
+ * Image paths are ALWAYS locale-suffixed, so an EN page never inherits the
+ * RU title. One builder per family owns its path shape — never inline the
+ * template in a layout:
+ *   - posts    → `postOgPath()`    in `./post-pages`    (/og/<slug>-<locale>.png)
+ *   - landings → `landingOgPath()` in `./landing-pages` (/og/landing/<page>-<locale>.png)
+ *   - lessons  → `lessonOgPath()`  in `./lesson-pages`  (/og/lesson/<course>/<lesson>-<locale>.png)
+ *
+ * The byline is NOT a free-form string: it defaults to the canonical author
+ * from `~/lib/seo/person`. A hardcoded name here ships on every card of the
+ * site at once and is invisible in the HTML, so `scripts/verify-seo-build.ts`
+ * fails the build on any person-shaped string literal under `src/lib/og/`.
+ *
+ * Fonts live in `public/fonts/og/`; the renderer needs the binary, not a
+ * CSS @font-face.
  *
  * Layout: 1200×630, paper bg, sienna rule, Source Serif 4 title,
  * JetBrains Mono eyebrow, Inter byline. Follows Direction A.
@@ -23,11 +27,17 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { person } from "~/lib/seo/person";
+import { OG_BRAND, OG_BRAND_UPPER } from "./brand";
 
 export interface OgInput {
   readonly title: string;
   readonly eyebrow?: string; // e.g. "ESSAY · 2026" or category
-  readonly byline?: string; // e.g. "Artur Karapetov"
+  /**
+   * Override for guest cards only. Omit it and the canonical author from
+   * `~/lib/seo/person` is used — do not repeat a name literal here.
+   */
+  readonly byline?: string;
 }
 
 interface FontBuffers {
@@ -105,7 +115,7 @@ const tree = (input: OgInput): Record<string, unknown> => ({
                   color: COLORS.accent,
                   fontWeight: 500,
                 },
-                children: input.eyebrow ?? "ARTKA.DEV",
+                children: input.eyebrow ?? OG_BRAND_UPPER,
               },
             },
           ],
@@ -149,7 +159,7 @@ const tree = (input: OgInput): Record<string, unknown> => ({
           children: [
             {
               type: "div",
-              props: { children: input.byline ?? "Artur Karapetov" },
+              props: { children: input.byline ?? person.name },
             },
             {
               type: "div",
@@ -159,7 +169,7 @@ const tree = (input: OgInput): Record<string, unknown> => ({
                   letterSpacing: "0.04em",
                   color: COLORS.fg,
                 },
-                children: "artka.dev",
+                children: OG_BRAND,
               },
             },
           ],
