@@ -1,6 +1,7 @@
 ---
 import "~/styles/content.css";
 import BaseLayout from "./BaseLayout.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import CardArt from "~/components/CardArt.astro";
 import PostTOC from "~/components/PostTOC.astro";
 import MobilePostTOC from "~/components/MobilePostTOC.astro";
@@ -21,6 +22,7 @@ import Tldr from "~/components/mdx/Tldr.astro";
 import Faq from "~/components/mdx/Faq.astro";
 import { getReadingTime, formatReadingTime } from "~/lib/posts/reading-time";
 import {
+  buildBlogNode,
   buildBlogPostingNode,
   buildBreadcrumbsNode,
   buildFaqPageNode,
@@ -85,6 +87,34 @@ const absoluteCover =
       : new URL(coverUrl, siteBase).toString()
     : new URL(ogImagePath, siteBase).toString();
 
+// Intrinsic size of the real cover. `socialImageWidth`/`socialImageHeight`
+// record the actual pixels of the uploaded file; 1200×630 is only the
+// fallback for covers stored before those fields existed. Both or neither —
+// one alone would reserve a box with the wrong aspect ratio and the layout
+// would jump when the image lands.
+//
+// The recorded size belongs to `socialImage`, not to `cover`: the content API
+// lets an article name a separate social asset (src/lib/content-api/markdown.ts),
+// and then these are that other file's pixels. They describe the cover only
+// while both fields point at the same file.
+const coverSize =
+  post.data.socialImage === absoluteCover &&
+  post.data.socialImageWidth !== undefined &&
+  post.data.socialImageHeight !== undefined
+    ? { width: post.data.socialImageWidth, height: post.data.socialImageHeight }
+    : { width: 1200, height: 630 };
+
+// A cover may live on a third-party media origin, and it is the largest
+// element of the first screen. Without this the browser only learns about
+// that origin once it parses the <img>, paying DNS + TLS before the first
+// byte. Same-origin covers need nothing: the connection is already open.
+const coverOrigin =
+  hasRealCover && coverUrl !== null && /^https?:\/\//.test(coverUrl)
+    ? new URL(coverUrl).origin
+    : null;
+const preconnectOrigins: ReadonlyArray<string> =
+  coverOrigin !== null && coverOrigin !== new URL(siteBase).origin ? [coverOrigin] : [];
+
 const excerpt = extractArticleBody(post.body ?? "", 800);
 
 const blogPostingNode = buildBlogPostingNode({
@@ -113,6 +143,12 @@ const breadcrumbItems = [
 ] as const;
 
 const breadcrumbNode = buildBreadcrumbsNode({ canonical, items: breadcrumbItems }) as GraphNode;
+
+// BlogPosting.isPartOf points at the locale's Blog node. That node used to be
+// emitted only on /blog/, so on every post the article's single link to its
+// publication resolved to nothing. Emit it here too — same @id, so a crawler
+// merges the two occurrences into one entity.
+const blogNode = buildBlogNode(locale) as GraphNode;
 
 const webPageNode = buildWebPageNode({
   locale,
@@ -160,7 +196,8 @@ const formattedUpdatedDate = updatedDate
   ogImageHeight={post.data.socialImageHeight}
   ogType="article"
   noSidebar={true}
-  extraSchemaNodes={[webPageNode, blogPostingNode, breadcrumbNode, faqNode]}
+  preconnect={preconnectOrigins}
+  extraSchemaNodes={[webPageNode, blogPostingNode, breadcrumbNode, blogNode, faqNode]}
 >
   <Fragment slot="head">
     <meta property="article:published_time" content={pubDate.toISOString()} />
@@ -184,10 +221,13 @@ const formattedUpdatedDate = updatedDate
     data-pagefind-filter={pagefindFilter}
     data-pagefind-meta={`title:${title}`}
   >
+    <div class="post__breadcrumbs" data-pagefind-ignore>
+      <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
+    </div>
     <header class="post__header">
       <h1 class="post__title" transition:name={`post-title-${slug}`}>{title}</h1>
       {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
-      <div class="post__byline" itemscope itemtype="https://schema.org/Person">
+      <div class="post__byline">
         <a href={aboutHref} class="post__byline-avatar" aria-hidden="true" tabindex="-1">
           <picture>
             <source
@@ -210,7 +250,7 @@ const formattedUpdatedDate = updatedDate
             />
           </picture>
         </a>
-        <a href={aboutHref} class="post__byline-name" itemprop="name">{person.name}</a>
+        <a href={aboutHref} class="post__byline-name">{authorName}</a>
         <span class="post__byline-sep" aria-hidden="true">·</span>
         <time datetime={pubDate.toISOString()} class="post__byline-date">{formattedPubDate}</time>
         <span class="post__byline-sep" aria-hidden="true">·</span>
@@ -248,8 +288,8 @@ const formattedUpdatedDate = updatedDate
           <img
             src={coverUrl}
             alt={coverAlt ?? ""}
-            width="1200"
-            height="630"
+            width={coverSize.width}
+            height={coverSize.height}
             loading="eager"
             decoding="async"
             fetchpriority="high"
@@ -293,6 +333,14 @@ const formattedUpdatedDate = updatedDate
     .post {
       max-width: 720px;
       margin-inline: auto;
+    }
+    /* The trail sits above the title, outside the header's bottom rule. The
+       component carries its own bottom margin, so this wrapper only has to
+       stay out of the header's box and not introduce a second gap. */
+    .post__breadcrumbs {
+      margin: 0;
+      min-width: 0;
+      max-width: 100%;
     }
     .post__header {
       margin-bottom: var(--space-7);

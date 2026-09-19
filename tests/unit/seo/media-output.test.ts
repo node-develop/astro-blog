@@ -14,12 +14,20 @@ const image = (src: string, properties: Properties = {}): Element => ({
   children: [],
 });
 
+// The one post that ships an actual cover file rather than the placeholder,
+// and it comes from a third-party media origin. Both the intrinsic-size and
+// the preconnect rules below are about exactly this shape of post.
+const REAL_COVER_POST = {
+  source: "src/content/posts/custom-domain-email-mailu-dokploy.md",
+  built: "dist/client/blog/custom-domain-email-mailu-dokploy/index.html",
+} as const;
+
 describe("built post media", () => {
   // The editorial redesign replaced the /og-default.* placeholder cover with
-  // a decorative slug-seeded artwork banner (aria-hidden inline SVG). Every
-  // current post uses the placeholder, so the built fixture asserts the
-  // banner path; the eager-with-intrinsic-dimensions contract for REAL
-  // covers is pinned against the PostLayout source below.
+  // a decorative slug-seeded artwork banner (aria-hidden inline SVG). This
+  // fixture uses the placeholder, so it asserts the banner path; the
+  // eager-with-intrinsic-dimensions contract for REAL covers is asserted on
+  // the built REAL_COVER_POST below.
   it("renders the editorial artwork banner instead of the placeholder cover", () => {
     const html = readFileSync(
       join(process.cwd(), "dist/client/en/blog/claude-md-12-rules/index.html"),
@@ -31,15 +39,68 @@ describe("built post media", () => {
     expect(html).not.toMatch(/og-default\.(svg|png)/);
   });
 
-  it("keeps the real-cover branch eager with truthful intrinsic dimensions", () => {
-    const layout = readFileSync(join(process.cwd(), "src/layouts/PostLayout.astro"), "utf8");
-    const cover = layout.match(/class="post__cover">\s*<img\b([\s\S]*?)\/>/)?.[1];
+  // The rule, not the numbers: a cover's intrinsic size is whatever the post's
+  // frontmatter recorded for it. Hardcoded 1200×630 reserved an OG-card box for
+  // an image of another shape, so the page shifted when the cover landed.
+  it("sizes a real cover from the post's own frontmatter", () => {
+    const source = readFileSync(join(process.cwd(), REAL_COVER_POST.source), "utf8");
+    const declared = {
+      width: source.match(/^socialImageWidth:\s*(\d+)\s*$/m)?.[1],
+      height: source.match(/^socialImageHeight:\s*(\d+)\s*$/m)?.[1],
+    };
+
+    expect(declared.width).toBeDefined();
+    expect(declared.height).toBeDefined();
+    // The recorded size is the social image's. It is the cover's size only
+    // while both fields name the same file, which is what this fixture proves.
+    const coverFile = source.match(/^cover:\s*(\S+)\s*$/m)?.[1];
+    expect(coverFile).toBeDefined();
+    expect(source.match(/^socialImage:\s*(\S+)\s*$/m)?.[1]).toBe(coverFile);
+
+    const html = readFileSync(join(process.cwd(), REAL_COVER_POST.built), "utf8");
+    const cover = html.match(/<figure\b[^>]*class="post__cover"[^>]*>[\s\S]*?<img\b[^>]*>/)?.[0];
 
     expect(cover).toBeDefined();
-    expect(cover).toMatch(/loading="eager"/);
-    expect(cover).toMatch(/width="1200"/);
-    expect(cover).toMatch(/height="630"/);
-    expect(cover).toMatch(/fetchpriority="high"/);
+    expect(attribute(cover!, "width")).toBe(declared.width);
+    expect(attribute(cover!, "height")).toBe(declared.height);
+    expect(attribute(cover!, "loading")).toBe("eager");
+    expect(attribute(cover!, "fetchpriority")).toBe("high");
+  });
+
+  it("falls back to the 1200x630 card when no size was recorded for the cover file", () => {
+    const layout = readFileSync(join(process.cwd(), "src/layouts/PostLayout.astro"), "utf8");
+    const size = layout.match(/const coverSize =([\s\S]*?);\n/)?.[1];
+
+    expect(size).toBeDefined();
+    // A post may name a social image that is a different file from its cover;
+    // that file's pixels must not be passed off as the cover's.
+    expect(size).toMatch(/socialImage === absoluteCover/);
+    // Both fields or neither: one alone would reserve the wrong aspect ratio.
+    expect(size).toMatch(/socialImageWidth !== undefined/);
+    expect(size).toMatch(/socialImageHeight !== undefined/);
+    expect(size).toMatch(/width: 1200, height: 630/);
+  });
+
+  // A cover on a third-party origin is the largest element of the first
+  // screen, and the browser only learns that origin exists when it reaches
+  // the <img>. PostLayout hands BaseLayout the origin to preconnect to; a
+  // same-origin or placeholder cover must hand it nothing.
+  it("hands BaseLayout the cover's origin when, and only when, it is third-party", () => {
+    const layout = readFileSync(join(process.cwd(), "src/layouts/PostLayout.astro"), "utf8");
+    const source = readFileSync(join(process.cwd(), REAL_COVER_POST.source), "utf8");
+    const cover = source.match(/^cover:\s*(\S+)\s*$/m)?.[1];
+
+    // The fixture only proves the rule while its cover really is off-site.
+    expect(cover).toMatch(/^https?:\/\//);
+    expect(new URL(cover ?? "").origin).not.toBe("https://artka.dev");
+
+    const origins = layout.match(/const preconnectOrigins[\s\S]*?;\n/)?.[0];
+    expect(origins).toBeDefined();
+    expect(origins).toMatch(/coverOrigin !== null/);
+    expect(origins).toMatch(/coverOrigin !== new URL\(siteBase\)\.origin/);
+    expect(origins).toMatch(/\[coverOrigin\] : \[\]/);
+    expect(layout).toMatch(/hasRealCover && coverUrl !== null && \/\^https\?:\\\/\\\/\/\.test/);
+    expect(layout).toMatch(/preconnect=\{preconnectOrigins\}/);
   });
 
   it("lazily decodes Mermaid images produced during the Markdown build", () => {
