@@ -93,6 +93,8 @@ describe("English CLAUDE.md article metadata", () => {
     expect(english.sourceHash).toBe(
       createHash("sha256").update(readFileSync(russianPath, "utf8")).digest("hex"),
     );
-    expect(body).toContain("https://github.com/node-develop/astro-blog");
+    // The astro-blog repository is not public: links point at the profile instead.
+    expect(body).toContain("https://github.com/node-develop");
+    expect(body).not.toContain("https://github.com/node-develop/astro-blog");
   });
 });

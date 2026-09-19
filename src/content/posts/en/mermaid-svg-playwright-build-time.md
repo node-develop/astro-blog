@@ -22,7 +22,7 @@ keywords:
   - rehype-mermaid
   - img-svg
 lang: en
-sourceHash: 6def463120c64c7db300c1e93170a2217bba3fcb099719ff466279e627a33d36
+sourceHash: e46da4524e77613ff8dd9531f25e414bcfa83f6b732821724a66f24848339429
 manuallyEdited: false
 updatedDate: 2026-09-07
 ---
@@ -33,7 +33,7 @@ The previous version reported 11.6 and 6.3 seconds for 32 diagrams. This article
 
 ## This site’s configuration
 
-At this revision, artka.dev uses Astro 7, `@astrojs/markdown-remark` and `rehype-mermaid`. The complete setup is in [astro.config.ts](https://github.com/node-develop/astro-blog/blob/main/astro.config.ts). This shortened fragment shows the relevant pipeline:
+At this revision, artka.dev uses Astro 7, `@astrojs/markdown-remark` and `rehype-mermaid`. The complete setup lives in this project’s `astro.config.ts`; the site source code is not published, and my GitHub profile is [node-develop](https://github.com/node-develop). This shortened fragment shows the relevant pipeline:
 
 ```typescript
 import { defineConfig } from "astro/config";
