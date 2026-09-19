@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { load } from "~/lib/yaml";
@@ -206,10 +206,56 @@ describe("lesson titles", () => {
     // `index` is still needed for the eyebrow and the LearningResource position.
     expect(lessonLayout).toMatch(/position: index/);
   });
+});
 
-  it("hands lessons the course preview image instead of the site placeholder", () => {
-    expect(lessonLayout).toMatch(/landingOgPath\("course-ccg", locale\)/);
-    expect(lessonLayout).toMatch(/ogImage: ogImagePath/);
+// Every lesson used to share the site-wide placeholder, so a lesson posted to
+// a social network looked like any other page. The rule is about what a
+// crawler receives, so it is asserted on the built pages, not on the layout
+// source: which helper builds the path is free to change, the outcome is not.
+describe("lessons get their own preview card", () => {
+  const courses = [
+    {
+      content: "src/content/courses/claude-code-guide",
+      built: "dist/client/courses/claude-code-guide",
+    },
+    {
+      content: "src/content/courses/claude-code-guide/en",
+      built: "dist/client/en/courses/claude-code-guide",
+    },
+  ] as const;
+
+  /** `og:image` of every built lesson page, read lazily so a missing build fails the test, not the file. */
+  const lessonCards = (): readonly {
+    readonly page: string;
+    readonly image: string | undefined;
+  }[] =>
+    courses.flatMap(({ content, built }) =>
+      lessonFiles(content).map((file) => {
+        const page = `${built}/${file.replace(/\.md$/, "")}/index.html`;
+        const tag = /<meta\b[^>]*\bproperty=["']og:image["'][^>]*>/i.exec(read(page))?.[0];
+        return { page, image: tag?.match(/\bcontent=["']([^"']+)["']/i)?.[1] };
+      }),
+    );
+
+  it("never falls back to the site placeholder", () => {
+    const cards = lessonCards();
+    expect(cards.length).toBeGreaterThan(0);
+    for (const { page, image } of cards) {
+      expect(image, page).toBeDefined();
+      expect(image, page).not.toMatch(/og-default\.(svg|png)/);
+    }
+  });
+
+  it("points at an image the build actually produced", () => {
+    for (const { page, image } of lessonCards()) {
+      const file = join("dist/client", new URL(image ?? "", "https://artka.dev").pathname);
+      expect(existsSync(repoFile(file)), `${page} -> ${file}`).toBe(true);
+    }
+  });
+
+  it("does not share one card between two lessons or two locales", () => {
+    const images = lessonCards().map(({ image }) => image);
+    expect(new Set(images).size).toBe(images.length);
   });
 });
 
