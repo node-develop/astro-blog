@@ -284,11 +284,17 @@ export interface CourseNodeInput {
   readonly level: CourseLevel;
   /** Human workload string from frontmatter, e.g. "~6 часов". Optional. */
   readonly workload?: string;
-  /** Canonical lesson URLs in course order. */
-  readonly lessonUrls: ReadonlyArray<string>;
+  /** Lessons in course order: canonical URL of the lesson page and its title. */
+  readonly lessons: ReadonlyArray<CourseLessonEntry>;
   readonly image?: string;
   readonly datePublished?: Date;
   readonly dateModified?: Date | null;
+}
+
+/** One lesson as the course page lists it. */
+export interface CourseLessonEntry {
+  readonly url: string;
+  readonly name: string;
 }
 
 export const courseId = (canonical: string): string => `${canonical}#course`;
@@ -308,7 +314,7 @@ export const buildCourseNode = (input: CourseNodeInput) => {
     inLanguage: inLang(input.locale),
     isAccessibleForFree: true,
     educationalLevel: educationalLevel(input.level),
-    numberOfLessons: input.lessonUrls.length,
+    numberOfLessons: input.lessons.length,
     provider: { "@id": graphIds.organization },
     author: { "@id": graphIds.person },
     publisher: { "@id": graphIds.organization },
@@ -319,7 +325,18 @@ export const buildCourseNode = (input: CourseNodeInput) => {
         ...(courseWorkload ? { courseWorkload } : {}),
       },
     ],
-    hasPart: input.lessonUrls.map((url) => ({ "@id": lessonId(url) })),
+    // hasPart used to be bare `{"@id": "…#lesson"}` references to nodes that
+    // exist only on the lesson pages, so on the course page every part of the
+    // course resolved to nothing. Each entry now carries a minimal node under
+    // the SAME `@id` the lesson page uses for the full LearningResource, the
+    // way hasPart does for the portfolio in nodes-projects.ts.
+    hasPart: input.lessons.map((lesson, index) => ({
+      "@type": "LearningResource",
+      "@id": lessonId(lesson.url),
+      url: lesson.url,
+      name: lesson.name,
+      position: index + 1,
+    })),
     ...(input.image ? { image: input.image } : {}),
     ...(input.datePublished ? { datePublished: input.datePublished.toISOString() } : {}),
     ...(input.dateModified ? { dateModified: input.dateModified.toISOString() } : {}),
@@ -330,6 +347,8 @@ export interface LearningResourceNodeInput {
   readonly locale: Locale;
   readonly canonical: string;
   readonly courseCanonical: string;
+  /** Title of the course the lesson belongs to, for the embedded Course node. */
+  readonly courseName: string;
   readonly name: string;
   readonly description: string;
   /** 1-based position inside the course. */
@@ -355,7 +374,15 @@ export const buildLearningResourceNode = (input: LearningResourceNodeInput) => {
     position: input.position,
     inLanguage: inLang(input.locale),
     isAccessibleForFree: true,
-    isPartOf: { "@id": courseId(input.courseCanonical) },
+    // The full Course node lives on the course page, not here. A bare
+    // reference to it resolved to nothing on all 28 lesson pages, so the
+    // lesson names its course with a minimal node under the same `@id`.
+    isPartOf: {
+      "@type": "Course",
+      "@id": courseId(input.courseCanonical),
+      url: input.courseCanonical,
+      name: input.courseName,
+    },
     author: { "@id": graphIds.person },
     publisher: { "@id": graphIds.organization },
     ...(timeRequired ? { timeRequired } : {}),

@@ -9,6 +9,7 @@ import {
   buildPostItemListNode,
   courseId,
   itemListId,
+  lessonId,
   minutesToIsoDuration,
   parseWorkloadToIsoDuration,
 } from "~/lib/seo/nodes-page";
@@ -208,8 +209,10 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
     "https://artka.dev/courses/claude-code-guide/01-introduction/",
     "https://artka.dev/courses/claude-code-guide/02-context-and-cache/",
   ];
+  const lessons = lessonUrls.map((url, index) => ({ url, name: `Lesson ${index + 1}` }));
+  const courseName = "Claude Code Guide";
 
-  it("emits a free online Course with workload, level and lesson @id references", () => {
+  it("emits a free online Course with workload, level and its lessons as defined parts", () => {
     const node = buildCourseNode({
       locale: "ru",
       canonical: courseCanonical,
@@ -217,7 +220,7 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       description: "Курс",
       level: "intermediate",
       workload: "~6 часов",
-      lessonUrls,
+      lessons,
       datePublished: new Date("2026-04-23T00:00:00.000Z"),
       dateModified: new Date("2026-08-24T00:00:00.000Z"),
     });
@@ -233,7 +236,18 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
     expect(node.hasCourseInstance).toEqual([
       { "@type": "CourseInstance", courseMode: "online", courseWorkload: "PT6H" },
     ]);
-    expect(node.hasPart).toEqual(lessonUrls.map((u) => ({ "@id": `${u}#lesson` })));
+    // Each part DEFINES the lesson under the id the lesson page uses: a bare
+    // {"@id"} would point at a node this page does not publish.
+    expect(node.hasPart).toEqual(
+      lessons.map((lesson, index) => ({
+        "@type": "LearningResource",
+        "@id": lessonId(lesson.url),
+        url: lesson.url,
+        name: lesson.name,
+        position: index + 1,
+      })),
+    );
+    expect(node.numberOfLessons).toBe(node.hasPart.length);
     expect(node.dateModified).toBe("2026-08-24T00:00:00.000Z");
   });
 
@@ -245,17 +259,18 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       description: "D",
       level: "beginner",
       workload: "self-paced",
-      lessonUrls: [],
+      lessons: [],
     });
     expect(node.hasCourseInstance[0]).toEqual({ "@type": "CourseInstance", courseMode: "online" });
     expect(node.educationalLevel).toBe("Beginner");
   });
 
-  it("emits a LearningResource lesson linked to its course by @id", () => {
+  it("emits a LearningResource lesson that names its course as a defined node", () => {
     const node = buildLearningResourceNode({
       locale: "en",
       canonical: lessonUrls[1]!,
       courseCanonical,
+      courseName,
       name: "02. Context",
       description: "Lesson",
       position: 2,
@@ -271,7 +286,14 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
     expect(node.dateModified).toBe("2026-09-08T00:00:00.000Z");
     expect(node.position).toBe(2);
     expect(node.timeRequired).toBe("PT25M");
-    expect(node.isPartOf).toEqual({ "@id": courseId(courseCanonical) });
+    // Same id as the full Course node on the course page, but defined here too:
+    // the lesson page does not publish that node, so a bare reference dangles.
+    expect(node.isPartOf).toEqual({
+      "@type": "Course",
+      "@id": courseId(courseCanonical),
+      url: courseCanonical,
+      name: courseName,
+    });
     expect(node.inLanguage).toBe("en-US");
     expect(node.isAccessibleForFree).toBe(true);
     expect(node.teaches).toBe("claude-code, guide");
@@ -282,6 +304,7 @@ describe("buildCourseNode / buildLearningResourceNode", () => {
       locale: "ru",
       canonical: lessonUrls[0]!,
       courseCanonical,
+      courseName,
       name: "01",
       description: "L",
       position: 1,

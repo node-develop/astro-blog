@@ -95,6 +95,7 @@ const lessonNode = buildLearningResourceNode({
   locale,
   canonical,
   courseCanonical: courseAbs,
+  courseName: course.data.title,
   name: lesson.data.title,
   description: lesson.data.blurb ?? course.data.blurb,
   position: index,
