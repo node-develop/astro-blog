@@ -110,8 +110,7 @@ const STRING_LITERAL = /"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|`((?:[^`\\]|
  * purpose: a plain \b is ASCII-only, so it would refuse Cyrillic names and
  * would accept the tail of a CamelCase token (JetBrains Mono).
  */
-const NAME_LIKE =
-  /(?<![\p{L}\p{N}_])\p{Lu}\p{Ll}+[ \u00A0]\p{Lu}\p{Ll}+(?![\p{L}\p{N}_])/u;
+const NAME_LIKE = /(?<![\p{L}\p{N}_])\p{Lu}\p{Ll}+[ \u00A0]\p{Lu}\p{Ll}+(?![\p{L}\p{N}_])/u;
 
 const ogSourceFiles = async (dir: string): Promise<string[] | null> => {
   const names = await readdir(dir, { recursive: true }).catch(() => null);
@@ -155,10 +154,10 @@ export const assertOgAuthorNames = async (
         issues.push(
           literal.includes(person.name) || literal.includes(person.alternateName)
             ? `${label}: author name copied into a string literal (${JSON.stringify(literal)}). ` +
-              `Import person from ~/lib/seo/person instead — a copy drifts silently.`
+                `Import person from ~/lib/seo/person instead — a copy drifts silently.`
             : `${label}: string literal ${JSON.stringify(literal)} reads as a person name ` +
-              `(${JSON.stringify(nameLike[0])}). OG bylines come from person.name in ` +
-              `src/lib/seo/person.ts; if this is not a name, add it to OG_ALLOWED_LITERALS.`,
+                `(${JSON.stringify(nameLike[0])}). OG bylines come from person.name in ` +
+                `src/lib/seo/person.ts; if this is not a name, add it to OG_ALLOWED_LITERALS.`,
         );
       }
     }
