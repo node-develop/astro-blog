@@ -29,7 +29,7 @@ const main = async (): Promise<void> => {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const r = await client.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-sonnet-5",
     max_tokens: 3000,
     messages: [
       {
