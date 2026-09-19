@@ -3,13 +3,13 @@
   "guide": "Guide",
   "seo": "SEO",
   "ai-crawlers": "AI crawlers",
-  "astro": "astro",
-  "schema-org": "schema-org",
-  "build-tooling": "build-tooling",
-  "ai": "ai",
-  "local-inference": "local-inference",
-  "coding-agents": "coding-agents",
-  "deepseek": "deepseek",
-  "apple-silicon": "apple-silicon",
-  "prompt-engineering": "prompt-engineering"
+  "astro": "Astro",
+  "schema-org": "Schema.org",
+  "build-tooling": "Build tooling",
+  "ai": "AI",
+  "local-inference": "Local inference",
+  "coding-agents": "Coding agents",
+  "deepseek": "DeepSeek",
+  "apple-silicon": "Apple Silicon",
+  "prompt-engineering": "Prompt engineering"
 }

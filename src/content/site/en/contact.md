@@ -1,6 +1,11 @@
 ---
 title: Contact
 description: How to contact Artyom Kashuta about articles, AI agents, Claude Code, and engineering projects.
+metaTitle: "Contact: how to reach Artyom Kashuta by email"
+metaDescription: "How to reach the author of artka.dev: email, GitHub and other profiles. Write about the articles, the Claude Code Guide course or a bug on the site."
+lang: en
+sourceHash: a628111cef31ff431b8705d258b61186b06cd08b0485a80409a06a66c9c9b075
+manuallyEdited: false
 ---
 
 ## Send me a message

@@ -69,10 +69,23 @@ const {
   extraSchemaNodes = [],
 } = Astro.props;
 
-// Brand suffix — every <title> ends with " | artka.dev" unless it already
-// contains the brand. Pages don't have to remember to append it themselves.
+// Brand suffix — a <title> ends with " | artka.dev" unless it already contains
+// the brand or the suffix would push the title past the SERP budget. Pages
+// don't have to remember to append it themselves.
 const BRAND = "artka.dev";
-const fullTitle = title.includes(BRAND) ? title : `${title} | ${BRAND}`;
+// Google renders the SERP title in a fixed box of roughly 600 px and cuts off
+// whatever does not fit. At the size search results use, 600 px works out to
+// about 60 characters for both Cyrillic and Latin copy, so that is the budget
+// a title has to stay inside. When the brand suffix does not fit, it is the
+// part we drop: the domain already appears on its own line in the result,
+// while the words it would push out are the ones carrying the meaning.
+const TITLE_BUDGET = 60;
+const titleWithBrand = `${title} | ${BRAND}`;
+const fullTitle =
+  title.includes(BRAND) || titleWithBrand.length > TITLE_BUDGET ? title : titleWithBrand;
+// Only <title> gets the suffixed form. og:title and twitter:title below take
+// the bare title: og:site_name already states the brand on the card, and a
+// second copy of it only eats the part of the headline that says something.
 
 const locale = getLocaleFromPath(Astro.url.pathname);
 const canonical = canonicalUrl(Astro.url.pathname);
@@ -177,7 +190,7 @@ const socialLabel = (url: string): string => {
     }
 
     <!-- Open Graph / Twitter -->
-    <meta property="og:title" content={fullTitle} />
+    <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={ogLocale} />
@@ -189,7 +202,7 @@ const socialLabel = (url: string): string => {
     <meta property="og:image:height" content={String(ogImageHeight ?? 630)} />
     <meta property="og:image:alt" content={imageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absoluteOgImage} />
     <meta name="twitter:image:alt" content={imageAlt} />

@@ -1,15 +1,15 @@
 {
   "claude-code": "Claude Code",
   "guide": "Гайд",
-  "seo": "seo",
-  "ai-crawlers": "ai-crawlers",
-  "astro": "astro",
-  "schema-org": "schema-org",
-  "build-tooling": "build-tooling",
-  "ai": "ai",
-  "local-inference": "local-inference",
-  "coding-agents": "coding-agents",
-  "deepseek": "deepseek",
-  "apple-silicon": "apple-silicon",
-  "prompt-engineering": "prompt-engineering"
+  "seo": "SEO",
+  "ai-crawlers": "AI-краулеры",
+  "astro": "Astro",
+  "schema-org": "Schema.org",
+  "build-tooling": "Сборка проекта",
+  "ai": "AI",
+  "local-inference": "Локальный инференс",
+  "coding-agents": "Агенты для кода",
+  "deepseek": "DeepSeek",
+  "apple-silicon": "Apple Silicon",
+  "prompt-engineering": "Промпт-инжиниринг"
 }

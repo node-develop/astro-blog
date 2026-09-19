@@ -1,8 +1,10 @@
 ---
 title: About me
 description: "Artyom Kashuta is a full-stack and AI engineer. My background, approach to software development, and work with AI agents."
+metaTitle: "Artyom Kashuta: full-stack and AI engineer"
+metaDescription: "Artyom Kashuta — full-stack and AI engineer: TypeScript, Python, AI agents and distributed systems. Background at TaxDome and 9RED, and how I work."
 lang: en
-sourceHash: 3a92f4f741159f723ae4119b137cd22e86e8dfffd5fadefc0fb131f05ed42e6c
+sourceHash: 5208e215855cb5ceb456a703ec178626b791f887a88cd7555945b8c5ed06a51c
 manuallyEdited: false
 ---
 
