@@ -18,7 +18,7 @@ pubDate: 2026-MM-DD
 tags:
   - ""
   - ""
-cover: "/og-default.svg"
+cover: "/og-default.png"
 coverAlt: ""
 lang: "ru"
 draft: false
