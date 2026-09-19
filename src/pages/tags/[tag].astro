@@ -5,7 +5,13 @@ import { getOrderedPosts, type PostWithMeta } from "~/lib/content/loader";
 import { groupPostsByTag, getAllTagSlugs, resolveTagLabel } from "~/lib/content/tags";
 import { t } from "~/i18n";
 import tagsRu from "~/i18n/tags.ru.json";
-import { graphIds, buildBreadcrumbsNode, buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
+import {
+  buildBreadcrumbsNode,
+  buildPostItemListNode,
+  buildWebPageNode,
+  itemListId,
+  type GraphNode,
+} from "~/lib/seo/schema";
 import type { GetStaticPaths } from "astro";
 import { isTagArchiveIndexable } from "~/lib/seo/indexability";
 import { landingOgPath } from "~/lib/og/landing-pages";
@@ -35,33 +41,21 @@ const bareSlug = (id: string): string => id.replace(/^en\//, "");
 
 const postUrl = (id: string): string => canonicalUrl(`/blog/${bareSlug(id)}`);
 
-// Blog node for THIS archive — distinct @id per slug; references global Person/Org.
-// Posts are referenced by @id only: redefining each `#blogposting` here with
-// stub fields (no author/body) used to shadow the full node on the post page.
-const blogNode = {
-  "@type": "Blog",
-  "@id": `${canonical}#blog`,
-  url: canonical,
+// One list per page, built by the shared builder (src/lib/seo/nodes-page.ts).
+// The per-archive `Blog` node this page used to emit is gone: its only unique
+// field was `blogPost`, a list of bare `@id` references to nodes that live on
+// the post pages and therefore resolved to nothing here. Everything else it
+// carried (url, name, description) is already on the CollectionPage below, and
+// a second `Blog` entity per tag competed with the site-wide `#blog-ru`.
+const itemListNode = buildPostItemListNode({
+  locale: "ru",
+  canonical,
   name: title,
-  description,
-  inLanguage: "ru-RU",
-  author: { "@id": graphIds.person },
-  publisher: { "@id": graphIds.organization },
-  blogPost: matches.map((p) => ({ "@id": `${postUrl(p.entry.id)}#blogposting` })),
-};
-
-const itemListNode = {
-  "@type": "ItemList",
-  "@id": `${canonical}#itemlist`,
-  name: title,
-  numberOfItems: matches.length,
-  itemListOrder: "https://schema.org/ItemListOrderDescending",
-  itemListElement: matches.map((p, idx) => ({
-    "@type": "ListItem",
-    position: idx + 1,
+  items: matches.map((p) => ({
     url: postUrl(p.entry.id),
+    headline: p.entry.data.title,
   })),
-};
+}) as GraphNode;
 
 const breadcrumbItems = [
   { name: t("ru", "nav.home"), href: canonicalUrl("/") },
@@ -81,7 +75,7 @@ const webPageNode = buildWebPageNode({
   description,
   type: "CollectionPage",
   breadcrumbId: `${canonical}#breadcrumbs`,
-  mainEntityId: `${canonical}#itemlist`,
+  mainEntityId: itemListId(canonical),
 }) as GraphNode;
 ---
 
@@ -92,7 +86,7 @@ const webPageNode = buildWebPageNode({
   fullWidth={true}
   noSidebar={true}
   noindex={!isTagArchiveIndexable(matches)}
-  extraSchemaNodes={[webPageNode, blogNode, itemListNode, breadcrumbNode]}
+  extraSchemaNodes={[webPageNode, itemListNode, breadcrumbNode]}
 >
   <section class="tag-archive">
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t("ru", "breadcrumbs.aria")} />

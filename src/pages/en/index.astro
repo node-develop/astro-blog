@@ -14,7 +14,12 @@ import { bareSlug } from "~/lib/content/slug";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { getEntry } from "astro:content";
 import { homeFrontmatterSchema } from "~/lib/content/home-schema";
-import { buildWebPageNode, type GraphNode } from "~/lib/seo/schema";
+import {
+  buildPostItemListNode,
+  buildWebPageNode,
+  itemListId,
+  type GraphNode,
+} from "~/lib/seo/schema";
 import { landingOgPath } from "~/lib/og/landing-pages";
 import { renderHomeMarkdown } from "~/lib/agents/markdown";
 import {
@@ -39,6 +44,8 @@ const blogHref = canonicalPath("/en/blog");
 const courseHref = canonicalPath("/en/courses/claude-code-guide");
 const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 const gridVariants = assignArtVariants(grid.map((p) => bareSlug(p.entry.id)));
+// See the RU twin: exactly the posts this page links, in the order shown.
+const listedPosts = [featured, ...grid].filter((p) => p !== undefined);
 
 const homeEntry = await getEntry("site", "en/home");
 const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
@@ -50,17 +57,11 @@ if (representation === "text/markdown") {
       locale,
       title: data.heroTitle ?? data.metaTitle ?? "AI agents and production backend",
       introduction: data.heroLede ?? data.metaDescription ?? "",
-      posts: [featured, ...grid].flatMap((post) =>
-        post
-          ? [
-              {
-                title: post.entry.data.title,
-                description: post.entry.data.description,
-                url: canonicalUrl(postHref(post.entry.id)),
-              },
-            ]
-          : [],
-      ),
+      posts: listedPosts.map((post) => ({
+        title: post.entry.data.title,
+        description: post.entry.data.description,
+        url: canonicalUrl(postHref(post.entry.id)),
+      })),
     }),
   );
 }
@@ -78,6 +79,17 @@ const latestModified = posts.reduce<Date | null>((acc, p) => {
 const ogImagePath = landingOgPath("home", locale);
 const primaryImageOfPage = new URL(ogImagePath, Astro.site ?? Astro.url).toString();
 
+// See the RU twin: the articles the home page links, in the markup.
+const itemListNode = buildPostItemListNode({
+  locale,
+  canonical,
+  name: data.latestLabel ?? data.metaTitle ?? "",
+  items: listedPosts.map((p) => ({
+    url: canonicalUrl(postHref(p.entry.id)),
+    headline: p.entry.data.title,
+  })),
+}) as GraphNode;
+
 const webPageNode = buildWebPageNode({
   locale,
   canonical,
@@ -86,6 +98,7 @@ const webPageNode = buildWebPageNode({
   type: "WebPage",
   primaryImageOfPage,
   dateModified: latestModified,
+  mainEntityId: itemListId(canonical),
 }) as GraphNode;
 ---
 
@@ -95,7 +108,7 @@ const webPageNode = buildWebPageNode({
   ogImage={ogImagePath}
   fullWidth={true}
   noSidebar={true}
-  extraSchemaNodes={[webPageNode]}
+  extraSchemaNodes={[webPageNode, itemListNode]}
 >
   <div class="home">
     <HomeMasthead

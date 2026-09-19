@@ -6,7 +6,9 @@ import {
   buildFaqPageNode,
   buildCourseNode,
   buildLearningResourceNode,
+  buildPostItemListNode,
   courseId,
+  itemListId,
   minutesToIsoDuration,
   parseWorkloadToIsoDuration,
 } from "~/lib/seo/nodes-page";
@@ -131,6 +133,72 @@ describe("buildWebPageNode", () => {
     expect(node.about).toEqual({ "@id": graphIds.person });
     expect(node.mainEntity).toEqual({ "@id": graphIds.person });
     expect(node.isPartOf).toEqual({ "@id": graphIds.websiteEn });
+  });
+});
+
+describe("buildPostItemListNode", () => {
+  const canonical = "https://artka.dev/blog/";
+  const items = [
+    { url: "https://artka.dev/blog/alpha/", headline: "Альфа" },
+    { url: "https://artka.dev/blog/beta/", headline: "Бета" },
+  ];
+
+  it("addresses the list by canonical and counts what it was given", () => {
+    const node = buildPostItemListNode({ locale: "ru", canonical, name: "Блог", items });
+    expect(node["@type"]).toBe("ItemList");
+    expect(node["@id"]).toBe(itemListId(canonical));
+    expect(itemListId(canonical)).toBe("https://artka.dev/blog/#itemlist");
+    expect(node.name).toBe("Блог");
+    expect(node.inLanguage).toBe("ru-RU");
+    expect(node.numberOfItems).toBe(items.length);
+    expect(node.itemListOrder).toBe("https://schema.org/ItemListOrderDescending");
+  });
+
+  it("keeps the given order and numbers positions 1..n", () => {
+    const node = buildPostItemListNode({ locale: "en", canonical, name: "Blog", items });
+    expect(node.itemListElement.map((el) => el.position)).toEqual([1, 2]);
+    expect(node.itemListElement.map((el) => el.url)).toEqual(items.map((i) => i.url));
+
+    const reversed = buildPostItemListNode({
+      locale: "en",
+      canonical,
+      name: "Blog",
+      items: [...items].reverse(),
+    });
+    expect(reversed.itemListElement.map((el) => el.url)).toEqual(
+      [...items].reverse().map((i) => i.url),
+    );
+  });
+
+  // The rule the whole builder exists for: a post lives on its own page, so a
+  // bare {"@id": …} here would resolve to nothing in this page's @graph.
+  it("embeds a minimal typed BlogPosting instead of a bare @id reference", () => {
+    const node = buildPostItemListNode({ locale: "ru", canonical, name: "Блог", items });
+    for (const [idx, element] of node.itemListElement.entries()) {
+      const item = element.item as Record<string, unknown>;
+      expect(Object.keys(item)).not.toEqual(["@id"]);
+      expect(item["@type"]).toBe("BlogPosting");
+      expect(item["@id"]).toBe(`${items[idx]!.url}#blogposting`);
+      expect(item.url).toBe(items[idx]!.url);
+      expect(item.headline).toBe(items[idx]!.headline);
+    }
+  });
+
+  it("survives an empty list without inventing entries", () => {
+    const node = buildPostItemListNode({ locale: "en", canonical, name: "Blog", items: [] });
+    expect(node.numberOfItems).toBe(0);
+    expect(node.itemListElement).toEqual([]);
+  });
+
+  it("honours an explicit order", () => {
+    const node = buildPostItemListNode({
+      locale: "en",
+      canonical,
+      name: "Blog",
+      items,
+      order: "Ascending",
+    });
+    expect(node.itemListOrder).toBe("https://schema.org/ItemListOrderAscending");
   });
 });
 

@@ -158,6 +158,57 @@ export const buildBreadcrumbsNode = (input: BreadcrumbsInput) => ({
 
 export type WebPageType = "WebPage" | "CollectionPage" | "ItemPage" | "AboutPage" | "ProfilePage";
 
+/** One row of a page's visible list of posts: where it links and what it shows. */
+export interface PostListEntry {
+  readonly url: string;
+  readonly headline: string;
+}
+
+export interface PostItemListInput {
+  readonly locale: Locale;
+  readonly canonical: string;
+  /** Human name of the list — the archive/section title the page shows. */
+  readonly name: string;
+  /** Exactly the posts the page links to, in the order it shows them. */
+  readonly items: ReadonlyArray<PostListEntry>;
+  /** Every current caller lists newest first; pass this only to say otherwise. */
+  readonly order?: "Ascending" | "Descending" | "Unordered";
+}
+
+export const itemListId = (canonical: string): string => `${canonical}#itemlist`;
+
+/**
+ * The single builder for "this page enumerates these posts": the blog index,
+ * the home page and the tag archives all emit their list through it, in both
+ * locales, so the site's main list of articles exists in the markup.
+ *
+ * Each entry embeds a MINIMAL typed BlogPosting under the same `@id` the post
+ * page uses for its full node — never a bare `{"@id": …}` reference, which
+ * would point at a node that lives on another page and so resolves to nothing
+ * inside this graph. Same shape as `hasPart` in `nodes-projects.ts`: the
+ * reference resolves here, and a crawler that follows `url` finds the complete
+ * description.
+ */
+export const buildPostItemListNode = (input: PostItemListInput) => ({
+  "@type": "ItemList",
+  "@id": itemListId(input.canonical),
+  name: input.name,
+  inLanguage: inLang(input.locale),
+  numberOfItems: input.items.length,
+  itemListOrder: `https://schema.org/ItemListOrder${input.order ?? "Descending"}`,
+  itemListElement: input.items.map((item, idx) => ({
+    "@type": "ListItem",
+    position: idx + 1,
+    url: item.url,
+    item: {
+      "@type": "BlogPosting",
+      "@id": `${item.url}#blogposting`,
+      url: item.url,
+      headline: item.headline,
+    },
+  })),
+});
+
 export interface WebPageInput {
   readonly locale: Locale;
   readonly canonical: string;
