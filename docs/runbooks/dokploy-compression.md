@@ -58,6 +58,8 @@ entryPoints:
         - blog-compress@file
 ```
 
+Since 2026-09-19 both entryPoints also list `www-to-apex@file` **before** `blog-compress@file` (see `dokploy-www-redirect.md`). When restoring `traefik.yml` from this runbook, keep that line.
+
 This is the approach documented in [Dokploy issue #3494](https://github.com/Dokploy/dokploy/issues/3494). The `@file` suffix is required because the middleware lives in the file provider. EntryPoint middlewares apply to **every** service behind this Traefik (console, monitoring, feedback API); compression is safe for all of them and images/fonts are excluded by content type.
 
 `traefik.yml` is static configuration: after saving it, run **Settings → Traefik → Reload** (API: `settings.reloadTraefik`). The container restarts in a few seconds.
