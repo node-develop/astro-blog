@@ -36,7 +36,7 @@ export const person: PersonProfile = {
   image: `${SITE}/avatar-512.png`,
   jobTitle: "Full-stack & AI engineer · LLM/agent workflows · backend",
   description:
-    "Full-stack and AI engineer with 5+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
+    "Full-stack and AI engineer with 7+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
   knowsAbout: [
     "Claude Code",
     "AI agent engineering",
@@ -87,7 +87,7 @@ export const person: PersonProfile = {
         "Notes on AI agent engineering, Claude Code, LLM pipelines, and production backend in Russian and English.",
     },
   ],
-  yearsExperience: 5,
+  yearsExperience: 7,
   techStack: [
     "Python",
     "TypeScript",

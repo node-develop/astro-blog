@@ -15,7 +15,12 @@ const { Content } = await render(entry);
 
 const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = new URL("/en/", Astro.site ?? Astro.url).toString();
-const description = entry.data.description ?? "How to contact the author of artka.dev.";
+// metaTitle / metaDescription are the search-result copy; title and
+// description stay the page name and the human lede, so the <h1> and the
+// schema keep reading the way the page reads.
+const description =
+  entry.data.metaDescription ?? entry.data.description ?? "How to contact the author of artka.dev.";
+const pageTitle = entry.data.metaTitle ?? entry.data.title;
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
   { name: t(locale, "nav.contact") },
@@ -30,7 +35,7 @@ const nodes = buildLandingNodes({
 ---
 
 <BaseLayout
-  title={entry.data.title}
+  title={pageTitle}
   description={description}
   fullWidth={true}
   noSidebar={true}

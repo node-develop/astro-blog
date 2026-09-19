@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 import type { APIContext } from "astro";
 import { GET as getLlmsFull } from "../../../src/pages/llms-full.txt";
 import { GET as getLlmsTxt } from "../../../src/pages/llms.txt";
-import { buildLegacyRedirects } from "~/lib/seo/redirects";
+import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
 import { canonicalPath, isFileLikePath } from "~/lib/seo/url-policy";
 
 interface Violation {
@@ -263,8 +263,8 @@ it("resolves every generated RU and EN lesson link to a built course route", () 
   const lessonFiles = filesUnder(DIST, ".html").filter((file) =>
     /(?:^|\/)courses\/claude-code-guide\/[^/]+\/index\.html$/.test(file),
   );
-  const redirects = buildLegacyRedirects();
   const violations: Violation[] = [];
+  const gluedLinks: string[] = [];
   let checkedLinks = 0;
 
   expect(lessonFiles).toHaveLength(28);
@@ -287,16 +287,21 @@ it("resolves every generated RU and EN lesson link to a built course route", () 
       }
 
       checkedLinks += 1;
+      // The link itself must be a built route. Following the redirect table
+      // here would forgive exactly the glued lesson pairs the table lists.
       const sourcePath = canonicalPath(resolved.pathname);
-      const finalPath = redirects[sourcePath] ?? sourcePath;
-      const generatedFile = join(DIST, finalPath.slice(1), "index.html");
+      if (resolveConcatenatedLessonPath(sourcePath) !== null) {
+        gluedLinks.push(`${relative(ROOT, file)}: ${href} glues two lesson slugs (${sourcePath})`);
+      }
+      const generatedFile = join(DIST, sourcePath.slice(1), "index.html");
       if (!existsSync(generatedFile)) {
-        addViolation(violations, file, href, ORIGIN + finalPath);
+        addViolation(violations, file, href, ORIGIN + sourcePath);
       }
     }
   }
 
   expect(checkedLinks).toBeGreaterThan(100);
+  expect(gluedLinks).toEqual([]);
   expect(violations).toEqual([]);
 });
 

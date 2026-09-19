@@ -63,3 +63,44 @@ it("keeps files, fragments, query-only references, roots, and parent-relative li
     "../02-context-and-cache/",
   ]);
 });
+
+// Regression: a bare relative link inside a lesson ("09-subagents") used to
+// pass through untouched. With `trailingSlash: "always"` the browser resolved
+// it against the current lesson and produced
+// /courses/claude-code-guide/08-tool-calls-and-loop/09-subagents — the glued
+// 404s Search Console reported. Bare and "./" spellings mean the same thing to
+// an author, so both must normalize to the sibling document.
+it("rewrites bare relative links so they cannot glue onto the current page", async () => {
+  expect(
+    await transformHrefs([
+      "09-subagents",
+      "09-subagents/",
+      "./09-subagents",
+      "12-travel-agent-blueprint#practice",
+      "guide/chapter",
+    ]),
+  ).toEqual([
+    "../09-subagents/",
+    "../09-subagents/",
+    "../09-subagents/",
+    "../12-travel-agent-blueprint/#practice",
+    "../guide/chapter/",
+  ]);
+});
+
+it("resolves a rewritten lesson link to the course root, not to a child of the lesson", async () => {
+  const lessonPage = "https://artka.dev/courses/claude-code-guide/08-tool-calls-and-loop/";
+  const [rewritten] = await transformHrefs(["09-subagents"]);
+
+  expect(new URL("09-subagents", lessonPage).pathname).toBe(
+    "/courses/claude-code-guide/08-tool-calls-and-loop/09-subagents",
+  );
+  expect(new URL(String(rewritten), lessonPage).pathname).toBe(
+    "/courses/claude-code-guide/09-subagents/",
+  );
+});
+
+it("still refuses to touch hrefs that carry their own scheme", async () => {
+  const hrefs = ["javascript:alert(1)", "data:text/plain,hi", "ftp://example.com/x"] as const;
+  expect(await transformHrefs(hrefs)).toEqual(hrefs);
+});

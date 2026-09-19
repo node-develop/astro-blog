@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   fetchWithTimeout,
@@ -55,16 +57,53 @@ const expectNegotiatedVary = (response: Response): void => {
   expect(tokens).toContain("accept-encoding");
 };
 
+const i18nString = (dictionary: string, key: string): string => {
+  const strings = JSON.parse(readFileSync(join(process.cwd(), dictionary), "utf8")) as Record<
+    string,
+    string
+  >;
+  const value = strings[key];
+  if (value === undefined) throw new Error(`Missing i18n key ${key} in ${dictionary}`);
+  return value;
+};
+
+/** Text of `<title>`, entity-decoded (`&amp;` last, or `&amp;lt;` would decode twice). */
+const documentTitle = (body: string): string =>
+  (/<title>([^<]*)<\/title>/i.exec(body)?.[1] ?? "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&#x27;/gi, "'")
+    .replace(/&amp;/g, "&");
+
+/** Canonical post paths in the order the JSON feed publishes them, newest first. */
+const feedPaths = async (origin: string, pathname: string): Promise<readonly string[]> => {
+  const response = await responseFor(origin, pathname);
+  expect(response.status, pathname).toBe(200);
+  const feed = (await response.json()) as { readonly items: readonly { readonly url: string }[] };
+  return feed.items.map((item) => new URL(item.url).pathname);
+};
+
 const expectCanonicalHomeLinks = (
   body: string,
-  expected: { readonly blog: string; readonly course: string },
+  expected: {
+    readonly blog: string;
+    readonly course: string;
+    readonly feed: readonly string[];
+  },
 ): void => {
   expect(body).toContain('href="' + expected.blog + '" class="masthead__cta"');
   expect(body).toContain('href="' + expected.course + '" class="course-band__cta"');
   const homePosts = [...body.matchAll(/<a\b[^>]*>/g)]
     .filter(([tag]) => /\bclass="[^"]*\b(featured__link|post-card__link)\b/.test(tag))
     .map(([tag]) => tag.match(/\bhref="([^"]+)"/)?.[1]);
-  expect(homePosts).toHaveLength(4);
+  // How many cards the home page shows is a layout decision (it went from 4 to
+  // 6 when the grid was widened), so no count is pinned here. What must hold:
+  // the list is not empty — `every` below passes vacuously on an empty one —
+  // and each card is the canonical URL of one of the newest posts, in feed
+  // order, with none skipped or repeated.
+  expect(homePosts.length).toBeGreaterThan(0);
+  expect(homePosts).toEqual(expected.feed.slice(0, homePosts.length));
   expect(homePosts.every((href) => href?.startsWith(expected.blog) && href.endsWith("/"))).toBe(
     true,
   );
@@ -166,6 +205,20 @@ describe("production standalone server", () => {
         expect(await status(server.origin, pathname), pathname + "\n" + server.output()).toBe(200);
       }
 
+      // The blog index is server-rendered, so its <title> exists nowhere in
+      // dist and only this server can show it. The page used to render the bare
+      // nav label while a written title sat unused in the dictionary; the
+      // layout may append the brand to that written title, and nothing else.
+      for (const [pathname, dictionary] of [
+        ["/blog/", "src/i18n/strings.ru.json"],
+        ["/en/blog/", "src/i18n/strings.en.json"],
+      ] as const) {
+        const written = i18nString(dictionary, "meta.blog.title");
+        expect(written, dictionary).not.toBe(i18nString(dictionary, "blog.title"));
+        const title = documentTitle(await html(server.origin, pathname));
+        expect(title.startsWith(written), pathname + ": " + title).toBe(true);
+      }
+
       expect(await redirect(server.origin, "/blog")).toEqual({ status: 301, location: "/blog/" });
       expect(await redirect(server.origin, "/blog/02-context-and-cache")).toEqual({
         status: 301,
@@ -175,6 +228,26 @@ describe("production standalone server", () => {
         status: 301,
         location: "/courses/claude-code-guide/02-context-and-cache/",
       });
+
+      // Glued lesson paths (a relative link resolved against the lesson the
+      // crawler was already on). The pair below is NOT in the explicit
+      // redirect table — it is recovered by the middleware rule, which is the
+      // point: Search Console only ever shows a sample of the affected URLs.
+      expect(
+        await redirect(server.origin, "/courses/claude-code-guide/03-claude-md/06-mcp/"),
+      ).toEqual({
+        status: 301,
+        location: "/courses/claude-code-guide/06-mcp/",
+      });
+      expect(
+        await redirect(server.origin, "/en/courses/claude-code-guide/05-hooks/10-agent-teams/"),
+      ).toEqual({
+        status: 301,
+        location: "/en/courses/claude-code-guide/10-agent-teams/",
+      });
+      // …and the real lesson it points at must answer directly, so the
+      // recovery is one hop and never a chain.
+      expect(await status(server.origin, "/courses/claude-code-guide/06-mcp/")).toBe(200);
 
       for (const pathname of [
         "/robots.txt",
@@ -265,10 +338,12 @@ describe("production standalone server", () => {
       expectCanonicalHomeLinks(ruHome, {
         blog: "/blog/",
         course: "/courses/claude-code-guide/",
+        feed: await feedPaths(server.origin, "/feed.json"),
       });
       expectCanonicalHomeLinks(enHome, {
         blog: "/en/blog/",
         course: "/en/courses/claude-code-guide/",
+        feed: await feedPaths(server.origin, "/en/feed.json"),
       });
 
       for (const pathname of ["/contact/", "/privacy/", "/en/contact/", "/en/privacy/"]) {

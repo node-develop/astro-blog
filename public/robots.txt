@@ -1,11 +1,13 @@
-# robots.txt — last reviewed 2026-09-07
+# robots.txt — last reviewed 2026-09-19
 # Owner: a@artka.dev. Policy: allow retrieval/answer crawlers; disallow private surfaces.
 # /admin/ and /api/ are private surfaces. Utility HTML remains crawlable so its
 # noindex directive can be observed.
 #
 # Agent resources: https://artka.dev/llms.txt (index) and
 # https://artka.dev/llms-full.txt (full-text digest, noindex but fetchable).
-# Every post and lesson also has a Markdown twin at <page-url minus slash>.md.
+# Every post and lesson also has a Markdown twin at <page-url minus slash>.md;
+# those twins are disallowed for ordinary search crawlers in the catch-all
+# block below, and stay open to the AI agent groups listed here.
 
 User-agent: GPTBot
 Allow: /
@@ -106,5 +108,9 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+# Markdown twins of posts and lessons duplicate their HTML pages. This rule
+# lives in the catch-all group only: the AI agent groups above each match on
+# their own token, so their access to the twins is unaffected.
+Disallow: /*.md$
 
 Sitemap: https://artka.dev/sitemap-index.xml

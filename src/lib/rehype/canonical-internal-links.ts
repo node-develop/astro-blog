@@ -3,6 +3,8 @@ import type { Transformer } from "unified";
 import { visit } from "unist-util-visit";
 import { CANONICAL_ORIGIN, canonicalPath, isFileLikePath } from "../seo/url-policy";
 
+const HAS_SCHEME = /^[a-z][a-z0-9+\-.]*:/i;
+
 export const canonicalInternalHref = (href: string): string => {
   if (
     href.startsWith("#") ||
@@ -19,7 +21,10 @@ export const canonicalInternalHref = (href: string): string => {
     return `${CANONICAL_ORIGIN}${canonicalPath(parsed.pathname)}${parsed.hash}`;
   }
 
-  if (!href.startsWith("/") && !href.startsWith("./") && !href.startsWith("../")) return href;
+  // Anything carrying its own scheme (javascript:, data:, ftp:, …) is left
+  // alone. Same regex as remark-strip-md-suffix, so both plugins agree on
+  // what counts as "not a document path".
+  if (HAS_SCHEME.test(href)) return href;
   if (isFileLikePath(href)) return href;
 
   const hash = new URL(href, CANONICAL_ORIGIN).hash;
@@ -28,7 +33,17 @@ export const canonicalInternalHref = (href: string): string => {
 
   const collapsed = path.replace(/\/{2,}/g, "/");
   const bare = collapsed.replace(/\/+$/, "");
-  const siblingRelative = bare.startsWith("./") ? `../${bare.slice(2)}` : bare;
+  if (bare === "" || bare === ".") return href;
+
+  // A bare "09-subagents" and an explicit "./09-subagents" are the same
+  // reference to a browser: both resolve against the CURRENT page. With
+  // `trailingSlash: "always"` the current page is itself a directory, so the
+  // browser glues the target onto the page path and produces
+  // /courses/<course>/<lesson-a>/<lesson-b>/ — exactly the 404s Search
+  // Console reported. A Markdown author writing either spelling always means
+  // the sibling document, so both are normalized to the same `../<target>/`.
+  const siblingRelative =
+    bare === ".." || bare.startsWith("../") ? bare : `../${bare.replace(/^\.\//, "")}`;
   return `${siblingRelative}/${hash}`;
 };
 

@@ -1,6 +1,8 @@
 ---
 title: Контакты
 description: Как связаться с Artyom Kashuta по вопросам статей, AI-агентов, Claude Code и engineering-проектов.
+metaTitle: "Контакты: как связаться с Артёмом Кашутой"
+metaDescription: "Как связаться с автором artka.dev: почта, GitHub и другие профили. Пишите про статьи, курс Claude Code Guide, ошибки на сайте и рабочие вопросы."
 ---
 
 ## Написать мне

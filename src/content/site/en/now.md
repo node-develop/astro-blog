@@ -1,8 +1,10 @@
 ---
 title: Now
 description: "What I am working on in September 2026: my personal site, practical writing, and tools for developing software with AI."
+metaTitle: "Now: the projects I am working on in 2026"
+metaDescription: "What I am working on right now: growing artka.dev, writing the Claude Code course and testing AI tools for development. Updated every month."
 lang: en
-sourceHash: c57d270a811ded9173c1b0d189dad52f6cf372557eead1d3fd49c01182fe8eb1
+sourceHash: 146712eee2a8fef7c77b961191545e8dafd64a8a65f795855fdd016e17330853
 manuallyEdited: false
 ---
 

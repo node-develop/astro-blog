@@ -1,8 +1,10 @@
 ---
 title: What I use
 description: "My development tools: editors, Claude Code and Codex, TypeScript, Python, PostgreSQL, and infrastructure for personal projects."
+metaTitle: "Dev toolkit: editor, Claude Code and the stack"
+metaDescription: "The tools I use every day: editor and terminal, Claude Code and other AI assistants, the backend stack, infrastructure and observability setup."
 lang: en
-sourceHash: d639c5a5c8d4f5c96c66898c20508234b23e0d44a9670dd459fb6d1e6e7fc251
+sourceHash: 590e293a063e48665ecef3ccb07642f755821be1d6611107317bb23fc54a63a5
 manuallyEdited: false
 ---
 

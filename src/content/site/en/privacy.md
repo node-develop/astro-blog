@@ -1,6 +1,11 @@
 ---
 title: Privacy
 description: What artka.dev processes and how analytics, browser settings, comments, and email are handled.
+metaTitle: "Privacy: how this site handles your data"
+metaDescription: "What artka.dev collects: anonymous analytics, theme and language settings kept in your browser, and email enquiries. What it never collects, and why."
+lang: en
+sourceHash: 2dd3a512346d38db39f92b536f9197ccc674e5d4aa95e5cf09f4de0e90d13494
+manuallyEdited: false
 ---
 
 Last updated: 24 August 2026.
