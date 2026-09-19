@@ -64,6 +64,64 @@ const requireString = (source: Record<string, string>, key: string): string => {
   return value;
 };
 
+// Helpers for the built-page checks. The source-level tests above and below
+// prove a value exists and fits; only the built HTML proves a page uses it.
+// Every reader is called inside an `it`, so a missing build fails that test
+// with ENOENT instead of failing the whole file at collection time.
+
+/** `&amp;` goes last, or `&amp;lt;` would decode twice. */
+const decodeEntities = (value: string): string =>
+  value
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&#x27;/gi, "'")
+    .replace(/&amp;/g, "&");
+
+const builtTitle = (html: string): string | undefined => {
+  const raw = /<title>([^<]*)<\/title>/i.exec(html)?.[1];
+  return raw === undefined ? undefined : decodeEntities(raw);
+};
+
+/** `content` of a `<meta>` tag, whatever order its attributes were written in. */
+const metaContent = (html: string, attr: "property" | "name", key: string): string | undefined => {
+  const tag = new RegExp(`<meta\\b[^>]*\\b${attr}=["']${key}["'][^>]*>`, "i").exec(html)?.[0];
+  const content = tag === undefined ? null : /\bcontent=(?:"([^"]*)"|'([^']*)')/i.exec(tag);
+  const value = content?.[1] ?? content?.[2];
+  return value === undefined ? undefined : decodeEntities(value);
+};
+
+/** File under dist/client that a built page's absolute `og:image` URL refers to. */
+const builtImageFile = (image: string | undefined): string =>
+  join("dist/client", new URL(image ?? "", "https://artka.dev").pathname);
+
+/** Course content folders next to the folders their lesson pages are built into. */
+const builtCourses = [
+  {
+    content: "src/content/courses/claude-code-guide",
+    built: "dist/client/courses/claude-code-guide",
+  },
+  {
+    content: "src/content/courses/claude-code-guide/en",
+    built: "dist/client/en/courses/claude-code-guide",
+  },
+] as const;
+
+interface BuiltLesson {
+  readonly page: string;
+  /** The lesson's own `title` from its frontmatter. */
+  readonly own: string;
+  readonly html: string;
+}
+
+const builtLessons = (): readonly BuiltLesson[] =>
+  builtCourses.flatMap(({ content, built }) =>
+    lessonFiles(content).map((file) => {
+      const page = `${built}/${file.replace(/\.md$/, "")}/index.html`;
+      return { page, own: str(`${content}/${file}`, "title"), html: read(page) };
+    }),
+  );
+
 describe("BaseLayout title budget", () => {
   it("budgets around the ~600px Google gives a SERP title", () => {
     expect(TITLE_BUDGET).toBe(60);
@@ -187,7 +245,9 @@ describe("lesson titles", () => {
     expect(lessons.length).toBeGreaterThan(0);
   });
 
-  it("never lets the layout push a lesson title past the budget", () => {
+  // Content check only: it shows the titles CAN fit if the layout applies the
+  // rule. What the layout actually renders is asserted on the built pages below.
+  it("has lesson titles that fit the budget once the course name is dropped", () => {
     for (const { id, lesson, course } of lessons) {
       const withCourse = `${lesson} — ${course}`;
       const pageTitle = withCourse.length > TITLE_BUDGET ? lesson : withCourse;
@@ -206,6 +266,48 @@ describe("lesson titles", () => {
     // `index` is still needed for the eyebrow and the LearningResource position.
     expect(lessonLayout).toMatch(/position: index/);
   });
+
+  it("renders every lesson <title> inside the budget, or as the lesson's own title and nothing more", () => {
+    const pages = builtLessons();
+    expect(pages.length).toBeGreaterThan(0);
+    for (const { page, own, html } of pages) {
+      const title = builtTitle(html);
+      expect(title, page).toBeDefined();
+      // Over budget is acceptable only when the layout added nothing at all:
+      // then the length is the writer's call, not something a layout can fix.
+      expect((title ?? "").length <= TITLE_BUDGET || title === own, `${page}: ${title}`).toBe(true);
+    }
+  });
+
+  it("only ever appends to the lesson's own title — no number or label in front of it", () => {
+    for (const { page, own, html } of builtLessons()) {
+      const title = builtTitle(html) ?? "";
+      expect(title.startsWith(own), `${page}: ${title}`).toBe(true);
+    }
+  });
+});
+
+// 6a37f98 fixed pages that ignored metadata they already had: the values were
+// in the frontmatter, the templates never read them. Scoring the frontmatter
+// (above) cannot see that bug coming back; only the rendered page can.
+describe("entity pages render the metadata written for them", () => {
+  const entities = (["about", "now", "uses", "contact", "privacy"] as const).flatMap((page) => [
+    { source: `src/content/site/${page}.md`, built: `dist/client/${page}/index.html` },
+    { source: `src/content/site/en/${page}.md`, built: `dist/client/en/${page}/index.html` },
+  ]);
+
+  it.each(entities)("$built", ({ source, built }) => {
+    const html = read(built);
+    expect(builtTitle(html)).toBe(serpTitle(str(source, "metaTitle")));
+    expect(metaContent(html, "name", "description")).toBe(str(source, "metaDescription"));
+  });
+
+  it("can tell metaTitle from the visible title, so the check above is not vacuous", () => {
+    const distinct = entities.filter(
+      ({ source }) => str(source, "metaTitle") !== str(source, "title"),
+    );
+    expect(distinct.length).toBeGreaterThan(0);
+  });
 });
 
 // Every lesson used to share the site-wide placeholder, so a lesson posted to
@@ -213,29 +315,15 @@ describe("lesson titles", () => {
 // crawler receives, so it is asserted on the built pages, not on the layout
 // source: which helper builds the path is free to change, the outcome is not.
 describe("lessons get their own preview card", () => {
-  const courses = [
-    {
-      content: "src/content/courses/claude-code-guide",
-      built: "dist/client/courses/claude-code-guide",
-    },
-    {
-      content: "src/content/courses/claude-code-guide/en",
-      built: "dist/client/en/courses/claude-code-guide",
-    },
-  ] as const;
-
-  /** `og:image` of every built lesson page, read lazily so a missing build fails the test, not the file. */
+  /** `og:image` of every built lesson page. */
   const lessonCards = (): readonly {
     readonly page: string;
     readonly image: string | undefined;
   }[] =>
-    courses.flatMap(({ content, built }) =>
-      lessonFiles(content).map((file) => {
-        const page = `${built}/${file.replace(/\.md$/, "")}/index.html`;
-        const tag = /<meta\b[^>]*\bproperty=["']og:image["'][^>]*>/i.exec(read(page))?.[0];
-        return { page, image: tag?.match(/\bcontent=["']([^"']+)["']/i)?.[1] };
-      }),
-    );
+    builtLessons().map(({ page, html }) => ({
+      page,
+      image: metaContent(html, "property", "og:image"),
+    }));
 
   it("never falls back to the site placeholder", () => {
     const cards = lessonCards();
@@ -248,7 +336,7 @@ describe("lessons get their own preview card", () => {
 
   it("points at an image the build actually produced", () => {
     for (const { page, image } of lessonCards()) {
-      const file = join("dist/client", new URL(image ?? "", "https://artka.dev").pathname);
+      const file = builtImageFile(image);
       expect(existsSync(repoFile(file)), `${page} -> ${file}`).toBe(true);
     }
   });
@@ -260,9 +348,37 @@ describe("lessons get their own preview card", () => {
 });
 
 describe("tag archives get the section preview image", () => {
-  it.each(["src/pages/tags/[tag].astro", "src/pages/en/tags/[tag].astro"])("%s", (rel) => {
+  const archives = [
+    { rel: "src/pages/tags/[tag].astro", built: "dist/client/tags", locale: "ru" },
+    { rel: "src/pages/en/tags/[tag].astro", built: "dist/client/en/tags", locale: "en" },
+  ] as const;
+
+  // An EN archive pointing at the RU card is the defect 3efe201 fixed for
+  // posts, so each template has to ask for its own locale, not for either.
+  it.each(archives)("$rel asks for the $locale card", ({ rel, locale }) => {
     const source = read(rel);
-    expect(source).toMatch(/landingOgPath\("tags", "(?:ru|en)"\)/);
+    const requested = [...source.matchAll(/landingOgPath\("tags", "(ru|en)"\)/g)].map(
+      (match) => match[1],
+    );
+    expect(requested).toEqual([locale]);
     expect(source).toMatch(/ogImage=\{ogImagePath\}/);
   });
+
+  it.each(archives)(
+    "every built $locale archive carries a built $locale card",
+    ({ built, locale }) => {
+      const pages = readdirSync(repoFile(built), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${built}/${entry.name}/index.html`);
+      expect(pages.length).toBeGreaterThan(0);
+      for (const page of pages) {
+        const image = metaContent(read(page), "property", "og:image");
+        expect(image, page).toBeDefined();
+        expect(image, page).not.toMatch(/og-default\.(svg|png)/);
+        // Cards are named `<name>-<locale>.png`; see landingOgPath().
+        expect(image, page).toMatch(new RegExp(`-${locale}\\.png$`));
+        expect(existsSync(repoFile(builtImageFile(image))), `${page} -> ${image}`).toBe(true);
+      }
+    },
+  );
 });
