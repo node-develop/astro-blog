@@ -176,6 +176,26 @@ describe("production standalone server", () => {
         location: "/courses/claude-code-guide/02-context-and-cache/",
       });
 
+      // Glued lesson paths (a relative link resolved against the lesson the
+      // crawler was already on). The pair below is NOT in the explicit
+      // redirect table — it is recovered by the middleware rule, which is the
+      // point: Search Console only ever shows a sample of the affected URLs.
+      expect(
+        await redirect(server.origin, "/courses/claude-code-guide/03-claude-md/06-mcp/"),
+      ).toEqual({
+        status: 301,
+        location: "/courses/claude-code-guide/06-mcp/",
+      });
+      expect(
+        await redirect(server.origin, "/en/courses/claude-code-guide/05-hooks/10-agent-teams/"),
+      ).toEqual({
+        status: 301,
+        location: "/en/courses/claude-code-guide/10-agent-teams/",
+      });
+      // …and the real lesson it points at must answer directly, so the
+      // recovery is one hop and never a chain.
+      expect(await status(server.origin, "/courses/claude-code-guide/06-mcp/")).toBe(200);
+
       for (const pathname of [
         "/robots.txt",
         "/rss.xml",

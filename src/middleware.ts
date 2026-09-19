@@ -2,11 +2,36 @@ import { defineMiddleware, sequence } from "astro:middleware";
 import { auth } from "~/lib/auth";
 import { canonicalHostRedirect, requiresAuthContext } from "~/lib/auth/request-classification";
 import { i18nRootRedirect } from "~/lib/i18n/middleware";
+import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
 
 const canonicalHostNormalization = defineMiddleware((context, next) => {
   if (context.isPrerendered) return next();
   const redirect = canonicalHostRedirect(context.request);
   return redirect ? context.redirect(redirect.toString(), 301) : next();
+});
+
+/**
+ * Recovers the "concatenated" lesson 404s Search Console reports, e.g.
+ * /courses/claude-code-guide/08-tool-calls-and-loop/09-subagents/ ->
+ * /courses/claude-code-guide/09-subagents/.
+ *
+ * The pair is combinatorial (14 x 14 lessons across five observed prefixes),
+ * so it lives here as one rule instead of ~900 entries in
+ * `buildLegacyRedirects()`. The explicit entries there stay as the pinned,
+ * test-covered sample; this catches every pair Search Console has not shown
+ * us yet, including lessons added later.
+ *
+ * `resolveConcatenatedLessonPath` never returns its own input, so this can
+ * neither loop nor chain into another redirect.
+ */
+const concatenatedLessonRecovery = defineMiddleware((context, next) => {
+  if (context.isPrerendered) return next();
+  const recovered = resolveConcatenatedLessonPath(context.url.pathname);
+  if (!recovered) return next();
+
+  const target = new URL(recovered, context.url);
+  target.search = context.url.search;
+  return context.redirect(target.pathname + target.search, 301);
 });
 
 const authContext = defineMiddleware(async (context, next) => {
@@ -84,6 +109,7 @@ const securityHeaders = defineMiddleware(async (context, next) => {
 export const onRequest = sequence(
   securityHeaders,
   canonicalHostNormalization,
+  concatenatedLessonRecovery,
   i18nRootRedirect,
   authContext,
   adminGuard,
