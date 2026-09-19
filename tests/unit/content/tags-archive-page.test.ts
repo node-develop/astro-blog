@@ -37,4 +37,17 @@ describe.each([
     const expectedKey = locale === "ru" ? /tags\.archiveEmptyRu/ : /tags\.archiveEmptyEn/;
     expect(source).toMatch(expectedKey);
   });
+
+  it("keeps the hash out of the heading text and paints it from CSS instead", () => {
+    // "#" is decoration. In the heading text it ends up in the H1 that search
+    // engines and screen readers read; as a pseudo-element it stays visual.
+    expect(source).toMatch(/<h1 class="tag-archive__title">\{label\}<\/h1>/);
+    expect(source).not.toMatch(/<h1[^>]*>#/);
+    expect(source).toMatch(/\.tag-archive__title::before\s*\{[^}]*content:\s*"#"/);
+  });
+
+  it("takes the title and the lede from the archive templates, not a bare label", () => {
+    expect(source).toMatch(/tags\.archiveTitle/);
+    expect(source).toMatch(/tags\.archiveDescription/);
+  });
 });
