@@ -22,7 +22,7 @@ keywords:
   - structured data
   - LLM citation
 lang: en
-sourceHash: bb14be88e39576b22a94953c2948ea8ff854d46388c230e7e85579e1ecd4e3b3
+sourceHash: 7b2143e31b4511610719b6427ed3e060f2ab91a7478784f48cbe9299dc02aaa3
 manuallyEdited: false
 updatedDate: 2026-09-07
 ---
@@ -33,7 +33,7 @@ Using `@graph` does not guarantee indexing, rich results or AI citations. Multip
 
 ## The repository approach
 
-On artka.dev the author and website data live in a shared layer, the `src/lib/seo` directory. Each page adds its entities and references shared ones through stable `@id` values. Updating the author profile then has one source. The site source code is not published, so the fragments below are shortened; my GitHub profile is [node-develop](https://github.com/node-develop).
+The [artka.dev SEO source](https://github.com/node-develop/astro-blog/tree/main/src/lib/seo) keeps author and website data in a shared layer. Each page adds its entities and references shared ones through stable `@id` values. Updating the author profile then has one source.
 
 This shortened example illustrates relationships; it is not a complete Google Article template:
 

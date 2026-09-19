@@ -24,15 +24,15 @@ outcomes:
   - Mermaid и LaTeX обрабатываются при сборке.
   - Контракт Content API, загрузка изображений и очередь публикации.
 links:
-  - label: GitHub автора
-    url: https://github.com/node-develop
+  - label: GitHub
+    url: https://github.com/node-develop/astro-blog
   - label: Live
     url: https://artka.dev/
 ---
 
 ## Что работает
 
-Этот сайт объединяет статьи, курс и описание проектов. Исходный код не опубликован: ссылка GitHub ведёт на профиль автора, а не на репозиторий сайта. Версии зависимостей зафиксированы в package.json и lockfile проекта.
+Этот сайт объединяет статьи, курс и описание проектов. Исходники и конфигурация опубликованы в GitHub; актуальные версии зависимостей находятся в package.json и lockfile.
 
 Публичные статьи собираются в HTML. PostgreSQL хранит серверные данные, Better Auth обслуживает вход, Pagefind — поиск по публичному контенту. Для программной подачи материалов есть [Content API](/api/v1/openapi.json).
 

@@ -31,7 +31,7 @@ updatedDate: 2026-09-07
 
 ## Конфигурация этого сайта
 
-На дату обновления artka.dev использует Astro 7, `@astrojs/markdown-remark` и `rehype-mermaid`. Полная конфигурация лежит в файле `astro.config.ts` этого проекта; исходный код сайта не опубликован, мой профиль на GitHub — [node-develop](https://github.com/node-develop). Для понимания Mermaid достаточно такого сокращения:
+На дату обновления artka.dev использует Astro 7, `@astrojs/markdown-remark` и `rehype-mermaid`. Полная конфигурация находится в [astro.config.ts](https://github.com/node-develop/astro-blog/blob/main/astro.config.ts). Для понимания Mermaid достаточно такого сокращения:
 
 ```typescript
 import { defineConfig } from "astro/config";

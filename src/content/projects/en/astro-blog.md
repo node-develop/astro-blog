@@ -24,17 +24,17 @@ outcomes:
   - Build-time Mermaid and LaTeX rendering.
   - A content API contract, image uploads and a publication queue.
 links:
-  - label: Author's GitHub
-    url: https://github.com/node-develop
+  - label: GitHub
+    url: https://github.com/node-develop/astro-blog
   - label: Live
     url: https://artka.dev/
-sourceHash: 8877bf4c2b541ec69897ea6548a192349cbefc6e1ec986dc06459a97446bf8be
+sourceHash: 58a9abca6e9d453eedd58d71219f7a32dbdafca56fd2389efd5cb63d9e2d7dc5
 manuallyEdited: false
 ---
 
 ## What is running
 
-This site combines articles, a course and project notes. The source code is not published: the GitHub link points to the author's profile, not to this site's repository. Dependency versions are recorded in package.json and the lockfile.
+This site combines articles, a course and project notes. Source and configuration are public on GitHub; package.json and the lockfile record dependencies.
 
 Public articles are built as HTML. PostgreSQL stores server data, Better Auth handles authentication and Pagefind searches public content. Programmatic publishing uses the [Content API](/api/v1/openapi.json).
 

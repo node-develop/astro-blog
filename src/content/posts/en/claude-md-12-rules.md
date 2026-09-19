@@ -22,7 +22,7 @@ keywords:
 - multi-step ai workflows
 - behavioral contract llm
 lang: en
-sourceHash: 236a1be2c017b493a40e539b00b2df00e1e976cc3ae6f3c6ddd3d2527452eec8
+sourceHash: 06731ad8eede9f9a1b93c021c2080dbc70df39de10a6e756784739c4747450bf
 manuallyEdited: true
 updatedDate: 2026-09-07
 ---
@@ -58,7 +58,7 @@ A small project may need only a few of these. Keep the instructions that address
 
 ## A template for this blog
 
-The artka.dev repository is not published, but it has separate commands for types, translations and builds, which makes concrete instructions possible. My GitHub profile is [node-develop](https://github.com/node-develop). Here is an excerpt from this blog’s CLAUDE.md:
+The [artka.dev repository](https://github.com/node-develop/astro-blog) has separate commands for types, translations and builds. That makes concrete instructions possible:
 
 ```markdown
 ## Before editing
