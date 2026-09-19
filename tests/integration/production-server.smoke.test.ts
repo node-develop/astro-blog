@@ -55,16 +55,34 @@ const expectNegotiatedVary = (response: Response): void => {
   expect(tokens).toContain("accept-encoding");
 };
 
+/** Canonical post paths in the order the JSON feed publishes them, newest first. */
+const feedPaths = async (origin: string, pathname: string): Promise<readonly string[]> => {
+  const response = await responseFor(origin, pathname);
+  expect(response.status, pathname).toBe(200);
+  const feed = (await response.json()) as { readonly items: readonly { readonly url: string }[] };
+  return feed.items.map((item) => new URL(item.url).pathname);
+};
+
 const expectCanonicalHomeLinks = (
   body: string,
-  expected: { readonly blog: string; readonly course: string },
+  expected: {
+    readonly blog: string;
+    readonly course: string;
+    readonly feed: readonly string[];
+  },
 ): void => {
   expect(body).toContain('href="' + expected.blog + '" class="masthead__cta"');
   expect(body).toContain('href="' + expected.course + '" class="course-band__cta"');
   const homePosts = [...body.matchAll(/<a\b[^>]*>/g)]
     .filter(([tag]) => /\bclass="[^"]*\b(featured__link|post-card__link)\b/.test(tag))
     .map(([tag]) => tag.match(/\bhref="([^"]+)"/)?.[1]);
-  expect(homePosts).toHaveLength(4);
+  // How many cards the home page shows is a layout decision (it went from 4 to
+  // 6 when the grid was widened), so no count is pinned here. What must hold:
+  // the list is not empty — `every` below passes vacuously on an empty one —
+  // and each card is the canonical URL of one of the newest posts, in feed
+  // order, with none skipped or repeated.
+  expect(homePosts.length).toBeGreaterThan(0);
+  expect(homePosts).toEqual(expected.feed.slice(0, homePosts.length));
   expect(homePosts.every((href) => href?.startsWith(expected.blog) && href.endsWith("/"))).toBe(
     true,
   );
@@ -285,10 +303,12 @@ describe("production standalone server", () => {
       expectCanonicalHomeLinks(ruHome, {
         blog: "/blog/",
         course: "/courses/claude-code-guide/",
+        feed: await feedPaths(server.origin, "/feed.json"),
       });
       expectCanonicalHomeLinks(enHome, {
         blog: "/en/blog/",
         course: "/en/courses/claude-code-guide/",
+        feed: await feedPaths(server.origin, "/en/feed.json"),
       });
 
       for (const pathname of ["/contact/", "/privacy/", "/en/contact/", "/en/privacy/"]) {
