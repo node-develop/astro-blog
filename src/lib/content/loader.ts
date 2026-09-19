@@ -2,6 +2,7 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import { eq } from "drizzle-orm";
 import { db } from "~/lib/db";
 import { postsMeta, type PostMeta } from "~/lib/db/schema";
+import { logger } from "~/lib/logger";
 import type { Locale } from "~/i18n";
 
 export interface PostWithMeta {
@@ -15,14 +16,29 @@ export interface PostQueryOptions {
 
 /**
  * Meta for a slug that doesn't have a `posts_meta` row yet.
- * Used at runtime when the DB IS reachable but a backfill hasn't happened —
- * the post should stay hidden until an admin adds it to the curated list.
+ * Used at runtime when the DB IS reachable but a backfill hasn't happened.
+ *
+ * VISIBLE by default, mirroring the column default in `posts_meta`
+ * (`hidden_from_list` defaults to false) and every write path that creates a
+ * row: `ensureMeta` (admin `posts.upsert`), the content-API worker, and the
+ * startup backfill all insert `hiddenFromList: false`. Hiding here instead
+ * meant a post that reached `src/content/posts/` without a row — published
+ * straight through git, or before the backfill ran — disappeared from the
+ * list, the sitemap and llms.txt with no error anywhere: "saved" looked like
+ * "published" while no crawler could ever find it. Hiding a post is an
+ * explicit editorial act (`posts.setVisibility` writes `hiddenFromList:
+ * true`); drafts are filtered earlier, by the `draft` frontmatter flag.
+ *
+ * The missing row is still a real defect — ordering, pinning and search are
+ * unavailable for that slug — so callers log it loudly instead of swallowing
+ * it. `order` stays last: public lists sort by publication date, so this only
+ * affects the admin's manual ordering until the backfill fills the row in.
  */
 export const defaultMetaFor = (slug: string): PostMeta => ({
   slug,
   order: Number.MAX_SAFE_INTEGER,
   pinned: false,
-  hiddenFromList: true,
+  hiddenFromList: false,
   searchVector: null,
   updatedAt: new Date(0),
 });
@@ -86,8 +102,9 @@ const tryLoadMeta = async (): Promise<Map<string, PostMeta> | null> => {
  * Two failure modes for meta lookup:
  * - DB unreachable (no DATABASE_URL or connection error) → every post gets
  *   `fallbackMetaForBuild` so the build still produces a usable site.
- * - DB reachable but slug has no row → `defaultMetaFor` (hidden by default;
- *   admin must add the post via /admin/posts to publish it).
+ * - DB reachable but slug has no row → `defaultMetaFor` (visible, unordered)
+ *   plus a pino warning naming the slugs, so the gap is noticed instead of
+ *   silently removing the post from every list.
  */
 export const getOrderedPosts = async (
   options: PostQueryOptions = {},
@@ -101,18 +118,26 @@ export const getOrderedPosts = async (
 
   const metaBySlug = await tryLoadMeta();
 
+  const missingMeta: string[] = [];
+
   const merged: PostWithMeta[] = entries.map((entry: CollectionEntry<"posts">) => {
     // Strip "en/" prefix so EN entries resolve to the same meta row as their
     // RU counterparts (posts_meta is keyed by the RU slug).
     // INVARIANT: EN posts live under exactly src/content/posts/en/<slug>.md (single-level).
     // If we ever nest EN posts deeper, this strip pattern will produce wrong meta keys silently.
     const metaKey = entry.id.replace(/^en\//, "");
-    const meta =
-      metaBySlug === null
-        ? fallbackMetaForBuild(metaKey)
-        : (metaBySlug.get(metaKey) ?? defaultMetaFor(metaKey));
-    return { entry, meta };
+    if (metaBySlug === null) return { entry, meta: fallbackMetaForBuild(metaKey) };
+    const row = metaBySlug.get(metaKey);
+    if (!row) missingMeta.push(metaKey);
+    return { entry, meta: row ?? defaultMetaFor(metaKey) };
   });
+
+  if (missingMeta.length > 0) {
+    logger.warn(
+      { locale, slugs: missingMeta, count: missingMeta.length },
+      "posts_meta rows missing for published posts: they are listed with default ordering and no pin/search state. Run the backfill (`scripts/backfill-posts-meta.ts` locally, `scripts/backfill-prod.mjs` on container start) so ordering, pinning and admin search work for these slugs.",
+    );
+  }
 
   return sortWithMeta(merged.filter((p) => !p.meta.hiddenFromList));
 };
@@ -145,8 +170,14 @@ export const getPostWithMeta = async (
 
   try {
     const rows = await db.select().from(postsMeta).where(eq(postsMeta.slug, slug));
-    const meta = rows[0] ?? defaultMetaFor(slug);
-    return { entry, meta };
+    const row = rows[0];
+    if (!row) {
+      logger.warn(
+        { slug, locale },
+        "posts_meta row missing for post: serving it with default meta (no pin/search state). Run the posts_meta backfill.",
+      );
+    }
+    return { entry, meta: row ?? defaultMetaFor(slug) };
   } catch {
     return { entry, meta: fallbackMetaForBuild(slug) };
   }
