@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import type { CollectionEntry } from "astro:content";
 import type { PostMeta } from "~/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { postsMeta } from "~/lib/db/schema";
 import { defaultMetaFor, sortWithMeta, type PostWithMeta } from "./loader";
 
 // ---------------------------------------------------------------------------
@@ -59,7 +61,14 @@ const FIXTURE_META: PostMeta[] = [fakeMeta("01-intro", 1), fakeMeta("02-context"
 // factory lazily, so top-level `const` declarations ARE accessible.)
 // ---------------------------------------------------------------------------
 
-const { warnSpy } = vi.hoisted(() => ({ warnSpy: vi.fn() }));
+// `whereRows.current` is what the single-row lookup of getPostWithMeta resolves
+// to. Each test sets it, so the fake can model a missing row as well as a
+// present one; `whereSpy` records the predicate the loader looked the row up by.
+const { warnSpy, whereSpy, whereRows } = vi.hoisted(() => ({
+  warnSpy: vi.fn(),
+  whereSpy: vi.fn(),
+  whereRows: { current: [] as PostMeta[] },
+}));
 
 // pino would otherwise spin up a real pino-pretty transport worker for every
 // warning this suite provokes on purpose.
@@ -74,13 +83,13 @@ vi.mock("astro:content", () => ({
 }));
 
 // db.select().from(table)           — resolves to FIXTURE_META (list call)
-// db.select().from(table).where(…) — resolves to first row (single-item call)
+// db.select().from(table).where(…) — resolves to whereRows.current (single-item call)
 vi.mock("~/lib/db", () => ({
   db: {
     select: vi.fn(() => ({
       from: vi.fn(() =>
         Object.assign(Promise.resolve([...FIXTURE_META]), {
-          where: vi.fn(async () => [FIXTURE_META[0]]),
+          where: whereSpy.mockImplementation(async () => [...whereRows.current]),
         }),
       ),
     })),
@@ -151,14 +160,16 @@ describe("getOrderedPosts(locale)", () => {
     const { getOrderedPosts } = await import("./loader");
     const posts = await getOrderedPosts({ locale: "ru" });
     const ids = posts.map((p) => p.entry.id);
-    expect(ids.every((id) => !id.startsWith("en/"))).toBe(true);
+    // The non-draft RU entries of FIXTURE_ENTRIES. A universal check such as
+    // every() is also true of an empty list, so it cannot guard this rule.
+    expect(ids).toEqual(["01-intro", "02-context", "no-meta-row"]);
   });
 
   it("returns only EN posts (en/ prefix) when locale=en", async () => {
     const { getOrderedPosts } = await import("./loader");
     const posts = await getOrderedPosts({ locale: "en" });
     const ids = posts.map((p) => p.entry.id);
-    expect(ids.every((id) => id.startsWith("en/"))).toBe(true);
+    expect(ids).toEqual(["en/01-intro", "en/02-context", "en/no-meta-row"]);
   });
 
   it("excludes drafts in both locales", async () => {
@@ -177,27 +188,122 @@ describe("getOrderedPosts(locale)", () => {
     expect(en.map((p) => p.entry.id)).toContain("en/no-meta-row");
   });
 
-  it("warns loudly about the missing row instead of swallowing it", async () => {
-    const { getOrderedPosts } = await import("./loader");
-    await getOrderedPosts({ locale: "ru" });
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({ slugs: ["no-meta-row"] });
-  });
+  it.each(["ru", "en"] as const)(
+    "warns loudly about the missing row instead of swallowing it (%s)",
+    async (locale) => {
+      const { getOrderedPosts } = await import("./loader");
+      await getOrderedPosts({ locale });
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      // Slugs are posts_meta keys, so the EN list reports the un-prefixed slug
+      // and only the one entry that really has no row: if EN ids stopped
+      // resolving to the RU-keyed rows, all three EN ids would be listed here.
+      const missing = ["no-meta-row"];
+      expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({
+        locale,
+        slugs: missing,
+        count: missing.length,
+      });
+    },
+  );
 
-  it("still hides a post whose row says hiddenFromList (explicit editorial act)", async () => {
-    const { getOrderedPosts } = await import("./loader");
-    FIXTURE_META.push({ ...fakeMeta("no-meta-row", 3), hiddenFromList: true });
-    try {
-      const ru = await getOrderedPosts({ locale: "ru" });
-      expect(ru.map((p) => p.entry.id)).not.toContain("no-meta-row");
-    } finally {
-      FIXTURE_META.pop();
-    }
-  });
+  it.each(["ru", "en"] as const)(
+    "names and counts every slug without a row, not just the first (%s)",
+    async (locale) => {
+      const { getOrderedPosts } = await import("./loader");
+      // Drop the "02-context" row: two posts of the locale are now without meta.
+      const removed = FIXTURE_META.pop();
+      try {
+        const posts = await getOrderedPosts({ locale });
+        const missing = ["02-context", "no-meta-row"];
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({
+          locale,
+          slugs: missing,
+          count: missing.length,
+        });
+        // Both stay listed: a missing row never removes a post.
+        const prefix = locale === "en" ? "en/" : "";
+        expect(posts.map((p) => p.entry.id)).toEqual(
+          expect.arrayContaining(missing.map((slug) => `${prefix}${slug}`)),
+        );
+      } finally {
+        if (removed) FIXTURE_META.push(removed);
+      }
+    },
+  );
+
+  it.each([
+    { locale: "ru", hiddenId: "no-meta-row", visibleId: "01-intro" },
+    { locale: "en", hiddenId: "en/no-meta-row", visibleId: "en/01-intro" },
+  ] as const)(
+    "still hides a post whose row says hiddenFromList (explicit editorial act, $locale)",
+    async ({ locale, hiddenId, visibleId }) => {
+      const { getOrderedPosts } = await import("./loader");
+      // One RU-keyed row hides the post in both locales.
+      FIXTURE_META.push({ ...fakeMeta("no-meta-row", 3), hiddenFromList: true });
+      try {
+        const ids = (await getOrderedPosts({ locale })).map((p) => p.entry.id);
+        expect(ids).not.toContain(hiddenId);
+        // Positive control: the list is not simply empty.
+        expect(ids).toContain(visibleId);
+        // Every entry found its row, so nothing fell back to the visible default.
+        expect(warnSpy).not.toHaveBeenCalled();
+      } finally {
+        FIXTURE_META.pop();
+      }
+    },
+  );
 
   it("defaults to RU when called with no argument (back-compat)", async () => {
     const { getOrderedPosts } = await import("./loader");
-    const posts = await getOrderedPosts();
-    expect(posts.every((p) => !p.entry.id.startsWith("en/"))).toBe(true);
+    const ids = (await getOrderedPosts()).map((p) => p.entry.id);
+    const ru = await getOrderedPosts({ locale: "ru" });
+    expect(ids).toEqual(ru.map((p) => p.entry.id));
+    expect(ids.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getPostWithMeta(slug, locale)", () => {
+  beforeEach(() => {
+    vi.stubEnv("DATABASE_URL", "postgres://test:test@localhost:5432/test");
+    warnSpy.mockClear();
+    whereSpy.mockClear();
+    whereRows.current = [];
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("serves a post without a posts_meta row as visible and warns with slug + locale", async () => {
+    const { getPostWithMeta } = await import("./loader");
+    const result = await getPostWithMeta("no-meta-row", { locale: "en" });
+    expect(result?.entry.id).toBe("en/no-meta-row");
+    expect(result?.meta.hiddenFromList).toBe(false);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({ slug: "no-meta-row", locale: "en" });
+  });
+
+  it("looks the row up by the RU slug even for the EN variant", async () => {
+    const { getPostWithMeta } = await import("./loader");
+    await getPostWithMeta("01-intro", { locale: "en" });
+    // posts_meta is keyed by the RU slug; "en/01-intro" would never match a row.
+    expect(whereSpy).toHaveBeenCalledTimes(1);
+    expect(whereSpy.mock.calls[0]?.[0]).toEqual(eq(postsMeta.slug, "01-intro"));
+  });
+
+  it("returns the row's own meta, not the default, and stays quiet when the row exists", async () => {
+    const { getPostWithMeta } = await import("./loader");
+    whereRows.current = [{ ...fakeMeta("01-intro", 7, true), hiddenFromList: true }];
+    const result = await getPostWithMeta("01-intro", { locale: "ru" });
+    expect(result?.entry.id).toBe("01-intro");
+    expect(result?.meta).toMatchObject({ order: 7, pinned: true, hiddenFromList: true });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns null for a slug that is not in the collection", async () => {
+    const { getPostWithMeta } = await import("./loader");
+    expect(await getPostWithMeta("does-not-exist", { locale: "ru" })).toBeNull();
+    // An RU-only slug has no EN variant either.
+    expect(await getPostWithMeta("draft-ru-only", { locale: "en" })).toBeNull();
   });
 });
