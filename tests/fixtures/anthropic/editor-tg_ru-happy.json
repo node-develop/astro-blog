@@ -2,7 +2,7 @@
   "id": "msg_test_editor_tg",
   "type": "message",
   "role": "assistant",
-  "model": "claude-sonnet-4-6",
+  "model": "claude-sonnet-5",
   "content": [
     {
       "type": "tool_use",

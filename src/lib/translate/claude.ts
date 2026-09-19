@@ -7,7 +7,7 @@ import {
   type StructuralMismatch,
 } from "./validate-structure";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-sonnet-5";
 const MAX_RETRIES = 3;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));

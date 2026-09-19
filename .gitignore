@@ -51,3 +51,7 @@ public/pagefind
 src/content/posts/e2e-*.md
 src/content/posts/e2enew*.md
 .lighthouse/
+
+# Рабочие деревья агентов и черновики, созданные ассистентом
+.claude/worktrees/
+Claude outputs/
