@@ -4,7 +4,14 @@ import { join } from "node:path";
 import { load as parseYaml } from "../src/lib/yaml";
 import type { ZodError } from "zod";
 import { sha256 } from "../src/lib/translate/hash";
-import { detectDrift, isFixtureSlug, type FileState } from "../src/lib/translate/sync-check";
+import {
+  detectDrift,
+  detectMissingTwins,
+  isFixtureSlug,
+  type FileState,
+  type TwinSide,
+  type TwinState,
+} from "../src/lib/translate/sync-check";
 import { PATHS } from "../src/lib/translate/site-config";
 import { postSchema, siteSchema, projectSchema } from "../src/lib/content/schemas";
 
@@ -13,6 +20,7 @@ interface FrontmatterPeek {
   readonly apiRevision?: string;
   readonly sourceHash?: string;
   readonly manuallyEdited?: boolean;
+  readonly locale?: string;
 }
 
 const peekFrontmatter = (src: string): FrontmatterPeek => {
@@ -72,6 +80,90 @@ const validateEnDir = async (
   return errors;
 };
 
+const CONTENT_FILE = /\.(md|mdx)$/;
+const COURSE_LANDING = "_index";
+
+/** Slugs of the content files directly inside `dir` (no recursion, no dotfiles). */
+const listSlugs = async (dir: string): Promise<readonly string[]> => {
+  if (!existsSync(dir)) return [];
+  const entries = await readdir(dir, { withFileTypes: true });
+  return entries
+    .filter((e) => e.isFile() && CONTENT_FILE.test(e.name) && !e.name.startsWith("."))
+    .map((e) => e.name.replace(CONTENT_FILE, ""));
+};
+
+const union = (a: readonly string[], b: readonly string[]): readonly string[] =>
+  [...new Set([...a, ...b])].sort();
+
+/** site and projects: `<slug>.md` next to `en/<slug>.md`; every file is built. */
+const collectFlatTwins = async (
+  collection: "site" | "projects",
+  ruDir: string,
+  enDir: string,
+): Promise<readonly TwinState[]> => {
+  const ru = await listSlugs(ruDir);
+  const en = await listSlugs(enDir);
+  return union(ru, en).map((slug) => ({
+    collection,
+    slug,
+    ru: ru.includes(slug) ? "built" : "absent",
+    en: en.includes(slug) ? "built" : "absent",
+  }));
+};
+
+const readLocale = async (dir: string, slug: string): Promise<string | undefined> => {
+  const file = [`${slug}.md`, `${slug}.mdx`].map((f) => join(dir, f)).find((f) => existsSync(f));
+  return file ? peekFrontmatter(await readFile(file, "utf8")).locale : undefined;
+};
+
+/**
+ * Courses and lessons. Mirrors src/pages/courses/[course]/** and its EN twin:
+ * the routes choose the language by frontmatter `locale` (schema default "ru"),
+ * not by the folder, and lessons are only built under a course landing of the
+ * same language. So an EN file without `locale: en` is a file, not a page.
+ */
+const collectCourseTwins = async (): Promise<readonly TwinState[]> => {
+  if (!existsSync(PATHS.coursesDir)) return [];
+  const courses = (await readdir(PATHS.coursesDir, { withFileTypes: true }))
+    .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+    .map((e) => e.name);
+
+  const states: TwinState[] = [];
+  for (const course of courses) {
+    const ruDir = join(PATHS.coursesDir, course);
+    const enDir = join(ruDir, "en");
+    const ruSlugs = await listSlugs(ruDir);
+    const enSlugs = await listSlugs(enDir);
+
+    const side = async (
+      dir: string,
+      slugs: readonly string[],
+      slug: string,
+      locale: "ru" | "en",
+      landingBuilt: boolean,
+    ): Promise<TwinSide> => {
+      if (!slugs.includes(slug)) return "absent";
+      const isEn = (await readLocale(dir, slug)) === "en";
+      return (locale === "en" ? isEn : !isEn) && landingBuilt ? "built" : "unbuilt";
+    };
+
+    const ruLanding = await side(ruDir, ruSlugs, COURSE_LANDING, "ru", true);
+    const enLanding = await side(enDir, enSlugs, COURSE_LANDING, "en", true);
+    states.push({ collection: "courses", slug: course, ru: ruLanding, en: enLanding });
+
+    const lessons = union(ruSlugs, enSlugs).filter((slug) => slug !== COURSE_LANDING);
+    for (const lesson of lessons) {
+      states.push({
+        collection: "lessons",
+        slug: `${course}/${lesson}`,
+        ru: await side(ruDir, ruSlugs, lesson, "ru", ruLanding === "built"),
+        en: await side(enDir, enSlugs, lesson, "en", enLanding === "built"),
+      });
+    }
+  }
+  return states;
+};
+
 const main = async (): Promise<void> => {
   const ruFiles = (await readdir(PATHS.postsDir)).filter(
     (f) => /\.(md|mdx)$/.test(f) && !f.startsWith("."),
@@ -114,6 +206,16 @@ const main = async (): Promise<void> => {
 
   const report = detectDrift(states);
 
+  // Pair presence for everything localised that is not a post. Courses and
+  // lessons are not part of `pnpm translate` (their twins are written by hand),
+  // so this is the only place a lesson published in one language gets caught.
+  const twins = detectMissingTwins([
+    ...(await collectFlatTwins("site", PATHS.siteDir, PATHS.siteEnDir)),
+    ...(await collectFlatTwins("projects", PATHS.projectsDir, PATHS.projectsEnDir)),
+    ...(await collectCourseTwins()),
+  ]);
+  const missingEn = [...report.missing, ...twins.missingEn];
+
   // Second pass: validate every EN file against its content schema.
   const schemaErrors = [
     ...(await validateEnDir(PATHS.postsEnDir, "posts", postSchema)),
@@ -124,7 +226,13 @@ const main = async (): Promise<void> => {
   if (report.warnings.length) {
     console.warn(`⚠ Manually-edited EN files with stale RU source: ${report.warnings.join(", ")}`);
   }
-  if (report.missing.length) console.error(`✗ Missing EN twins: ${report.missing.join(", ")}`);
+  if (missingEn.length) console.error(`✗ Missing EN twins: ${missingEn.join(", ")}`);
+  if (twins.missingRu.length) {
+    console.error(`✗ EN twins without a RU source: ${twins.missingRu.join(", ")}`);
+  }
+  if (twins.unbuilt.length) {
+    console.error(`✗ Files no page route builds: ${twins.unbuilt.join(", ")}`);
+  }
   if (report.drift.length) console.error(`✗ EN twins out of date: ${report.drift.join(", ")}`);
   if (schemaErrors.length) {
     console.error("");
@@ -134,9 +242,29 @@ const main = async (): Promise<void> => {
     }
   }
 
-  if (report.missing.length || report.drift.length || schemaErrors.length) {
-    if (report.missing.length || report.drift.length) {
+  // Courses and lessons are written by hand; posts, site pages and projects are
+  // what `pnpm translate` generates. The advice has to match the collection.
+  const isHandWritten = (label: string): boolean =>
+    label.startsWith("courses/") || label.startsWith("lessons/");
+  const handWritten = [...twins.missingEn, ...twins.missingRu, ...twins.unbuilt].some(
+    isHandWritten,
+  );
+  const translatable = twins.missingEn.some((label) => !isHandWritten(label));
+  const pairBroken = twins.missingEn.length || twins.missingRu.length || twins.unbuilt.length;
+
+  if (report.missing.length || report.drift.length || pairBroken || schemaErrors.length) {
+    if (report.missing.length || report.drift.length || translatable) {
       console.error("\nRun `pnpm translate` and commit the result.");
+    }
+    if (handWritten) {
+      console.error(
+        "\nCourses and lessons are NOT covered by `pnpm translate`: write the twin by hand as src/content/courses/<course>/en/<file>.md with `locale: en` in its frontmatter (RU files carry no `locale`, or `locale: ru`).",
+      );
+    }
+    if (twins.missingRu.length) {
+      console.error(
+        "\nAn EN twin without a RU source means the Russian page was removed or renamed and the English one was left behind: restore the RU file or delete the EN one.",
+      );
     }
     if (schemaErrors.length) {
       console.error(
