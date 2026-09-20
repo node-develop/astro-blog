@@ -93,8 +93,8 @@ const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
       border-color var(--dur-fast) var(--ease-out);
   }
   .sidebar__label-link:hover {
-    color: var(--color-accent);
-    border-bottom-color: var(--color-accent);
+    color: var(--color-fg);
+    border-bottom-color: var(--color-fill);
   }
   .sidebar__list {
     list-style: none;
@@ -121,10 +121,12 @@ const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
     color: var(--color-fg);
     background: var(--color-bg-elevated);
   }
+  /* The current lesson is a filled row with a slab on its leading edge,
+     the same marker the search palette uses for the selected result. */
   .sidebar__link[aria-current="page"] {
     color: var(--color-fg);
-    background: var(--color-accent-soft);
-    box-shadow: inset 2px 0 0 var(--color-accent);
+    background: var(--color-bg-elevated);
+    box-shadow: inset var(--stroke-slab) 0 0 var(--color-fill);
   }
   .sidebar__num {
     font-family: var(--font-mono);
@@ -133,7 +135,7 @@ const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
     font-variant-numeric: tabular-nums;
   }
   .sidebar__link[aria-current="page"] .sidebar__num {
-    color: var(--color-accent);
+    color: var(--color-fg);
   }
   .sidebar__title {
     display: -webkit-box;

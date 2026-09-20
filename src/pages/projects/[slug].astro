@@ -154,7 +154,7 @@ const projectLinkHref = (url: string): string =>
     .project__header {
       margin-bottom: var(--space-6);
       padding-bottom: var(--space-5);
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: var(--stroke-hair) solid var(--color-border);
     }
     .project__eyebrow {
       display: flex;
@@ -211,7 +211,7 @@ const projectLinkHref = (url: string): string =>
       gap: var(--space-5);
       margin: 0 0 var(--space-7) 0;
       padding: var(--space-5);
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       border-radius: var(--radius-md);
       background: var(--color-bg-elevated);
     }
@@ -236,7 +236,7 @@ const projectLinkHref = (url: string): string =>
       font-size: var(--fs-xs);
       color: var(--color-fg-muted);
       padding: 2px 8px;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       border-radius: var(--radius-pill);
     }
     .project__outcomes {

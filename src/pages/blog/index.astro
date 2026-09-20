@@ -174,7 +174,7 @@ const webPageNode = buildWebPageNode({
     .list__header {
       margin-bottom: var(--space-6);
       padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: var(--stroke-hair) solid var(--color-border);
     }
     .list__eyebrow {
       font-family: var(--font-mono);
@@ -206,15 +206,16 @@ const webPageNode = buildWebPageNode({
       transition: background var(--dur-fast) var(--ease-out);
     }
     .list__course-banner:hover {
-      background: color-mix(in oklch, var(--color-accent), transparent 80%);
+      background: var(--color-fill);
+      color: var(--color-on-fill);
     }
     .list__course-label {
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
       text-transform: uppercase;
       letter-spacing: var(--tracking-wide);
-      color: var(--color-accent);
-      font-weight: 600;
+      color: var(--color-fg);
+      font-weight: 700;
     }
     .list__course-title {
       font-family: var(--font-serif);
@@ -225,7 +226,10 @@ const webPageNode = buildWebPageNode({
     .list__course-cta {
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
-      color: var(--color-accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-fg);
       white-space: nowrap;
     }
     @media (max-width: 600px) {
@@ -246,7 +250,7 @@ const webPageNode = buildWebPageNode({
       font-size: var(--fs-xs);
       color: var(--color-fg-muted);
       padding: 2px 8px;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       border-radius: var(--radius-pill);
       text-decoration: none;
       transition:
@@ -254,7 +258,9 @@ const webPageNode = buildWebPageNode({
         color var(--dur-fast) var(--ease-out);
     }
     .list__tag-chip:hover {
-      border-color: var(--color-accent);
+      background: var(--color-fill);
+      color: var(--color-on-fill);
+      border-color: var(--color-fg);
       color: var(--color-accent-hover);
     }
     .list__grid {
