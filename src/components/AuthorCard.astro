@@ -44,16 +44,23 @@ const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
 </aside>
 
 <style>
+  /* Poster pass: a framed slab, not a tinted panel. The old 1px border on a
+     raised background read as a light patch between the article and the ink
+     footer; the frame and the offset shadow give it an edge instead. It stays
+     on paper rather than inverting, because the footer right below it is
+     already a solid ink block. */
   .author-card {
+    position: relative;
     display: grid;
     grid-template-columns: 56px 1fr;
     gap: var(--space-4);
     align-items: start;
-    padding: var(--space-5);
-    margin: var(--space-7) 0 0 0;
-    border: 1px solid var(--color-border);
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    margin: var(--space-8) 0 0 0;
+    border: var(--stroke-slab) solid var(--color-fg);
     border-radius: var(--radius-md);
     background: var(--color-bg-elevated);
+    box-shadow: var(--shadow-soft);
   }
   .author-card__avatar-link {
     line-height: 0;
@@ -62,7 +69,7 @@ const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
     width: 56px;
     height: 56px;
     border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     background: var(--color-bg);
     object-fit: cover;
   }
@@ -70,26 +77,38 @@ const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
     display: grid;
     gap: var(--space-1);
   }
+  /* The label is a tab notched into the top edge, the same move the TL;DR
+     slab uses, so the two read as one family. */
   .author-card__label {
+    position: absolute;
+    top: 0;
+    left: var(--space-4);
+    transform: translateY(-50%);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    padding: 3px 10px;
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-fg-subtle);
     margin: 0;
   }
   .author-card__name {
     font-family: var(--font-serif);
-    font-size: var(--fs-lg);
-    font-weight: 500;
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
     margin: 0;
   }
   .author-card__name a {
     color: var(--color-fg);
     text-decoration: none;
+    border-bottom: var(--stroke-slab) solid transparent;
   }
   .author-card__name a:hover {
-    color: var(--color-accent);
+    border-bottom-color: var(--color-fill);
   }
   .author-card__role {
     color: var(--color-fg-muted);
@@ -107,11 +126,14 @@ const projectsHref = locale === "en" ? "/en/projects/" : "/projects/";
   }
   .author-card__links a {
     color: var(--color-accent);
+    font-weight: 600;
+    text-decoration-thickness: var(--stroke-bold);
+    text-underline-offset: 4px;
   }
   @media (max-width: 600px) {
     .author-card {
       grid-template-columns: 1fr;
-      padding: var(--space-4);
+      padding: var(--space-6) var(--space-4) var(--space-4);
       gap: var(--space-3);
     }
     .author-card__avatar-link {

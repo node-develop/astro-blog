@@ -70,18 +70,19 @@ const fmtDate = (d: Date): string =>
     gap: var(--space-2);
     margin-bottom: var(--space-4);
   }
+  /* The hairline dash becomes a short lime slab: a fill, at slab weight. */
   .related__rule {
-    width: 24px;
-    height: 1px;
-    background: var(--color-accent);
+    width: 28px;
+    height: var(--stroke-slab);
+    background: var(--color-fill);
   }
   .related__title {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    font-weight: 500;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-accent);
+    color: var(--color-fg);
     margin: 0;
   }
   .related__list {
@@ -94,19 +95,23 @@ const fmtDate = (d: Date): string =>
   }
   .related__link {
     display: block;
-    padding: var(--space-3) 0;
-    border-top: 1px solid var(--color-border);
+    padding: var(--space-4) 0 var(--space-3);
+    border-top: var(--stroke-slab) solid var(--color-fg);
     text-decoration: none;
     color: var(--color-fg);
-    transition: border-color var(--dur-fast) var(--ease-out);
+    transition:
+      border-top-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
   .related__link:hover {
-    border-top-color: var(--color-accent);
+    border-top-color: var(--color-fill);
+    transform: translateY(-2px);
   }
   .related__post-title {
     font-family: var(--font-serif);
     font-size: var(--fs-md);
-    font-weight: 500;
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
     line-height: var(--lh-snug);
     margin: 0 0 var(--space-2) 0;
     color: var(--color-fg);

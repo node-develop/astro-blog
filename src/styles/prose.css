@@ -11,8 +11,8 @@
   --tw-prose-counters: var(--color-fg-muted);
   --tw-prose-bullets: var(--color-border-strong);
   --tw-prose-hr: var(--color-border);
-  --tw-prose-quotes: var(--color-fg);
-  --tw-prose-quote-borders: var(--color-accent-soft);
+  --tw-prose-quotes: var(--color-on-fill-alt);
+  --tw-prose-quote-borders: var(--color-fg);
   --tw-prose-captions: var(--color-fg-muted);
   --tw-prose-code: var(--color-fg);
   --tw-prose-pre-code: var(--color-fg);
@@ -21,7 +21,7 @@
   --tw-prose-td-borders: var(--color-border);
 
   font-family: var(--font-sans);
-  font-size: var(--fs-md);
+  font-size: var(--fs-prose);
   line-height: var(--lh-relaxed);
   color: var(--color-fg);
   overflow-wrap: anywhere;
@@ -31,9 +31,20 @@
 .prose h2,
 .prose h3 {
   font-family: var(--font-serif);
-  font-weight: 500;
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--lh-snug);
+  font-weight: 800;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-display);
+}
+
+/* Section headings are the poster's second voice: uppercase display, set
+   larger than the old editorial step so they break the column of prose. */
+.prose h2 {
+  font-size: var(--fs-2xl);
+  text-transform: uppercase;
+}
+
+.prose h3 {
+  font-size: var(--fs-xl);
 }
 
 .prose h2 {
@@ -52,7 +63,7 @@
 
 /* .prose pre base styles are overridden by .code-block pre.astro-code below */
 .prose pre {
-  border: 1px solid var(--color-border);
+  border: var(--stroke-bold) solid var(--color-fg);
   border-radius: var(--radius-md);
   padding: var(--space-4);
   /* Code blocks scroll independently; they must not push the page wider */
@@ -73,20 +84,43 @@
 }
 
 .prose a {
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  transition: color var(--dur-fast) var(--ease-out);
+  /* The lime is a fill, never a hairline. At 2px under running text it was a
+     tint-sized use of a fill colour: barely 1.2:1 against paper, so it read
+     as a smudge in light mode and glowed brighter than the word in dark. The
+     rule now takes the word's own colour and darkens to ink on hover. */
+  text-decoration-thickness: var(--stroke-bold);
+  text-decoration-color: currentColor;
+  text-underline-offset: 4px;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    text-decoration-color var(--dur-fast) var(--ease-out);
 }
 
 .prose a:hover {
   color: var(--color-accent-hover);
+  text-decoration-color: var(--color-fg);
 }
 
+/* A quote is a slab, not an indented line: ultramarine ground, ink frame,
+   its own ink on top. One per article is the rule; prose cannot enforce it,
+   so the editor does. */
 .prose blockquote {
   font-style: normal;
-  border-left-width: 3px;
-  padding-left: var(--space-4);
-  color: var(--color-fg-muted);
+  background: var(--color-fill-alt);
+  color: var(--color-on-fill-alt);
+  border: var(--stroke-slab) solid var(--color-fg);
+  border-left-width: var(--stroke-slab);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-5) var(--space-6);
+  margin: var(--space-7) 0;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+  font-weight: 500;
+}
+
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: none;
 }
 
 /* ── Code block container (variant B: craft left stripe) ─────── */
@@ -94,8 +128,7 @@
   position: relative;
   margin: var(--space-5) 0;
   background: var(--color-bg-subtle);
-  border: 1px solid var(--color-border-strong);
-  border-left: 3px solid var(--color-accent-soft);
+  border: var(--stroke-slab) solid var(--color-fg);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
@@ -116,8 +149,11 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-bg-elevated);
-  border-bottom: 1px solid var(--color-border);
+  /* Inverted chrome: the filename bar is the darkest thing on the page in
+     paper mode, which is what makes a code block read as a block. */
+  background: var(--color-fg);
+  color: var(--color-bg);
+  border-bottom: var(--stroke-slab) solid var(--color-fg);
 }
 
 .code-block__lang {
@@ -126,8 +162,9 @@
   font-family: var(--font-code);
   font-size: var(--fs-xs);
   text-transform: uppercase;
+  font-weight: 700;
   letter-spacing: var(--tracking-wide);
-  color: var(--color-fg-muted);
+  color: var(--color-bg);
 }
 
 /* ── Copy button ─────────────────────────────────────────────── */
@@ -150,8 +187,17 @@
 }
 
 .code-block__copy:hover {
-  color: var(--color-fg);
-  background: color-mix(in srgb, var(--color-fg) 6%, transparent);
+  color: var(--color-on-fill);
+  background: var(--color-fill);
+}
+
+/* Inside the inverted header the button sits on ink, so it wears paper. */
+.code-block__header .code-block__copy {
+  color: var(--color-bg);
+}
+
+.code-block__header .code-block__copy:hover {
+  color: var(--color-on-fill);
 }
 
 .code-block__copy:focus-visible {

@@ -83,11 +83,16 @@ const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`
 </section>
 
 <style>
+  /* The article closes the way the home page does: a lime band, then the
+     ink footer. It is the page's one conversion element, so it gets to be
+     the loud object down here. */
   .newsletter {
-    margin: var(--space-7) 0;
-    padding: var(--space-6) 0;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
+    margin: var(--space-8) 0;
+    padding: var(--space-6) var(--space-6) var(--space-5);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    border: var(--stroke-slab) solid var(--color-fg);
+    box-shadow: var(--shadow-soft);
   }
   .newsletter__eyebrow {
     display: inline-flex;
@@ -98,29 +103,32 @@ const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-accent);
+    color: var(--color-on-fill);
+    font-weight: 700;
     margin: 0 0 var(--space-3) 0;
   }
   .newsletter__rule {
-    width: 24px;
-    height: 1px;
-    background: var(--color-accent);
+    width: 28px;
+    height: var(--stroke-slab);
+    background: var(--color-on-fill);
   }
   .newsletter__headline {
     font-family: var(--font-serif);
     font-size: var(--fs-2xl);
-    font-weight: 500;
-    line-height: var(--lh-tight);
-    letter-spacing: var(--tracking-tight);
+    font-weight: 800;
+    line-height: var(--lh-display);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
     margin: 0 0 var(--space-3) 0;
-    color: var(--color-fg);
+    color: var(--color-on-fill);
     text-wrap: balance;
   }
+  /* Body copy takes the text face: the display face is for the headline. */
   .newsletter__blurb {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: var(--fs-md);
-    line-height: var(--lh-base);
-    color: var(--color-fg-muted);
+    line-height: var(--lh-normal);
+    color: var(--color-on-fill);
     margin: 0 0 var(--space-5) 0;
     max-width: 56ch;
     text-wrap: pretty;
@@ -145,8 +153,8 @@ const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`
   }
   .newsletter__input {
     width: 100%;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-strong);
+    background: var(--color-bg-elevated);
+    border: var(--stroke-bold) solid var(--color-on-fill);
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-4);
     font-family: var(--font-sans);
@@ -156,10 +164,12 @@ const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
+  /* The blue focus ring is invisible on lime; on this band the ring is ink. */
   .newsletter__input:focus {
-    outline: 0;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px var(--color-focus-ring);
+    outline: var(--stroke-bold) solid var(--color-on-fill);
+    outline-offset: 2px;
+    border-color: var(--color-on-fill);
+    box-shadow: none;
   }
   .newsletter__hp {
     position: absolute;
@@ -168,34 +178,45 @@ const action = `https://buttondown.email/api/emails/embed-subscribe/${username}`
     height: 1px;
     opacity: 0;
   }
+  /* Same rule as the course band: on a fill, the band's ink, not the
+     page's — otherwise this goes cream-on-lime in dark. */
   .newsletter__submit {
-    background: var(--color-accent);
-    color: var(--color-bg);
-    border: 1px solid var(--color-accent);
+    background: var(--color-on-fill);
+    color: var(--color-fill);
+    border: var(--stroke-slab) solid var(--color-on-fill);
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-5);
-    font-family: var(--font-mono);
+    font-family: var(--font-serif);
     font-size: var(--fs-sm);
-    font-weight: 500;
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
     cursor: pointer;
     transition:
       background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
   }
   .newsletter__submit:hover {
-    background: var(--color-accent-hover);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 var(--color-on-fill);
   }
   .newsletter__submit:active {
-    transform: translateY(1px);
+    transform: none;
+    box-shadow: none;
   }
   .newsletter__submit:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
+    outline: var(--stroke-bold) solid var(--color-on-fill);
     outline-offset: 2px;
   }
   .newsletter__note {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    color: var(--color-fg-subtle);
+    color: var(--color-on-fill);
+    opacity: 0.72;
     margin: 0;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
