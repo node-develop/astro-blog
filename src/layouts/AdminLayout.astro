@@ -18,6 +18,24 @@ const { title } = Astro.props;
     <meta name="robots" content="noindex" />
     <title>{title} — admin</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Same no-flash bootstrap as BaseLayout: the admin honours the theme
+         chosen on the public site, so switching there does not strand this
+         page in paper. Values are 'paper' | 'dark', matching ThemeToggle. -->
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem("artka-theme");
+          var prefersDark =
+            window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var theme = stored || (prefersDark ? "dark" : "paper");
+          if (theme === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+          }
+        } catch (e) {
+          /* localStorage blocked */
+        }
+      })();
+    </script>
   </head>
   <body>
     <AdminHeader />

@@ -149,17 +149,25 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
           position: sticky; bottom: var(--space-4);
           padding: var(--space-3) var(--space-4);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
         }
         .editor-shell__save {
           font-family: var(--font-mono); font-size: var(--fs-sm);
-          color: var(--color-bg); background: var(--color-accent);
-          border: 1px solid var(--color-accent); padding: var(--space-2) var(--space-4);
+          text-transform: uppercase; letter-spacing: var(--tracking-wide);
+          color: var(--color-on-fill); background: var(--color-fill);
+          border: var(--stroke-bold) solid var(--color-fg); padding: var(--space-2) var(--space-4);
           border-radius: var(--radius-md); cursor: pointer;
+          box-shadow: var(--shadow-press);
+          transition:
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
-        .editor-shell__save:hover { background: var(--color-accent-hover); }
-        .editor-shell__save:disabled { opacity: 0.6; cursor: not-allowed; }
+        .editor-shell__save:not(:disabled):hover {
+          transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--color-shadow);
+        }
+        .editor-shell__save:not(:disabled):active { transform: none; box-shadow: none; }
+        .editor-shell__save:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
         .editor-shell__hint {
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-fg-muted);
@@ -172,7 +180,7 @@ export default function EditorShell({ slug: propsSlug, initial }: Props): React.
           display: flex; justify-content: space-between; align-items: center;
           gap: var(--space-3); padding: var(--space-3) var(--space-4);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-accent); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-fg);
         }

@@ -139,7 +139,7 @@ export default function FrontmatterForm({ value, onChange }: Props): React.JSX.E
         .fm-form__field textarea {
           font-family: var(--font-sans); font-size: var(--fs-base);
           padding: var(--space-2) var(--space-3);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           background: var(--color-bg); color: var(--color-fg);
         }
         .fm-form__row {

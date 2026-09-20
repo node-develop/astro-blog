@@ -83,18 +83,18 @@ export default function MediaPicker({ value, onChange }: Props): React.JSX.Eleme
         .media-picker__current button {
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-fg-muted); background: transparent;
-          border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-sm);
           padding: var(--space-1) var(--space-2); cursor: pointer;
         }
         .media-picker__dialog {
           position: fixed; inset: 10vh 10vw; max-height: 80vh; overflow: auto;
-          background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+          background: var(--color-bg); border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-lg);
           padding: var(--space-5); z-index: 100;
           box-shadow: var(--shadow-lifted);
         }
         .media-picker__close {
           position: absolute; top: var(--space-3); right: var(--space-3);
-          background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+          background: transparent; border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-sm);
           padding: 2px 8px; cursor: pointer; color: var(--color-fg-muted);
         }
         .media-picker__dialog ul {
@@ -103,7 +103,7 @@ export default function MediaPicker({ value, onChange }: Props): React.JSX.Eleme
           gap: var(--space-3);
         }
         .media-picker__dialog ul li button {
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           padding: 0; cursor: pointer; background: transparent;
           width: 100%;
         }

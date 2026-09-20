@@ -1,6 +1,11 @@
+/* Admin skin — the poster system applied to the editing tool.
+   Auth-gated and never crawled, so this stays utilitarian: the poster
+   language shows up as square corners, 2px ink strokes and the lime
+   affordance on the controls you actually press, not as billboards. */
+
 .post-editor .cm-editor {
   height: 70vh;
-  border: 1px solid var(--color-border);
+  border: var(--stroke-bold) solid var(--color-fg);
   border-radius: var(--radius-md);
   /* CodeMirror renders the markdown source itself — real code, and the admin
      is auth-gated and never crawled, so it keeps the JetBrains face. */
@@ -15,7 +20,28 @@
   background: var(--color-bg);
 }
 .post-editor .cm-gutters {
-  background: var(--color-bg-elevated);
-  border-right: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+  border-right: var(--stroke-hair) solid var(--color-border);
   color: var(--color-fg-subtle);
+}
+/* The caret line and the active gutter row read as ink, not as a tint of
+   the old sienna accent. */
+.post-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--color-fg) 5%, transparent);
+}
+.post-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--color-fg) 8%, transparent);
+  color: var(--color-fg);
+}
+.post-editor .cm-cursor {
+  border-left-color: var(--color-fg);
+}
+.post-editor .cm-selectionBackground,
+.post-editor .cm-editor .cm-selectionBackground,
+.post-editor .cm-editor.cm-focused .cm-selectionBackground {
+  background: var(--color-fill) !important;
+}
+.post-editor .cm-editor.cm-focused {
+  outline: var(--stroke-bold) solid var(--color-focus-ring);
+  outline-offset: 2px;
 }

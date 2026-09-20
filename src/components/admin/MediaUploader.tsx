@@ -56,16 +56,27 @@ export default function MediaUploader({ onUploaded }: Props): React.JSX.Element 
       )}
       <style>{`
         .media-uploader {
-          border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg);
+          border: var(--stroke-bold) dashed var(--color-fg); border-radius: var(--radius-lg);
           padding: var(--space-5); text-align: center;
           color: var(--color-fg-muted);
         }
         .media-uploader button {
           font-family: var(--font-mono); font-size: var(--fs-sm);
-          padding: var(--space-2) var(--space-4); border: 1px solid var(--color-accent);
-          color: var(--color-accent); background: transparent; cursor: pointer;
+          text-transform: uppercase; letter-spacing: var(--tracking-wide);
+          padding: var(--space-2) var(--space-4); border: var(--stroke-bold) solid var(--color-fg);
+          color: var(--color-fg); background: transparent; cursor: pointer;
           border-radius: var(--radius-md);
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out),
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
+        .media-uploader button:hover {
+          background: var(--color-fill); color: var(--color-on-fill);
+          transform: translate(-2px, -2px); box-shadow: var(--shadow-press);
+        }
+        .media-uploader button:active { transform: none; box-shadow: none; }
         .media-uploader__error { color: var(--color-danger); }
       `}</style>
     </div>

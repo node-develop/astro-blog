@@ -55,22 +55,36 @@ const initial: PostListItem[] = sorted.map((p) => ({
   }
   .admin-page-header h1 {
     font-family: var(--font-serif);
+    font-weight: 800;
     font-size: var(--fs-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
     margin: 0;
   }
   .admin-button {
     display: inline-block;
     font-family: var(--font-mono);
     font-size: var(--fs-sm);
-    color: var(--color-bg);
-    background: var(--color-accent);
-    border: 1px solid var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-on-fill);
+    background: var(--color-fill);
+    border: var(--stroke-bold) solid var(--color-fg);
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-md);
     text-decoration: none;
-    transition: background var(--dur-fast) var(--ease-out);
+    box-shadow: var(--shadow-press);
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
   .admin-button:hover {
-    background: var(--color-accent-hover);
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--color-shadow);
+  }
+  .admin-button:active {
+    transform: none;
+    box-shadow: none;
   }
 </style>

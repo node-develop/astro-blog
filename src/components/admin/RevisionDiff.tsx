@@ -33,16 +33,21 @@ export default function RevisionDiff({ oldBody, newBody }: Props): React.JSX.Ele
           line-height: 1.5;
           padding: var(--space-4);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           overflow-x: auto; white-space: pre-wrap;
         }
-        .diff__added { color: #14532d; background: #dcfce7; }
-        .diff__removed { color: #7f1d1d; background: #fee2e2; }
-        .diff__unchanged { color: var(--color-fg-muted); }
-        @media (prefers-color-scheme: dark) {
-          .diff__added { color: #bbf7d0; background: rgba(20,83,45,0.2); }
-          .diff__removed { color: #fecaca; background: rgba(127,29,29,0.2); }
+        /* Derived from the state tokens, so these flip with [data-theme]
+           rather than with the OS — the site's theme toggle is explicit and
+           a prefers-color-scheme query would disagree with it. */
+        .diff__added {
+          color: var(--color-success);
+          background: color-mix(in srgb, var(--color-success) 16%, var(--color-bg-elevated));
         }
+        .diff__removed {
+          color: var(--color-danger);
+          background: color-mix(in srgb, var(--color-danger) 16%, var(--color-bg-elevated));
+        }
+        .diff__unchanged { color: var(--color-fg-muted); }
       `}</style>
     </pre>
   );

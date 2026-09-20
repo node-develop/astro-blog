@@ -104,7 +104,7 @@ export default function FaqEditor({ value, onChange }: Props): React.JSX.Element
         }
         .faq-editor__card {
           display: flex; flex-direction: column; gap: var(--space-2);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           padding: var(--space-3); background: var(--color-bg-elevated);
         }
         .faq-editor__head {
@@ -133,18 +133,25 @@ export default function FaqEditor({ value, onChange }: Props): React.JSX.Element
         .faq-editor__field textarea {
           font-family: var(--font-sans); font-size: var(--fs-sm);
           padding: var(--space-2) var(--space-3);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           background: var(--color-bg); color: var(--color-fg);
           resize: vertical;
         }
         .faq-editor__add {
           align-self: flex-start;
           font-family: var(--font-mono); font-size: var(--fs-xs);
-          color: var(--color-accent); background: transparent;
-          border: 1px dashed var(--color-accent); border-radius: var(--radius-md);
+          text-transform: uppercase; letter-spacing: var(--tracking-wide);
+          color: var(--color-fg); background: transparent;
+          border: var(--stroke-bold) dashed var(--color-fg); border-radius: var(--radius-md);
           padding: var(--space-2) var(--space-3); cursor: pointer;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out);
         }
-        .faq-editor__add:hover { background: var(--color-bg-elevated); }
+        .faq-editor__add:hover {
+          background: var(--color-fill); color: var(--color-on-fill);
+          border-style: solid;
+        }
       `}</style>
     </div>
   );
