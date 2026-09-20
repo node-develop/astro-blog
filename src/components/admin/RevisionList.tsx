@@ -68,15 +68,15 @@ export default function RevisionList({ slug: _slug, items }: Props): React.JSX.E
         .revision-list__item {
           display: flex; justify-content: space-between; align-items: baseline;
           width: 100%; text-align: left; padding: var(--space-2) var(--space-3);
-          border: 1px solid transparent; border-radius: var(--radius-md);
+          border: var(--stroke-hair) solid transparent; border-radius: var(--radius-md);
           background: transparent; cursor: pointer;
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-fg-muted);
         }
         .revision-list__item:hover { background: var(--color-bg-elevated); }
         .revision-list__item[aria-current="true"] {
-          background: var(--color-accent-soft); color: var(--color-fg);
-          box-shadow: inset 2px 0 0 var(--color-accent);
+          background: var(--color-bg-elevated); color: var(--color-fg);
+          box-shadow: inset var(--stroke-slab) 0 0 var(--color-fill);
         }
         .revision-list__id { color: var(--color-fg-subtle); }
         .revision-list__detail-head {
@@ -87,10 +87,21 @@ export default function RevisionList({ slug: _slug, items }: Props): React.JSX.E
         }
         .revision-list__detail-head button {
           font-family: var(--font-mono); font-size: var(--fs-xs);
-          color: var(--color-accent); background: transparent;
-          border: 1px solid var(--color-accent); border-radius: var(--radius-md);
+          text-transform: uppercase; letter-spacing: var(--tracking-wide);
+          color: var(--color-fg); background: transparent;
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           padding: var(--space-1) var(--space-3); cursor: pointer;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out),
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
+        .revision-list__detail-head button:hover {
+          background: var(--color-fill); color: var(--color-on-fill);
+          transform: translate(-2px, -2px); box-shadow: var(--shadow-press);
+        }
+        .revision-list__detail-head button:active { transform: none; box-shadow: none; }
       `}</style>
     </div>
   );

@@ -198,7 +198,7 @@ export default function PublishBar({
           display: flex; flex-direction: column; gap: var(--space-2);
           padding: var(--space-3) var(--space-4);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
         }
         .publish-bar__row {
@@ -209,18 +209,27 @@ export default function PublishBar({
           padding: var(--space-2) var(--space-4);
           border-radius: var(--radius-md); cursor: pointer;
           letter-spacing: var(--tracking-wide); text-transform: uppercase;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out),
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
         .publish-bar__btn--accent {
-          background: var(--color-accent); color: var(--color-bg);
-          border: 1px solid var(--color-accent);
+          background: var(--color-fill); color: var(--color-on-fill);
+          border: var(--stroke-bold) solid var(--color-fg);
+          box-shadow: var(--shadow-press);
         }
-        .publish-bar__btn--accent:hover { background: var(--color-accent-hover); }
         .publish-bar__btn--ghost {
           background: transparent; color: var(--color-fg);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
         }
-        .publish-bar__btn--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); }
-        .publish-bar__btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .publish-bar__btn:not(:disabled):hover {
+          background: var(--color-fill); color: var(--color-on-fill);
+          transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--color-shadow);
+        }
+        .publish-bar__btn:not(:disabled):active { transform: none; box-shadow: none; }
+        .publish-bar__btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
         .publish-bar__toggle {
           margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2);
           font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-fg-muted);

@@ -5,6 +5,13 @@
 /* Self-hosted variable fonts — latin + cyrillic only, see fonts.css */
 @import "./fonts.css";
 
+/* Tailwind 4's default `dark:` variant keys off prefers-color-scheme, but
+   this site's theme is an explicit [data-theme] attribute set by
+   ThemeToggle. Left at the default the two disagree — a page styled with
+   `dark:` utilities renders dark chrome on a paper page whenever the OS is
+   dark. Point the variant at the attribute instead. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
@@ -23,6 +30,15 @@
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-soft: var(--color-accent-soft);
   --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+  /* Poster fills — surfaces that carry other content but never carry
+     themselves as text. Each ships with its own ink. */
+  --color-fill: var(--color-fill);
+  --color-on-fill: var(--color-on-fill);
+  --color-fill-alt: var(--color-fill-alt);
+  --color-on-fill-alt: var(--color-on-fill-alt);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -31,6 +47,8 @@
 
   --shadow-soft: var(--shadow-soft);
   --shadow-lifted: var(--shadow-lifted);
+  --shadow-press: var(--shadow-press);
+  --shadow-hard-fill: var(--shadow-hard-fill);
 }
 
 html {

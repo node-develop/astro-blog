@@ -83,7 +83,7 @@ export default function GenericTranslatePanel({ slugsByCollection }: Props): Rea
           font-family: var(--font-mono); font-size: var(--fs-sm);
           padding: var(--space-2) var(--space-3);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
           color: var(--color-fg);
         }

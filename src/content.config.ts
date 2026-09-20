@@ -56,8 +56,14 @@ const site = defineCollection({
     manuallyEdited: z.boolean().default(false),
     heroEyebrow: z.string().optional(),
     heroTitle: z.string().optional(),
+    // Keep in step with src/lib/content/home-schema.ts: this object is not
+    // strict, so a field missing here is silently stripped from entry.data
+    // and the page renders as if the editor never set it.
+    heroHighlight: z.string().optional(),
     heroLede: z.string().optional(),
     heroCta: z.string().optional(),
+    sealPhrase: z.string().optional(),
+    tickerItems: z.string().optional(),
     courseEyebrow: z.string().optional(),
     courseTitle: z.string().optional(),
     courseLede: z.string().optional(),

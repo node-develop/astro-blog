@@ -29,7 +29,7 @@ const user = session?.user ?? null;
 
 <style>
   .admin-header {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--stroke-slab) solid var(--color-fg);
     display: flex;
     align-items: center;
     gap: var(--space-5);
@@ -41,7 +41,10 @@ const user = session?.user ?? null;
   }
   .admin-header__brand {
     font-family: var(--font-serif);
-    font-size: var(--fs-lg);
+    font-weight: 800;
+    font-size: var(--fs-base);
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
     color: var(--color-fg);
     text-decoration: none;
     display: flex;
@@ -51,27 +54,42 @@ const user = session?.user ?? null;
   .admin-header__label,
   .admin-header__divider {
     font-family: var(--font-mono);
+    font-weight: 500;
     font-size: var(--fs-xs);
     color: var(--color-fg-muted);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
+  }
+  /* The one lime mark in the chrome: admin is a different room. */
+  .admin-header__label {
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    padding: 2px var(--space-2);
   }
   .admin-header__nav {
     margin-left: auto;
     display: flex;
     gap: var(--space-5);
     font-family: var(--font-mono);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
   }
   .admin-header__nav a {
     color: var(--color-fg-muted);
     text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: var(--stroke-slab) solid transparent;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
   }
   .admin-header__nav a:hover {
     color: var(--color-fg);
+    border-bottom-color: var(--color-fill);
   }
   .admin-header__out {
-    color: var(--color-accent);
+    color: var(--color-fg);
   }
   .admin-header__user {
     display: flex;
@@ -83,16 +101,49 @@ const user = session?.user ?? null;
   }
   .admin-header__logout {
     background: transparent;
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     color: var(--color-fg);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     cursor: pointer;
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
   .admin-header__logout:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-press);
+  }
+  .admin-header__logout:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (max-width: 860px) {
+    .admin-header {
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+    .admin-header__nav {
+      order: 3;
+      width: 100%;
+      margin-left: 0;
+      gap: var(--space-4);
+      overflow-x: auto;
+    }
+    .admin-header__user {
+      margin-left: auto;
+    }
+    .admin-header__email {
+      display: none;
+    }
   }
 </style>

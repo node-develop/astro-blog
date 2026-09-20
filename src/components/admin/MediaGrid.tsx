@@ -40,7 +40,7 @@ export default function MediaGrid({ items }: Props): React.JSX.Element {
         figure { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
         figure img {
           width: 100%; aspect-ratio: 4/3; object-fit: cover;
-          border-radius: var(--radius-md); border: 1px solid var(--color-border);
+          border-radius: var(--radius-md); border: var(--stroke-bold) solid var(--color-fg);
         }
         figcaption {
           display: flex; justify-content: space-between; align-items: center;

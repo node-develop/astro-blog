@@ -192,7 +192,7 @@ export default function DraftCard({ row: initialRow }: { row: DraftRow }) {
           white-space: nowrap;
         }
         .draft-card__counter[data-overlimit="true"] {
-          color: var(--color-danger, crimson);
+          color: var(--color-danger);
           font-weight: 600;
         }
         .draft-card__textarea {
@@ -201,7 +201,7 @@ export default function DraftCard({ row: initialRow }: { row: DraftRow }) {
           font-size: var(--fs-sm);
           color: var(--color-fg);
           background: var(--color-bg);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-sm);
           padding: var(--space-2) var(--space-3);
           resize: vertical;
@@ -237,23 +237,31 @@ export default function DraftCard({ row: initialRow }: { row: DraftRow }) {
           cursor: pointer;
           letter-spacing: var(--tracking-wide);
           text-transform: uppercase;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out),
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
         .draft-card__btn--accent {
-          background: var(--color-accent);
-          color: var(--color-bg);
-          border: 1px solid var(--color-accent);
+          background: var(--color-fill);
+          color: var(--color-on-fill);
+          border: var(--stroke-bold) solid var(--color-fg);
+          box-shadow: var(--shadow-press);
         }
-        .draft-card__btn--accent:hover { background: var(--color-accent-hover); }
         .draft-card__btn--ghost {
           background: transparent;
           color: var(--color-fg);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
         }
-        .draft-card__btn--ghost:hover {
-          border-color: var(--color-accent);
-          color: var(--color-accent);
+        .draft-card__btn:not(:disabled):hover {
+          background: var(--color-fill);
+          color: var(--color-on-fill);
+          transform: translate(-2px, -2px);
+          box-shadow: 5px 5px 0 var(--color-shadow);
         }
-        .draft-card__btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .draft-card__btn:not(:disabled):active { transform: none; box-shadow: none; }
+        .draft-card__btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
         .draft-card__generating {
           font-size: var(--fs-sm);
           color: var(--color-fg-muted);
@@ -282,7 +290,7 @@ export default function DraftCard({ row: initialRow }: { row: DraftRow }) {
           font-size: var(--fs-sm);
           color: var(--color-fg);
           background: var(--color-bg);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-sm);
           padding: var(--space-2) var(--space-3);
           resize: vertical;
@@ -299,26 +307,26 @@ export default function DraftCard({ row: initialRow }: { row: DraftRow }) {
           font-size: var(--fs-sm);
           color: var(--color-fg-muted);
           background: transparent;
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-sm);
           padding: 0 var(--space-2);
           cursor: pointer;
           line-height: 1.6rem;
         }
-        .thread-editor__remove:hover { color: var(--color-danger, crimson); border-color: var(--color-danger, crimson); }
+        .thread-editor__remove:hover { color: var(--color-danger); border-color: var(--color-danger); }
         .thread-editor__add {
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
           color: var(--color-fg-muted);
           background: transparent;
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-sm);
           padding: var(--space-1) var(--space-3);
           cursor: pointer;
           align-self: flex-start;
           margin-left: 2.5rem;
         }
-        .thread-editor__add:hover { color: var(--color-accent); border-color: var(--color-accent); }
+        .thread-editor__add:hover { background: var(--color-fill); color: var(--color-on-fill); }
       `}</style>
     </article>
   );

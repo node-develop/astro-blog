@@ -1,81 +1,223 @@
 ---
 /**
- * Centered masthead for the home page (Variant A redesign).
+ * Poster masthead for the home page.
  *
- * GitBook-style: accent mono eyebrow, serif h1, muted lede, dashed CTA —
- * all centered. Content comes from home.md frontmatter via the page.
+ * Left flag, one statement at display size, one word on the lime fill, a
+ * lede and a hard-shadow CTA, with the rotating seal pinned to the right.
+ * Content comes from home.md frontmatter via the page.
+ *
+ * The statement size is picked from the title's length rather than fixed:
+ * the concept boards assume four or five words, and the editor is free to
+ * write a sentence. Three steps keep a long title from wrapping into a wall
+ * and a short one from looking timid.
  */
+import Seal from "./Seal.astro";
+
 interface Props {
   eyebrow?: string | undefined;
   title?: string | undefined;
+  /** Literal substring of `title` to set on the lime fill. */
+  highlight?: string | undefined;
   lede?: string | undefined;
   cta?: string | undefined;
   ctaHref: string;
+  sealPhrase?: string | undefined;
 }
 
-const { eyebrow, title, lede, cta, ctaHref } = Astro.props;
+const { eyebrow, title, highlight, lede, cta, ctaHref, sealPhrase } = Astro.props;
+
+const text = title ?? "";
+// indexOf, not a regex: the highlight is editor-supplied text, and a missing
+// match must degrade to a plain title rather than throw or half-render.
+const at = highlight && highlight.length > 0 ? text.indexOf(highlight) : -1;
+const before = at >= 0 ? text.slice(0, at) : text;
+const marked = at >= 0 ? text.slice(at, at + (highlight?.length ?? 0)) : "";
+const after = at >= 0 ? text.slice(at + (highlight?.length ?? 0)) : "";
+
+const size = text.length <= 30 ? "xl" : text.length <= 50 ? "lg" : "md";
 ---
 
 <section class="masthead">
   {eyebrow && <p class="masthead__eyebrow">{eyebrow}</p>}
-  <h1 class="masthead__title">{title}</h1>
-  {lede && <p class="masthead__lede">{lede}</p>}
+
+  <div class="masthead__reveal">
+    <h1 class="masthead__title" data-size={size}>
+      {before}{marked && <mark class="masthead__mark">{marked}</mark>}{after}
+    </h1>
+  </div>
+
+  <div class="masthead__foot">
+    {lede && <p class="masthead__lede">{lede}</p>}
+    {
+      cta && (
+        <a href={ctaHref} class="masthead__cta">
+          {cta}
+        </a>
+      )
+    }
+  </div>
+
   {
-    cta && (
-      <a href={ctaHref} class="masthead__cta">
-        {cta}
-      </a>
+    sealPhrase && (
+      <div class="masthead__seal">
+        <Seal phrase={sealPhrase} />
+      </div>
     )
   }
 </section>
 
 <style>
   .masthead {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4);
-    text-align: center;
-    padding: var(--space-6) 0;
+    position: relative;
+    padding: var(--space-8) 0 var(--space-7);
   }
   .masthead__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-accent);
-    font-weight: 500;
-    margin: 0;
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-6);
+  }
+  .masthead__eyebrow::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: var(--color-fill);
+    flex: none;
+  }
+
+  /* Overflow clips the rise; the padding keeps descenders of the last line
+     inside the padding box, which overflow does not cut. */
+  .masthead__reveal {
+    overflow: hidden;
+    padding-bottom: 0.1em;
   }
   .masthead__title {
     font-family: var(--font-serif);
-    font-size: var(--fs-3xl);
-    line-height: var(--lh-tight);
-    letter-spacing: var(--tracking-tight);
-    font-weight: 500;
+    font-weight: 800;
+    line-height: var(--lh-mega);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
     color: var(--color-fg);
-    max-width: 780px;
     margin: 0;
-    text-wrap: balance;
+    max-width: 18ch;
+    transform: translateY(100%);
+    animation: masthead-rise var(--dur-entrance) var(--ease-poster) forwards;
+  }
+  .masthead__title[data-size="xl"] {
+    font-size: clamp(3rem, 9vw, 8.25rem);
+  }
+  .masthead__title[data-size="lg"] {
+    font-size: clamp(2.75rem, 7.5vw, 6.5rem);
+    max-width: 20ch;
+  }
+  .masthead__title[data-size="md"] {
+    font-size: clamp(2.25rem, 6vw, 5.25rem);
+    max-width: 22ch;
+  }
+  @keyframes masthead-rise {
+    to {
+      transform: none;
+    }
+  }
+  .masthead__mark {
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    padding: 0 0.1em;
+    /* The highlight is one word or a short phrase and must not break across
+       lines: "AI-агентов" splitting at the hyphen reads as a typo, not as a
+       poster. clone still applies if an editor sets a long phrase anyway. */
+    white-space: nowrap;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .masthead__foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-7);
+    margin-top: var(--space-7);
+    opacity: 0;
+    animation: masthead-in var(--dur-entrance) var(--ease-poster) 220ms forwards;
+  }
+  @keyframes masthead-in {
+    to {
+      opacity: 1;
+    }
   }
   .masthead__lede {
     font-size: var(--fs-md);
     line-height: var(--lh-normal);
     color: var(--color-fg-muted);
-    max-width: 640px;
+    max-width: 46ch;
     margin: 0;
     text-wrap: pretty;
   }
   .masthead__cta {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: var(--fs-sm);
-    color: var(--color-accent);
+    flex: none;
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    border: var(--stroke-slab) solid var(--color-fg);
+    box-shadow: var(--shadow-soft);
+    padding: var(--space-4) var(--space-5);
     text-decoration: none;
-    border-bottom: 1px dashed var(--color-accent);
-    padding-bottom: 1px;
+    white-space: nowrap;
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
   .masthead__cta:hover {
-    color: var(--color-accent-hover);
+    transform: translate(-4px, -4px);
+    box-shadow: var(--shadow-lifted);
+  }
+  .masthead__cta:active {
+    transform: translate(3px, 3px);
+    box-shadow: var(--shadow-press);
+  }
+
+  .masthead__seal {
+    position: absolute;
+    top: var(--space-6);
+    right: 0;
+  }
+
+  @media (max-width: 1100px) {
+    .masthead__seal {
+      display: none;
+    }
+  }
+  @media (max-width: 767px) {
+    .masthead {
+      padding: var(--space-6) 0 var(--space-6);
+    }
+    .masthead__foot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-5);
+      margin-top: var(--space-6);
+    }
+    .masthead__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .masthead__title {
+      transform: none;
+    }
+    .masthead__foot {
+      opacity: 1;
+    }
   }
 </style>

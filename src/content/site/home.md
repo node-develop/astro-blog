@@ -2,10 +2,18 @@
 title: Главная
 heroEyebrow: Personal blog · on writing code with AI
 heroTitle: Записи про Claude Code, AI-агентов и production backend.
+heroHighlight: AI-агентов
 heroLede: >-
   Серия из четырнадцати частей про то, как устроен Claude Code изнутри — context, skills, hooks, MCP, subagents, модели
   и антипаттерны.
 heroCta: Все статьи →
+sealPhrase: Записки из продакшна · с 2018 · Анкара
+tickerItems: |-
+  Новое · 8 страниц из 185
+  Claude Code изнутри · 18 мин
+  Eval-харнесс раньше агента
+  MCP-сервер на 688 страниц
+  Kafka outbox, версия что выжила
 courseEyebrow: Курс
 courseTitle: Claude Code Guide
 courseLede: >-

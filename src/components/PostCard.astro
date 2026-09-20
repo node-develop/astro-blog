@@ -1,8 +1,10 @@
 ---
 /**
- * Compact post card for the home grid and blog index (editorial redesign).
+ * Compact post card for the home grid and blog index (poster redesign).
  *
- * Decorative artwork block on top, mono date · tag eyebrow, serif title.
+ * A slab: 4px ink border, square corners, hard offset shadow that grows as
+ * the card travels toward the cursor. Artwork block on top, label eyebrow,
+ * display-face title, optional ghost index number.
  * The whole card is one link. Artwork defaults to the slug-seeded variant;
  * grids pass `artVariant` from `assignArtVariants()` so neighbouring cards
  * never repeat a composition.
@@ -26,6 +28,8 @@ interface Props {
   transitionName?: string;
   /** Title heading level — h3 under the home grid's h2, h2 on the blog index. */
   headingLevel?: "h2" | "h3";
+  /** 1-based position in its grid; rendered as the ghost number. Omit to hide. */
+  index?: number | undefined;
 }
 
 const {
@@ -36,6 +40,7 @@ const {
   showDescription = false,
   transitionName,
   headingLevel = "h3",
+  index,
 } = Astro.props;
 const Heading = headingLevel;
 
@@ -60,6 +65,13 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     }
   </div>
   <div class="post-card__body">
+    {
+      index !== undefined && (
+        <span class="post-card__index" aria-hidden="true">
+          {String(index).padStart(2, "0")}
+        </span>
+      )
+    }
     <p class="post-card__eyebrow">
       <time datetime={entry.data.pubDate.toISOString()}>{dateLabel}</time>
       {tagLabel && <span>· {tagLabel}</span>}
@@ -87,21 +99,29 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     flex-direction: column;
     height: 100%;
     background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
+    border: var(--stroke-slab) solid var(--color-fg);
     border-radius: var(--radius-lg);
     overflow: hidden;
     color: var(--color-fg);
     text-decoration: none;
-    transition: box-shadow var(--dur-base) var(--ease-out);
-  }
-  .post-card__link:hover {
     box-shadow: var(--shadow-soft);
+    transition:
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
-  .post-card__link:hover .post-card__title {
-    color: var(--color-accent-hover);
+  /* The slab travels toward the top-left corner and its shadow grows by the
+     same amount, so the card looks lifted off the page rather than scaled. */
+  .post-card__link:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: var(--shadow-lifted);
+  }
+  .post-card__link:active {
+    transform: translate(2px, 2px);
+    box-shadow: var(--shadow-press);
   }
   .post-card__media {
     height: 150px;
+    border-bottom: var(--stroke-slab) solid var(--color-fg);
   }
   .post-card__body {
     display: flex;
@@ -109,9 +129,19 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     gap: var(--space-2);
     padding: var(--space-4) var(--space-5) var(--space-5) var(--space-5);
   }
+  .post-card__index {
+    font-family: var(--font-serif);
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: var(--tracking-display);
+    color: var(--color-fg);
+    opacity: 0.18;
+  }
   .post-card__eyebrow {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
     /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
@@ -121,8 +151,9 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
   .post-card__title {
     font-family: var(--font-serif);
     font-size: var(--fs-lg);
-    line-height: var(--lh-snug);
-    font-weight: 500;
+    line-height: var(--lh-tight);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
     margin: 0;
     transition: color var(--dur-fast) var(--ease-out);
   }

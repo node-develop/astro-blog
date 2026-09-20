@@ -54,7 +54,7 @@ export default function TagInput({ value, onChange }: Props): React.JSX.Element 
       <style>{`
         .tag-input {
           display: flex; flex-wrap: wrap; gap: var(--space-2);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           padding: var(--space-2); background: var(--color-bg);
         }
         .tag-input__chip {

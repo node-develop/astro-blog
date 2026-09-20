@@ -188,10 +188,16 @@ const PERSON_MODULE = /from\s+["'][^"']*\/seo\/person["']/;
  * Two-word capitalized phrases that are legitimately hardcoded under the OG
  * folders. Keep this list tiny and justified — every entry is a name-shaped
  * literal a reviewer has already looked at.
+ *
+ * Empty on purpose. The one entry this ever held was a Satori font-family
+ * name, and a Satori family name is an internal handle we choose: the only
+ * contract is that `fonts[].name` matches what `fontFamily` asks for, and
+ * nothing about it reaches the card. So the renderer spells those handles
+ * `Unbounded-Cyr` and `GolosText` rather than the way the foundry does, and
+ * the guard stays strict instead of carrying a standing exception. Reach for
+ * this list only for a literal that genuinely cannot be renamed.
  */
-const OG_ALLOWED_LITERALS: ReadonlySet<string> = new Set([
-  "Source Serif 4", // Satori font-family name, matched against the loaded .ttf
-]);
+const OG_ALLOWED_LITERALS: ReadonlySet<string> = new Set<string>([]);
 
 /** Double-quoted, single-quoted and template literals, comments included. */
 const STRING_LITERAL = /"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|`((?:[^`\\]|\\.)*)`/g;

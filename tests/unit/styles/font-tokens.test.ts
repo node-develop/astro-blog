@@ -3,13 +3,16 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * Two monospace tokens, two jobs (SEO audit item 23).
+ * Two font tokens, two jobs (SEO audit item 23; revisited in the poster pass).
  *
  * `--font-mono` is decoration — logo, eyebrows, footer headings, labels —
- * and is referenced by ~76 files we do not want to touch. It must stay a
- * SYSTEM stack: a `@font-face` declaration downloads nothing, but a
- * rendered element whose family resolves to "JetBrains Mono Variable"
- * pulls a 52 KB woff2, and the home page has no code on it at all.
+ * and is referenced by ~76 files we do not want to touch. The poster
+ * redesign moved it off a system monospace stack onto the label face, so
+ * the invariant is no longer "it must say monospace". What still has to
+ * hold, and what actually costs bytes, is this: every family it names must
+ * already be downloaded for other reasons. A label may reuse the text face;
+ * it may never be the reason a fourth font file is fetched, and the home
+ * page must not pull the code webfont for ornament.
  *
  * `--font-code` is the only token allowed to name the JetBrains webfont,
  * and only code (`code`, `pre`, `kbd`, `samp`) plus the code-block chrome
@@ -86,6 +89,27 @@ const cssFiles = readdirSync(STYLES_DIR)
   .map((name) => join(STYLES_DIR, name));
 
 const allRules = cssFiles.flatMap((file) => parseRules(file, readFileSync(file, "utf8")));
+
+/**
+ * The families the site actually downloads, read from the `@font-face`
+ * blocks rather than hard-coded, so adding a face to fonts.css is what
+ * widens the allowance — not editing this test.
+ */
+const LOADED_FAMILIES = new Set(
+  allRules
+    .filter((rule) => rule.selector.endsWith("@font-face"))
+    .flatMap((rule) =>
+      rule.declarations
+        .filter((declaration) => declaration.property === "font-family")
+        .map((declaration) => declaration.value.replace(/^["']|["']$/g, "")),
+    ),
+);
+
+/** Quoted names in a stack are real families; bare ones are generics. */
+const quotedFamilies = (stack: string): string[] =>
+  [...stack.matchAll(/"([^"]+)"/g)].map((match) => match[1] as string);
+
+const GENERIC_FALLBACK = /\b(sans-serif|serif|monospace|system-ui|ui-sans-serif|ui-monospace)\b/;
 
 /**
  * The MDX components ship their own scoped `<style>` blocks, and a scoped
@@ -165,7 +189,7 @@ describe("monospace font tokens", () => {
     ).toEqual([]);
   });
 
-  it("keeps the decorative mono token on a system stack", () => {
+  it("keeps the label token off any webfont the site does not already load", () => {
     const definitions = allRules.flatMap((rule) =>
       rule.declarations.filter((declaration) => declaration.property === DECORATIVE_TOKEN),
     );
@@ -184,7 +208,16 @@ describe("monospace font tokens", () => {
     const stacks = definitions.filter((definition) => !/^var\([^)]+\)$/.test(definition.value));
     expect(stacks.length).toBeGreaterThan(0);
     for (const stack of stacks) {
-      expect(stack.value).toMatch(/\bmonospace\b/);
+      for (const family of quotedFamilies(stack.value)) {
+        expect(
+          LOADED_FAMILIES.has(family),
+          `${DECORATIVE_TOKEN} names "${family}", which no @font-face in fonts.css loads — a label would be the reason another font file is fetched. Got: ${stack.value}`,
+        ).toBe(true);
+      }
+      expect(
+        stack.value,
+        `${DECORATIVE_TOKEN} needs a generic family at the end of the stack.`,
+      ).toMatch(GENERIC_FALLBACK);
     }
   });
 

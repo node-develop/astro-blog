@@ -85,7 +85,7 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
           font-size: var(--fs-sm);
           padding: var(--space-2) var(--space-3);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
           color: var(--color-fg);
           box-sizing: border-box;
@@ -115,7 +115,7 @@ export default function SiteEditor({ slug, initial }: Props): React.JSX.Element 
           display: flex; justify-content: space-between; align-items: center;
           gap: var(--space-3); padding: var(--space-3) var(--space-4);
           background: var(--color-bg-elevated);
-          border: 1px solid var(--color-accent); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           font-family: var(--font-mono); font-size: var(--fs-xs);
           color: var(--color-fg);
         }

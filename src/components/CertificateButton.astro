@@ -45,11 +45,15 @@ const certificateHref = `${localePrefix}/courses/${course}/certificate.png`;
 </div>
 
 <style>
+  /* A finished course earns the lime band, the same close the article and
+     the home page use. */
   .certificate {
     margin: var(--space-6) 0;
     padding: var(--space-5) var(--space-6);
-    border: 1px solid var(--color-accent);
-    background: var(--color-accent-subtle);
+    border: var(--stroke-slab) solid var(--color-fg);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    box-shadow: var(--shadow-soft);
     border-radius: var(--radius-md);
   }
   .certificate__label {
@@ -58,15 +62,16 @@ const certificateHref = `${localePrefix}/courses/${course}/certificate.png`;
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--color-accent);
+    color: var(--color-on-fill);
+    font-weight: 700;
     margin: 0 0 var(--space-2) 0;
   }
   .certificate__copy {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: var(--fs-base);
     line-height: var(--lh-normal);
     margin: 0 0 var(--space-3) 0;
-    color: var(--color-fg);
+    color: var(--color-on-fill);
     text-wrap: pretty;
   }
   .certificate__cta {
@@ -75,16 +80,30 @@ const certificateHref = `${localePrefix}/courses/${course}/certificate.png`;
     font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-sm);
-    background: var(--color-accent);
-    color: var(--color-bg);
+    /* Same rule as the course band: on a fill, the band's ink, not the
+       page's — otherwise this goes cream-on-lime in dark. */
+    background: var(--color-on-fill);
+    color: var(--color-fill);
     text-decoration: none;
-    border: 1px solid var(--color-accent);
-    transition: background var(--dur-fast) var(--ease-out);
+    font-weight: 700;
+    border: var(--stroke-bold) solid var(--color-on-fill);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
   .certificate__cta:hover {
-    background: var(--color-accent-hover);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 var(--color-on-fill);
+  }
+  .certificate__cta:active {
+    transform: none;
+    box-shadow: none;
   }
 </style>
 

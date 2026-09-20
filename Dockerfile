@@ -56,6 +56,10 @@ COPY --from=builder --chown=astro:astro /app/src/content/posts ./src/content/pos
 COPY --from=builder --chown=astro:astro /app/src/content/site ./src/content/site
 COPY --from=builder --chown=astro:astro /app/src/content/projects ./src/content/projects
 COPY --from=builder --chown=astro:astro /app/src/content/courses ./src/content/courses
+# /courses/<slug>/certificate.png is the one Satori route that is NOT
+# prerendered, so its font binaries have to exist at runtime. Every other
+# card is rendered at build time and needs nothing here.
+COPY --from=builder --chown=astro:astro /app/src/assets/og-fonts ./src/assets/og-fonts
 # Uploads from /admin/media land here; the node adapter serves dist/client
 # statically, so this is the only location that is both writable and public.
 # Mount a persistent volume on it in Dokploy (see docs/runbooks).

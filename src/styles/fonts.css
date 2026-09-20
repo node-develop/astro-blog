@@ -1,19 +1,24 @@
 /* Self-hosted variable fonts — latin + cyrillic subsets only.
  * Fontsource ships no per-subset CSS entry point (index.css === wght.css),
  * so these six @font-face blocks are hand-written from the fontsource
- * sources to drop the unused greek/vietnamese/*-ext subsets (13 of 19
- * files) from every page. font-display: swap matches fontsource's default
- * and keeps the editorial serif repainting on slow connections instead of
- * permanently falling back to Georgia (font-display: optional would).
+ * sources to drop the unused greek/vietnamese/*-ext subsets from every
+ * page. font-display: swap matches fontsource's default and keeps the
+ * display face repainting on slow connections instead of permanently
+ * falling back to Arial Black (font-display: optional would).
+ *
+ * Poster pairing, chosen for Cyrillic coverage:
+ *   Unbounded  — display (wght 200 900), cyrillic + latin
+ *   Golos Text — text and labels (wght 400 900), cyrillic + latin
+ *   JetBrains Mono — code only, unchanged
  */
 
-/* Source Serif 4 Variable — LCP face (H1), weight range 200 900 */
+/* Unbounded Variable — display / LCP face (H1), weight range 200 900 */
 @font-face {
-  font-family: "Source Serif 4 Variable";
+  font-family: "Unbounded Variable";
   font-style: normal;
   font-display: swap;
   font-weight: 200 900;
-  src: url("@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2")
+  src: url("@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2")
     format("woff2-variations");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
@@ -21,22 +26,22 @@
 }
 
 @font-face {
-  font-family: "Source Serif 4 Variable";
+  font-family: "Unbounded Variable";
   font-style: normal;
   font-display: swap;
   font-weight: 200 900;
-  src: url("@fontsource-variable/source-serif-4/files/source-serif-4-cyrillic-wght-normal.woff2")
+  src: url("@fontsource-variable/unbounded/files/unbounded-cyrillic-wght-normal.woff2")
     format("woff2-variations");
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
-/* Inter Variable — body copy, weight range 100 900 */
+/* Golos Text Variable — body copy and labels, weight range 400 900 */
 @font-face {
-  font-family: "Inter Variable";
+  font-family: "Golos Text Variable";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+  font-weight: 400 900;
+  src: url("@fontsource-variable/golos-text/files/golos-text-latin-wght-normal.woff2")
     format("woff2-variations");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
@@ -44,16 +49,16 @@
 }
 
 @font-face {
-  font-family: "Inter Variable";
+  font-family: "Golos Text Variable";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  src: url("@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2")
+  font-weight: 400 900;
+  src: url("@fontsource-variable/golos-text/files/golos-text-cyrillic-wght-normal.woff2")
     format("woff2-variations");
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
-/* JetBrains Mono Variable — code / eyebrows, weight range 100 800 */
+/* JetBrains Mono Variable — code only, weight range 100 800 */
 @font-face {
   font-family: "JetBrains Mono Variable";
   font-style: normal;

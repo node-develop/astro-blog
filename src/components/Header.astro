@@ -1,13 +1,13 @@
 ---
 /**
- * Site header — Phase 1 refresh (Direction A: Refined Editorial).
+ * Site header — Poster redesign.
  *
- * Changes from previous version:
- *   - Lockup migrated from serif → mono (editorial-technical signature)
- *   - "notes from production" tagline added under brand
- *   - Active nav link: 1px sienna underline (was bottom-border block)
- *   - ThemeToggle inserted between LangToggle and ⌘K
- *   - Subtle hairline appears only after scroll (data-scrolled)
+ * Changes from the editorial version:
+ *   - Wordmark set in the display face, uppercase, with a registered mark
+ *   - Nav labels uppercase in the label face at --tracking-wide
+ *   - Active and hovered links carry a 4px lime underline that grows in
+ *   - Flat solid background: no translucency, no backdrop blur
+ *   - Search and drawer controls are square, 2px ink, invert on hover
  *
  * Untouched: i18n routing, drawer trigger, search dispatch, aria contracts.
  */
@@ -37,7 +37,7 @@ const tagline = locale === "en" ? "notes from production" : "записки из
 <header class="site-header" role="banner" data-site-header>
   <div class="site-header__inner">
     <a href={homeHref} class="site-header__brand" aria-label={t(locale, "nav.home")}>
-      <span class="site-header__lockup">artka.dev</span>
+      <span class="site-header__lockup">artka.dev<sup aria-hidden="true">&#174;</sup></span>
       <span class="site-header__tagline">{tagline}</span>
     </a>
 
@@ -68,7 +68,19 @@ const tagline = locale === "en" ? "notes from production" : "записки из
         aria-label={t(locale, "nav.search") + " (⌘K)"}
         onclick="window.dispatchEvent(new CustomEvent('search:open'))"
       >
-        <span aria-hidden="true">⌘K</span>
+        <span class="site-header__search-key" aria-hidden="true">⌘K</span>
+        <svg
+          class="site-header__search-icon"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2.25"></circle>
+          <path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+          ></path>
+        </svg>
         <span class="visually-hidden">{t(locale, "nav.search")}</span>
       </button>
     </div>
@@ -98,14 +110,14 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     position: sticky;
     top: 0;
     z-index: 50;
-    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid transparent;
+    background: var(--color-bg);
+    border-bottom: var(--stroke-hair) solid var(--color-border);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
+  /* Scrolled state darkens the rule to ink instead of adding thickness,
+     which would shift every page by a pixel on first scroll. */
   .site-header[data-scrolled] {
-    border-bottom-color: var(--color-border);
+    border-bottom-color: var(--color-fg);
   }
   .site-header__inner {
     max-width: var(--content-max);
@@ -120,22 +132,31 @@ const tagline = locale === "en" ? "notes from production" : "записки из
   .site-header__brand {
     display: inline-flex;
     flex-direction: column;
-    line-height: 1.1;
+    line-height: 1;
     text-decoration: none;
     color: var(--color-fg);
   }
   .site-header__lockup {
-    font-family: var(--font-mono);
-    font-size: var(--fs-base);
-    font-weight: 500;
-    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+  }
+  .site-header__lockup sup {
+    font-size: 0.42em;
+    font-weight: 700;
+    vertical-align: super;
+    letter-spacing: 0;
   }
   .site-header__tagline {
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    font-weight: 400;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
     color: var(--color-fg-subtle);
-    margin-top: 2px;
+    margin-top: var(--space-2);
   }
 
   /* ── Nav ───────────────────────────────────────────────── */
@@ -143,24 +164,42 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     margin-left: auto;
     display: flex;
     gap: var(--space-5);
-    font-size: var(--fs-sm);
     font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
   }
   .site-header__nav a {
+    position: relative;
     color: var(--color-fg-muted);
     text-decoration: none;
-    padding: var(--space-1) 0;
+    padding-bottom: var(--space-2);
     transition: color var(--dur-fast) var(--ease-out);
+  }
+  /* The underline is a pseudo-element rather than text-decoration so it can
+     grow from the left; 4px is the slab stroke the whole system draws with. */
+  .site-header__nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: var(--stroke-slab);
+    background: var(--color-fill);
+    transition: width var(--dur-fast) var(--ease-out);
   }
   .site-header__nav a:hover {
     color: var(--color-fg);
   }
+  .site-header__nav a:hover::after {
+    width: 100%;
+  }
   .site-header__nav a[aria-current="page"] {
     color: var(--color-fg);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 6px;
-    text-decoration-color: var(--color-accent);
+  }
+  .site-header__nav a[aria-current="page"]::after {
+    width: 100%;
   }
 
   /* ── Actions cluster ───────────────────────────────────── */
@@ -179,27 +218,82 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     height: 44px;
     margin-inline-start: var(--space-2);
     background: transparent;
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-md);
     padding: var(--space-2);
     color: var(--color-fg);
     cursor: pointer;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .site-header__drawer-btn:hover {
+    background: var(--color-fill);
+    color: var(--color-on-fill);
   }
 
+  /* The control shows a glyph at rest and the shortcut on hover. Both faces
+     are stacked in the same box, so the swap never reflows the row — which
+     matters, because this row is width-critical down to 320px. */
   .site-header__search {
+    position: relative;
+    width: 44px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--color-border);
+    font-weight: 700;
+    letter-spacing: var(--tracking-wide);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-md);
-    background: var(--color-bg-subtle);
-    color: var(--color-fg-subtle);
+    background: transparent;
+    color: var(--color-fg);
     cursor: pointer;
-    line-height: 1.4;
+    line-height: 1.2;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+  .site-header__search-key,
+  .site-header__search-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  .site-header__search-key {
+    opacity: 0;
+  }
+  .site-header__search-icon {
+    opacity: 1;
+  }
+  /* No hover on touch, so the glyph is what a phone keeps. */
+  @media (hover: hover) {
+    .site-header__search:hover .site-header__search-key,
+    .site-header__search:focus-visible .site-header__search-key {
+      opacity: 1;
+    }
+    .site-header__search:hover .site-header__search-icon,
+    .site-header__search:focus-visible .site-header__search-icon {
+      opacity: 0;
+    }
   }
   .site-header__search:hover {
-    background: var(--color-bg-elevated);
-    color: var(--color-fg);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-press);
+  }
+  .site-header__search:active {
+    transform: none;
+    box-shadow: none;
   }
   .visually-hidden {
     position: absolute;
@@ -239,6 +333,59 @@ const tagline = locale === "en" ? "notes from production" : "записки из
     .site-header__actions {
       gap: var(--space-2);
     }
+    /* The drawer button owes the cluster 16px of clear air (asserted in
+       tests/unit/seo/site-shell-browser.test.ts); space-2 was not enough
+       once the controls grew a 2px border. */
+    .site-header__drawer-btn {
+      margin-inline-start: var(--space-4);
+    }
+  }
+
+  /* 320px is the floor the shell is tested at, and the row has to fit there
+     with a 15px scrollbar taken out of it. Unbounded is a wide face and every
+     control gained a 2px border in the poster pass, so width is reclaimed in
+     three steps below: search becomes a glyph at 767, the wordmark drops a
+     size and loses its ® at 414, and the language control moves to the drawer
+     at 360. The theme toggle and, down to 375, the language toggle stay in
+     the header, because tests/unit/seo/site-shell-browser.test.ts clicks both
+     there at that width. */
+  @media (max-width: 767px) {
+    .site-header__search {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  @media (max-width: 414px) {
+    .site-header__lockup {
+      font-size: var(--fs-sm);
+    }
+    /* The registered mark is 6px the row cannot spare at this width. */
+    .site-header__lockup sup {
+      display: none;
+    }
+    .site-header__actions {
+      gap: var(--space-1);
+    }
+  }
+
+  /* Below 360px the language control leaves the header. It is not lost: the
+     drawer footer carries the same LangToggle, and the shell test clicks the
+     header one at 375px, which keeps it. */
+  @media (max-width: 360px) {
+    .site-header__actions :global(.lang-toggle) {
+      display: none;
+    }
+  }
+
+  /* Last-resort net: if a longer wordmark or a wider face ever overruns the
+     row, the brand clips instead of the document scrolling sideways. */
+  .site-header__brand {
+    min-width: 0;
+  }
+  .site-header__lockup {
+    white-space: nowrap;
+    overflow: hidden;
   }
 </style>
 

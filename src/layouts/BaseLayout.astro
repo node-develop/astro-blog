@@ -33,12 +33,14 @@ import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 import { person } from "~/lib/seo/person";
 import { canonicalPath, canonicalUrl } from "~/lib/seo/url-policy";
 import { twitterHandleFromSameAs } from "~/lib/seo/social";
-// Hashed URLs of the primary serif subsets. Vite dedupes by content, so these
+// Hashed URLs of the display-face subsets. Vite dedupes by content, so these
 // resolve to the exact files @fontsource's CSS references — preloading them
 // takes the H1 web-font off the CSS critical path. Latin + Cyrillic only:
-// the other subsets (greek, vietnamese, *-ext) are never used above the fold.
-import serifLatinUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url";
-import serifCyrillicUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-cyrillic-wght-normal.woff2?url";
+// the other subsets (vietnamese, *-ext) are never used above the fold.
+// scripts/verify-seo-build.ts asserts each href below appears verbatim in an
+// emitted CSS file, so these must stay in step with src/styles/fonts.css.
+import displayLatinUrl from "@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2?url";
+import displayCyrillicUrl from "@fontsource-variable/unbounded/files/unbounded-cyrillic-wght-normal.woff2?url";
 
 interface Props {
   title: string;
@@ -147,7 +149,7 @@ const twitterHandle =
 const imageAlt = ogImageAlt ?? fullTitle;
 // Preload only the subsets this locale paints first: Cyrillic for RU pages,
 // Latin for both (brand, code, EN copy).
-const fontPreloads = locale === "ru" ? [serifCyrillicUrl, serifLatinUrl] : [serifLatinUrl];
+const fontPreloads = locale === "ru" ? [displayCyrillicUrl, displayLatinUrl] : [displayLatinUrl];
 const rssHref = locale === "ru" ? "/rss.xml" : "/en/rss.xml";
 const jsonFeedHref = locale === "ru" ? "/feed.json" : "/en/feed.json";
 
@@ -286,12 +288,12 @@ const socialLabel = (url: string): string => {
     <link rel="icon" type="image/png" href="/icon-32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/icon-16.png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <link rel="mask-icon" href="/favicon.svg" color="#9C5A2A" />
+    <link rel="mask-icon" href="/favicon.svg" color="#2A1AE0" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- theme-color: split light/dark so iOS Safari address bar matches -->
-    <meta name="theme-color" content="#FAF8F5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1A1814" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F3F1EA" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B0B0B" media="(prefers-color-scheme: dark)" />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link
@@ -453,16 +455,20 @@ const socialLabel = (url: string): string => {
         }
       }
 
+      /* The footer is the page's closing slab: solid ink with paper on top,
+         the same inversion the code-block header uses. Both tokens flip with
+         the theme, so the block stays legible in paper and in dark without a
+         second rule, and it needs no border — it is the edge. */
       .site-footer {
-        border-top: 1px solid var(--color-border);
-        margin-top: var(--space-6);
+        background: var(--color-fg);
+        color: var(--color-bg);
+        margin-top: var(--space-8);
       }
       .site-footer__inner {
         max-width: var(--content-max);
         margin: 0 auto;
-        padding: var(--space-5);
+        padding: var(--space-6) var(--space-5);
         font-size: var(--fs-sm);
-        color: var(--color-fg-muted);
       }
       .site-footer__cols {
         display: grid;
@@ -477,28 +483,50 @@ const socialLabel = (url: string): string => {
         flex-direction: column;
         gap: var(--space-1);
       }
+      /* Footer links are a LABEL list, not running text. Set as body copy
+         they read thin and undernourished against the slab they sit on, so
+         they take the label treatment the header nav uses: smaller, caps,
+         tracked, and heavy enough to hold their own on ink. */
       .site-footer__col li a {
         display: inline-flex;
         align-items: center;
-        min-height: 28px;
+        min-height: 32px;
         overflow-wrap: anywhere;
-        color: var(--color-fg-muted);
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: color var(--dur-fast) var(--ease-out);
-      }
-      .site-footer__col li a:hover {
-        color: var(--color-accent);
-        border-bottom-color: var(--color-accent);
-      }
-      .site-footer__heading {
         font-family: var(--font-mono);
         font-size: var(--fs-xs);
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: var(--tracking-wide);
-        color: var(--color-fg-subtle);
-        font-weight: 500;
-        margin: 0 0 var(--space-2);
+        color: var(--color-bg);
+        /* Resting links sit back from the headings without leaving the
+           inverted palette; 78% of paper on ink still clears AA, and caps
+           at 12px need slightly more presence than body copy did. */
+        opacity: 0.78;
+        text-decoration: none;
+        /* Reserve the underline up front: a hover must not move the row. */
+        border-bottom: var(--stroke-bold) solid transparent;
+        transition:
+          opacity var(--dur-fast) var(--ease-out),
+          border-color var(--dur-fast) var(--ease-out);
+      }
+      .site-footer__col li a:hover,
+      .site-footer__col li a:focus-visible {
+        opacity: 1;
+        border-bottom-color: var(--color-bg);
+      }
+      /* The global focus ring is the ultramarine accent, which all but
+         disappears on the inverted ground. On this slab the ring is paper. */
+      .site-footer :where(a, button):focus-visible {
+        outline-color: var(--color-bg);
+      }
+      .site-footer__heading {
+        font-family: var(--font-serif);
+        font-size: var(--fs-base);
+        text-transform: uppercase;
+        letter-spacing: var(--tracking-tight);
+        color: var(--color-bg);
+        font-weight: 800;
+        margin: 0 0 var(--space-4);
       }
       @media (max-width: 767px) {
         .site-footer__inner {

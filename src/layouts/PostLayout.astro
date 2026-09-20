@@ -225,6 +225,8 @@ const formattedUpdatedDate = updatedDate
       <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     </div>
     <header class="post__header">
+      {/* Decorative repeat of the reading time already stated in the byline. */}
+      <span class="post__ghost" aria-hidden="true">{readingTime}</span>
       <h1 class="post__title" transition:name={`post-title-${slug}`}>{title}</h1>
       {description && <p class="post__lede" set:html={renderInlineCode(description)} />}
       <div class="post__byline">
@@ -342,21 +344,45 @@ const formattedUpdatedDate = updatedDate
       min-width: 0;
       max-width: 100%;
     }
+    /* The title is a billboard, not a heading with a rule under it: one lime
+       slab in an ink frame, carrying the kicker, the byline and the tags. */
     .post__header {
-      margin-bottom: var(--space-7);
-      padding-bottom: var(--space-5);
-      border-bottom: 1px solid var(--color-border);
+      position: relative;
+      overflow: hidden;
+      background: var(--color-fill);
+      color: var(--color-on-fill);
+      border: var(--stroke-slab) solid var(--color-fg);
+      box-shadow: var(--shadow-soft);
+      padding: var(--space-6) var(--space-6) var(--space-5);
+      margin-bottom: var(--space-8);
+    }
+    .post__ghost {
+      position: absolute;
+      right: -0.06em;
+      bottom: -0.34em;
+      font-family: var(--font-serif);
+      font-size: 9rem;
+      font-weight: 800;
+      line-height: 0.8;
+      letter-spacing: var(--tracking-display);
+      color: var(--color-on-fill);
+      opacity: 0.16;
+      pointer-events: none;
+      user-select: none;
     }
     .post__byline {
+      position: relative;
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-2);
       align-items: center;
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
       letter-spacing: var(--tracking-wide);
-      color: var(--color-fg-muted);
-      margin: var(--space-4) 0 0 0;
+      color: var(--color-on-fill);
+      margin: var(--space-5) 0 0 0;
     }
     .post__byline-avatar {
       line-height: 0;
@@ -366,45 +392,51 @@ const formattedUpdatedDate = updatedDate
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-on-fill);
       background: var(--color-bg-subtle);
       object-fit: cover;
       display: block;
     }
     .post__byline-name {
-      color: var(--color-fg);
+      color: var(--color-on-fill);
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 700;
+      border-bottom: var(--stroke-bold) solid transparent;
     }
     .post__byline-name:hover {
-      color: var(--color-accent);
+      border-bottom-color: var(--color-on-fill);
     }
-    .post__byline-sep {
-      color: var(--color-fg-subtle);
-    }
+    .post__byline-sep,
     .post__byline-date,
     .post__byline-reading,
     .post__byline-updated {
-      color: var(--color-fg-muted);
-      text-transform: uppercase;
+      color: var(--color-on-fill);
+      opacity: 0.72;
     }
     .post__title {
+      position: relative;
       font-family: var(--font-serif);
-      font-size: var(--fs-4xl);
-      line-height: var(--lh-tight);
-      letter-spacing: var(--tracking-tight);
-      font-weight: 500;
-      margin: 0 0 var(--space-3) 0;
-      color: var(--color-fg);
+      /* Bigger than the old editorial step and clamped for the phone: a
+         billboard headline, not a page heading. */
+      font-size: clamp(1.75rem, 5.5vw, 3.25rem);
+      line-height: var(--lh-display);
+      letter-spacing: var(--tracking-display);
+      text-transform: uppercase;
+      font-weight: 800;
+      margin: 0 0 var(--space-4) 0;
+      color: var(--color-on-fill);
     }
     .post__lede {
+      position: relative;
       font-family: var(--font-sans);
       font-size: var(--fs-lg);
       line-height: var(--lh-normal);
-      color: var(--color-fg-muted);
+      color: var(--color-on-fill);
       margin: 0 0 var(--space-4) 0;
+      max-width: 46ch;
     }
     .post__tags {
+      position: relative;
       list-style: none;
       padding: 0;
       margin: 0;
@@ -413,27 +445,33 @@ const formattedUpdatedDate = updatedDate
       gap: var(--space-2);
     }
     .post__tag-chip {
+      position: relative;
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
-      color: var(--color-fg-muted);
-      padding: 2px 8px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-pill);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      color: var(--color-on-fill);
+      padding: 4px 10px;
+      border: var(--stroke-bold) solid var(--color-on-fill);
+      border-radius: var(--radius-sm);
       display: inline-block;
       text-decoration: none;
       transition:
         border-color var(--dur-fast) var(--ease-out),
         color var(--dur-fast) var(--ease-out);
     }
+    /* On the lime ground the chip inverts to ink rather than reaching for
+       the blue accent, which is off-system here and hard to read on lime. */
     .post__tag-chip:hover {
-      border-color: var(--color-accent);
-      color: var(--color-accent-hover);
+      background: var(--color-on-fill);
+      color: var(--color-fill);
     }
     .post__cover {
       margin: 0 0 var(--space-7) 0;
       border-radius: var(--radius-md);
       overflow: hidden;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-slab) solid var(--color-fg);
       background: var(--color-bg-elevated);
     }
     .post__cover img {
@@ -444,7 +482,7 @@ const formattedUpdatedDate = updatedDate
     .post__art {
       height: 220px;
       margin: 0 0 var(--space-7) 0;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-slab) solid var(--color-fg);
       border-radius: var(--radius-lg);
       overflow: hidden;
     }
@@ -453,21 +491,24 @@ const formattedUpdatedDate = updatedDate
       margin: var(--space-6) auto var(--space-9);
     }
     @media (max-width: 600px) {
-      .post__title {
-        font-size: var(--fs-3xl); /* down from --fs-4xl */
-        line-height: var(--lh-snug);
-      }
+      /* The title sizes itself with a clamp now; a second ladder of
+         breakpoint overrides would fight it. Only the billboard's own box
+         and the lede step down here. */
       .post__lede {
         font-size: var(--fs-base); /* down from --fs-lg */
       }
       .post__header {
-        margin-bottom: var(--space-5);
-        padding-bottom: var(--space-4);
+        margin-bottom: var(--space-6);
+        padding: var(--space-5) var(--space-4) var(--space-4);
+      }
+      .post__ghost {
+        font-size: 6rem;
       }
     }
     @media (max-width: 414px) {
-      .post__title {
-        font-size: var(--fs-2xl);
+      /* Same reason as the 600px block: the clamp owns the title size. */
+      .post__ghost {
+        font-size: 4.5rem;
       }
     }
   </style>

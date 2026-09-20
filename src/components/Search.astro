@@ -97,7 +97,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
     display: flex;
     flex-direction: column;
     background: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lifted);
     opacity: 0;
@@ -121,7 +121,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--stroke-hair) solid var(--color-border);
   }
   .search__icon {
     color: var(--color-fg-subtle);
@@ -144,7 +144,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
     color: var(--color-fg-subtle);
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-sm);
     padding: 2px 6px;
     background: var(--color-bg-subtle);
@@ -176,15 +176,18 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
+  /* Selection is a lime slab on the leading edge plus a wash: the 4px edge
+     is a fill at slab weight, which is how this system marks state. */
   .search__result:hover,
   .search__result[aria-selected="true"] {
     background: var(--color-bg-elevated);
-    border-left-color: var(--color-accent);
+    border-left-color: var(--color-fill);
   }
   .search__result-title {
     font-family: var(--font-serif);
     font-size: var(--fs-md);
-    font-weight: 500;
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
     line-height: var(--lh-snug);
     margin: 0 0 4px 0;
   }
@@ -218,7 +221,7 @@ const escLabel = locale === "en" ? "Esc to close" : "Esc для закрытия
     justify-content: space-between;
     align-items: center;
     padding: var(--space-2) var(--space-4);
-    border-top: 1px solid var(--color-border);
+    border-top: var(--stroke-hair) solid var(--color-border);
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
     color: var(--color-fg-subtle);

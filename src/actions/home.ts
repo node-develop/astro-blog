@@ -22,8 +22,11 @@ export const homeUpdateInput = z.object({
   // Optional fields — empty string normalised to undefined so merge-semantics
   // preserves existing file values rather than overwriting with blank (M-6).
   heroEyebrow: z.string().optional(),
+  heroHighlight: z.string().optional(),
   heroLede: z.string().optional(),
   heroCta: z.string().optional(),
+  sealPhrase: z.string().optional(),
+  tickerItems: z.string().optional(),
   courseEyebrow: z.string().optional(),
   courseTitle: z.string().optional(),
   courseLede: z.string().optional(),
@@ -47,8 +50,11 @@ export const home = {
         metaTitle,
         metaDescription,
         heroEyebrow: normaliseOptional(optionals.heroEyebrow),
+        heroHighlight: normaliseOptional(optionals.heroHighlight),
         heroLede: normaliseOptional(optionals.heroLede),
         heroCta: normaliseOptional(optionals.heroCta),
+        sealPhrase: normaliseOptional(optionals.sealPhrase),
+        tickerItems: normaliseOptional(optionals.tickerItems),
         courseEyebrow: normaliseOptional(optionals.courseEyebrow),
         courseTitle: normaliseOptional(optionals.courseTitle),
         courseLede: normaliseOptional(optionals.courseLede),

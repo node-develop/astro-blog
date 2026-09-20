@@ -108,7 +108,7 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
     .projects__header {
       margin-bottom: var(--space-6);
       padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: var(--stroke-hair) solid var(--color-border);
     }
     .projects__eyebrow {
       font-family: var(--font-mono);
@@ -137,12 +137,14 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
       gap: var(--space-5);
     }
     .projects__item {
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       border-radius: var(--radius-md);
       transition: border-color var(--dur-fast) var(--ease-out);
     }
     .projects__item:hover {
-      border-color: var(--color-accent);
+      border-color: var(--color-fg);
+      transform: translate(-3px, -3px);
+      box-shadow: var(--shadow-soft);
     }
     .projects__link {
       display: block;
@@ -171,13 +173,15 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
       letter-spacing: var(--tracking-wide);
       padding: 2px 8px;
       border-radius: var(--radius-pill);
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       color: var(--color-fg-muted);
       flex-shrink: 0;
     }
+    /* Shipping status is a filled chip, not tinted text. */
     .projects__status--active {
-      color: var(--color-accent);
-      border-color: var(--color-accent);
+      background: var(--color-fill);
+      color: var(--color-on-fill);
+      border-color: var(--color-fg);
     }
     .projects__card-desc {
       margin: 0 0 var(--space-3) 0;
@@ -209,7 +213,7 @@ const statusLabel = (s: "active" | "maintained" | "archived"): string =>
       font-size: var(--fs-xs);
       color: var(--color-fg-muted);
       padding: 2px 8px;
-      border: 1px solid var(--color-border);
+      border: var(--stroke-bold) solid var(--color-fg);
       border-radius: var(--radius-pill);
     }
   </style>

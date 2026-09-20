@@ -7,10 +7,11 @@ const ogImageSource = readFileSync(join(repoRoot, "src/lib/og/og-image.ts"), "ut
 
 /**
  * `loadFonts` in `src/lib/og/og-image.ts` builds its font directory as
- * `join(root, ...segments)`. Pull those segments straight out of the source
- * instead of hardcoding a copy, so this test tracks the actual code path:
- * if the renderer's directory ever moves back under `public/`, this fails
- * without anyone touching the assertions.
+ * `join(root, ...segments)` and then reads each face as `join(dir, "<file>")`.
+ * Pull both out of the source instead of hardcoding copies, so this test
+ * tracks the actual code path: if the renderer's directory ever moves back
+ * under `public/`, or a face is renamed without the file landing next to it,
+ * this fails without anyone touching the assertions.
  */
 const fontDirSegments = (): readonly string[] => {
   const match = ogImageSource.match(/const dir = join\(root,\s*([^)]+)\)/);
@@ -30,6 +31,14 @@ const fontDirSegments = (): readonly string[] => {
     });
 };
 
+const fontFileNames = (): readonly string[] => {
+  const names = [...ogImageSource.matchAll(/join\(dir,\s*"([^"]+)"\)/g)].map((m) => m[1]);
+  if (names.length === 0) {
+    throw new Error('og-image.ts: could not find any `join(dir, "…")` font reads');
+  }
+  return [...new Set(names)];
+};
+
 describe("OG font files stay out of public/", () => {
   it("points the renderer at a build-only directory, not public/", () => {
     const segments = fontDirSegments();
@@ -37,15 +46,14 @@ describe("OG font files stay out of public/", () => {
     expect(join(...segments)).not.toMatch(/^public[/\\]/);
   });
 
-  it("has the three fonts the renderer reads at that build-only directory", () => {
+  it("ships every font the renderer reads at that build-only directory", () => {
     const dir = join(repoRoot, ...fontDirSegments());
     expect(existsSync(dir)).toBe(true);
-    for (const file of [
-      "SourceSerif4-SemiBold.ttf",
-      "JetBrainsMono-Medium.ttf",
-      "Inter-Regular.ttf",
-    ]) {
-      expect(existsSync(join(dir, file))).toBe(true);
+    const names = fontFileNames();
+    // Latin + Cyrillic for both the display and the text face.
+    expect(names.length).toBeGreaterThanOrEqual(4);
+    for (const file of names) {
+      expect(existsSync(join(dir, file)), `missing OG font: ${file}`).toBe(true);
     }
   });
 

@@ -52,22 +52,32 @@ const ariaLabel = t(locale, "theme.toggle.aria");
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    flex: none;
     padding: 0;
-    background: var(--color-bg-subtle);
-    border: 1px solid var(--color-border);
+    background: transparent;
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-md);
-    color: var(--color-fg-subtle);
+    color: var(--color-fg);
     cursor: pointer;
     transition:
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
+  /* Matches the search and language controls: step out, drop a hard shadow. */
   .theme-toggle:hover {
-    color: var(--color-fg);
-    background: var(--color-bg-elevated);
+    color: var(--color-on-fill);
+    background: var(--color-fill);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-press);
+  }
+  .theme-toggle:active {
+    transform: none;
+    box-shadow: none;
   }
   .theme-toggle:focus-visible {
     outline: 2px solid var(--color-focus-ring);
@@ -76,6 +86,13 @@ const ariaLabel = t(locale, "theme.toggle.aria");
   .theme-toggle__icon {
     width: 16px;
     height: 16px;
+  }
+  /* See the 414px note in Header.astro: the shell has to fit 320px. */
+  @media (max-width: 414px) {
+    .theme-toggle {
+      width: 32px;
+      height: 32px;
+    }
   }
 
   /* Default (paper) — show moon (click → go dark) */

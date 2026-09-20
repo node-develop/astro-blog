@@ -278,13 +278,13 @@ export default function PostList({ initial }: Props): React.JSX.Element {
           padding: var(--space-2) var(--space-3);
           background: var(--color-bg-elevated);
           color: var(--color-fg);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md, 6px);
           font: var(--fs-sm) / 1.4 var(--font-sans);
         }
-        .post-list__search input[type="search"]:focus {
-          outline: none;
-          border-color: var(--color-accent);
+        .post-list__search input[type="search"]:focus-visible {
+          outline: var(--stroke-bold) solid var(--color-focus-ring);
+          outline-offset: 2px;
         }
         .post-list__search-status {
           font-family: var(--font-mono);
@@ -301,13 +301,13 @@ export default function PostList({ initial }: Props): React.JSX.Element {
           grid-template-columns: 28px 36px 1fr;
           gap: var(--space-3);
           padding: var(--space-4) 0;
-          border-top: 1px solid var(--color-border);
+          border-top: var(--stroke-hair) solid var(--color-border);
           align-items: start;
           background: var(--color-bg);
         }
         .post-list__handle {
           background: transparent;
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-sm);
           color: var(--color-fg-subtle);
           cursor: grab;
@@ -339,52 +339,60 @@ export default function PostList({ initial }: Props): React.JSX.Element {
           font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-fg-subtle);
         }
         .post-list__flag {
-          padding: 1px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+          padding: 1px 6px; border: var(--stroke-hair) solid var(--color-fg); border-radius: var(--radius-sm);
+          text-transform: uppercase; letter-spacing: var(--tracking-wide);
         }
         .post-list__flag--accent {
-          border-color: var(--color-accent); color: var(--color-accent);
+          background: var(--color-fill); color: var(--color-on-fill);
         }
         .post-list__toggle {
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
           color: var(--color-fg-subtle);
           background: transparent;
-          border: 1px solid var(--color-border);
+          border: var(--stroke-hair) solid var(--color-fg);
           border-radius: var(--radius-sm);
           padding: 1px 6px;
           cursor: pointer;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out);
         }
         .post-list__toggle:hover {
-          color: var(--color-fg);
-          border-color: var(--color-fg-subtle);
+          background: var(--color-fill);
+          color: var(--color-on-fill);
         }
         .post-list__toggle--on {
           color: var(--color-fg);
           background: var(--color-bg-elevated);
         }
         .post-list__toggle--accent {
-          color: var(--color-accent);
-          border-color: var(--color-accent);
+          background: var(--color-fill);
+          color: var(--color-on-fill);
         }
         .post-list__delete {
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
           background: transparent;
-          border: 1px solid transparent;
+          border: var(--stroke-hair) solid transparent;
           color: var(--color-fg-subtle);
           padding: 1px 6px;
           border-radius: var(--radius-sm);
           cursor: pointer;
           margin-left: auto;
+          transition:
+            background var(--dur-fast) var(--ease-out),
+            color var(--dur-fast) var(--ease-out);
         }
         .post-list__delete:hover {
           color: var(--color-danger);
           border-color: var(--color-danger);
+          background: color-mix(in srgb, var(--color-danger) 12%, transparent);
         }
         .post-list__error {
           margin-bottom: var(--space-4);
           padding: var(--space-3);
-          border: 1px solid var(--color-danger);
+          border: var(--stroke-bold) solid var(--color-danger);
           color: var(--color-danger);
           border-radius: var(--radius-md);
         }

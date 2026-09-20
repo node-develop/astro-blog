@@ -48,23 +48,51 @@ const unavailable = t(currentLocale, "lang.unavailable");
   .lang-toggle {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--color-border);
+    font-weight: 700;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    padding: var(--space-2) var(--space-3);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-md);
-    background: var(--color-bg-subtle);
-    color: var(--color-fg-subtle);
+    background: transparent;
+    color: var(--color-fg);
     cursor: pointer;
-    line-height: 1.4;
+    line-height: 1.2;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    height: 34px;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
+  /* One hover behaviour for every control in the header cluster: the chip
+     steps toward the corner and drops a hard shadow the same distance. */
   .lang-toggle:hover:not(:disabled) {
-    background: var(--color-bg-elevated);
-    color: var(--color-fg);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-press);
+  }
+  .lang-toggle:active:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+  /* Disabled means the counterpart page does not exist. Border drops to the
+     hairline so the control reads as absent rather than merely dimmed. */
+  /* See the 414px note in Header.astro: the shell has to fit 320px. */
+  @media (max-width: 414px) {
+    .lang-toggle {
+      padding: var(--space-2);
+      letter-spacing: 0.06em;
+    }
   }
   .lang-toggle:disabled {
-    opacity: 0.4;
+    border-color: var(--color-border);
+    color: var(--color-fg-subtle);
     cursor: not-allowed;
   }
 </style>

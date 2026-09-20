@@ -15,8 +15,16 @@ export const homeFrontmatterSchema = z.object({
   title: z.string(),
   heroEyebrow: z.string().optional(),
   heroTitle: z.string().optional(),
+  /** A literal substring of heroTitle to set on the lime fill. Ignored when
+      it does not occur in heroTitle, so editing one field never breaks the
+      other. */
+  heroHighlight: z.string().optional(),
   heroLede: z.string().optional(),
   heroCta: z.string().optional(),
+  /** Text that runs around the rotating seal beside the hero. Empty hides it. */
+  sealPhrase: z.string().optional(),
+  /** Ticker band items, one per line. Empty hides the band. */
+  tickerItems: z.string().optional(),
   courseEyebrow: z.string().optional(),
   courseTitle: z.string().optional(),
   courseLede: z.string().optional(),
@@ -38,8 +46,11 @@ export const KEY_ORDER: ReadonlyArray<keyof HomeFrontmatter> = [
   "title",
   "heroEyebrow",
   "heroTitle",
+  "heroHighlight",
   "heroLede",
   "heroCta",
+  "sealPhrase",
+  "tickerItems",
   "courseEyebrow",
   "courseTitle",
   "courseLede",

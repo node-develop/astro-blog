@@ -71,19 +71,24 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
+    border: var(--stroke-slab) solid var(--color-fg);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: var(--shadow-soft);
+    /* The one lime-shadowed slab on the page. Everything else takes ink. */
+    box-shadow: var(--shadow-hard-fill);
     color: var(--color-fg);
     text-decoration: none;
-    transition: box-shadow var(--dur-base) var(--ease-out);
+    transition:
+      box-shadow var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
   .featured__link:hover {
-    box-shadow: var(--shadow-lifted);
+    transform: translate(-5px, -5px);
+    box-shadow: 15px 15px 0 var(--color-fill);
   }
-  .featured__link:hover .featured__title {
-    color: var(--color-accent-hover);
+  .featured__link:active {
+    transform: translate(3px, 3px);
+    box-shadow: 4px 4px 0 var(--color-fill);
   }
   .featured__body {
     display: flex;
@@ -95,6 +100,7 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
   .featured__eyebrow {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
     /* fg-muted, not fg-subtle: subtle is below AA on the elevated surface */
@@ -104,11 +110,10 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
   .featured__title {
     font-family: var(--font-serif);
     font-size: var(--fs-2xl);
-    line-height: var(--lh-tight);
-    letter-spacing: var(--tracking-tight);
-    font-weight: 500;
+    line-height: var(--lh-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: 800;
     margin: 0;
-    transition: color var(--dur-fast) var(--ease-out);
   }
   .featured__lede {
     font-size: var(--fs-base);
@@ -132,19 +137,22 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
   .featured__media {
     position: relative;
     min-height: 300px;
+    border-left: var(--stroke-slab) solid var(--color-fg);
   }
   .featured__pill {
     position: absolute;
     top: var(--space-4);
     right: var(--space-4);
-    background: var(--color-accent);
-    color: var(--color-bg);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    border: var(--stroke-bold) solid var(--color-fg);
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
   }
   @media (max-width: 768px) {
     .featured__link {
@@ -156,6 +164,8 @@ const dateLabel = entry.data.pubDate.toLocaleDateString(locale === "ru" ? "ru-RU
     .featured__media {
       min-height: 200px;
       order: -1;
+      border-left: 0;
+      border-bottom: var(--stroke-slab) solid var(--color-fg);
     }
   }
 </style>

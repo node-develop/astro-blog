@@ -74,7 +74,11 @@ const batches = await db
   }
   .admin-page-header h1 {
     font-family: var(--font-serif);
+    font-weight: 800;
     font-size: var(--fs-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
     margin: 0;
   }
   .admin-page-count {
@@ -98,7 +102,7 @@ const batches = await db
   }
 
   .social-item {
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     border-radius: var(--radius-md);
     padding: var(--space-4);
     background: var(--color-bg);
@@ -136,31 +140,37 @@ const batches = await db
     margin-top: var(--space-3);
   }
 
+  /* Square caps chip. The field is the state colour mixed 18% into the
+     surface, which is the ratio the state tokens were picked against — the
+     label clears 4.5:1 on its own chip in both themes. */
   .badge {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
     padding: 2px var(--space-2);
     border-radius: var(--radius-sm);
+    border: var(--stroke-hair) solid currentColor;
   }
 
   .badge--generating {
-    background: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
-    color: var(--color-warning, #b45309);
+    background: color-mix(in srgb, var(--color-warning) 18%, var(--color-bg));
+    color: var(--color-warning);
   }
   .badge--pending {
-    background: color-mix(in srgb, var(--color-info, #3b82f6) 15%, transparent);
-    color: var(--color-info, #1d4ed8);
+    background: color-mix(in srgb, var(--color-info) 18%, var(--color-bg));
+    color: var(--color-info);
   }
   .badge--sent {
-    background: color-mix(in srgb, var(--color-success, #10b981) 15%, transparent);
-    color: var(--color-success, #065f46);
+    background: color-mix(in srgb, var(--color-success) 18%, var(--color-bg));
+    color: var(--color-success);
   }
   .badge--failed {
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 15%, transparent);
-    color: var(--color-danger, #991b1b);
+    background: color-mix(in srgb, var(--color-danger) 18%, var(--color-bg));
+    color: var(--color-danger);
   }
   .badge--total {
-    background: color-mix(in srgb, var(--color-fg-muted) 12%, transparent);
+    background: color-mix(in srgb, var(--color-fg-muted) 12%, var(--color-bg));
     color: var(--color-fg-muted);
   }
 </style>
