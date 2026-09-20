@@ -18,8 +18,11 @@ import PublishBar from "./PublishBar";
 export interface HomeData {
   heroEyebrow?: string;
   heroTitle?: string;
+  heroHighlight?: string;
   heroLede?: string;
   heroCta?: string;
+  sealPhrase?: string;
+  tickerItems?: string;
   courseEyebrow?: string;
   courseTitle?: string;
   courseLede?: string;
@@ -44,6 +47,7 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const MULTILINE_FIELDS: ReadonlyArray<keyof HomeData> = [
   "heroLede",
+  "tickerItems",
   "courseLede",
   "authorBio",
   "metaDescription",
@@ -52,8 +56,11 @@ const MULTILINE_FIELDS: ReadonlyArray<keyof HomeData> = [
 const FIELD_LABELS: Record<keyof HomeData, string> = {
   heroEyebrow: "Hero Eyebrow",
   heroTitle: "Hero Title",
+  heroHighlight: "Hero Highlight (слово из Hero Title под лаймом)",
   heroLede: "Hero Lede",
   heroCta: "Hero CTA",
+  sealPhrase: "Seal Phrase (текст по кругу печати)",
+  tickerItems: "Ticker Items (по одному в строке)",
   courseEyebrow: "Course Eyebrow",
   courseTitle: "Course Title",
   courseLede: "Course Lede",
@@ -69,8 +76,11 @@ const FIELD_LABELS: Record<keyof HomeData, string> = {
 const FIELD_ORDER: ReadonlyArray<keyof HomeData> = [
   "heroEyebrow",
   "heroTitle",
+  "heroHighlight",
   "heroLede",
   "heroCta",
+  "sealPhrase",
+  "tickerItems",
   "courseEyebrow",
   "courseTitle",
   "courseLede",
@@ -86,8 +96,11 @@ const FIELD_ORDER: ReadonlyArray<keyof HomeData> = [
 const emptyData = (): HomeData => ({
   heroEyebrow: "",
   heroTitle: "",
+  heroHighlight: "",
   heroLede: "",
   heroCta: "",
+  sealPhrase: "",
+  tickerItems: "",
   courseEyebrow: "",
   courseTitle: "",
   courseLede: "",
@@ -355,42 +368,54 @@ export default function HomeEditor({ ru, en, enManuallyEdited }: Props): React.J
           border-radius: var(--radius-md);
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
-          border: 1px solid currentColor;
+          border: var(--stroke-bold) solid currentColor;
+          text-transform: uppercase;
+          letter-spacing: var(--tracking-wide);
         }
         .home-editor__toast--warn { color: var(--color-accent); background: var(--color-accent-subtle); }
         .home-editor__toast--ok   { color: var(--color-fg-muted); background: var(--color-bg-elevated); }
         .home-editor__tabs {
           display: flex;
           gap: var(--space-1);
-          border-bottom: 1px solid var(--color-border);
+          border-bottom: var(--stroke-hair) solid var(--color-border);
           padding-bottom: 0;
         }
+        /* Square tabs sitting on the rule, poster-style: the live one is a
+           lime slab, not a lifted folder tab. */
         .home-editor__tab {
           font-family: var(--font-mono);
           font-size: var(--fs-sm);
+          text-transform: uppercase;
+          letter-spacing: var(--tracking-wide);
           padding: var(--space-2) var(--space-4);
           background: transparent;
-          border: 1px solid transparent;
-          border-bottom: none;
-          border-radius: var(--radius-md) var(--radius-md) 0 0;
+          border: none;
+          border-bottom: var(--stroke-slab) solid transparent;
+          border-radius: 0;
           cursor: pointer;
           color: var(--color-fg-muted);
           display: flex;
           align-items: center;
           gap: var(--space-2);
+          margin-bottom: calc(-1 * var(--stroke-hair));
+          transition:
+            color var(--dur-fast) var(--ease-out),
+            border-color var(--dur-fast) var(--ease-out);
+        }
+        .home-editor__tab:hover {
+          color: var(--color-fg);
+          border-bottom-color: var(--color-border);
         }
         .home-editor__tab--active {
           color: var(--color-fg);
-          border-color: var(--color-border);
-          background: var(--color-bg-elevated);
-          margin-bottom: -1px;
+          border-bottom-color: var(--color-fill);
         }
         .home-editor__badge {
           font-size: var(--fs-xs);
         }
         .home-editor__info-banner {
           padding: var(--space-3) var(--space-4);
-          border: 1px solid var(--color-border);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
           background: var(--color-bg-elevated);
           font-family: var(--font-mono);
@@ -408,16 +433,24 @@ export default function HomeEditor({ ru, en, enManuallyEdited }: Props): React.J
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
           padding: var(--space-2) var(--space-5);
-          background: var(--color-accent);
-          color: var(--color-bg);
-          border: 1px solid var(--color-accent);
+          background: var(--color-fill);
+          color: var(--color-on-fill);
+          border: var(--stroke-bold) solid var(--color-fg);
           border-radius: var(--radius-md);
           cursor: pointer;
           letter-spacing: var(--tracking-wide);
           text-transform: uppercase;
+          box-shadow: var(--shadow-press);
+          transition:
+            transform var(--dur-fast) var(--ease-out),
+            box-shadow var(--dur-fast) var(--ease-out);
         }
-        .home-editor__save-btn:hover { background: var(--color-accent-hover); }
-        .home-editor__save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .home-editor__save-btn:not(:disabled):hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 5px 5px 0 var(--color-shadow);
+        }
+        .home-editor__save-btn:not(:disabled):active { transform: none; box-shadow: none; }
+        .home-editor__save-btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
         .home-editor__hint {
           font-family: var(--font-mono);
           font-size: var(--fs-xs);
@@ -490,7 +523,7 @@ function HomeFormFields({ values, onChange, disabled }: FormFieldsProps): React.
         .fm-form__field textarea {
           font-family: var(--font-sans); font-size: var(--fs-base);
           padding: var(--space-2) var(--space-3);
-          border: 1px solid var(--color-border); border-radius: var(--radius-md);
+          border: var(--stroke-bold) solid var(--color-fg); border-radius: var(--radius-md);
           background: var(--color-bg); color: var(--color-fg);
           resize: vertical;
         }

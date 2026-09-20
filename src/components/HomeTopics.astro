@@ -62,9 +62,9 @@ const topTags = [...grouped.entries()]
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--space-3) var(--space-1);
+    border-top: var(--stroke-bold) solid var(--color-fg);
+    border-bottom: var(--stroke-bold) solid var(--color-fg);
+    padding: var(--space-4) var(--space-1);
   }
   .topics__list {
     list-style: none;
@@ -77,30 +77,35 @@ const topTags = [...grouped.entries()]
   .topics__link {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
     color: var(--color-fg-muted);
     text-decoration: none;
     padding: var(--space-1) 0;
-    border-bottom: 1px solid transparent;
+    /* Reserved up front so a hover never nudges the row. */
+    border-bottom: var(--stroke-slab) solid transparent;
     transition:
       color var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
   .topics__link:hover {
-    color: var(--color-accent-hover);
-    border-bottom-color: var(--color-accent);
+    color: var(--color-fg);
+    border-bottom-color: var(--color-fill);
   }
   .topics__all-link {
     flex-shrink: 0;
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    color: var(--color-accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg);
     text-decoration: none;
-    border-bottom: 1px dashed var(--color-accent);
+    border-bottom: var(--stroke-slab) solid var(--color-fill);
     padding-bottom: 1px;
   }
   .topics__all-link:hover {
-    color: var(--color-accent-hover);
+    border-bottom-color: var(--color-fg);
   }
 </style>

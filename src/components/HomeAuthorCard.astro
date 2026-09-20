@@ -83,7 +83,7 @@ const socialLabel = (url: string): string => {
     /* Vertical rhythm is owned by the home page's flex column (gap);
        the block spans the full editorial grid and closes with a hairline. */
     padding-top: var(--space-5);
-    border-top: 1px solid var(--color-border);
+    border-top: var(--stroke-slab) solid var(--color-fg);
   }
   .home-author__avatar {
     line-height: 0;
@@ -93,7 +93,7 @@ const socialLabel = (url: string): string => {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    border: 1px solid var(--color-border);
+    border: var(--stroke-bold) solid var(--color-fg);
     background: var(--color-bg-subtle);
     object-fit: cover;
     display: block;
@@ -105,6 +105,7 @@ const socialLabel = (url: string): string => {
   .home-author__label {
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
     color: var(--color-fg-subtle);
@@ -113,7 +114,8 @@ const socialLabel = (url: string): string => {
   .home-author__name {
     font-family: var(--font-serif);
     font-size: var(--fs-lg);
-    font-weight: 500;
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
     margin: 0;
   }
   .home-author__name a {
@@ -147,14 +149,17 @@ const socialLabel = (url: string): string => {
     font-size: var(--fs-xs);
   }
   .home-author__links a {
-    color: var(--color-accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg);
     text-decoration: none;
-    border-bottom: 1px dashed transparent;
+    border-bottom: var(--stroke-slab) solid transparent;
     padding-bottom: 1px;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
   .home-author__links a:hover {
-    border-bottom-color: var(--color-accent);
+    border-bottom-color: var(--color-fill);
   }
   @media (max-width: 600px) {
     .home-author {

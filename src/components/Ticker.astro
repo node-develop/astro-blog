@@ -1,0 +1,100 @@
+---
+/**
+ * Ticker band — the blue strip under the poster hero.
+ *
+ * Items come from home.md `tickerItems`, one per line. The list is rendered
+ * twice and the track is translated by -50%, which is what makes the loop
+ * seamless; the duplicate is aria-hidden so a screen reader hears the items
+ * once. No items, no band.
+ */
+interface Props {
+  items?: ReadonlyArray<string> | undefined;
+  /** Accessible name for the band. */
+  label?: string | undefined;
+}
+
+const { items = [], label } = Astro.props;
+const list = items.filter((item) => item.trim().length > 0);
+// Duration scales with content so a long list does not crawl and a short one
+// does not sprint: roughly one item every four seconds.
+const duration = Math.max(14, list.length * 4);
+---
+
+{
+  list.length > 0 && (
+    <aside class="ticker" aria-label={label}>
+      <div class="ticker__track" style={`--ticker-duration:${duration}s`}>
+        <ul class="ticker__list">
+          {list.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+        <ul class="ticker__list" aria-hidden="true">
+          {list.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .ticker {
+    background: var(--color-fill-alt);
+    color: var(--color-on-fill-alt);
+    border-top: var(--stroke-slab) solid var(--color-fg);
+    border-bottom: var(--stroke-slab) solid var(--color-fg);
+    overflow: hidden;
+  }
+  .ticker__track {
+    display: flex;
+    width: max-content;
+    animation: ticker-run var(--ticker-duration) linear infinite;
+  }
+  @keyframes ticker-run {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .ticker__list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ticker__list li {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: var(--space-3) var(--space-6);
+    height: 58px;
+    display: flex;
+    align-items: center;
+  }
+  /* The bullet between items is drawn, not typed, so the copy stays clean. */
+  .ticker__list li::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    background: var(--color-fill);
+    margin-right: var(--space-4);
+    flex: none;
+  }
+  @media (max-width: 767px) {
+    .ticker__list li {
+      font-size: var(--fs-base);
+      height: 44px;
+      padding: var(--space-2) var(--space-4);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker__track {
+      animation: none;
+    }
+  }
+</style>

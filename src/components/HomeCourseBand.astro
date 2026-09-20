@@ -39,9 +39,12 @@ const { eyebrow, title, lede, cta, href } = Astro.props;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-6);
-    border: 1px solid var(--color-accent);
-    background: var(--color-accent-subtle);
+    /* The closing lime band. One per page, and the home page spends it here. */
+    border: var(--stroke-slab) solid var(--color-fg);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
     padding: var(--space-6) var(--space-7);
   }
   .course-band__body {
@@ -55,44 +58,64 @@ const { eyebrow, title, lede, cta, href } = Astro.props;
     font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-accent);
+    font-weight: 700;
+    color: var(--color-on-fill);
     margin: 0;
   }
   .course-band__title {
     font-family: var(--font-serif);
-    font-size: var(--fs-xl);
-    font-weight: 500;
-    line-height: var(--lh-tight);
-    letter-spacing: var(--tracking-tight);
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    line-height: var(--lh-display);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
     margin: 0;
   }
   .course-band__title a {
-    color: var(--color-fg);
+    color: var(--color-on-fill);
     text-decoration: none;
   }
-  .course-band__title a:hover {
-    color: var(--color-accent);
-  }
   .course-band__lede {
-    color: var(--color-fg-muted);
+    color: var(--color-on-fill);
     font-size: var(--fs-sm);
     line-height: var(--lh-normal);
     margin: 0;
     text-wrap: pretty;
   }
+  /* A button standing ON a fill band takes that band's own ink pair, not
+     the page's. --color-fg / --color-bg invert with the theme, so in dark
+     this was a cream button on lime — a hole punched in the band. The
+     fill/on-fill pair belongs to the band and does not flip. */
   .course-band__cta {
     flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: var(--fs-sm);
-    color: var(--color-bg);
-    background: var(--color-accent);
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+    color: var(--color-fill);
+    background: var(--color-on-fill);
+    border: var(--stroke-slab) solid var(--color-on-fill);
     padding: var(--space-3) var(--space-5);
     border-radius: var(--radius-md);
     text-decoration: none;
-    transition: background var(--dur-fast) var(--ease-out);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
+  /* On hover it opens up: the ink drains out, the frame stays, and the
+     shadow is ink on lime — the only value that reads on this band. */
   .course-band__cta:hover {
-    background: var(--color-accent-hover);
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 var(--color-on-fill);
+  }
+  .course-band__cta:active {
+    transform: none;
+    box-shadow: none;
   }
   @media (max-width: 768px) {
     .course-band {

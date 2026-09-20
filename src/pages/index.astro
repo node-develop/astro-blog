@@ -3,6 +3,7 @@ export const prerender = false;
 
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import HomeMasthead from "~/components/HomeMasthead.astro";
+import Ticker from "~/components/Ticker.astro";
 import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
 import PostCard from "~/components/PostCard.astro";
 import HomeCourseBand from "~/components/HomeCourseBand.astro";
@@ -12,6 +13,7 @@ import { getOrderedPosts } from "~/lib/content/loader";
 import { assignArtVariants } from "~/lib/content/card-art";
 import { bareSlug } from "~/lib/content/slug";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
+import { t } from "~/i18n";
 import { getEntry } from "astro:content";
 import { homeFrontmatterSchema } from "~/lib/content/home-schema";
 import {
@@ -53,6 +55,13 @@ const listedPosts = [featured, ...grid].filter((p) => p !== undefined);
 
 const homeEntry = await getEntry("site", "home");
 const data = homeFrontmatterSchema.parse(homeEntry?.data ?? {});
+
+// Ticker copy is one item per line in home.md. Blank lines are dropped here
+// rather than in the component so an empty field renders no band at all.
+const tickerItems = (data.tickerItems ?? "")
+  .split("\n")
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0);
 
 if (representation === "text/markdown") {
   return markdownResponse(
@@ -120,10 +129,14 @@ const webPageNode = buildWebPageNode({
     <HomeMasthead
       eyebrow={data.heroEyebrow}
       title={data.heroTitle}
+      highlight={data.heroHighlight}
       lede={data.heroLede}
       cta={data.heroCta}
       ctaHref={blogHref}
+      sealPhrase={data.sealPhrase}
     />
+
+    <Ticker items={tickerItems} label={t(locale, "ticker.aria")} />
 
     <HomeTopics />
 
@@ -150,6 +163,7 @@ const webPageNode = buildWebPageNode({
                 href={postHref(p.entry.id)}
                 locale={locale}
                 artVariant={gridVariants[i]}
+                index={i + 2}
               />
             ))}
           </div>
@@ -179,6 +193,11 @@ const webPageNode = buildWebPageNode({
       gap: var(--space-7);
       max-width: 1080px;
       margin: 0 auto;
+    }
+    /* The ticker reads as a rule under the statement, so it loses the
+       column gap above it and keeps the one below. */
+    .home > :global(.ticker) {
+      margin-top: calc(-1 * var(--space-7));
     }
     .home__grid-section {
       display: flex;
