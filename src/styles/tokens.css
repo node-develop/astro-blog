@@ -1,24 +1,34 @@
-/* Editorial × Technical — single source of truth for visual tokens.
+/* Poster — single source of truth for visual tokens.
    Consumed by Tailwind 4 @theme in global.css and directly by components.
 
-   Phase 1 update (Refined Editorial / Direction A):
-   - Palette shifts from honeyed ochre to burnt-sienna editorial.
-   - Dark theme moved from prefers-color-scheme media query to
-     [data-theme="dark"] selector — see no-flash bootstrap in BaseLayout.
-   - Token NAMES are unchanged so Tailwind @theme keeps working.
+   Phase 1 (Poster redesign):
+   - Palette moves from burnt-sienna editorial to poster: ink + paper,
+     acid lime as a FILL, ultramarine as the text accent.
+   - Square by intent: every radius except the pill collapses to 0.
+   - Shadows are hard offsets in the ink colour, not soft blurs.
+   - Type pairing: Unbounded (display) + Golos Text (text). Both carry
+     Cyrillic; the previous Bricolage/Space Grotesk pairing from the
+     concept boards does not, and RU is the source of truth here.
+   - Token NAMES are unchanged so Tailwind @theme and ~180 existing
+     `font-mono` / `font-serif` call sites keep working. The names are
+     now historical: read --font-serif as "display" and --font-mono as
+     "label face". Renaming them is a separate, mechanical commit.
 */
 
 :root {
   /* ── Typography ───────────────────────────────────────────── */
-  --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  /* Decorative monospace — logo, eyebrows, labels, footer headings, numerals.
-     Deliberately system-only: these appear on pages that contain no code, and
-     a webfont here downloaded 52 KB of JetBrains Mono for pure ornament. */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* Display face — headlines, post titles, the wordmark. Poster type
+     lives at 46 to 132px, so this face is only ever set large. */
+  --font-serif: "Unbounded Variable", "Arial Black", ui-sans-serif, system-ui, sans-serif;
+  /* Text face — body copy, ledes, card descriptions. */
+  --font-sans: "Golos Text Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Label face — eyebrows, kickers, ticker, footer headings, meta rows.
+     Same family as the text face; caps plus --tracking-wide is what
+     makes a label a label in this system, not a different family. */
+  --font-mono: "Golos Text Variable", ui-sans-serif, system-ui, sans-serif;
   /* Real code only — code / pre / kbd / samp and the code-block chrome.
-     This is the ONLY token that names the JetBrains webfont, so the woff2 is
-     fetched only by pages that actually render code. */
+     The ONLY token naming the JetBrains webfont, so the woff2 is fetched
+     only by pages that actually render code. */
   --font-code:
     "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
@@ -27,39 +37,69 @@
   --fs-sm: 0.875rem;
   --fs-base: 1rem;
   --fs-md: 1.0625rem;
+  --fs-prose: 1.15rem; /* article body: the poster reads at 18.4px, not 17px */
   --fs-lg: 1.25rem;
   --fs-xl: 1.5rem;
   --fs-2xl: 1.875rem;
   --fs-3xl: 2.25rem;
   --fs-4xl: 2.75rem;
+  /* Poster additions — display sizes the old editorial scale never needed. */
+  --fs-5xl: 3.5rem; /* article title */
+  --fs-6xl: 4.5rem; /* about page name */
+  --fs-mega: clamp(2.875rem, 9vw, 8.25rem); /* home hero: 46px phone → 132px desktop */
 
+  --lh-mega: 0.85;
+  --lh-display: 0.95;
   --lh-tight: 1.15;
   --lh-snug: 1.3;
   --lh-normal: 1.55;
   --lh-relaxed: 1.7;
 
-  --tracking-tight: -0.015em;
+  --tracking-display: -0.04em; /* --fs-4xl and up */
+  --tracking-tight: -0.02em;
   --tracking-normal: 0;
-  --tracking-wide: 0.08em;
+  --tracking-wide: 0.14em; /* caps labels */
 
   /* ── Colors (paper / light — default) ─────────────────────── */
-  /* Refined Editorial: warm off-white, ink-deep text, single sienna accent. */
-  --color-bg: #f4efe6; /* paper */
-  --color-bg-elevated: #ede7da; /* card surface */
-  --color-bg-subtle: #e7dfcd; /* subtle wash, code blocks */
-  --color-fg: #1a1714; /* ink */
-  --color-fg-muted: #5a544c; /* secondary text */
-  --color-fg-subtle: #666059; /* tertiary, captions — AA (≥4.5:1) on bg, bg-elevated, bg-subtle */
-  --color-border: #d8cfb8; /* hairlines */
-  --color-border-strong: #b8ad94; /* emphasized dividers */
-  --color-accent: #a63409; /* burnt sienna — AA as text on accent-soft / bg-elevated */
-  --color-accent-hover: #8a2d07;
-  --color-accent-soft: #f0d9c5; /* sienna washed onto paper */
-  --color-accent-subtle: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  --color-danger: #c0392b;
+  --color-bg: #f3f1ea; /* paper */
+  --color-bg-elevated: #ffffff; /* slab surface */
+  --color-bg-subtle: #e9e6dd; /* subtle wash, code blocks */
+  --color-fg: #0b0b0b; /* ink */
+  --color-fg-muted: #4b4a45; /* secondary text — 7.9:1 on bg */
+  --color-fg-subtle: #5a5953; /* tertiary, captions — AA on bg, bg-elevated, bg-subtle */
+  --color-border: #d6d3c9; /* hairlines */
+  --color-border-strong: #0b0b0b; /* the 4px slab border — ink, not a tint */
 
-  /* Focus ring derived from accent, at AA contrast against bg. */
-  --color-focus-ring: color-mix(in srgb, var(--color-accent) 65%, transparent);
+  /* Accent = the colour text and links are allowed to wear. Ultramarine. */
+  --color-accent: #2a1ae0; /* 9.1:1 on bg-elevated, 7.3:1 on bg-subtle */
+  --color-accent-hover: #1a0fb0;
+  --color-accent-soft: #ddd9ff; /* ultramarine washed onto paper */
+  --color-accent-subtle: color-mix(in srgb, var(--color-accent) 12%, transparent);
+
+  /* Fills = the colours that carry other content but never carry themselves
+     as text. Every fill ships with its own ink.
+     One more rule that follows from that: a fill is a FIELD or a 4px slab,
+     never a hairline. Lime under running text at 1 or 2px is invisible on
+     paper and shouty in dark; underlines inside prose take the text colour,
+     and the lime stays on billboards, chips, tabs and --stroke-slab edges. */
+  --color-fill: #c2f000; /* acid lime — highlight word, featured slab, closing band */
+  --color-on-fill: #0b0b0b; /* 17:1 */
+  --color-fill-alt: #2a1ae0; /* ultramarine — ticker band, pull quote */
+  --color-on-fill-alt: #ffffff; /* 9.1:1 */
+
+  /* ── State ────────────────────────────────────────────────
+     Admin badges, form errors, revision diffs. These are FOREGROUND
+     colours: each clears 4.5:1 both on paper and on its own chip field
+     (the state colour mixed 18% into the surface), so a 12px caps label
+     stays legible in either place. They never carry text of their own,
+     so they need no `on-` ink. */
+  --color-danger: #9c2a1f; /* 6.7:1 on bg */
+  --color-success: #146a33; /* 5.9:1 on bg */
+  --color-warning: #7a4f00; /* 6.3:1 on bg */
+  --color-info: #0a5299; /* 6.9:1 on bg */
+
+  /* Focus ring is solid, not a wash: 2px of accent at 3:1 on every surface. */
+  --color-focus-ring: var(--color-accent);
 
   color-scheme: light;
 
@@ -74,15 +114,33 @@
   --space-8: 64px;
   --space-9: 96px;
 
-  /* ── Radii ────────────────────────────────────────────────── */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-pill: 999px;
+  /* ── Radii — square by intent ─────────────────────────────── */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 999px; /* avatars and the theme toggle knob only */
 
-  /* ── Shadows ──────────────────────────────────────────────── */
-  --shadow-soft: 0 1px 2px rgba(31, 27, 22, 0.04), 0 4px 12px rgba(31, 27, 22, 0.06);
-  --shadow-lifted: 0 2px 4px rgba(31, 27, 22, 0.06), 0 12px 32px rgba(31, 27, 22, 0.08);
+  /* ── Strokes ──────────────────────────────────────────────── */
+  --stroke-hair: 1px; /* rules between rows */
+  --stroke-bold: 2px; /* focus ring, active underline on mobile */
+  --stroke-slab: 4px; /* slab borders, the underline under a live link */
+
+  /* ── Shadows — hard offsets, no blur ──────────────────────── */
+  /* A hard shadow only reads as depth when it is DIMMER than the thing
+     casting it. On paper that is automatic: an ink shadow under a paper
+     slab in an ink frame is the darkest value on the page. Inverted it
+     stops working — a paper shadow beside a paper frame is the same value,
+     the two fuse, and every card grows a thick ragged light edge on its
+     bottom-right. So the shadow gets its own colour rather than borrowing
+     --color-fg, and in dark that colour is a mid grey: 3.1:1 on the page
+     (a shape you can see) and 5.6:1 against the frame (a step you cannot
+     miss). Do NOT set this back to --color-fg. */
+  --color-shadow: var(--color-fg);
+
+  --shadow-soft: 6px 6px 0 var(--color-shadow);
+  --shadow-lifted: 10px 10px 0 var(--color-shadow);
+  --shadow-press: 3px 3px 0 var(--color-shadow);
+  --shadow-hard-fill: 10px 10px 0 var(--color-fill); /* the one featured slab per page */
 
   /* ── Layout ───────────────────────────────────────────────── */
   --col-sidebar: 240px;
@@ -94,30 +152,45 @@
   /* ── Motion ───────────────────────────────────────────────── */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --dur-fast: 120ms;
+  --ease-poster: cubic-bezier(0.16, 1, 0.3, 1); /* entrances: overshoot-free, fast start */
+  --dur-fast: 160ms; /* hover, focus, press */
   --dur-base: 200ms;
   --dur-slow: 320ms;
+  --dur-entrance: 700ms; /* clipped line reveals, slab entrances */
 }
 
 /* ── Colors (dark) — explicit toggle via [data-theme="dark"] ────────────────
-   No more prefers-color-scheme; the no-flash bootstrap in BaseLayout reads
-   localStorage('artka-theme') and sets this attribute before first paint. */
+   The no-flash bootstrap in BaseLayout reads localStorage('artka-theme')
+   and sets this attribute before first paint. Paper stays the default. */
 :root[data-theme="dark"] {
-  --color-bg: #16140f; /* warm off-black */
-  --color-bg-elevated: #1f1c16;
-  --color-bg-subtle: #2a261e;
-  --color-fg: #e8e2d4;
-  --color-fg-muted: #9a9388;
-  --color-fg-subtle: #948d80; /* AA on every dark surface */
-  --color-border: #2e2a22;
-  --color-border-strong: #3f3a30;
-  --color-accent: #e87a4d; /* lifted sienna for dark */
-  --color-accent-hover: #f29067;
-  --color-accent-soft: #3a2418;
+  --color-bg: #0b0b0b;
+  --color-bg-elevated: #161616;
+  --color-bg-subtle: #1e1e1e;
+  --color-fg: #f5f3ec;
+  --color-fg-muted: #a3a097; /* 7.5:1 on bg, 6.9:1 on bg-elevated */
+  --color-fg-subtle: #918e86; /* 6.0:1 on bg, 5.1:1 on bg-subtle */
+  --color-border: #2a2a2a;
+  --color-border-strong: #f5f3ec;
+
+  /* Ultramarine is too dark to read on black, so the accent is lifted.
+     The saturated blue survives as --color-fill-alt, where it is a fill. */
+  --color-accent: #8a7eff; /* 6.1:1 on bg, 5.2:1 on bg-subtle */
+  --color-accent-hover: #a79dff;
+  --color-accent-soft: #221a5e;
   --color-accent-subtle: color-mix(in srgb, var(--color-accent) 18%, transparent);
-  --color-danger: #e55c4f;
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --color-fill: #ccff00;
+  --color-on-fill: #0b0b0b;
+  --color-fill-alt: #3a2bff;
+  --color-on-fill-alt: #ffffff; /* 7.1:1 */
+
+  /* See --color-shadow above: a cream shadow beside a cream frame fuses. */
+  --color-shadow: #63605a; /* 3.1:1 on bg, 5.6:1 against the frame */
+
+  --color-danger: #e55c4f; /* 5.6:1 on bg */
+  --color-success: #5fd68a; /* 10.8:1 on bg */
+  --color-warning: #e8b04b; /* 10.1:1 on bg */
+  --color-info: #7fb3ff; /* 9.2:1 on bg */
   color-scheme: dark;
 }
 
@@ -126,11 +199,12 @@
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-slow: 0ms;
+    --dur-entrance: 0ms;
   }
 }
 
 /* ── Selection ─────────────────────────────────────────────── */
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background: var(--color-fill);
+  color: var(--color-on-fill);
 }
