@@ -17,13 +17,21 @@
  * site at once and is invisible in the HTML, so `scripts/verify-seo-build.ts`
  * fails the build on any person-shaped string literal under `src/lib/og/`.
  *
- * Fonts live in `src/assets/og-fonts/` (build-only — never served publicly
- * from `public/`); the renderer needs the binary, not a CSS @font-face.
- * Every caller here runs at build time (SSG, no `prerender = false`), so the
- * font files never need to exist in the runtime Docker image.
+ * Fonts live in `src/assets/og-fonts/` (never served publicly from
+ * `public/`); the renderer needs the binary, not a CSS @font-face. Every
+ * caller *here* runs at build time (SSG, no `prerender = false`). The same
+ * four files are read at runtime by the one non-prerendered Satori route,
+ * `/courses/<slug>/certificate.png`, which is why the Dockerfile copies that
+ * directory into the runtime image.
  *
- * Layout: 1200×630, paper bg, sienna rule, Source Serif 4 title,
- * JetBrains Mono eyebrow, Inter byline. Follows Direction A.
+ * Layout: 1200×630 poster billboard — lime ground in a thick ink frame,
+ * Unbounded title, Golos Text eyebrow and byline. The card is the article's
+ * own header, reused at share size.
+ *
+ * Fontsource ships one file per subset, and satori needs the binary, so each
+ * family is registered twice (latin + cyrillic) and referenced as a
+ * `fontFamily` list. Satori walks that list per glyph, which is what keeps a
+ * Russian title from rendering as tofu.
  */
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
@@ -43,9 +51,10 @@ export interface OgInput {
 }
 
 interface FontBuffers {
-  readonly serifBold: Buffer;
-  readonly mono: Buffer;
-  readonly sans: Buffer;
+  readonly displayLatin: Buffer;
+  readonly displayCyrillic: Buffer;
+  readonly textLatin: Buffer;
+  readonly textCyrillic: Buffer;
 }
 
 let fontCache: FontBuffers | null = null;
@@ -55,21 +64,46 @@ const loadFonts = async (): Promise<FontBuffers> => {
   const root = process.cwd();
   const dir = join(root, "src", "assets", "og-fonts");
   fontCache = {
-    serifBold: await readFile(join(dir, "SourceSerif4-SemiBold.ttf")),
-    mono: await readFile(join(dir, "JetBrainsMono-Medium.ttf")),
-    sans: await readFile(join(dir, "Inter-Regular.ttf")),
+    displayLatin: await readFile(join(dir, "Unbounded-ExtraBold.ttf")),
+    displayCyrillic: await readFile(join(dir, "Unbounded-ExtraBold-Cyrillic.ttf")),
+    textLatin: await readFile(join(dir, "GolosText-Medium.ttf")),
+    textCyrillic: await readFile(join(dir, "GolosText-Medium-Cyrillic.ttf")),
   };
   return fontCache;
 };
 
-// Direction A palette — keep in sync with tokens.css
+// Poster palette — keep in sync with tokens.css. A card cannot read custom
+// properties, so these are the only hard-coded colours in the system.
 const COLORS = {
-  bg: "#f4efe6",
-  fg: "#1c1916",
-  fgMuted: "#5d574e",
-  accent: "#c2410c",
-  border: "#d6cdbf",
+  fill: "#c2f000",
+  ink: "#0b0b0b",
+  inkMuted: "rgba(11, 11, 11, 0.72)",
 } as const;
+
+/**
+ * Satori family identifiers. These are internal handles — the only contract
+ * is that `fonts[].name` below matches what `fontFamily` asks for; nothing
+ * here reaches the rendered card. So they are deliberately NOT spelled the
+ * way the foundry spells them, with a space between two capitalised words:
+ * that is exactly the shape scripts/verify-seo-build.ts fails the build on
+ * under src/lib/og/, because the guard exists to stop a stranger's name
+ * shipping on every social card. Hyphen and camel forms cost nothing and keep
+ * the guard strict instead of widening its allowlist.
+ */
+const DISPLAY_FAMILY = "Unbounded, Unbounded-Cyr";
+const TEXT_FAMILY = "GolosText, GolosText-Cyr";
+
+/**
+ * Satori implements no line-clamp and no auto-fit, so an over-long title
+ * would simply run off the card. The size steps down with the character
+ * count instead — the same approach the home masthead uses, for the same
+ * reason: the copy is editor-supplied and cannot be trusted to be short.
+ */
+const titleSize = (title: string): string => {
+  if (title.length <= 40) return "68px";
+  if (title.length <= 72) return "54px";
+  return "42px";
+};
 
 /**
  * Satori element tree of a card. Exported so the byline rule (default =
@@ -83,13 +117,14 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
       flexDirection: "column",
       width: "1200px",
       height: "630px",
-      background: COLORS.bg,
-      padding: "72px 80px",
+      background: COLORS.fill,
+      border: `14px solid ${COLORS.ink}`,
+      padding: "52px 60px",
       position: "relative",
-      fontFamily: "Inter",
+      fontFamily: TEXT_FAMILY,
     },
     children: [
-      // Top rule + eyebrow
+      // Slab marker + eyebrow
       {
         type: "div",
         props: {
@@ -97,7 +132,7 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
             display: "flex",
             alignItems: "center",
             gap: "16px",
-            marginBottom: "40px",
+            marginBottom: "36px",
           },
           children: [
             {
@@ -105,8 +140,8 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
               props: {
                 style: {
                   width: "40px",
-                  height: "2px",
-                  background: COLORS.accent,
+                  height: "6px",
+                  background: COLORS.ink,
                 },
               },
             },
@@ -114,11 +149,11 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
               type: "div",
               props: {
                 style: {
-                  fontFamily: "JetBrains Mono",
+                  fontFamily: TEXT_FAMILY,
                   fontSize: "20px",
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  color: COLORS.accent,
+                  color: COLORS.ink,
                   fontWeight: 500,
                 },
                 children: input.eyebrow ?? OG_BRAND_UPPER,
@@ -132,17 +167,15 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
         type: "div",
         props: {
           style: {
-            fontFamily: "Source Serif 4",
-            fontWeight: 600,
-            fontSize: "72px",
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
-            color: COLORS.fg,
+            fontFamily: DISPLAY_FAMILY,
+            fontWeight: 800,
+            fontSize: titleSize(input.title),
+            lineHeight: 1.03,
+            letterSpacing: "-0.03em",
+            color: COLORS.ink,
             display: "flex",
             flex: "1 1 auto",
             alignItems: "flex-start",
-            // Satori does not implement CSS line-clamp; titles longer
-            // than ~3 lines will overflow. Keep titles under ~80 chars.
           },
           children: input.title,
         },
@@ -155,12 +188,12 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-end",
-            marginTop: "40px",
-            paddingTop: "24px",
-            borderTop: `1px solid ${COLORS.border}`,
-            fontFamily: "Inter",
+            marginTop: "36px",
+            paddingTop: "22px",
+            borderTop: `4px solid ${COLORS.ink}`,
+            fontFamily: TEXT_FAMILY,
             fontSize: "22px",
-            color: COLORS.fgMuted,
+            color: COLORS.inkMuted,
           },
           children: [
             {
@@ -171,9 +204,11 @@ export const ogTree = (input: OgInput): Record<string, unknown> => ({
               type: "div",
               props: {
                 style: {
-                  fontFamily: "JetBrains Mono",
-                  letterSpacing: "0.04em",
-                  color: COLORS.fg,
+                  fontFamily: DISPLAY_FAMILY,
+                  fontWeight: 800,
+                  letterSpacing: "-0.02em",
+                  textTransform: "uppercase",
+                  color: COLORS.ink,
                 },
                 children: OG_BRAND,
               },
@@ -191,9 +226,10 @@ export const renderOg = async (input: OgInput): Promise<Buffer> => {
     width: 1200,
     height: 630,
     fonts: [
-      { name: "Source Serif 4", data: fonts.serifBold, weight: 600, style: "normal" },
-      { name: "JetBrains Mono", data: fonts.mono, weight: 500, style: "normal" },
-      { name: "Inter", data: fonts.sans, weight: 400, style: "normal" },
+      { name: "Unbounded", data: fonts.displayLatin, weight: 800, style: "normal" },
+      { name: "Unbounded-Cyr", data: fonts.displayCyrillic, weight: 800, style: "normal" },
+      { name: "GolosText", data: fonts.textLatin, weight: 500, style: "normal" },
+      { name: "GolosText-Cyr", data: fonts.textCyrillic, weight: 500, style: "normal" },
     ],
   });
   const resvg = new Resvg(svg, {

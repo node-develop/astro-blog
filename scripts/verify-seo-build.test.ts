@@ -70,7 +70,7 @@ describe("assertSeoBuildOutput", () => {
 describe("assertOgAuthorNames", () => {
   const CLEAN_OG_IMAGE = [
     'import { person } from "~/lib/seo/person";',
-    'const fonts = ["Source Serif 4", "JetBrains Mono", "Inter"];',
+    'const fonts = ["Unbounded", "Unbounded-Cyr", "GolosText", "GolosText-Cyr"];',
     "export const byline = (override?: string): string => override ?? person.name;",
     "export { fonts };",
     "",
@@ -132,11 +132,28 @@ describe("assertOgAuthorNames", () => {
     );
   });
 
-  it("does not flag the Satori font-family literal", async () => {
-    await write("src/lib/og/fonts.ts", 'export const title = "Source Serif 4";\n');
+  /**
+   * A Satori family name is an internal handle, so the renderer spells its
+   * handles with a hyphen or in camel case. These two cases pin that
+   * convention from both sides: the spellings in use stay silent, and the
+   * foundry spelling is still a failure rather than a standing allowlist
+   * entry — the guard has no idea whether two capitalised words are a
+   * typeface or a stranger, and it must not have to guess.
+   */
+  it("does not flag the Satori font-family handles the renderer uses", async () => {
+    await write("src/lib/og/fonts.ts", 'export const title = "GolosText-Cyr";\n');
     await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
 
     expect(await assertOgAuthorNames(["src/lib/og"], root)).toEqual([]);
+  });
+
+  it("still flags a font family spelled as two capitalised words", async () => {
+    await write("src/lib/og/fonts.ts", 'export const title = "Source Serif 4";\n');
+    await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
+
+    expect(await assertOgAuthorNames(["src/lib/og"], root).then((i) => i.join("\n"))).toContain(
+      "Source Serif",
+    );
   });
 
   // Built in code so no editor or formatter can quietly turn it into a space.
