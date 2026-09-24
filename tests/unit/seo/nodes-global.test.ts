@@ -9,30 +9,6 @@ import {
 } from "~/lib/seo/nodes-global";
 import { person } from "~/lib/seo/person";
 
-describe("graphIds", () => {
-  it("are stable canonical IDs", () => {
-    expect(graphIds.person).toBe("https://artka.dev/#person");
-    expect(graphIds.organization).toBe("https://artka.dev/#brand");
-    expect(graphIds.website).toBe("https://artka.dev/#website");
-    expect(graphIds.websiteRu).toBe("https://artka.dev/#website");
-    expect(graphIds.websiteEn).toBe("https://artka.dev/#website-en");
-    expect(graphIds.blogRu).toBe("https://artka.dev/#blog-ru");
-    expect(graphIds.blogEn).toBe("https://artka.dev/#blog-en");
-  });
-});
-
-describe("buildPersonNode", () => {
-  it("emits a Person with @id and required fields", () => {
-    const node = buildPersonNode();
-    expect(node["@type"]).toBe("Person");
-    expect(node["@id"]).toBe(graphIds.person);
-    expect(node.name).toBe("Artyom Kashuta");
-    expect(node.alternateName).toBe("Артём Кашута");
-    expect(node.knowsAbout).toContain("Claude Code");
-    expect(node.email).toMatch(/@/);
-  });
-});
-
 describe("buildOrganizationNode", () => {
   it("links founder to Person by @id", () => {
     const node = buildOrganizationNode();

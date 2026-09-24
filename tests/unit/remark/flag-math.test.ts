@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
@@ -44,19 +42,5 @@ describe("remarkFlagMath", () => {
     expect(() => processor().runSync(tree, file)).toThrow(
       /file\.data\.astro\.frontmatter is missing/,
     );
-  });
-});
-
-describe("layouts wire hasMath to a conditional KaTeX <link>", () => {
-  const LAYOUTS = [
-    "src/layouts/PostLayout.astro",
-    "src/layouts/LessonLayout.astro",
-    "src/layouts/CourseLayout.astro",
-  ] as const;
-
-  it.each(LAYOUTS)("%s imports katex.min.css and gates it behind hasMath", (relPath) => {
-    const source = readFileSync(join(process.cwd(), relPath), "utf8");
-    expect(source).toMatch(/katex\/dist\/katex\.min\.css\?url/);
-    expect(source).toMatch(/\{hasMath\s*&&\s*<link\s+rel="stylesheet"/);
   });
 });

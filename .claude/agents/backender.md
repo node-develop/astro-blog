@@ -56,7 +56,7 @@ memory: read-write
 
 1. `pnpm typecheck` — без ошибок
 2. `pnpm lint` — чистый
-3. Unit-тест для новой функции в `tests/unit/`
+3. Тесты — по скиллу `write-tests`: только если есть поведение, которое может сломаться и которое не ловят typecheck / Zod / build. Чистая логика → `src/**/x.test.ts` рядом с модулем (`pnpm test`); запросы, Actions, блокировки → `tests/integration/` (`pnpm test:db`). Не дублировать лимиты Zod-схем и не проверять, что мок вызван.
 4. Если менял схему — `pnpm db:generate` и коммит файлов миграции
 5. `.env.example` обновлён, если добавил новые env-vars
 

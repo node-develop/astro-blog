@@ -6,6 +6,13 @@ name: Build & publish Docker image
     tags: ["v*.*.*"]
   workflow_dispatch:
 
+# Releases queue instead of cancelling each other: every push to main must reach
+# Dokploy in order. The prefix differs from ci.yml's so the called workflow can
+# never wait on its own caller.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}

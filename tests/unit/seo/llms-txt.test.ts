@@ -1,5 +1,7 @@
 import type { APIContext } from "astro";
 import { describe, expect, it } from "vitest";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
 import { GET, prerender } from "../../../src/pages/llms.txt";
 import { buildLlmsTxt, type LlmsInput } from "~/lib/agents/llms";
 
@@ -89,15 +91,32 @@ describe("buildLlmsTxt", () => {
     expect(content).toContain("https://artka.dev/rss.xml");
     expect(content).toContain("https://artka.dev/en/rss.xml");
     expect(content).toContain("https://artka.dev/llms-full.txt");
+    expect(content).toContain("https://artka.dev/contact/");
+    expect(content).toContain("https://artka.dev/privacy/");
   });
 
-  it("declares the preferred attribution string", () => {
-    expect(content).toMatch(/preferred attribution/i);
-    expect(content).toContain("Артём Кашута");
-  });
-
-  it("no longer makes claims the site cannot back", () => {
-    expect(content).not.toMatch(/every post in one file/i);
+  it("follows llms.txt ordering and reserves H2 sections for linked file lists", () => {
+    const tree = unified().use(remarkParse).parse(content);
+    expect(tree.children[0]).toMatchObject({ type: "heading", depth: 1 });
+    expect(tree.children[1]?.type).toBe("blockquote");
+    const firstSection = tree.children.findIndex(
+      (node) => node.type === "heading" && node.depth === 2,
+    );
+    expect(firstSection).toBeGreaterThan(1);
+    for (const node of tree.children.slice(firstSection)) {
+      if (node.type === "heading") {
+        expect(node.depth).toBe(2);
+      } else {
+        expect(node.type).toBe("list");
+        if (node.type !== "list") continue;
+        for (const item of node.children) {
+          expect(item.children[0]).toMatchObject({
+            type: "paragraph",
+            children: expect.arrayContaining([expect.objectContaining({ type: "link" })]),
+          });
+        }
+      }
+    }
   });
 });
 

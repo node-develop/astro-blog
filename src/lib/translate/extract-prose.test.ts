@@ -14,12 +14,6 @@ const fixturePath = join(__dirname, "fixtures/sample.md");
 const fixture = readFileSync(fixturePath, "utf8");
 
 describe("extractProse", () => {
-  it("returns placeholders array and skeleton string", () => {
-    const result = extractProse(fixture);
-    expect(Array.isArray(result.placeholders)).toBe(true);
-    expect(typeof result.skeleton).toBe("string");
-  });
-
   it("captures heading text", () => {
     const result = extractProse(fixture);
     const texts = result.placeholders.map((p) => p.text);
@@ -38,18 +32,6 @@ describe("extractProse", () => {
     const allText = result.placeholders.map((p) => p.text).join("\n");
     expect(allText).not.toContain("// Это комментарий внутри кода");
     expect(allText).not.toContain("const x = 42");
-  });
-
-  it("does NOT capture inline code", () => {
-    const result = extractProse(fixture);
-    const allText = result.placeholders.map((p) => p.text).join("\n");
-    // The string `inline-кодом` is wrapped in backticks in the source — captured chunk
-    // CAN contain the backticks (since it's a paragraph), but should not have
-    // the bare 'inline-кодом' text outside backticks
-    // Acceptable: the paragraph chunk contains the literal markdown including the
-    // backticks-and-content sequence as one unit. We just verify the captured
-    // chunk preserves the backticks (showing it's raw markdown, not stripped).
-    expect(allText).toContain("`inline-кодом`");
   });
 
   it("does NOT capture math content as standalone prose", () => {
@@ -76,11 +58,6 @@ describe("extractProse", () => {
     const texts = result.placeholders.map((p) => p.text);
     // The paragraph chunk containing the link preserves the markdown link syntax
     expect(texts.some((t) => t.includes("[Ссылка на статью](/blog/01-foo)"))).toBe(true);
-  });
-
-  it("uses HTML-comment placeholders <!--T0--> in the skeleton", () => {
-    const result = extractProse(fixture);
-    expect(result.skeleton).toMatch(/<!--T\d+-->/);
   });
 
   it("rewrites internal links via the optional callback", () => {

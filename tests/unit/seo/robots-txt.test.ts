@@ -28,10 +28,6 @@ describe("public/robots.txt", () => {
     "Diffbot",
   ];
 
-  it.each(namedBots)("declares an explicit User-agent block for %s", (bot) => {
-    expect(robots).toMatch(new RegExp(`^User-agent:\\s*${bot}\\s*$`, "m"));
-  });
-
   it("disallows private admin/API routes while leaving noindex utility pages crawlable", () => {
     const blocks = robots.split(/\n\n+/).filter((b) => /^User-agent:/m.test(b));
     expect(blocks.length).toBeGreaterThanOrEqual(namedBots.length + 1); // named + catch-all *

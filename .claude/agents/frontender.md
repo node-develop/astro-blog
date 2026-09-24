@@ -59,6 +59,7 @@ memory: read-write
 3. Lighthouse in DevTools: Perf ≥ 90, A11y = 100. **If Perf < 90, stop and report the concrete bottleneck (LCP/CLS/TBT with the actual number) to the user. Do not mark the task done.** No "we'll tune it later".
 4. Verified manually in the browser (light/dark theme, mobile).
 5. If styles were touched, `global.css` still imports cleanly.
+6. Tests — only per the `write-tests` skill. Markup/SEO changes are verified on the output (`tests/built`, after `pnpm build`), never by `readFileSync`-ing an `.astro`/`.css` file and regex-matching it (the `test-guard` hook blocks that). A user-visible flow no lower layer can cover → extend an existing `tests/e2e` spec.
 
 ## Запреты
 

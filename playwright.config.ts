@@ -22,11 +22,11 @@ export default defineConfig({
     // mobile-overflow tests only need a narrow viewport, not Safari rendering.
     {
       name: "iphone-se",
-      // Public-site specs only: the admin editor is a desktop tool (CodeMirror
-      // island, mouse drag-and-drop reorder) whose Save button never settles as
-      // "stable" under touch emulation; phone support for /admin is not a
+      // Only the specs that are about the narrow viewport. Everything else is
+      // viewport-independent and already runs once in "chromium"; the admin
+      // editor is a desktop tool and phone support for /admin is not a
       // requirement this suite enforces.
-      testIgnore: /admin-.*\.spec\.ts$/,
+      testMatch: /(mobile-overflow|navigation)\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 375, height: 667 },

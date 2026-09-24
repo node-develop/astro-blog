@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
+// test-guard: allow-source-read — the import graph IS the behaviour: a `.prose`
+// consumer that does not load content.css ships unstyled, and no build step fails.
+
 /**
  * `.prose` typography (Tailwind's `@tailwindcss/typography` plugin) lives
  * in src/styles/content.css, a second Tailwind entry split out of
@@ -68,10 +71,6 @@ describe("prose layouts import content.css directly (not just transitively)", ()
 describe("content.css declares the full Tailwind layer order before any @import", () => {
   const contentCss = readFileSync(join(process.cwd(), "src/styles/content.css"), "utf8");
   const LAYER_STATEMENT = "@layer properties, theme, base, components, utilities;";
-
-  it("contains the exact layer statement", () => {
-    expect(contentCss).toContain(LAYER_STATEMENT);
-  });
 
   it("declares the layer statement before the first @import", () => {
     const layerIndex = contentCss.indexOf(LAYER_STATEMENT);

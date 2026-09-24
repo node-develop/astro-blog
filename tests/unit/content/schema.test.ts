@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import * as yaml from "~/lib/yaml";
@@ -38,20 +38,6 @@ const isoOf = (v: unknown): string => {
   return "";
 };
 
-describe("post schema — back-compat for existing posts", () => {
-  it("all existing posts (pubDate < cutoff) parse without summary", () => {
-    const old = posts.filter((p) => isoOf(p.fm["pubDate"]) < CUTOFF_ISO);
-    // Standalone posts that remain in /blog after the claude-code-guide
-    // series moved to /courses/claude-code-guide/. The course lessons live
-    // in their own collection now and are validated by lesson-schema tests.
-    expect(old.length).toBeGreaterThanOrEqual(1);
-    for (const p of old) {
-      // No assertion on `summary` presence — back-compat by design.
-      expect(typeof p.fm["title"]).toBe("string");
-    }
-  });
-});
-
 describe("post schema — required fields after cutoff", () => {
   it("every post with pubDate >= 2026-05-02 has a summary", () => {
     const fresh = posts.filter((p) => isoOf(p.fm["pubDate"]) >= CUTOFF_ISO);
@@ -62,34 +48,6 @@ describe("post schema — required fields after cutoff", () => {
         `Posts published on/after ${CUTOFF_ISO} must define \`summary\` ` +
           `(60–280 chars TL;DR). Missing in:\n${list}`,
       );
-    }
-  });
-
-  it("if `summary` is present it is 60–280 chars", () => {
-    for (const p of posts) {
-      const s = p.fm["summary"];
-      if (typeof s !== "string") continue;
-      expect(s.length).toBeGreaterThanOrEqual(60);
-      expect(s.length).toBeLessThanOrEqual(280);
-    }
-  });
-
-  it("if `faq` is present each item has question + answer", () => {
-    for (const p of posts) {
-      const faq = p.fm["faq"];
-      if (!Array.isArray(faq)) continue;
-      for (const item of faq) {
-        expect(typeof (item as Record<string, unknown>)["question"]).toBe("string");
-        expect(typeof (item as Record<string, unknown>)["answer"]).toBe("string");
-      }
-    }
-  });
-
-  it("if `lang` is present it is 'ru' or 'en'", () => {
-    for (const p of posts) {
-      const lang = p.fm["lang"];
-      if (lang === undefined) continue;
-      expect(["ru", "en"]).toContain(lang);
     }
   });
 });

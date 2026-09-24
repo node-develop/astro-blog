@@ -111,6 +111,26 @@ describe("locale sitemap inventory", () => {
     expect(locations.slice(7)).toEqual([...locations.slice(7)].sort());
   });
 
+  it("includes localized contact and privacy pages even with no content", () => {
+    const empty = (locale: "ru" | "en"): SitemapInput => ({
+      locale,
+      posts: [],
+      courseEntries: [],
+      lessonEntries: [],
+      projectEntries: [],
+      tagGroups: new Map(),
+    });
+    const ruUrls = buildLocaleSitemapEntries(empty("ru")).map((entry) => entry.loc);
+    const enUrls = buildLocaleSitemapEntries(empty("en")).map((entry) => entry.loc);
+
+    expect(ruUrls).toEqual(
+      expect.arrayContaining(["https://artka.dev/contact/", "https://artka.dev/privacy/"]),
+    );
+    expect(enUrls).toEqual(
+      expect.arrayContaining(["https://artka.dev/en/contact/", "https://artka.dev/en/privacy/"]),
+    );
+  });
+
   it("rejects duplicate canonical locations", () => {
     const input = localeInput("ru");
     expect(() =>

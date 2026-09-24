@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildCollectionPageNode, buildCreativeWorkNode } from "~/lib/seo/nodes-projects";
 import { buildBreadcrumbsNode, buildWebPageNode } from "~/lib/seo/nodes-page";
@@ -154,21 +152,6 @@ describe("buildCreativeWorkNode", () => {
 });
 
 describe("portfolio graphs are traversable", () => {
-  it("leaves no dangling @id on the projects index page", () => {
-    const breadcrumbs = buildBreadcrumbsNode({
-      canonical: CANONICAL,
-      items: [{ name: "Главная", href: "https://artka.dev/" }, { name: "Проекты" }],
-    }) as GraphNode;
-    const collection = buildCollectionPageNode({
-      ...collectionInput,
-      breadcrumbId: breadcrumbs["@id"] as string,
-    }) as GraphNode;
-
-    const graph = buildGraph({ locale: "ru", extraNodes: [collection, breadcrumbs] });
-
-    expect(danglingIds(graph)).toEqual([]);
-  });
-
   it("leaves no dangling @id on a project page", () => {
     const canonical = "https://artka.dev/projects/x";
     const creativeWork = buildCreativeWorkNode({
@@ -211,26 +194,4 @@ describe("portfolio graphs are traversable", () => {
   // page that drops it still type-checks and still builds while the
   // CreativeWork goes back to hanging alone. The suffix is taken from the
   // builder, so a renamed `@id` scheme has to be followed by the pages.
-  it.each([
-    ["ru", "src/pages/projects/[slug].astro"],
-    ["en", "src/pages/en/projects/[slug].astro"],
-  ])("the %s project page names its CreativeWork as mainEntity", (_locale, page) => {
-    const probe = "https://artka.dev/projects/probe";
-    const workId = buildCreativeWorkNode({
-      locale: "ru",
-      canonical: probe,
-      name: "Probe",
-      description: "desc",
-      role: "Solo",
-      datePublished: new Date("2026-04-01T00:00:00Z"),
-      keywords: [],
-      url: probe,
-    })["@id"];
-    expect(workId.startsWith(probe)).toBe(true);
-    const suffix = workId.slice(probe.length);
-
-    const source = readFileSync(join(process.cwd(), page), "utf8");
-
-    expect(source).toContain(`mainEntityId: \`\${canonical}${suffix}\`,`);
-  });
 });

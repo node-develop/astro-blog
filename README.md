@@ -26,23 +26,24 @@ pnpm dev           # http://localhost:4321
 
 ## Команды
 
-| Команда                      | Что делает                                    |
-| ---------------------------- | --------------------------------------------- |
-| `pnpm dev`                   | Dev-сервер                                    |
-| `pnpm build`                 | Прод-билд в `dist/`                           |
-| `pnpm preview`               | Локальный просмотр прод-билда                 |
-| `pnpm typecheck`             | `astro sync` + `astro check` + `tsc --noEmit` |
-| `pnpm lint`                  | ESLint + Prettier check                       |
-| `pnpm format`                | Prettier fix                                  |
-| `pnpm test`                  | Vitest (unit + integration)                   |
-| `pnpm test:production-smoke` | Smoke standalone-сервера из `dist/`           |
-| `pnpm verify:seo-build`      | Билд + проверка вывода на SEO-регрессии       |
-| `pnpm test:e2e`              | Playwright                                    |
-| `pnpm translate`             | Сгенерировать EN-двойники                     |
-| `pnpm translate:check`       | Проверить актуальность EN (CI)                |
-| `pnpm db:generate`           | Сгенерировать миграцию из схемы               |
-| `pnpm db:migrate`            | Применить миграции                            |
-| `pnpm db:studio`             | drizzle-kit studio                            |
+| Команда                 | Что делает                                              |
+| ----------------------- | ------------------------------------------------------- |
+| `pnpm dev`              | Dev-сервер                                              |
+| `pnpm build`            | Прод-билд в `dist/`                                     |
+| `pnpm preview`          | Локальный просмотр прод-билда                           |
+| `pnpm typecheck`        | `astro sync` + `astro check` + `tsc --noEmit`           |
+| `pnpm lint`             | ESLint + Prettier check                                 |
+| `pnpm format`           | Prettier fix                                            |
+| `pnpm test`             | Vitest: unit (без билда и Docker)                       |
+| `pnpm test:built`       | Собранный сайт и standalone-сервер (после `pnpm build`) |
+| `pnpm test:db`          | Postgres-сьюты через Testcontainers (нужен Docker)      |
+| `pnpm verify:seo-build` | Билд + проверка вывода на SEO-регрессии                 |
+| `pnpm test:e2e`         | Playwright                                              |
+| `pnpm translate`        | Сгенерировать EN-двойники                               |
+| `pnpm translate:check`  | Проверить актуальность EN (CI)                          |
+| `pnpm db:generate`      | Сгенерировать миграцию из схемы                         |
+| `pnpm db:migrate`       | Применить миграции                                      |
+| `pnpm db:studio`        | drizzle-kit studio                                      |
 
 ## Публикация статьи
 

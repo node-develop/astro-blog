@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
-# pre-push: полная проверка перед отправкой в remote.
-# CI зеркалит lint+typecheck+test; запускаем те же шаги локально, чтобы push не валил CI.
+# pre-push: то же, что CI-джоб `checks` (lint → typecheck → translate:check → unit).
+# Билд + tests/built (`pnpm verify:seo-build && pnpm test:built`) и Postgres-сьюты
+# (`pnpm test:db`, нужен Docker) гоняет CI; локально — по необходимости, билд первым.
 set -e
 
 echo "▶ lint (eslint + prettier)"
@@ -12,10 +13,7 @@ pnpm typecheck
 echo "▶ translate:check (RU/EN sync)"
 pnpm translate:check
 
-echo "▶ vitest"
+echo "▶ unit tests"
 pnpm test
-
-echo "▶ astro build"
-pnpm build
 
 echo "✅ pre-push checks passed"

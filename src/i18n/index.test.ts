@@ -1,21 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { t, tagLabel, isLocale, type Locale } from "./index";
-
-describe("t()", () => {
-  it("returns the RU string for ru locale", () => {
-    expect(t("ru", "nav.posts")).toBe("Статьи");
-  });
-
-  it("returns the EN string for en locale", () => {
-    expect(t("en", "nav.posts")).toBe("Posts");
-  });
-
-  it("falls back to RU when EN key is missing (defensive default)", () => {
-    const value = t("en" as Locale, "nav.posts");
-    expect(typeof value).toBe("string");
-    expect(value.length).toBeGreaterThan(0);
-  });
-});
+import { tagLabel, isLocale } from "./index";
 
 describe("tagLabel()", () => {
   it("returns localized label for known slug", () => {

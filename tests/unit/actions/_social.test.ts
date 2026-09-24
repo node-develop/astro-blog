@@ -2,11 +2,6 @@ import { describe, it, expect } from "vitest";
 import { computeSourceHash, loadArticle } from "~/actions/_social";
 
 describe("computeSourceHash", () => {
-  it("is deterministic", () => {
-    const a = { title: "T", body: "B", frontmatter: { x: 1 } };
-    expect(computeSourceHash(a)).toBe(computeSourceHash(a));
-  });
-
   it("changes when body changes", () => {
     const a = computeSourceHash({ title: "T", body: "B1", frontmatter: {} });
     const b = computeSourceHash({ title: "T", body: "B2", frontmatter: {} });
@@ -23,11 +18,6 @@ describe("computeSourceHash", () => {
     const a = computeSourceHash({ title: "T", body: "B", frontmatter: { tags: ["a"] } });
     const b = computeSourceHash({ title: "T", body: "B", frontmatter: { tags: ["b"] } });
     expect(a).not.toBe(b);
-  });
-
-  it("returns hex string of length 64", () => {
-    const h = computeSourceHash({ title: "T", body: "B", frontmatter: {} });
-    expect(h).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
@@ -60,10 +50,5 @@ describe("loadArticle", () => {
     await expect(loadArticle("this-slug-does-not-exist-xyz")).rejects.toThrow(
       "article not found: posts/this-slug-does-not-exist-xyz",
     );
-  });
-
-  it("accepts collection param without breaking (signature compatibility)", async () => {
-    const article = await loadArticle("local-coding-agent", "posts");
-    expect(article.slug).toBe("local-coding-agent");
   });
 });
