@@ -77,7 +77,7 @@ test.describe("booking widget", () => {
     await expect(section.getByRole("heading", { name: "Записаться на созвон" })).toBeVisible();
     await expect(section.locator("[data-booking-fallback]")).toHaveAttribute(
       "href",
-      "https://cal.com/kashuta/intro-ru",
+      "https://cal.com/kashuta",
     );
     expect(requests).toEqual([]);
 
@@ -93,12 +93,12 @@ test.describe("booking widget", () => {
     const inline = calls.find((c) => c[1] === "inline");
     expect(init?.[3]).toEqual({ origin: CAL_ORIGIN });
     expect(inline?.[2]).toMatchObject({
-      calLink: "kashuta/intro-ru",
+      calLink: "kashuta",
       config: { theme: "light", layout: "month_view" },
     });
   });
 
-  test("books the English event from /en/contact/", async ({ page }) => {
+  test("mounts the booker from /en/contact/", async ({ page }) => {
     await stubEmbed(page);
     await page.goto("/en/contact/");
 
@@ -107,7 +107,7 @@ test.describe("booking widget", () => {
     await expect(section).toHaveAttribute("data-state", "ready");
 
     const inline = (await recordedCalls(page)).find((c) => c[1] === "inline");
-    expect(inline?.[2]).toMatchObject({ calLink: "kashuta/intro-en" });
+    expect(inline?.[2]).toMatchObject({ calLink: "kashuta" });
   });
 
   test("re-themes the live booker when the site theme is toggled", async ({ page }) => {
