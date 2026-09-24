@@ -20,13 +20,21 @@ const CAL_USER = "kashuta";
 /** Prefix of the embed namespace; each mount appends a counter. */
 export const CAL_NAMESPACE_PREFIX = "book";
 
-/** 30-minute intro call, one event per language so title and questions match the reader. */
-const EVENT_BY_LOCALE: Readonly<Record<Locale, string>> = {
-  ru: "intro-ru",
-  en: "intro-en",
+/**
+ * Event slug per locale; `null` embeds the profile page, where the reader picks
+ * one of the account's meetings (30 min or 1 hour). A slug must exist on the
+ * account — an unknown one renders Cal.com's "404. Cal Link seems to be wrong"
+ * inside the embed. To open straight on one event, put its slug here.
+ */
+const EVENT_BY_LOCALE: Readonly<Record<Locale, string | null>> = {
+  ru: null,
+  en: null,
 };
 
-export const calLinkFor = (locale: Locale): string => `${CAL_USER}/${EVENT_BY_LOCALE[locale]}`;
+export const calLinkFor = (locale: Locale): string => {
+  const event = EVENT_BY_LOCALE[locale];
+  return event ? `${CAL_USER}/${event}` : CAL_USER;
+};
 
 export const calPublicUrl = (locale: Locale): string =>
   `${CAL_PUBLIC_ORIGIN}/${calLinkFor(locale)}`;

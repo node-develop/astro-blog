@@ -88,7 +88,7 @@
   "tags.archiveEmptyEn": "There are no articles with this tag in the English version of the blog yet.",
   "tags.backToIndex": "All tags",
   "booking.title": "Book a call",
-  "booking.lede": "A free 30-minute call about AI agents, Claude Code, backend architecture or your project. Pick a time that suits you — I will confirm the meeting and the invitation will arrive by email.",
+  "booking.lede": "A free call of 30 minutes or an hour about AI agents, Claude Code, backend architecture or your project. Pick a time that suits you — I will confirm the meeting and the invitation will arrive by email.",
   "booking.cta": "Choose a time",
   "booking.fallback": "Open the calendar on cal.com",
   "booking.loading": "Loading the calendar…",

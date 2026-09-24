@@ -13,11 +13,13 @@ import {
 } from "~/lib/booking/config";
 
 describe("booking config", () => {
-  it("books the language-specific 30-minute intro event on the kashuta account", () => {
-    expect(calLinkFor("ru")).toBe("kashuta/intro-ru");
-    expect(calLinkFor("en")).toBe("kashuta/intro-en");
-    expect(calPublicUrl("ru")).toBe("https://cal.com/kashuta/intro-ru");
-    expect(calPublicUrl("en")).toBe("https://cal.com/kashuta/intro-en");
+  it("opens the kashuta profile, where the reader picks the meeting length", () => {
+    // Event slugs that do not exist on the account render Cal.com's 404 inside
+    // the embed, so both locales point at the profile the owner confirmed.
+    expect(calLinkFor("ru")).toBe("kashuta");
+    expect(calLinkFor("en")).toBe("kashuta");
+    expect(calPublicUrl("ru")).toBe("https://cal.com/kashuta");
+    expect(calPublicUrl("en")).toBe("https://cal.com/kashuta");
   });
 
   it("loads embed.js from the same Cal.com origin the booker runs on", () => {
