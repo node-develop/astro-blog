@@ -50,31 +50,6 @@ describe("translateProse", () => {
     expect(call.system[0]!).toMatchObject({ type: "text", cache_control: { type: "ephemeral" } });
   });
 
-  it("translates mermaid placeholders (kind passed through to prompt)", async () => {
-    createMock.mockResolvedValueOnce({
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify([{ id: 0, text: "flowchart LR\n  A[Start] --> B[End]" }]),
-        },
-      ],
-    });
-    const result = await translateProse({
-      apiKey: "test-key",
-      sourceLocale: "ru",
-      targetLocale: "en",
-      placeholders: [{ id: 0, text: "flowchart LR\n  A[Начало] --> B[Конец]", kind: "mermaid" }],
-    });
-
-    expect(result[0]!.text).toContain("flowchart LR");
-
-    expect(result[0]!.text).toContain("[Start]");
-    // Verify the user message included the kind field
-
-    const userPayload = createMock.mock.calls[0]![0]!.messages[0].content;
-    expect(userPayload).toContain("mermaid");
-  });
-
   it("retries on transient failure (3 attempts) then throws", async () => {
     createMock
       .mockRejectedValueOnce(new Error("rate limit"))

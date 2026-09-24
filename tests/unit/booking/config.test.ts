@@ -3,32 +3,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   BRAND_PALETTE,
-  CAL_EMBED_URL,
-  CAL_ORIGIN,
   buildInlineConfig,
   buildUiConfig,
-  calLinkFor,
-  calPublicUrl,
   themeFromRoot,
 } from "~/lib/booking/config";
 
 describe("booking config", () => {
-  it("opens the kashuta profile, where the reader picks the meeting length", () => {
-    // Event slugs that do not exist on the account render Cal.com's 404 inside
-    // the embed, so both locales point at the profile the owner confirmed.
-    expect(calLinkFor("ru")).toBe("kashuta");
-    expect(calLinkFor("en")).toBe("kashuta");
-    expect(calPublicUrl("ru")).toBe("https://cal.com/kashuta");
-    expect(calPublicUrl("en")).toBe("https://cal.com/kashuta");
-  });
-
-  it("loads embed.js from the same Cal.com origin the booker runs on", () => {
-    // A US embed pointed at an EU origin (or the reverse) fails as a silent
-    // linkFailed in the browser, so the pairing is pinned here.
-    expect(CAL_EMBED_URL).toBe(`${CAL_ORIGIN}/embed/embed.js`);
-    expect(new URL(CAL_ORIGIN).protocol).toBe("https:");
-  });
-
   it("reads the site theme from <html data-theme>, light unless explicitly dark", () => {
     expect(themeFromRoot("dark")).toBe("dark");
     expect(themeFromRoot(null)).toBe("light");

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readSiteFromDisk, listSiteFiles } from "./site-io";
+import { load as loadYaml } from "~/lib/yaml";
+import { listSiteFiles, mergeSiteFile, readSiteFromDisk, writeSiteToDisk } from "./site-io";
 
 const inTempDir = async <T>(fn: (dir: string) => Promise<T>): Promise<T> => {
   const base = await mkdtemp(join(tmpdir(), "site-io-"));
@@ -63,6 +64,72 @@ describe("listSiteFiles", () => {
     await inTempDir(async (dir) => {
       const files = await listSiteFiles(dir);
       expect(files).toHaveLength(0);
+    });
+  });
+});
+
+// Regression (site.update): the action once wrote `dump({ title })` as the whole
+// frontmatter, dropping description / sourceHash / manuallyEdited on every save.
+const ABOUT_WITH_META_MD = [
+  "---",
+  "title: Обо мне",
+  "description: Кто я и чем занимаюсь — краткая справка.",
+  "sourceHash: abc123",
+  "manuallyEdited: true",
+  "---",
+  "",
+  "## Старый текст",
+  "",
+].join("\n");
+
+const frontmatterOf = async (path: string): Promise<Record<string, unknown>> => {
+  const raw = await readFile(path, "utf8");
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
+  return (loadYaml(m?.[1] ?? "") ?? {}) as Record<string, unknown>;
+};
+
+describe("mergeSiteFile", () => {
+  it("overrides title and carries every other existing field through", () => {
+    const out = mergeSiteFile(
+      { title: "Old", description: "Desc", sourceHash: "h", manuallyEdited: true },
+      { title: "New" },
+      "Body",
+    );
+    const fm = loadYaml(/^---\n([\s\S]*?)\n---/.exec(out)?.[1] ?? "") as Record<string, unknown>;
+    expect(fm).toEqual({
+      title: "New",
+      description: "Desc",
+      sourceHash: "h",
+      manuallyEdited: true,
+    });
+    expect(out.endsWith("---\n\nBody")).toBe(true);
+  });
+});
+
+describe("writeSiteToDisk", () => {
+  it("preserves description / sourceHash / manuallyEdited when only title+body change", async () => {
+    await inTempDir(async (dir) => {
+      await writeFile(join(dir, "about.md"), ABOUT_WITH_META_MD, "utf8");
+
+      await writeSiteToDisk(dir, "about", { title: "Новый заголовок", body: "## Новый текст\n" });
+
+      const fm = await frontmatterOf(join(dir, "about.md"));
+      expect(fm["title"]).toBe("Новый заголовок");
+      expect(fm["description"]).toBe("Кто я и чем занимаюсь — краткая справка.");
+      expect(fm["sourceHash"]).toBe("abc123");
+      expect(fm["manuallyEdited"]).toBe(true);
+
+      const page = await readSiteFromDisk(dir, "about");
+      expect(page?.title).toBe("Новый заголовок");
+      expect(page?.body).toBe("## Новый текст\n");
+    });
+  });
+
+  it("creates a new page with just the title when no file exists yet", async () => {
+    await inTempDir(async (dir) => {
+      await writeSiteToDisk(dir, "uses", { title: "Uses", body: "Tools.\n" });
+      const fm = await frontmatterOf(join(dir, "uses.md"));
+      expect(fm).toEqual({ title: "Uses" });
     });
   });
 });

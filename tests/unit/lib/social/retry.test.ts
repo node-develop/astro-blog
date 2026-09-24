@@ -2,6 +2,18 @@ import { describe, it, expect, vi } from "vitest";
 import { withRetry } from "~/lib/social/retry";
 import { ok, err, transportError } from "~/lib/social/errors";
 
+describe("transportError retryable", () => {
+  it.each([
+    [503, true],
+    [500, true],
+    [429, true],
+    [422, false],
+    [401, false],
+  ])("status %i → retryable %s", (status, retryable) => {
+    expect(transportError("x_en", status, "body").retryable).toBe(retryable);
+  });
+});
+
 describe("withRetry", () => {
   it("returns ok on first success", async () => {
     const fn = vi.fn().mockResolvedValue(ok(42));

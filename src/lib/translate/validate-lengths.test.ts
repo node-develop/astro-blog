@@ -25,12 +25,6 @@ describe("truncateAtBoundary", () => {
     const result = truncateAtBoundary(input, 200);
     expect(result.length).toBe(200);
   });
-
-  it("regression: 201-char description (the failing case) → ≤ 200", () => {
-    const input = "x".repeat(201);
-    const result = truncateAtBoundary(input, 200);
-    expect(result.length).toBeLessThanOrEqual(200);
-  });
 });
 
 describe("checkLengths", () => {

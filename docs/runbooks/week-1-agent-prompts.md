@@ -102,26 +102,23 @@ node_modules: он не смог запустить ни одной провер
 
 ## ШАГ 1. Прогнать проверки в том же порядке, что и CI
 
-Порядок взят из .github/workflows/ci.yml, не меняй его: ранние проверки дешевле
-и ловят больше.
+Порядок повторяет джобы .github/workflows/ci.yml, не меняй его: ранние проверки
+дешевле и ловят больше.
 
     pnpm install --frozen-lockfile
-    pnpm exec playwright install --with-deps chromium
-    pnpm verify:seo-build
-    pnpm exec vitest run --exclude 'tests/integration/**'
-    pnpm test:production-smoke
-    pnpm exec vitest run tests/integration/seo-utility-routes.test.ts
-    pnpm exec vitest run tests/integration/course-dates.test.ts
-    pnpm translate:check
-    pnpm typecheck
+    # джоб checks
     pnpm lint
+    pnpm typecheck
+    pnpm translate:check
+    pnpm test
+    # джоб build
+    pnpm exec playwright install --with-deps --only-shell chromium
+    pnpm verify:seo-build
+    pnpm test:built
 
-Затем второй блок из CI (нужен Docker для Testcontainers):
+Затем джоб db (нужен Docker для Testcontainers):
 
-    pnpm exec vitest run tests/integration \
-      --exclude tests/integration/production-server.smoke.test.ts \
-      --exclude tests/integration/seo-utility-routes.test.ts \
-      --exclude tests/integration/course-dates.test.ts
+    pnpm test:db
 
 Не пропускай ни одного шага и не запускай их параллельно.
 

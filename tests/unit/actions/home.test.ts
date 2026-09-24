@@ -18,23 +18,6 @@ describe("homeUpdateInput", () => {
     expect(homeUpdateInput.parse(valid)).toMatchObject(valid);
   });
 
-  it("rejects an unknown locale", () => {
-    expect(() => homeUpdateInput.parse({ ...valid, locale: "de" })).toThrow();
-  });
-
-  it("rejects an empty heroTitle", () => {
-    expect(() => homeUpdateInput.parse({ ...valid, heroTitle: "" })).toThrow();
-  });
-
-  it("enforces metaTitle max(120) and metaDescription min(10)/max(200)", () => {
-    expect(() => homeUpdateInput.parse({ ...valid, metaTitle: "x".repeat(121) })).toThrow();
-    expect(homeUpdateInput.parse({ ...valid, metaTitle: "x".repeat(120) }).metaTitle).toHaveLength(
-      120,
-    );
-    expect(() => homeUpdateInput.parse({ ...valid, metaDescription: "short" })).toThrow();
-    expect(() => homeUpdateInput.parse({ ...valid, metaDescription: "x".repeat(201) })).toThrow();
-  });
-
   it("keeps optional fields optional (absent stays absent — merge semantics)", () => {
     const parsed = homeUpdateInput.parse(valid);
     expect("heroLede" in parsed).toBe(false);

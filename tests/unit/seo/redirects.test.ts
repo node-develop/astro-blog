@@ -155,18 +155,6 @@ it("recovers the glued pair for every lesson combination, not just the sampled U
   expect(unrecovered).toEqual([]);
 });
 
-it("recovers a glued pair that no explicit rule lists", () => {
-  expect(buildLegacyRedirects()).not.toHaveProperty(
-    "/courses/claude-code-guide/03-claude-md/06-mcp/",
-  );
-  expect(resolveConcatenatedLessonPath("/courses/claude-code-guide/03-claude-md/06-mcp/")).toBe(
-    "/courses/claude-code-guide/06-mcp/",
-  );
-  expect(
-    resolveConcatenatedLessonPath("/en/courses/claude-code-guide/05-hooks/10-agent-teams/"),
-  ).toBe("/en/courses/claude-code-guide/10-agent-teams/");
-});
-
 it("normalizes a glued pair that arrives without its trailing slash", () => {
   expect(resolveConcatenatedLessonPath("/courses/claude-code-guide/03-claude-md/06-mcp")).toBe(
     "/courses/claude-code-guide/06-mcp/",

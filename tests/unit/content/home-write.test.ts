@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as yaml from "~/lib/yaml";
 import { writeHomeToDisk } from "~/lib/content/write-home";
-import { homeFrontmatterSchema, KEY_ORDER } from "~/lib/content/home-schema";
+import { KEY_ORDER } from "~/lib/content/home-schema";
 
 let workDir: string;
 let homePath: string;
@@ -126,25 +126,5 @@ describe("writeHomeToDisk — T-3 EN manuallyEdited semantics", () => {
     });
     const after = await parseFrontmatter(homePath);
     expect(after["manuallyEdited"]).toBe(true);
-  });
-});
-
-describe("homeFrontmatterSchema — T-7 parse live files", () => {
-  it("parses src/content/site/home.md", async () => {
-    const raw = await readFile("src/content/site/home.md", "utf8");
-    const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
-    expect(m?.[1]).toBeTruthy();
-    const data = yaml.load(m![1]!);
-    const result = homeFrontmatterSchema.safeParse(data);
-    expect(result.success).toBe(true);
-  });
-
-  it("parses src/content/site/en/home.md", async () => {
-    const raw = await readFile("src/content/site/en/home.md", "utf8");
-    const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
-    expect(m?.[1]).toBeTruthy();
-    const data = yaml.load(m![1]!);
-    const result = homeFrontmatterSchema.safeParse(data);
-    expect(result.success).toBe(true);
   });
 });

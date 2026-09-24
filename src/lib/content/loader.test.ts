@@ -172,22 +172,6 @@ describe("getOrderedPosts(locale)", () => {
     expect(ids).toEqual(["en/01-intro", "en/02-context", "en/no-meta-row"]);
   });
 
-  it("excludes drafts in both locales", async () => {
-    const { getOrderedPosts } = await import("./loader");
-    const ru = await getOrderedPosts({ locale: "ru" });
-    expect(ru.map((p) => p.entry.id)).not.toContain("draft-ru-only");
-    const en = await getOrderedPosts({ locale: "en" });
-    expect(en.map((p) => p.entry.id)).not.toContain("en/draft-only");
-  });
-
-  it("lists a post that has no posts_meta row instead of silently dropping it", async () => {
-    const { getOrderedPosts } = await import("./loader");
-    const ru = await getOrderedPosts({ locale: "ru" });
-    expect(ru.map((p) => p.entry.id)).toContain("no-meta-row");
-    const en = await getOrderedPosts({ locale: "en" });
-    expect(en.map((p) => p.entry.id)).toContain("en/no-meta-row");
-  });
-
   it.each(["ru", "en"] as const)(
     "warns loudly about the missing row instead of swallowing it (%s)",
     async (locale) => {

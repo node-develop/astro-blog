@@ -4,69 +4,62 @@ name: CI
   pull_request:
   workflow_call:
 
+permissions:
+  contents: read
+
+# A new push to a PR supersedes the previous run. Pushes to main (called from
+# docker-publish.yml) are never cancelled: each one is a release candidate.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Three independent jobs, one per test layer (vitest.config.ts `projects`).
+# Each fails fast on its cheapest step.
 jobs:
-  validate:
+  checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
 
-      - uses: pnpm/action-setup@v4
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Validate EN translations (drift + schema)
+        run: pnpm translate:check
+      - name: Unit tests
+        run: pnpm test
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      # Advisory only: surfaces known-vulnerable prod deps without blocking the
-      # pipeline. Dependabot (.github/dependabot.yml) owns the actual bumps.
+      # Advisory only: Dependabot (.github/dependabot.yml) owns the actual bumps.
       - name: Audit production dependencies (non-blocking)
         run: pnpm audit --prod --audit-level=high
         continue-on-error: true
 
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Build and verify fresh SEO output
-        run: pnpm verify:seo-build
-
-      - name: Unit tests (Postgres/Testcontainers suites run in the integration job)
-        run: pnpm exec vitest run --exclude 'tests/integration/**'
-
-      - name: Production standalone smoke tests
-        run: pnpm test:production-smoke
-
-      - name: Production SEO utility routes
-        run: pnpm exec vitest run tests/integration/seo-utility-routes.test.ts
-
-      - name: Published course revision dates
-        run: pnpm exec vitest run tests/integration/course-dates.test.ts
-
-      - name: Validate EN translations (drift + schema)
-        run: pnpm translate:check
-
-      - run: pnpm typecheck
-
-      - run: pnpm lint
-
-  # Postgres-backed suites (Testcontainers). Docker is available on GitHub-hosted
-  # ubuntu runners, so no service container is needed. The two suites that do
-  # not need Postgres already run in `validate` and are excluded here.
-  integration:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
 
-      - uses: pnpm/action-setup@v4
+      # Headless shell only: rehype-mermaid renders diagrams at build time, and
+      # two built-site tests drive a page. Nothing here needs headed Chromium.
+      - name: Install Playwright Chromium headless shell
+        run: pnpm exec playwright install --with-deps --only-shell chromium
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
+      - name: Build and verify fresh SEO output
+        run: pnpm verify:seo-build
 
-      - run: pnpm install --frozen-lockfile
+      - name: Built-site tests (dist + standalone server)
+        run: pnpm test:built
 
-      - name: Integration tests (Testcontainers Postgres)
-        run: pnpm exec vitest run tests/integration --exclude tests/integration/production-server.smoke.test.ts --exclude tests/integration/seo-utility-routes.test.ts --exclude tests/integration/course-dates.test.ts
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+
+      # Testcontainers Postgres; Docker is available on GitHub-hosted runners.
+      - name: Database tests
+        run: pnpm test:db

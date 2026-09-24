@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# pre-commit: lint только изменённых файлов + быстрый typecheck
+# pre-commit: быстрые проверки только staged-файлов (секунды, не минуты).
+# Полный typecheck — в pre-push и CI: гонять astro check на каждый коммит дорого.
 set -e
 
 # Refuse to stage secret-bearing .env files even if .gitignore ever drifts.
@@ -16,6 +17,3 @@ fi
 
 echo "▶ lint-staged (eslint --fix + prettier on staged files)"
 pnpm exec lint-staged
-
-echo "▶ typecheck (astro check + tsc)"
-pnpm typecheck

@@ -170,7 +170,8 @@ CLI использует DATABASE_URL текущей среды; полный т
 
 ```bash
 pnpm exec tsx scripts/content-contract.ts
-pnpm exec vitest run tests/unit/content-api tests/integration/content-api.test.ts tests/integration/content-media.test.ts
+pnpm exec vitest run tests/unit/content-api
+pnpm exec vitest run --project db tests/integration/content-api.test.ts tests/integration/content-media.test.ts
 pnpm content:smoke
 pnpm typecheck
 pnpm build

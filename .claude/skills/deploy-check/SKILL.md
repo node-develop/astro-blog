@@ -35,10 +35,11 @@ allowed-tools: ["Read", "Bash(pnpm:*)", "Bash(docker:*)", "Bash(git:*)"]
 4. **Тесты**:
 
    ```bash
-   pnpm test
+   pnpm test            # unit
+   pnpm test:db         # Postgres через Testcontainers, нужен Docker
    ```
 
-   Unit-тесты (Vitest) должны быть зелёными.
+   Оба зелёные. Built-тесты — после билда (шаг 5).
 
 5. **Билд**:
 
@@ -47,6 +48,7 @@ allowed-tools: ["Read", "Bash(pnpm:*)", "Bash(docker:*)", "Bash(git:*)"]
    ```
 
    Билд должен пройти без warnings. Проверь размер `dist/` — не взорвался ли (лимит ~10 МБ).
+   Затем `pnpm test:built` — проверки собранного сайта и standalone-сервера (как в CI-джобе `build`).
 
 6. **Миграции**:
    - Если менял `src/lib/db/schema.ts` — `pnpm db:generate` сделан?

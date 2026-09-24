@@ -36,7 +36,7 @@ Astro middleware supplies a defense-in-depth host redirect and security headers 
 
 ## 2. Deploy the verified application
 
-- [ ] Confirm CI ran these gates in order on the commit selected for release: Playwright Chromium/dependency installation; `pnpm verify:seo-build` (which forces Astro content-cache refresh); unit tests excluding integration; `pnpm test:production-smoke`; `pnpm exec vitest run tests/integration/seo-utility-routes.test.ts`; `pnpm translate:check`; `pnpm typecheck`; and `pnpm lint`.
+- [ ] Confirm CI was green on the commit selected for release: job `checks` (`pnpm lint`, `pnpm typecheck`, `pnpm translate:check`, unit tests) and job `build` (Playwright Chromium headless shell, `pnpm verify:seo-build` — which forces an Astro content-cache refresh — then `pnpm test:built`, which includes the production smoke and SEO utility-route suites).
 - [ ] Deploy that exact commit through the normal production pipeline. Record the commit SHA and deployment identifier.
 - [ ] Confirm the deployment is healthy before changing Search Console submissions. Roll back through the deployment platform if public `200` pages or canonical redirects regress.
 

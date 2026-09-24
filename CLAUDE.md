@@ -22,7 +22,7 @@
 - **Подсветка кода / OG:** shiki 4, satori 0.33
 - **Логи:** pino 10
 - **Линт:** ESLint 10 + eslint-plugin-astro 3 + typescript-eslint 8.69, prettier
-- **Тесты:** Vitest 5 (unit + integration через testcontainers, `getViteConfig()` из Astro) + Playwright 1.63 (e2e)
+- **Тесты:** Vitest 5 (`projects`: `unit` / `built` / `db`, `getViteConfig()` из Astro; `db` — Postgres через testcontainers) + Playwright 1.63 (e2e, локально)
 - **Деплой:** Docker (multi-stage, `node:24-bookworm-slim`) → GitHub Actions → ghcr.io → Dokploy (см. «Деплой» ниже)
 
 ## Структура
@@ -58,8 +58,9 @@ astro-blog/
 - `pnpm preview` — локальный просмотр билда
 - `pnpm typecheck` — `astro sync && astro check && tsc --noEmit`
 - `pnpm lint` — eslint + prettier
-- `pnpm test` — Vitest (unit + integration; integration-сьюты в `tests/integration/` требуют Docker для testcontainers)
-- `pnpm test:production-smoke` — smoke-тесты собранного standalone-сервера (`tests/integration/production-server.smoke.test.ts`)
+- `pnpm test` — unit-тесты (чистая логика, без билда и Docker; то же гоняет pre-push)
+- `pnpm test:built` — проверки собранного сайта и standalone-сервера (`tests/built/`); сначала `pnpm build`, без `dist/` падает
+- `pnpm test:db` — Postgres-сьюты `tests/integration/` через testcontainers (нужен Docker); `pnpm test:all` — все три слоя
 - `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверка вывода билда на известные SEO-регрессии (`scripts/verify-seo-build.ts`)
 - `pnpm test:e2e` — Playwright
 - `pnpm translate` — сгенерировать EN-двойники контента (см. «i18n»)
@@ -126,9 +127,9 @@ When the codebase contains two patterns (e.g. two error-handling styles, two val
 
 Before adding code to a file, read it in full: exports, nearest callers, shared utilities. For symbols with dependencies, run `gitnexus_impact` (see `@docs/claude-code-guide/gitnexus.md`). "Looks orthogonal to me" is the most expensive sentence in the codebase — that's how you get duplicate functions and import-order winning over semantics.
 
-### Tests verify intent, not existence
+### Tests: few, behavioural, in the right layer
 
-A test must fail when business logic changes. `expect(fn()).toBeDefined()` is useless when the value or side-effect is what matters. Focus Vitest unit tests and Playwright e2e on boundary conditions, observable side-effects, and user scenarios — not on "the function was called".
+Default is **no new test**. Write one only for behaviour that can regress and that typecheck, Zod schemas, `astro build` / `verify:seo-build` or `translate:check` do not already catch — and prove it goes red when the code breaks. Never test by reading source/config text (`readFileSync` + regex over `.astro`, CSS, CI yaml, `astro.config`) — `.claude/hooks/test-guard.sh` blocks it; assert on the output instead. Layers: `unit` (pure `src/lib` logic) → `built` (`dist/` + served pages) → `db` (Postgres) → e2e (a handful of critical flows). Checklist and anti-patterns: skill `write-tests`.
 
 ### Checkpoint after every significant step
 
@@ -218,6 +219,7 @@ Plan: `docs/superpowers/plans/2026-05-09-home-page-admin-editor.md`
 - `ui-design-review` — чек-лист дизайн-ревью (контраст, иерархия, dark mode, a11y)
 - `db-migration` — схема → `pnpm db:generate` → ревью SQL → `pnpm db:migrate`
 - `deploy-check` — pre-deploy чеклист (билд, тесты, типы, docker, миграции)
+- `write-tests` — нужен ли тест, в каком слое, как написать, чтобы падал на регрессии
 - `gitnexus/*` — навигация по графу кода (exploring, impact-analysis, debugging, refactoring, cli)
 - `generated/*` — авто-сгенерированные карты областей (`admin`, `content`, `e2e`, `fs`, `search`); пути в них проверять `ls` перед использованием
 

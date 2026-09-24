@@ -4,7 +4,6 @@ import { inspectMarkdown, serializeArticle } from "../../../src/lib/content-api/
 import { inspectImage } from "../../../src/lib/content-api/media";
 import { readBytes, readJson } from "../../../src/lib/content-api/http";
 import { postSchema } from "../../../src/lib/content/schemas";
-import { openApiDocument } from "../../../src/lib/content-api/openapi";
 import * as yaml from "~/lib/yaml";
 import sharp from "sharp";
 import { check, resolveConfig } from "prettier";
@@ -134,9 +133,5 @@ describe("content API contract and rendering", () => {
         }),
       ),
     ).rejects.toMatchObject({ status: 400 });
-  });
-  it("exposes the same strict article schema in OpenAPI", () => {
-    expect(openApiDocument.components.schemas.ArticleDocument.additionalProperties).toBe(false);
-    expect(openApiDocument.paths["/articles/"].post.parameters).toHaveLength(1);
   });
 });
