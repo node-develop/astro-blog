@@ -92,6 +92,13 @@ const { locale } = Astro.props;
     host.plausible?.(event, props ? { props } : undefined);
   };
 
+  let pendingTimer: number | undefined;
+
+  const clearPending = (): void => {
+    window.clearTimeout(pendingTimer);
+    pendingTimer = undefined;
+  };
+
   const open = (section: HTMLElement): void => {
     const mount = section.querySelector<HTMLElement>("[data-booking-mount]");
     const status = section.querySelector<HTMLElement>("[data-booking-status]");
@@ -99,24 +106,43 @@ const { locale } = Astro.props;
     const calLink = section.dataset.calLink;
     const locale = section.dataset.locale ?? "ru";
     if (!mount || !status || !button || !calLink) return;
+    if (section.dataset.state === "loading" || section.dataset.state === "ready") return;
 
+    clearPending();
     const namespace = `${CAL_NAMESPACE_PREFIX}-${++mounts}`;
     activeNamespace = namespace;
     const theme = currentTheme();
-    let ready = false;
+    // Callbacks from an earlier attempt (a retry, or a page left mid-load)
+    // must not touch the section the reader is looking at now.
+    const isCurrent = (): boolean => activeNamespace === namespace && section.isConnected;
 
-    button.disabled = true;
+    // aria-disabled, not disabled: disabling the focused button would drop
+    // keyboard focus to <body> while the calendar loads.
+    button.setAttribute("aria-disabled", "true");
     section.dataset.state = "loading";
     status.textContent = section.dataset.loadingText ?? "";
+    // A retry must not stack a second iframe next to a dead one.
+    mount.replaceChildren();
     mount.hidden = false;
 
     const fail = (): void => {
-      if (ready || section.dataset.state === "failed") return;
+      if (!isCurrent() || section.dataset.state !== "loading") return;
+      clearPending();
       section.dataset.state = "failed";
       mount.hidden = true;
-      button.disabled = false;
+      button.removeAttribute("aria-disabled");
       status.textContent = section.dataset.errorText ?? "";
       track(BOOKING_ANALYTICS.embedFailed);
+    };
+
+    const ready = (): void => {
+      if (!isCurrent()) return;
+      clearPending();
+      section.dataset.state = "ready";
+      mount.hidden = false;
+      status.textContent = "";
+      button.hidden = true;
+      section.querySelector<HTMLElement>("#booking-heading")?.focus({ preventScroll: true });
     };
 
     const cal = installCalSnippet(host, CAL_EMBED_URL);
@@ -127,23 +153,14 @@ const { locale } = Astro.props;
       config: buildInlineConfig(theme),
     });
     calNs(namespace)?.("ui", buildUiConfig(theme));
-    calNs(namespace)?.("on", {
-      action: "linkReady",
-      callback: () => {
-        ready = true;
-        section.dataset.state = "ready";
-        status.textContent = "";
-        button.hidden = true;
-        section.querySelector<HTMLElement>("#booking-heading")?.focus({ preventScroll: true });
-      },
-    });
+    calNs(namespace)?.("on", { action: "linkReady", callback: ready });
     calNs(namespace)?.("on", { action: "linkFailed", callback: fail });
     calNs(namespace)?.("on", {
       action: "bookingSuccessfulV2",
       callback: () => track(BOOKING_ANALYTICS.booked, { locale }),
     });
 
-    window.setTimeout(fail, READY_TIMEOUT_MS);
+    pendingTimer = window.setTimeout(fail, READY_TIMEOUT_MS);
   };
 
   const bind = (): void => {
@@ -158,6 +175,8 @@ const { locale } = Astro.props;
 
   // Bundled module: runs once per full load, so these listeners are registered once.
   document.addEventListener("astro:page-load", bind);
+  // Leaving the page mid-load is not an embed failure.
+  document.addEventListener("astro:before-swap", clearPending);
   window.addEventListener("themechange", () => {
     if (activeNamespace) calNs(activeNamespace)?.("ui", buildUiConfig(currentTheme()));
   });
@@ -193,9 +212,6 @@ const { locale } = Astro.props;
     color: var(--color-fg);
     margin: 0;
   }
-  .booking__title:focus {
-    outline: none;
-  }
   .booking .booking__lede {
     color: var(--color-fg-muted);
     margin: 0 0 var(--space-5);
@@ -224,11 +240,11 @@ const { locale } = Astro.props;
       transform var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-  .booking__cta:hover:not(:disabled) {
+  .booking__cta:hover:not([aria-disabled="true"]) {
     transform: translate(-4px, -4px);
     box-shadow: var(--shadow-lifted);
   }
-  .booking__cta:active:not(:disabled) {
+  .booking__cta:active:not([aria-disabled="true"]) {
     transform: translate(3px, 3px);
     box-shadow: var(--shadow-press);
   }
@@ -236,7 +252,7 @@ const { locale } = Astro.props;
     outline: 3px solid var(--color-focus-ring);
     outline-offset: 3px;
   }
-  .booking__cta:disabled {
+  .booking__cta[aria-disabled="true"] {
     cursor: progress;
     opacity: 0.7;
   }

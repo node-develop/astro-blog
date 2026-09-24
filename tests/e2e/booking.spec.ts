@@ -11,21 +11,40 @@ const CAL_ORIGIN = "https://app.cal.com";
 
 const EMBED_STUB = `
 (function () {
+  // Mirrors embed.js processQueue(): drain each queue, then replace its push
+  // so instructions sent after load (a retry, a ClientRouter return) still run.
   var calls = (window.__calCalls = []);
   var Cal = window.Cal;
-  Cal.q.forEach(function (a) { calls.push(["global"].concat(Array.from(a))); });
-  Object.keys(Cal.ns).forEach(function (name) {
-    var handle = function (args) {
+  var scenario = window.__calScenario;
+  var mounts = 0;
+  var drain = function (queue, handle) {
+    queue.forEach(handle);
+    queue.splice(0);
+    queue.push = function (a) { handle(a); return queue.length; };
+  };
+  var namespaceHandler = function (name) {
+    // __calScenario: "fail-first" answers the first mount with linkFailed,
+    // "late" answers linkReady only after the page's 15s ready timeout.
+    var failThis = scenario === "fail-first" && mounts++ === 0;
+    return function (a) {
+      var args = Array.from(a);
       calls.push([name].concat(args));
       if (args[0] === "inline") {
         var frame = document.createElement("iframe");
         frame.title = "booker stub";
         args[1].elementOrSelector.appendChild(frame);
       }
-      if (args[0] === "on" && args[1].action === "linkReady") setTimeout(args[1].callback, 0);
+      if (args[0] !== "on") return;
+      if (args[1].action === "linkFailed" && failThis)
+        setTimeout(function () { args[1].callback({ detail: { data: {} } }); }, 0);
+      if (args[1].action === "linkReady" && !failThis)
+        setTimeout(args[1].callback, scenario === "late" ? 20000 : 0);
     };
-    Cal.ns[name].q.forEach(function (a) { handle(Array.from(a)); });
-    Cal.ns[name] = function () { handle(Array.from(arguments)); };
+  };
+  drain(Cal.q, function (a) {
+    var args = Array.from(a);
+    calls.push(["global"].concat(args));
+    if (args[0] === "initNamespace") drain(Cal.ns[args[1]].q, namespaceHandler(args[1]));
   });
 })();
 `;
@@ -122,6 +141,48 @@ test.describe("booking widget", () => {
     await expect(section.getByRole("status")).toContainText("Календарь не загрузился");
     await expect(section.locator("[data-booking-fallback]")).toBeVisible();
     await expect(section.locator("[data-booking-open]")).toBeEnabled();
+  });
+
+  test("a retry after linkFailed shows one working booker, not a stale error", async ({ page }) => {
+    await page.clock.install();
+    await page.addInitScript(() => {
+      (window as unknown as { __calScenario: string }).__calScenario = "fail-first";
+    });
+    await stubEmbed(page);
+    await page.goto("/contact/");
+
+    const section = page.locator("#book");
+    const button = section.locator("[data-booking-open]");
+    await button.click();
+    await expect(section).toHaveAttribute("data-state", "failed");
+    await expect(button).toBeFocused();
+
+    await button.click();
+    await expect(section).toHaveAttribute("data-state", "ready");
+    // The first attempt's 15s timer must not flip the working booker back to failed.
+    await page.clock.runFor(16_000);
+    await expect(section).toHaveAttribute("data-state", "ready");
+    await expect(section.locator("[data-booking-mount]")).toBeVisible();
+    await expect(section.locator("[data-booking-mount] iframe")).toHaveCount(1);
+  });
+
+  test("shows the booker when linkReady arrives after the timeout", async ({ page }) => {
+    await page.clock.install();
+    await page.addInitScript(() => {
+      (window as unknown as { __calScenario: string }).__calScenario = "late";
+    });
+    await stubEmbed(page);
+    await page.goto("/contact/");
+
+    const section = page.locator("#book");
+    await section.locator("[data-booking-open]").click();
+    await page.clock.runFor(16_000);
+    await expect(section).toHaveAttribute("data-state", "failed");
+
+    await page.clock.runFor(5_000);
+    await expect(section).toHaveAttribute("data-state", "ready");
+    await expect(section.locator("[data-booking-mount]")).toBeVisible();
+    await expect(section.getByRole("status")).toHaveText("");
   });
 
   test("home masthead links to the booking section in each language", async ({ page }) => {
