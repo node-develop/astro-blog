@@ -27,7 +27,7 @@ const responseFor = async (
   });
 
 const status = async (origin: string, pathname: string, headers?: HeadersInit): Promise<number> => {
-  const response = await responseFor(origin, pathname, { headers });
+  const response = await responseFor(origin, pathname, headers === undefined ? {} : { headers });
   await response.body?.cancel();
   return response.status;
 };

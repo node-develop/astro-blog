@@ -1,4 +1,4 @@
-import { ok, err, transportError, policyError } from "../errors.js";
+import { ok, err, httpFailure, transportError } from "../errors.js";
 import type { Result } from "../errors.js";
 
 const sleep = (ms: number): Promise<void> => new Promise<void>((r) => setTimeout(r, ms));
@@ -15,11 +15,7 @@ const handleResponse = async (response: Response): Promise<Result<{ id: string }
     const j = (await response.json()) as { data: { id: string } };
     return ok({ id: j.data.id });
   }
-  const body = await response.text();
-  if (response.status === 401 || response.status === 403) {
-    return err(policyError("x_en", `${response.status} ${body.slice(0, 200)}`));
-  }
-  return err(transportError("x_en", response.status, body));
+  return err(httpFailure("x_en", response.status, await response.text()));
 };
 
 export const postTweet = async (opts: {

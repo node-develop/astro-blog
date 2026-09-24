@@ -6,25 +6,10 @@
  * requests are cacheable — a signed-in editor sees the same markup today,
  * but the session cookie makes the response per-user by definition and a
  * shared cache must never store it.
- *
- * Mirrors the cookie names from src/lib/auth/request-classification.ts
- * without importing admin/auth code into public page modules.
  */
-const SESSION_COOKIE_NAMES: ReadonlySet<string> = new Set([
-  "better-auth.session_token",
-  "__Secure-better-auth.session_token",
-]);
+import { hasSessionCookie } from "./session-cookie";
 
 export const PUBLIC_HTML_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=3600";
-
-export const hasSessionCookie = (cookieHeader: string | null): boolean => {
-  if (!cookieHeader) return false;
-  return cookieHeader.split(";").some((cookie) => {
-    const separator = cookie.indexOf("=");
-    if (separator < 1) return false;
-    return SESSION_COOKIE_NAMES.has(cookie.slice(0, separator).trim());
-  });
-};
 
 /** Cache-Control value for an SSR HTML response, or null when it must stay private. */
 export const publicHtmlCacheControl = (request: Request): string | null =>

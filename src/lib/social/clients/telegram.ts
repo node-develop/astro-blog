@@ -1,4 +1,4 @@
-import { ok, err, transportError, policyError, contentError } from "../errors.js";
+import { ok, err, transportError, contentError, httpFailure, isAuthFailure } from "../errors.js";
 import type { Result } from "../errors.js";
 
 const apiBase = (): string => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN ?? ""}`;
@@ -46,8 +46,8 @@ export const sendMessage = async (opts: {
     body: JSON.stringify(body),
   });
 
-  if (response.status === 401 || response.status === 403) {
-    return err(policyError("tg_ru", `${response.status} ${(await response.text()).slice(0, 200)}`));
+  if (isAuthFailure(response.status)) {
+    return err(httpFailure("tg_ru", response.status, await response.text()));
   }
 
   let json: TgResp;

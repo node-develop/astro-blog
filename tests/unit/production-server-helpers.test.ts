@@ -3,16 +3,19 @@ import type { ChildProcess } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildProductionSmokeEnvironment, stopServer } from "../support/production-server";
 
-class FakeChildProcess extends EventEmitter {
-  exitCode: number | null = null;
-  signalCode: NodeJS.Signals | null = null;
-  readonly signals: NodeJS.Signals[] = [];
-
-  kill(signal: NodeJS.Signals): boolean {
-    this.signals.push(signal);
-    return true;
-  }
-}
+/** A child process that ignores every signal, as a hung server would. */
+const unkillableChild = () => {
+  const signals: NodeJS.Signals[] = [];
+  const child = Object.assign(new EventEmitter(), {
+    exitCode: null,
+    signalCode: null,
+    kill: (signal: NodeJS.Signals): boolean => {
+      signals.push(signal);
+      return true;
+    },
+  });
+  return { child, signals };
+};
 
 describe("production server smoke helpers", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -57,11 +60,11 @@ describe("production server smoke helpers", () => {
   });
 
   it("escalates shutdown and fails if the child remains alive", async () => {
-    const child = new FakeChildProcess();
+    const { child, signals } = unkillableChild();
 
     await expect(
       stopServer(child as unknown as ChildProcess, { termTimeoutMs: 1, killTimeoutMs: 1 }),
     ).rejects.toThrow("remained alive after SIGKILL");
-    expect(child.signals).toEqual(["SIGTERM", "SIGKILL"]);
+    expect(signals).toEqual(["SIGTERM", "SIGKILL"]);
   });
 });

@@ -1,5 +1,6 @@
 import type { Element, Root } from "hast";
 import canonicalInternalLinks from "~/lib/rehype/canonical-internal-links";
+import { VFile } from "vfile";
 
 const anchor = (href: string): Element => ({
   type: "element",
@@ -11,7 +12,7 @@ const anchor = (href: string): Element => ({
 const transformHrefs = async (hrefs: readonly string[]): Promise<readonly unknown[]> => {
   const anchors = hrefs.map(anchor);
   const tree: Root = { type: "root", children: anchors };
-  await canonicalInternalLinks()(tree, undefined);
+  await canonicalInternalLinks()(tree, new VFile(), () => {});
   return anchors.map((node) => node.properties.href);
 };
 

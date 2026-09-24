@@ -1,26 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import {
-  fetchWithTimeout,
-  startProductionServer,
-  stopServer,
-  type StartedProductionServer,
-} from "../support/production-server";
+import { describe, expect, inject, it } from "vitest";
+import { fetchWithTimeout } from "../support/production-server";
+
+const origin = inject("siteOrigin");
 
 describe("published homepage brand metadata", () => {
-  let server: StartedProductionServer;
-  beforeAll(async () => {
-    server = await startProductionServer({
-      host: "127.0.0.1",
-      siteUrl: "https://artka.dev",
-      auth: "unconfigured",
-    });
-  });
-  afterAll(async () => {
-    if (server) await stopServer(server.child);
-  });
-
   it.each(["/", "/en/"])("leads with the brand in HTML metadata at %s", async (path) => {
-    const response = await fetchWithTimeout(`${server.origin}${path}`);
+    const response = await fetchWithTimeout(`${origin}${path}`);
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toMatch(/<title>artka\.dev — Artyom Kashuta \| /);

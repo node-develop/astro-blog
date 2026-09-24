@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { Element, Properties, Root } from "hast";
 import { describe, expect, it } from "vitest";
 import lazyContentImages from "~/lib/rehype/lazy-content-images";
+import { VFile } from "vfile";
 
 const attribute = (tag: string, name: string): string | undefined =>
   tag.match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1];
@@ -96,7 +97,7 @@ describe("lazyContentImages", () => {
       children: [ordinary, mermaid, dataEager, highPriority, explicitLoading],
     };
 
-    await lazyContentImages()(tree, undefined);
+    await lazyContentImages()(tree, new VFile(), () => {});
 
     expect(ordinary.properties).toMatchObject({ loading: "lazy", decoding: "async" });
     expect(mermaid.properties).toMatchObject({

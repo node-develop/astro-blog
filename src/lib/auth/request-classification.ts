@@ -1,21 +1,7 @@
-const SESSION_COOKIE_NAMES = new Set([
-  "better-auth.session_token",
-  "__Secure-better-auth.session_token",
-]);
+import { hasSessionCookie } from "~/lib/http/session-cookie";
 
 const isPathWithin = (pathname: string, root: string): boolean =>
   pathname === root || pathname.startsWith(`${root}/`);
-
-const hasSessionCookie = (request: Request): boolean => {
-  const cookieHeader = request.headers.get("cookie");
-  if (!cookieHeader) return false;
-
-  return cookieHeader.split(";").some((cookie) => {
-    const separator = cookie.indexOf("=");
-    if (separator < 1) return false;
-    return SESSION_COOKIE_NAMES.has(cookie.slice(0, separator).trim());
-  });
-};
 
 export const requiresAuthContext = (request: Request, pathname: string): boolean => {
   if (request.method !== "GET" && request.method !== "HEAD") return true;
@@ -27,7 +13,7 @@ export const requiresAuthContext = (request: Request, pathname: string): boolean
   ) {
     return true;
   }
-  return hasSessionCookie(request);
+  return hasSessionCookie(request.headers.get("cookie"));
 };
 
 const HOST_CHARACTERS = /^(?:\[[0-9a-f:.]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]{1,5})?$/i;

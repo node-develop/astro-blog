@@ -1,24 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { chromium, type Browser } from "playwright";
-import {
-  startProductionServer,
-  stopServer,
-  type StartedProductionServer,
-} from "../support/production-server";
+
+const origin = inject("siteOrigin");
 
 let browser: Browser;
-let server: StartedProductionServer;
 beforeAll(async () => {
-  server = await startProductionServer({
-    host: "127.0.0.1",
-    siteUrl: "https://artka.dev",
-    auth: "unconfigured",
-  });
   browser = await chromium.launch();
 });
 afterAll(async () => {
   await browser?.close();
-  if (server) await stopServer(server.child);
 });
 
 describe.each([375, 1440])("theme navigation at %ipx", (width) => {
@@ -42,7 +32,7 @@ describe.each([375, 1440])("theme navigation at %ipx", (width) => {
             void target.recordThemeSwap(document.documentElement.dataset.theme ?? "paper");
           });
         });
-        await page.goto(server.origin + "/about/");
+        await page.goto(origin + "/about/");
         for (const theme of ["dark", "paper"]) {
           const current = (await page.locator("html").getAttribute("data-theme")) ?? "paper";
           if (current === theme) await page.locator("[data-theme-toggle]").first().click();
@@ -51,15 +41,15 @@ describe.each([375, 1440])("theme navigation at %ipx", (width) => {
           let expectedSwaps = 0;
           for (const route of ["/now/", "/uses/", "/about/"]) {
             await page.locator(`.site-footer a[href="${route}"]`).click();
-            await page.waitForURL(server.origin + route);
+            await page.waitForURL(origin + route);
             await expect.poll(() => swaps.length).toBe(++expectedSwaps);
             expect((await page.locator("html").getAttribute("data-theme")) ?? "paper").toBe(theme);
           }
           await page.goBack();
-          await page.waitForURL(server.origin + "/uses/");
+          await page.waitForURL(origin + "/uses/");
           await expect.poll(() => swaps.length).toBe(4);
           await page.goForward();
-          await page.waitForURL(server.origin + "/about/");
+          await page.waitForURL(origin + "/about/");
           await expect.poll(() => swaps.length).toBe(5);
           expect(swaps).toEqual(Array(5).fill(theme));
           await page.reload();
@@ -93,10 +83,10 @@ it("preserves the in-memory choice during navigation when storage is blocked", a
     await page.route("https://artka.dev/avatar-512.png", (route) =>
       route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
     );
-    await page.goto(server.origin + "/about/");
+    await page.goto(origin + "/about/");
     await page.locator("[data-theme-toggle]").first().click();
     await page.locator('.site-footer a[href="/now/"]').click();
-    await page.waitForURL(server.origin + "/now/");
+    await page.waitForURL(origin + "/now/");
     expect(await page.locator("html").getAttribute("data-theme")).toBe("dark");
   } finally {
     await context.close();
@@ -116,7 +106,7 @@ it.each([375, 1440])(
       await page.route("https://artka.dev/avatar-512.png", (route) =>
         route.fulfill({ path: "dist/client/avatar-512.png", contentType: "image/png" }),
       );
-      await page.goto(server.origin + "/blog/");
+      await page.goto(origin + "/blog/");
       await page.locator("[data-theme-toggle]").first().click();
       for (const route of ["/en/blog/", "/blog/"]) {
         const toggle = page.locator(".site-header__actions .lang-toggle");
@@ -125,7 +115,7 @@ it.each([375, 1440])(
           await page.locator(`link[rel="alternate"][href="https://artka.dev${route}"]`).count(),
         ).toBeGreaterThan(0);
         await toggle.click();
-        await page.waitForURL(server.origin + route);
+        await page.waitForURL(origin + route);
         await expect
           .poll(async () => await page.locator("html").getAttribute("lang"))
           .toBe(route.startsWith("/en/") ? "en" : "ru");

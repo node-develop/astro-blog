@@ -1,26 +1,16 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { chromium, type Browser } from "playwright";
-import {
-  startProductionServer,
-  stopServer,
-  type StartedProductionServer,
-} from "../support/production-server";
+
+const origin = inject("siteOrigin");
 
 let browser: Browser;
-let server: StartedProductionServer;
 
 beforeAll(async () => {
-  server = await startProductionServer({
-    host: "127.0.0.1",
-    siteUrl: "https://artka.dev",
-    auth: "unconfigured",
-  });
   browser = await chromium.launch({ headless: true });
 });
 
 afterAll(async () => {
   await browser?.close();
-  if (server) await stopServer(server.child);
 });
 
 const routes = [
@@ -40,7 +30,7 @@ describe.each([375, 1440])("code readability at %ipx", (width) => {
       try {
         const page = await context.newPage();
         for (const route of routes) {
-          await page.goto(server.origin + route);
+          await page.goto(origin + route);
           for (const siteTheme of ["paper", "dark"]) {
             if (
               (await page.locator("html").getAttribute("data-theme")) !==
@@ -109,7 +99,7 @@ describe.each([375, 1440])("code readability at %ipx", (width) => {
 it("preserves code text and empty lines when copying", async () => {
   const page = await browser.newPage();
   try {
-    await page.goto(server.origin + routes[0]);
+    await page.goto(origin + routes[0]);
     const pre = page.locator("pre.astro-code").first();
     const expected = await pre.textContent();
     expect(expected).toContain("\n\n");

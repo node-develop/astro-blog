@@ -27,6 +27,7 @@ import {
 import { mdxComponents } from "~/components/mdx";
 import { lessonOgPath } from "~/lib/og/lesson-pages";
 import { canonicalUrl } from "~/lib/seo/url-policy";
+import { lessonTitle } from "~/lib/seo/title";
 // KaTeX CSS is per-page, not global (see src/lib/remark/flag-math.ts) — it
 // only ships on lessons that actually contain math.
 import katexHref from "katex/dist/katex.min.css?url";
@@ -61,19 +62,12 @@ const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 const courseAbs = canonicalUrl(courseHref);
 
-// Title: the lesson name, followed by the course name while both fit the
-// length a search result shows (the same ~60 characters BaseLayout budgets
-// for, since Google cuts the title at roughly 600 px). The lesson number is
-// gone for good: it says nothing to a searcher and it already appears in the
-// URL, in the breadcrumbs and in the sidebar, while it cost four characters
-// of every title. `index` stays in use for the eyebrow and for the
-// LearningResource position below. The course name goes the same way on the
-// long lessons — the breadcrumbs and the sidebar carry it there too, and a
-// name that is cut off in the results helps nobody.
-const LESSON_TITLE_BUDGET = 60;
-const titleWithCourse = `${lesson.data.title} — ${course.data.title}`;
-const pageTitle =
-  titleWithCourse.length > LESSON_TITLE_BUDGET ? lesson.data.title : titleWithCourse;
+// Title: the lesson name, followed by the course name while both fit the SERP
+// budget (src/lib/seo/title.ts). The lesson number is gone for good: it says
+// nothing to a searcher and it already appears in the URL, in the breadcrumbs
+// and in the sidebar, while it cost four characters of every title. `index`
+// stays in use for the eyebrow and for the LearningResource position below.
+const pageTitle = lessonTitle(lesson.data.title, course.data.title);
 
 // Per-page OG card: every lesson gets its own image carrying its own title,
 // rendered at build time by src/pages/og/lesson/[course]/[lesson].png.ts.

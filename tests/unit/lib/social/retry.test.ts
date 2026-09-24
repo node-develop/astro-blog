@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { withRetry } from "~/lib/social/retry";
-import { ok, err, transportError } from "~/lib/social/errors";
+import { ok, err, httpFailure, transportError } from "~/lib/social/errors";
 
 describe("transportError retryable", () => {
   it.each([
@@ -10,7 +10,31 @@ describe("transportError retryable", () => {
     [422, false],
     [401, false],
   ])("status %i → retryable %s", (status, retryable) => {
-    expect(transportError("x_en", status, "body").retryable).toBe(retryable);
+    expect(transportError("x_en", status, "body")).toMatchObject({ kind: "transport", retryable });
+  });
+});
+
+describe("httpFailure", () => {
+  it.each([401, 403])("maps %i to a non-retryable policy error with a clipped body", (status) => {
+    expect(httpFailure("li_en", status, "x".repeat(500))).toEqual({
+      kind: "policy",
+      channel: "li_en",
+      reason: `${status} ${"x".repeat(200)}`,
+    });
+  });
+
+  it.each([
+    [429, true],
+    [503, true],
+    [422, false],
+  ])("maps %i to a transport error (retryable: %s) keeping the full body", (status, retryable) => {
+    expect(httpFailure("x_en", status, "body")).toEqual({
+      kind: "transport",
+      channel: "x_en",
+      status,
+      retryable,
+      body: "body",
+    });
   });
 });
 

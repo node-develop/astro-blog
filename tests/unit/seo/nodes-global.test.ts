@@ -39,8 +39,8 @@ describe("buildWebSiteNode", () => {
     expect(en.inLanguage).toBe("en-US");
     expect(en["@id"]).toBe(graphIds.websiteEn);
     expect(en.url).toBe("https://artka.dev/en/");
-    expect(en.translationOfWork).toEqual({ "@id": graphIds.websiteRu });
-    expect(ru.workTranslation).toEqual({ "@id": graphIds.websiteEn });
+    expect(en).toMatchObject({ translationOfWork: { "@id": graphIds.websiteRu } });
+    expect(ru).toMatchObject({ workTranslation: { "@id": graphIds.websiteEn } });
     expect(ru["@id"]).not.toBe(en["@id"]);
     expect(websiteId("ru")).toBe(graphIds.websiteRu);
     expect(websiteId("en")).toBe(graphIds.websiteEn);

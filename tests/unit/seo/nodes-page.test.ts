@@ -86,9 +86,9 @@ describe("buildBreadcrumbListNode", () => {
     });
     expect(node["@type"]).toBe("BreadcrumbList");
     expect(node.itemListElement).toHaveLength(3);
-    expect(node.itemListElement[0].name).toBe("Главная");
-    expect(node.itemListElement[1].item).toBe("https://artka.dev/blog/");
-    expect(node.itemListElement[2].name).toBe("Заголовок");
+    expect(node.itemListElement[0]?.name).toBe("Главная");
+    expect(node.itemListElement[1]?.item).toBe("https://artka.dev/blog/");
+    expect(node.itemListElement[2]?.name).toBe("Заголовок");
   });
 
   it("uses /en/ paths for en locale", () => {
@@ -97,8 +97,8 @@ describe("buildBreadcrumbListNode", () => {
       blogIndexLabel: "Blog",
       title: "Title",
     });
-    expect(node.itemListElement[0].item).toBe("https://artka.dev/en/");
-    expect(node.itemListElement[1].item).toBe("https://artka.dev/en/blog/");
+    expect(node.itemListElement[0]?.item).toBe("https://artka.dev/en/");
+    expect(node.itemListElement[1]?.item).toBe("https://artka.dev/en/blog/");
   });
 });
 
@@ -356,8 +356,8 @@ describe("buildFaqPageNode", () => {
     expect(node!["@type"]).toBe("FAQPage");
     expect(node!.isPartOf).toEqual({ "@id": "https://artka.dev/blog/foo#webpage" });
     expect(node!.mainEntity).toHaveLength(1);
-    expect(node!.mainEntity[0]["@type"]).toBe("Question");
-    expect(node!.mainEntity[0].acceptedAnswer["@type"]).toBe("Answer");
-    expect(node!.mainEntity[0].acceptedAnswer.text).toBe("A1.");
+    expect(node!.mainEntity[0]?.["@type"]).toBe("Question");
+    expect(node!.mainEntity[0]?.acceptedAnswer["@type"]).toBe("Answer");
+    expect(node!.mainEntity[0]?.acceptedAnswer.text).toBe("A1.");
   });
 });

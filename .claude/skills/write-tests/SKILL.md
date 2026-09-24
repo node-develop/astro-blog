@@ -42,6 +42,8 @@ Never write:
 
 - `.astro` markup is tested through its output (`tests/built`), never by reading the template.
 - Anything that needs `dist/` goes to `tests/built` — never `skipIf(!existsSync("dist"))` in `unit`.
+- A `built` test that needs the running site uses `inject("siteOrigin")` (one shared server from
+  `tests/built/global-setup.ts`); start your own server only to assert on startup or logs.
 - A new e2e spec needs a user flow that no lower layer can cover. Prefer extending an existing spec.
 
 ## 3. Write it so it fails for the right reason

@@ -1,5 +1,6 @@
 import type { Element, Root } from "hast";
 import focusableTables from "~/lib/rehype/focusable-tables";
+import { VFile } from "vfile";
 
 const table = (properties: Element["properties"] = {}): Element => ({
   type: "element",
@@ -14,7 +15,7 @@ it("makes every Markdown table keyboard-focusable (axe: scrollable-region-focusa
   const wrapper: Element = { type: "element", tagName: "div", properties: {}, children: [nested] };
   const tree: Root = { type: "root", children: [plain, wrapper] };
 
-  await focusableTables()(tree, undefined);
+  await focusableTables()(tree, new VFile(), () => {});
 
   expect(plain.properties.tabIndex).toBe(0);
   expect(nested.properties.tabIndex).toBe(0);
@@ -25,7 +26,7 @@ it("keeps an explicit tabindex and leaves other elements alone", async () => {
   const div: Element = { type: "element", tagName: "div", properties: {}, children: [] };
   const tree: Root = { type: "root", children: [custom, div] };
 
-  await focusableTables()(tree, undefined);
+  await focusableTables()(tree, new VFile(), () => {});
 
   expect(custom.properties.tabIndex).toBe(-1);
   expect(div.properties.tabIndex).toBeUndefined();

@@ -52,12 +52,19 @@ Scripts: `pnpm test` = unit, `pnpm test:built`, `pnpm test:db`, `pnpm test:all`.
    `backender` / `frontender` / `critic` aligned with it; `test-guard.sh` PreToolUse hook blocks test files
    that read `.astro` / workflow / config source to regex it.
 
-## Out of scope (flagged, not done here)
+## Follow-up (done in the second PR)
 
-- Folding `seo-utility-routes` / `course-dates` / `home-brand-metadata` into the smoke file so the
-  `built` project boots the standalone server once (a `globalSetup` that `provide()`s the origin).
-- Merging the three `socialDrafts.*` integration files (would save 2 Postgres boots) — cannot be run in
-  this environment (no Docker); do it together with a shared Testcontainers `globalSetup`.
-- Source refactors suggested by the audit: one `hasSessionCookie` for `request-classification` and
-  `public-cache`; `mapHttpFailure` shared by the social clients; exporting `TITLE_BUDGET` from a lib module.
+- `tests/**` is part of `tsconfig.json` and ESLint (test override: `console` and
+  `vi.importActual<typeof import(…)>` allowed); the one test class became a factory.
+- `built` boots one shared standalone server in `tests/built/global-setup.ts`
+  (`inject("siteOrigin")`); only the smoke file starts its own, because it asserts on
+  startup and server logs. 9 boots → 3.
+- `socialDrafts.{generate,publish,actions}` → one `socialDrafts.test.ts`: 3 Postgres boots → 1.
+- Source: `hasSessionCookie` lives once in `src/lib/http/session-cookie.ts`; social
+  clients map HTTP failures through `httpFailure` in `src/lib/social/errors.ts`; the SERP
+  title budget and rules live in `src/lib/seo/title.ts`, used by both layouts and the tests
+  (no more regex over `BaseLayout.astro`).
+
+## Still out of scope
+
 - Running e2e in CI (needs a Postgres service + started server).
