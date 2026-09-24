@@ -1,13 +1,10 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, inject, it } from "vitest";
 import { graphIds } from "~/lib/seo/nodes-global";
-import {
-  fetchWithTimeout,
-  startProductionServer,
-  stopServer,
-  type StartedProductionServer,
-} from "../support/production-server";
+import { fetchWithTimeout } from "../support/production-server";
+
+const origin = inject("siteOrigin");
 
 /**
  * The site's main list of articles must exist in the markup, not only in the
@@ -163,27 +160,13 @@ const distTagArchives = (locale: "ru" | "en"): ReadonlyArray<readonly [string, s
 };
 
 describe("the main list of articles is in the markup — server-rendered pages", () => {
-  let server: StartedProductionServer;
-
-  beforeAll(async () => {
-    server = await startProductionServer({
-      host: "127.0.0.1",
-      siteUrl: "https://artka.dev",
-      auth: "test",
-    });
-  }, 60_000);
-
-  afterAll(async () => {
-    if (server) await stopServer(server.child);
-  });
-
   it.each([
     ["/", "ru"],
     ["/blog/", "ru"],
     ["/en/", "en"],
     ["/en/blog/", "en"],
   ] as const)("%s enumerates the posts it links", async (path, locale) => {
-    const response = await fetchWithTimeout(`${server.origin}${path}`, {}, 10_000);
+    const response = await fetchWithTimeout(`${origin}${path}`, {}, 10_000);
     expect(response.status, path).toBe(200);
     const listed = assertListMatchesMarkup(path, await response.text(), locale);
     // Fixture guard: the comparisons are vacuous on a page that links nothing,

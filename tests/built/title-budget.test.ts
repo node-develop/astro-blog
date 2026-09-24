@@ -2,10 +2,11 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { load } from "~/lib/yaml";
+import { brandedTitle, TITLE_BUDGET } from "~/lib/seo/title";
 
 /**
- * The SERP title budget lives in BaseLayout as a number; these tests assert the
- * rule that number expresses, not the exact copy of any one page:
+ * The SERP title budget and rule live in src/lib/seo/title.ts; these tests assert
+ * what that rule means for real content and built pages, not the copy of one page:
  *
  *   - the brand suffix is dropped when it would push the title over the budget;
  *   - og:title / twitter:title carry the bare title (og:site_name has the brand);
@@ -15,10 +16,6 @@ import { load } from "~/lib/yaml";
 
 const repoFile = (rel: string): string => join(process.cwd(), rel);
 const read = (rel: string): string => readFileSync(repoFile(rel), "utf8");
-
-// test-guard: allow-source-read — only to read TITLE_BUDGET until it is exported
-// from a lib module; every assertion below runs on content or dist/.
-const baseLayout = read("src/layouts/BaseLayout.astro");
 
 const readStrings = (rel: string): Record<string, string> =>
   JSON.parse(read(rel)) as Record<string, string>;
@@ -30,22 +27,6 @@ const lessonFiles = (dir: string): readonly string[] =>
   readdirSync(repoFile(dir))
     .filter((file) => file.endsWith(".md") && file !== "_index.md")
     .sort();
-
-/** The budget as BaseLayout declares it — the tests below derive from it. */
-const budgetFrom = (source: string, name: string): number => {
-  const match = new RegExp(`const ${name} = (\\d+);`).exec(source);
-  if (!match?.[1]) throw new Error(`${name} not found`);
-  return Number(match[1]);
-};
-
-const BRAND = "artka.dev";
-const TITLE_BUDGET = budgetFrom(baseLayout, "TITLE_BUDGET");
-
-/** Mirror of BaseLayout's rule, used to score the titles pages hand it. */
-const serpTitle = (title: string): string => {
-  const withBrand = `${title} | ${BRAND}`;
-  return title.includes(BRAND) || withBrand.length > TITLE_BUDGET ? title : withBrand;
-};
 
 const frontmatter = (rel: string): Record<string, unknown> => {
   const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(read(rel))?.[1];
@@ -164,7 +145,7 @@ describe("landing and archive titles fit the budget", () => {
   ];
 
   it.each(cases)("$page stays inside the budget with the brand", ({ title }) => {
-    expect(serpTitle(title).length).toBeLessThanOrEqual(TITLE_BUDGET);
+    expect(brandedTitle(title).length).toBeLessThanOrEqual(TITLE_BUDGET);
   });
 
   it("gives the tag archive a description worth showing", () => {
@@ -239,7 +220,7 @@ describe("entity pages render the metadata written for them", () => {
 
   it.each(entities)("$built", ({ source, built }) => {
     const html = read(built);
-    expect(builtTitle(html)).toBe(serpTitle(str(source, "metaTitle")));
+    expect(builtTitle(html)).toBe(brandedTitle(str(source, "metaTitle")));
     expect(metaContent(html, "name", "description")).toBe(str(source, "metaDescription"));
   });
 

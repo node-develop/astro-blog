@@ -79,7 +79,7 @@ const call = async (
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }),
-  } as APIContext);
+  } as unknown as APIContext);
   return { status: response.status, body: await response.json() };
 };
 

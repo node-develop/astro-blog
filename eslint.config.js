@@ -13,7 +13,6 @@ export default [
       "playwright.config.ts",
       "vitest.config.ts",
       "eslint.config.js",
-      "tests/**",
       "*.d.ts",
       "src/env.d.ts",
     ],
@@ -42,6 +41,15 @@ export default [
   {
     files: ["src/lib/db/migrate.ts", "**/*.config.ts"],
     rules: { "no-console": "off" },
+  },
+  {
+    // Tests print diagnostics on failure, and `vi.importActual<typeof import("…")>`
+    // is the idiomatic partial-mock pattern, so both are allowed here.
+    files: ["tests/**/*.ts", "**/*.test.ts"],
+    rules: {
+      "no-console": "off",
+      "@typescript-eslint/consistent-type-imports": ["error", { disallowTypeAnnotations: false }],
+    },
   },
   ...astro.configs.recommended,
 ];

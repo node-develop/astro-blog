@@ -33,6 +33,7 @@ import { buildGraph, safeJsonLd, type GraphNode } from "~/lib/seo/schema";
 import { person } from "~/lib/seo/person";
 import { canonicalPath, canonicalUrl } from "~/lib/seo/url-policy";
 import { twitterHandleFromSameAs } from "~/lib/seo/social";
+import { brandedTitle } from "~/lib/seo/title";
 // Hashed URLs of the display-face subsets. Vite dedupes by content, so these
 // resolve to the exact files @fontsource's CSS references — preloading them
 // takes the H1 web-font off the CSS critical path. Latin + Cyrillic only:
@@ -97,20 +98,9 @@ const preconnectOrigins = [
   ),
 ];
 
-// Brand suffix — a <title> ends with " | artka.dev" unless it already contains
-// the brand or the suffix would push the title past the SERP budget. Pages
-// don't have to remember to append it themselves.
-const BRAND = "artka.dev";
-// Google renders the SERP title in a fixed box of roughly 600 px and cuts off
-// whatever does not fit. At the size search results use, 600 px works out to
-// about 60 characters for both Cyrillic and Latin copy, so that is the budget
-// a title has to stay inside. When the brand suffix does not fit, it is the
-// part we drop: the domain already appears on its own line in the result,
-// while the words it would push out are the ones carrying the meaning.
-const TITLE_BUDGET = 60;
-const titleWithBrand = `${title} | ${BRAND}`;
-const fullTitle =
-  title.includes(BRAND) || titleWithBrand.length > TITLE_BUDGET ? title : titleWithBrand;
+// Brand suffix within the ~60-character SERP budget — rule and rationale in
+// src/lib/seo/title.ts. Pages don't have to remember to append it themselves.
+const fullTitle = brandedTitle(title);
 // Only <title> gets the suffixed form. og:title and twitter:title below take
 // the bare title: og:site_name already states the brand on the card, and a
 // second copy of it only eats the part of the headline that says something.

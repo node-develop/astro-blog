@@ -6,8 +6,8 @@ const request = (
   init: { readonly method?: string; readonly headers?: HeadersInit } = {},
 ): Request =>
   new Request(new URL(pathname, "http://origin.test"), {
-    method: init.method,
-    headers: init.headers,
+    ...(init.method === undefined ? {} : { method: init.method }),
+    ...(init.headers === undefined ? {} : { headers: init.headers }),
   });
 
 describe("requiresAuthContext", () => {
@@ -25,23 +25,13 @@ describe("requiresAuthContext", () => {
     (pathname) => expect(requiresAuthContext(request(pathname), pathname)).toBe(true),
   );
 
-  it.each(["better-auth.session_token=x", "__Secure-better-auth.session_token=x"])(
-    "requires auth when cookie %s is present",
-    (cookie) => expect(requiresAuthContext(request("/", { headers: { cookie } }), "/")).toBe(true),
-  );
-
-  it.each([
-    "not-better-auth.session_token=x",
-    "better-auth.session_token-suffix=x",
-    "__Secure-better-auth.session_token-suffix=x",
-    "BETTER-AUTH.SESSION_TOKEN=x",
-  ])("does not match an inexact session cookie name: %s", (cookie) => {
-    expect(requiresAuthContext(request("/", { headers: { cookie } }), "/")).toBe(false);
-  });
-
-  it("parses semicolon-delimited cookie names exactly", () => {
+  // Cookie-name matching itself is covered in src/lib/http/session-cookie.test.ts.
+  it("requires auth for a public GET that carries a session cookie", () => {
     const cookie = "theme=dark; better-auth.session_token=abc; locale=en";
     expect(requiresAuthContext(request("/", { headers: { cookie } }), "/")).toBe(true);
+    expect(requiresAuthContext(request("/", { headers: { cookie: "theme=dark" } }), "/")).toBe(
+      false,
+    );
   });
 
   it.each(["POST", "PUT", "PATCH", "DELETE"])(

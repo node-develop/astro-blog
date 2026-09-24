@@ -63,8 +63,8 @@ const parseRules = (file: string, css: string): Rule[] => {
   for (const match of stripComments(css).matchAll(BLOCK_RE)) {
     rules.push({
       file,
-      selector: match[1].trim().replace(/\s+/g, " "),
-      declarations: parseDeclarations(match[2]),
+      selector: (match[1] ?? "").trim().replace(/\s+/g, " "),
+      declarations: parseDeclarations(match[2] ?? ""),
     });
   }
   return rules;
@@ -127,7 +127,7 @@ const mdxFiles = readdirSync(MDX_DIR)
 
 const mdxRules = mdxFiles.flatMap((file) =>
   [...readFileSync(file, "utf8").matchAll(STYLE_BLOCK_RE)].flatMap((block) =>
-    parseRules(file, block[1]),
+    parseRules(file, block[1] ?? ""),
   ),
 );
 

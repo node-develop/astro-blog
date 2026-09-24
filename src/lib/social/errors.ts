@@ -44,6 +44,15 @@ export const contentError = (channel: SocialChannel, reason: string): SocialErro
   reason,
 });
 
+/** A rejected token or missing scope: retrying cannot help, a human must re-auth. */
+export const isAuthFailure = (status: number): boolean => status === 401 || status === 403;
+
+/** Maps a non-2xx channel API response: auth failures → policy, anything else → transport. */
+export const httpFailure = (channel: SocialChannel, status: number, body: string): SocialError =>
+  isAuthFailure(status)
+    ? policyError(channel, `${status} ${body.slice(0, 200)}`)
+    : transportError(channel, status, body);
+
 export const stringifyError = (e: SocialError): string => {
   switch (e.kind) {
     case "generation":

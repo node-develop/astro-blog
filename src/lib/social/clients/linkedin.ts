@@ -1,4 +1,4 @@
-import { ok, err, transportError, policyError, contentError } from "../errors.js";
+import { ok, err, contentError, httpFailure } from "../errors.js";
 import type { Result } from "../errors.js";
 
 const apiUrl = "https://api.linkedin.com/rest/posts";
@@ -41,9 +41,5 @@ export const postShare = async (opts: {
     });
   }
 
-  const errBody = await response.text();
-  if (response.status === 401 || response.status === 403) {
-    return err(policyError("li_en", `${response.status} ${errBody.slice(0, 200)}`));
-  }
-  return err(transportError("li_en", response.status, errBody));
+  return err(httpFailure("li_en", response.status, await response.text()));
 };
