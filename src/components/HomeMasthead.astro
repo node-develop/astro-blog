@@ -21,10 +21,14 @@ interface Props {
   lede?: string | undefined;
   cta?: string | undefined;
   ctaHref: string;
+  /** Secondary action beside the CTA (the booking link); both or neither. */
+  secondaryCta?: string | undefined;
+  secondaryHref?: string | undefined;
   sealPhrase?: string | undefined;
 }
 
-const { eyebrow, title, highlight, lede, cta, ctaHref, sealPhrase } = Astro.props;
+const { eyebrow, title, highlight, lede, cta, ctaHref, secondaryCta, secondaryHref, sealPhrase } =
+  Astro.props;
 
 const text = title ?? "";
 // indexOf, not a regex: the highlight is editor-supplied text, and a missing
@@ -49,10 +53,19 @@ const size = text.length <= 30 ? "xl" : text.length <= 50 ? "lg" : "md";
   <div class="masthead__foot">
     {lede && <p class="masthead__lede">{lede}</p>}
     {
-      cta && (
-        <a href={ctaHref} class="masthead__cta">
-          {cta}
-        </a>
+      (cta || (secondaryCta && secondaryHref)) && (
+        <div class="masthead__actions">
+          {cta && (
+            <a href={ctaHref} class="masthead__cta">
+              {cta}
+            </a>
+          )}
+          {secondaryCta && secondaryHref && (
+            <a href={secondaryHref} class="masthead__cta masthead__cta--secondary">
+              {secondaryCta}
+            </a>
+          )}
+        </div>
       )
     }
   </div>
@@ -185,6 +198,17 @@ const size = text.length <= 30 ? "xl" : text.length <= 50 ? "lg" : "md";
     transform: translate(3px, 3px);
     box-shadow: var(--shadow-press);
   }
+  .masthead__actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  /* One lime slab per screen: the secondary action is the same slab on paper. */
+  .masthead__cta--secondary {
+    background: var(--color-bg-elevated);
+    color: var(--color-fg);
+  }
 
   .masthead__seal {
     position: absolute;
@@ -206,6 +230,11 @@ const size = text.length <= 30 ? "xl" : text.length <= 50 ? "lg" : "md";
       align-items: flex-start;
       gap: var(--space-5);
       margin-top: var(--space-6);
+    }
+    .masthead__actions {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
     }
     .masthead__cta {
       width: 100%;

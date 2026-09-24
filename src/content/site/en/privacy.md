@@ -4,11 +4,11 @@ description: What artka.dev processes and how analytics, browser settings, comme
 metaTitle: "Privacy: how this site handles your data"
 metaDescription: "What artka.dev collects: anonymous analytics, theme and language settings kept in your browser, and email enquiries. What it never collects, and why."
 lang: en
-sourceHash: 2dd3a512346d38db39f92b536f9197ccc674e5d4aa95e5cf09f4de0e90d13494
+sourceHash: 9026f6cf6e92b1a17530d079c136ab08d83be37ec3cb348b4f361e1286c3d686
 manuallyEdited: false
 ---
 
-Last updated: 24 August 2026.
+Last updated: 24 September 2026.
 
 ## Summary
 
@@ -54,6 +54,18 @@ purpose is to manage the subscriber list and deliver artka.dev emails. Buttondow
 handles that information under its own
 [privacy policy](https://www.buttondown.com/legal/privacy). Every newsletter
 includes an unsubscribe link.
+
+Booking a call on the Contact page uses Cal.com. The Cal.com widget loads only
+after you press “Choose a time”; until then the page makes no requests to
+Cal.com. When you book, your name, email address, the selected time, the meeting
+topic you describe, and technical request metadata are sent to Cal.com, and the
+event is added to the author's calendar. The purpose is to arrange and hold the
+meeting and to send confirmations and reminders. Cal.com handles that
+information under its own [privacy policy](https://cal.com/privacy). Plausible
+receives only two events, "booking made" (with the page language) and "calendar
+failed to load", never your name, email address, or meeting time. You can reschedule or cancel through
+the link in the confirmation email, and ask for the booking record to be removed
+by writing to [a@artka.dev](mailto:a@artka.dev).
 
 If you send email, the mail providers involved process the sender address,
 headers, and message content. That information is used to understand and answer

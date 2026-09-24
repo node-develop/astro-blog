@@ -86,5 +86,12 @@
   "tags.archiveDescription": "All artka.dev articles and notes tagged {label}: hands-on breakdowns, code examples and lessons learned in production.",
   "tags.archiveEmptyRu": "There are no articles with this tag in the Russian version of the blog yet.",
   "tags.archiveEmptyEn": "There are no articles with this tag in the English version of the blog yet.",
-  "tags.backToIndex": "All tags"
+  "tags.backToIndex": "All tags",
+  "booking.title": "Book a call",
+  "booking.lede": "A free 30-minute call about AI agents, Claude Code, backend architecture or your project. Pick a time that suits you — I will confirm the meeting and the invitation will arrive by email.",
+  "booking.cta": "Choose a time",
+  "booking.fallback": "Open the calendar on cal.com",
+  "booking.loading": "Loading the calendar…",
+  "booking.error": "The calendar did not load. Open it on cal.com using the link above, or send an email.",
+  "booking.homeCta": "Let's meet"
 }

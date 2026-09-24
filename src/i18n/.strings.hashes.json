@@ -97,5 +97,12 @@
   "breadcrumbs.courses": "0a168ca185552ba715e79cb6a625705fe1b8af7553a2b861e0a38499e03e351a",
   "certificate.label": "9d924c5f2fcd8afdd0df9c7774931278ad843a2f59e5d5e8b90986b8b05728c3",
   "certificate.copy": "348ff3be2d36eb20675eb3213279ba176c301c604c8c12e8c8709cf59b6d59da",
-  "certificate.download": "59a0ba0355b1eead805d1206a5e0bb7604c6d12210b69c866f87868af00817a2"
+  "certificate.download": "59a0ba0355b1eead805d1206a5e0bb7604c6d12210b69c866f87868af00817a2",
+  "booking.title": "580498c229ae0cf860ad0b42c2f9bad6d9f05a9cd9e333cddbe0227ab1f7f8a5",
+  "booking.lede": "5234dc61cd4acbd10eeca4ebe94ce836936df755060fc04d825fa7445de302f0",
+  "booking.cta": "1e3502906c3b95dcfa25885c17f594dbe4cf6c71f9491bb1523c45429fe46a8d",
+  "booking.fallback": "e5ee446bd3fc333e0e2ee117c7d7f6810f33df2e6251d0a165fc7335b91a7b56",
+  "booking.loading": "58c20878da0426de162d45fdecb42529d729a40fe59dca1f095c1b3380be26e9",
+  "booking.error": "2be711ce480c2d9af7b5a9e6e22db7ea32c6d38f5efff6720a0611cb89afdbfc",
+  "booking.homeCta": "62b46d2407c4f4e5d1376318a11ebbc95b40efa4c43cf7284e368012f1d7beaa"
 }
