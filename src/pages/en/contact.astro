@@ -1,6 +1,7 @@
 ---
 import "~/styles/content.css";
 import { getEntry, render } from "astro:content";
+import BookingWidget from "~/components/BookingWidget.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import { t } from "~/i18n";
@@ -47,6 +48,7 @@ const nodes = buildLandingNodes({
     <Breadcrumbs items={breadcrumbItems} ariaLabel={t(locale, "breadcrumbs.aria")} />
     <h1>{entry.data.title}</h1>
     <Content />
+    <BookingWidget locale={locale} />
   </article>
   <style>
     .prose {

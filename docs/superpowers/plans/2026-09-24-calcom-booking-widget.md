@@ -6,7 +6,7 @@
 
 **Architecture:** Cal.com Cloud owns availability, calendar sync, booking, confirmation emails, video links and reschedule/cancel. The site only embeds the Cal.com booker via the vanilla `embed.js` snippet inside one Astro component, `BookingWidget.astro`, mounted in a new `#book` section of `/contact/` and `/en/contact/`. The embed loads on explicit click (a facade), follows the site theme, and reports a PII-free `Booking` event to Plausible. There is no backend code, DB table, API key or LLM call.
 
-**Tech Stack:** Cal.com Cloud + `embed.js` (vanilla snippet, no npm dependency), Astro component with `is:inline` script (same pattern as `src/components/Comments.astro`), Vitest, Playwright.
+**Tech Stack:** Cal.com Cloud + `embed.js` (vanilla snippet, no npm dependency), Astro component with a bundled `<script>` (same pattern as `ThemeToggle.astro`), Vitest, Playwright.
 
 ---
 
@@ -162,3 +162,14 @@
 4. **Require manual confirmation?** Recommended for a public personal calendar.
 5. **Reachability for RU readers.** Check that `app.cal.com` and the chosen video provider load from Russia without a VPN. If they don't, the fallback email stays the primary path and the lede should say so.
 6. **Later:** site-wide CTA (`/about/`, home author card) linking to `/contact/#book`; Cal.com webhooks (`BOOKING_CREATED`) into `/api/*` for an admin feed. That would need a signed-secret endpoint and is out of scope until there's a need beyond Cal.com's own emails.
+
+---
+
+## Owner decisions (2026-09-24) and implementation notes
+
+- Events `kashuta/intro-ru` and `kashuta/intro-en`, 30 min, free, **requires confirmation**; placement on `/contact/#book`.
+- Added: a secondary masthead CTA on the home page (RU «Назначить встречу», EN "Let's meet") linking to `/contact/#book`, visible on desktop and mobile. Its label is the `booking.homeCta` UI string, not a home.md field: adding a field to `/admin/home` would touch ~10 files (schema, editor, action, translate pipeline, both home.md). Move it into `/admin/home` if the owner wants to edit it there.
+- Deviation from Task 2: the client script is a bundled `<script>` (like `ThemeToggle.astro`), not `is:inline`, so it imports the unit-tested `src/lib/booking/config.ts` and the typed snippet port `src/lib/booking/snippet.ts` directly. Each mount uses a fresh namespace (`book-N`) so a ClientRouter return to `/contact/` gets its own iframe.
+- Brand colours are literals in `BRAND_PALETTE`; `tests/unit/booking/config.test.ts` fails if `--color-accent` in `tokens.css` drifts from them.
+- EN strings and the EN contact/privacy twins were written by hand (no API key in the session); `.strings.hashes.json` and the twins' `sourceHash` were refreshed so `pnpm translate` does not re-translate them.
+

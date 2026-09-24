@@ -1,6 +1,7 @@
 import { defineMiddleware, sequence } from "astro:middleware";
 import { auth } from "~/lib/auth";
 import { canonicalHostRedirect, requiresAuthContext } from "~/lib/auth/request-classification";
+import { CAL_ORIGIN } from "~/lib/booking/config";
 import { i18nRootRedirect } from "~/lib/i18n/middleware";
 import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
 
@@ -77,12 +78,13 @@ const CSP_REPORT_ONLY = [
   "default-src 'self'",
   // Inline scripts are needed for the theme bootstrap and Plausible loader.
   // Tighten to 'strict-dynamic' + nonces in a follow-up if we ever need it.
-  "script-src 'self' 'unsafe-inline' https://plausible.io",
+  // Cal.com: the booking embed on /contact/ loads embed.js and the booker iframe.
+  `script-src 'self' 'unsafe-inline' https://plausible.io ${CAL_ORIGIN}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "frame-src https://giscus.app",
-  "connect-src 'self' https://plausible.io https://giscus.app",
+  `frame-src https://giscus.app ${CAL_ORIGIN}`,
+  `connect-src 'self' https://plausible.io https://giscus.app ${CAL_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

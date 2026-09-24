@@ -43,6 +43,8 @@ const featured = posts[0];
 // a layout no-op; keep it >= the archive size so no post is orphaned.
 const grid = posts.slice(1, 7);
 const blogHref = canonicalPath("/en/blog");
+// The booking section on the contact page; the masthead's secondary action.
+const bookHref = `${canonicalPath("/en/contact")}#book`;
 const courseHref = canonicalPath("/en/courses/claude-code-guide");
 const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 const gridVariants = assignArtVariants(grid.map((p) => bareSlug(p.entry.id)));
@@ -126,6 +128,8 @@ const webPageNode = buildWebPageNode({
       lede={data.heroLede}
       cta={data.heroCta}
       ctaHref={blogHref}
+      secondaryCta={t(locale, "booking.homeCta")}
+      secondaryHref={bookHref}
       sealPhrase={data.sealPhrase}
     />
 

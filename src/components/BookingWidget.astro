@@ -1,0 +1,280 @@
+---
+/**
+ * Booking — Cal.com inline booker behind a click-to-load facade.
+ *
+ * Server-rendered markup works without JS: a heading, a lede, a button and a
+ * plain link to the public Cal.com page. Cal.com's embed.js is requested only
+ * after the reader presses the button, so a visitor who only wants the email
+ * address never talks to Cal.com (the privacy page promises exactly that; the
+ * e2e suite asserts it).
+ *
+ * Account, events, theme and palette live in src/lib/booking/config.ts. The
+ * booker follows the site theme and reports a PII-free "Booking" event to
+ * Plausible.
+ */
+import { t, type Locale } from "~/i18n";
+import { calLinkFor, calPublicUrl } from "~/lib/booking/config";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<section
+  id="book"
+  class="booking"
+  aria-labelledby="booking-heading"
+  data-booking
+  data-locale={locale}
+  data-cal-link={calLinkFor(locale)}
+  data-loading-text={t(locale, "booking.loading")}
+  data-error-text={t(locale, "booking.error")}
+>
+  <header class="booking__head">
+    <span class="booking__rule" aria-hidden="true"></span>
+    <h2 id="booking-heading" class="booking__title" tabindex="-1">
+      {t(locale, "booking.title")}
+    </h2>
+  </header>
+  <p class="booking__lede">{t(locale, "booking.lede")}</p>
+
+  <div class="booking__actions">
+    <button type="button" class="booking__cta" data-booking-open>
+      {t(locale, "booking.cta")}
+    </button>
+    <a
+      class="booking__fallback"
+      href={calPublicUrl(locale)}
+      target="_blank"
+      rel="noopener"
+      data-booking-fallback
+    >
+      {t(locale, "booking.fallback")}
+    </a>
+  </div>
+
+  <p class="booking__status" role="status" aria-live="polite" data-booking-status></p>
+  <div class="booking__mount" data-booking-mount hidden></div>
+</section>
+
+<script>
+  import {
+    BOOKING_ANALYTICS,
+    CAL_EMBED_URL,
+    CAL_NAMESPACE_PREFIX,
+    CAL_ORIGIN,
+    buildInlineConfig,
+    buildUiConfig,
+    themeFromRoot,
+  } from "~/lib/booking/config";
+  import { installCalSnippet, type CalHost } from "~/lib/booking/snippet";
+
+  type Plausible = (event: string, options?: { props?: Record<string, string> }) => void;
+  type BookingWindow = Window & CalHost & { plausible?: Plausible };
+
+  const host = window as unknown as BookingWindow;
+  // embed.js never reports a blocked script (ad blockers, network policy), so
+  // a booker that has not said linkReady by then is treated as failed.
+  const READY_TIMEOUT_MS = 15_000;
+
+  // One namespace per mount: ClientRouter swaps the DOM, and a fresh namespace
+  // gives the new container its own iframe instead of re-targeting a detached one.
+  let mounts = 0;
+  let activeNamespace: string | null = null;
+
+  const currentTheme = () => themeFromRoot(document.documentElement.getAttribute("data-theme"));
+
+  const calNs = (namespace: string) => host.Cal?.ns[namespace];
+
+  const track = (event: string, props?: Record<string, string>): void => {
+    host.plausible?.(event, props ? { props } : undefined);
+  };
+
+  const open = (section: HTMLElement): void => {
+    const mount = section.querySelector<HTMLElement>("[data-booking-mount]");
+    const status = section.querySelector<HTMLElement>("[data-booking-status]");
+    const button = section.querySelector<HTMLButtonElement>("[data-booking-open]");
+    const calLink = section.dataset.calLink;
+    const locale = section.dataset.locale ?? "ru";
+    if (!mount || !status || !button || !calLink) return;
+
+    const namespace = `${CAL_NAMESPACE_PREFIX}-${++mounts}`;
+    activeNamespace = namespace;
+    const theme = currentTheme();
+    let ready = false;
+
+    button.disabled = true;
+    section.dataset.state = "loading";
+    status.textContent = section.dataset.loadingText ?? "";
+    mount.hidden = false;
+
+    const fail = (): void => {
+      if (ready || section.dataset.state === "failed") return;
+      section.dataset.state = "failed";
+      mount.hidden = true;
+      button.disabled = false;
+      status.textContent = section.dataset.errorText ?? "";
+      track(BOOKING_ANALYTICS.embedFailed);
+    };
+
+    const cal = installCalSnippet(host, CAL_EMBED_URL);
+    cal("init", namespace, { origin: CAL_ORIGIN });
+    calNs(namespace)?.("inline", {
+      elementOrSelector: mount,
+      calLink,
+      config: buildInlineConfig(theme),
+    });
+    calNs(namespace)?.("ui", buildUiConfig(theme));
+    calNs(namespace)?.("on", {
+      action: "linkReady",
+      callback: () => {
+        ready = true;
+        section.dataset.state = "ready";
+        status.textContent = "";
+        button.hidden = true;
+        section.querySelector<HTMLElement>("#booking-heading")?.focus({ preventScroll: true });
+      },
+    });
+    calNs(namespace)?.("on", { action: "linkFailed", callback: fail });
+    calNs(namespace)?.("on", {
+      action: "bookingSuccessfulV2",
+      callback: () => track(BOOKING_ANALYTICS.booked, { locale }),
+    });
+
+    window.setTimeout(fail, READY_TIMEOUT_MS);
+  };
+
+  const bind = (): void => {
+    document.querySelectorAll<HTMLElement>("[data-booking]").forEach((section) => {
+      if (section.dataset.bound === "1") return;
+      section.dataset.bound = "1";
+      section
+        .querySelector<HTMLButtonElement>("[data-booking-open]")
+        ?.addEventListener("click", () => open(section));
+    });
+  };
+
+  // Bundled module: runs once per full load, so these listeners are registered once.
+  document.addEventListener("astro:page-load", bind);
+  window.addEventListener("themechange", () => {
+    if (activeNamespace) calNs(activeNamespace)?.("ui", buildUiConfig(currentTheme()));
+  });
+</script>
+
+<style>
+  .booking {
+    margin: var(--space-7) 0 0;
+    padding-top: var(--space-5);
+    border-top: var(--stroke-hair) solid var(--color-border);
+    /* Deep links land on the heading, not under the sticky header. */
+    scroll-margin-top: var(--space-8);
+  }
+  .booking__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  /* Same section marker as Comments / RelatedPosts: a short lime slab. */
+  .booking__rule {
+    width: 28px;
+    height: var(--stroke-slab);
+    background: var(--color-fill);
+    flex: none;
+  }
+  .booking .booking__title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-fg);
+    margin: 0;
+  }
+  .booking__title:focus {
+    outline: none;
+  }
+  .booking .booking__lede {
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-5);
+    text-wrap: pretty;
+  }
+  .booking__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-5);
+  }
+  /* Same hard-shadow slab as the home masthead CTA. */
+  .booking__cta {
+    font-family: var(--font-serif);
+    font-size: var(--fs-base);
+    font-weight: 800;
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+    background: var(--color-fill);
+    color: var(--color-on-fill);
+    border: var(--stroke-slab) solid var(--color-fg);
+    box-shadow: var(--shadow-soft);
+    padding: var(--space-4) var(--space-5);
+    cursor: pointer;
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .booking__cta:hover:not(:disabled) {
+    transform: translate(-4px, -4px);
+    box-shadow: var(--shadow-lifted);
+  }
+  .booking__cta:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: var(--shadow-press);
+  }
+  .booking__cta:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+  .booking__cta:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+  .booking .booking__fallback {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  .booking .booking__status {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-fg-muted);
+    margin: var(--space-3) 0 0;
+    min-height: 1lh;
+  }
+  .booking[data-state="failed"] .booking__status {
+    color: var(--color-fg);
+  }
+  /* Reserve height so the page does not jump when the iframe arrives. */
+  .booking__mount {
+    min-height: 560px;
+    margin-top: var(--space-3);
+  }
+  .booking__mount[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .booking__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .booking__cta {
+      transition: none;
+    }
+  }
+</style>
