@@ -44,3 +44,12 @@ This file is the home of the GitNexus rules. `CLAUDE.md` does not inline them; i
 | Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
 <!-- gitnexus:end -->
+
+## Редакционная работа
+
+Для написания, рерайта и расширения статей и уроков используй
+[Statejnik](.claude/skills/statejnik/SKILL.md). Это основной редакционный процесс:
+драфт с превью до/после, для полной статьи по умолчанию 1500–2000 слов без кода,
+публикация по явному запросу. Прямые указания пользователя важнее этих настроек.
+`new-blog-post` остаётся справочником формата; его противоречащие требования
+не заменяют контракт Statejnik.
