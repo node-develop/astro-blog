@@ -1,0 +1,38 @@
+project:
+  domain: "artka.dev"
+  content_path: "/blog"
+audience:
+  profile: "Разработчики, которым нужны проверяемые инструкции по веб-разработке и инструментам coding agents."
+  jargon_level: "high"
+voice:
+  source: "src/content/posts"
+  forbidden:
+    - "в современном мире"
+    - "не секрет, что"
+    - "стоит отметить"
+editorial:
+  banned_words: []
+cta:
+  offer: "Полезный следующий шаг читателя, без обязательной продажи"
+  url: ""
+legal:
+  region: ""
+notify:
+  channel: "chat"
+cms:
+  adapter: "manual"
+qa:
+  final_review:
+    editor_model: ""
+    reviewer_model: ""
+tools:
+  originality:
+    max_cosine: 0.60
+    ngram_n: 5
+    max_ngram: 0.30
+  cadence:
+    max_per_1k: 3.0
+  read_aloud:
+    max_sentence_words: 40
+  structure:
+    min_internal_links: 1
