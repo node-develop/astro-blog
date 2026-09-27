@@ -1,5 +1,5 @@
 /**
- * Google Analytics 4, loaded only when VITE_GA_ID is set at build time.
+ * Google Analytics 4 for the artka.dev property.
  * Skipped on localhost and when the browser sends Do Not Track, same as the
  * blog's Plausible loader. Tracking must never break the calculator, so every
  * call is a no-op until gtag exists.
@@ -13,7 +13,9 @@ declare global {
   }
 }
 
-const GA_ID: string | undefined = import.meta.env.VITE_GA_ID;
+/** artka.dev GA4 property. Public by design (it ships in every page); VITE_GA_ID overrides it. */
+const DEFAULT_GA_ID = "G-X53SL63MK2";
+const GA_ID: string | undefined = import.meta.env.VITE_GA_ID || DEFAULT_GA_ID;
 
 const allowed = (): boolean => {
   const host = location.hostname;
