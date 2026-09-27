@@ -3,6 +3,7 @@ import { compact, pctText } from "../lib/format";
 import { levelText, t, type StringKey } from "../lib/i18n";
 import type { CalcState, Country, FunnelStep, Lang } from "../lib/types";
 import { Chip, InfoTip, NumberField, Segmented, StatusChip } from "./ui";
+import { cx } from "../lib/cx";
 
 type Update = (fn: (s: CalcState) => CalcState) => void;
 
@@ -318,7 +319,7 @@ export const Funnel = ({
           const last = step.key === "avatars";
           const tip = TIP[step.key];
           return (
-            <li key={step.key} className={`frow${last ? "frow--last" : ""}`}>
+            <li key={step.key} className={cx("frow", last && "frow--last")}>
               {conv != null && (
                 <div className="frow__conv">
                   <span className="pill">{pctText(conv, lang)}</span>

@@ -6,6 +6,7 @@ import { NICHES, nicheName } from "../lib/state";
 import type { CalcState, Country, Lang, LevelId, Mode, Niche } from "../lib/types";
 import { VERDICT_TONE } from "./ResultSlab";
 import { Chip, StatusChip } from "./ui";
+import { cx } from "../lib/cx";
 
 export const NicheDrawer = ({
   lang,
@@ -149,7 +150,7 @@ export const NicheDrawer = ({
                 <li key={n.id}>
                   <button
                     type="button"
-                    className={`nitem${picked === n.id ? "nitem--on" : ""}`}
+                    className={cx("nitem", picked === n.id && "nitem--on")}
                     aria-pressed={picked === n.id}
                     onClick={() => setPicked(n.id)}
                   >
@@ -204,7 +205,7 @@ export const NicheDrawer = ({
                   <li key={idea.niche.id}>
                     <button
                       type="button"
-                      className={`idea${picked === idea.niche.id ? "nitem--on" : ""}`}
+                      className={cx("idea", picked === idea.niche.id && "nitem--on")}
                       aria-pressed={picked === idea.niche.id}
                       onClick={() => setPicked(idea.niche.id)}
                     >

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { parseNum } from "../lib/format";
+import { cx } from "../lib/cx";
 
 /* ── Segmented control: single choice, arrow keys move and select ───── */
 
@@ -40,7 +41,7 @@ export const Segmented = <T extends string | number>({
     refs.current[options.indexOf(next)]?.focus();
   };
   return (
-    <div className={`seg${full ? "seg--full" : ""}`} role="radiogroup" aria-label={label}>
+    <div className={cx("seg", full && "seg--full")} role="radiogroup" aria-label={label}>
       {options.map((o, i) => (
         <button
           key={String(o.value)}
@@ -155,11 +156,11 @@ export const NumberField = ({
 
   const describedBy = bad || hint || warning ? `${fid}-msg` : undefined;
   return (
-    <div className={`field${compact ? "field--compact" : ""}${disabled ? "field--disabled" : ""}`}>
+    <div className={cx("field", compact && "field--compact", disabled && "field--disabled")}>
       <label htmlFor={fid} className={hideLabel ? "sr-only" : "field__label"}>
         {label}
       </label>
-      <div className={`field__box${bad ? "field__box--error" : ""}`}>
+      <div className={cx("field__box", bad && "field__box--error")}>
         {prefix && <span className="field__affix">{prefix}</span>}
         <input
           id={fid}
@@ -187,7 +188,7 @@ export const NumberField = ({
       {(bad || hint || warning) && (
         <p
           id={`${fid}-msg`}
-          className={`field__msg${bad ? "field__msg--error" : warning ? "field__msg--warn" : ""}`}
+          className={cx("field__msg", bad ? "field__msg--error" : warning && "field__msg--warn")}
         >
           {bad ? (error ?? "") : (warning ?? hint)}
         </p>
@@ -228,7 +229,7 @@ export const SliderField = ({
   const id = useId();
   const clamped = Math.min(max, Math.max(min, value));
   return (
-    <div className={`slider${disabled ? "slider--disabled" : ""}`}>
+    <div className={cx("slider", disabled && "slider--disabled")}>
       <div className="slider__row">
         <input
           type="range"
@@ -259,7 +260,7 @@ export const SliderField = ({
       </div>
       <p className="slider__label">{label}</p>
       {(warning || hint) && (
-        <p className={`field__msg${warning ? "field__msg--warn" : ""}`}>{warning ?? hint}</p>
+        <p className={cx("field__msg", warning && "field__msg--warn")}>{warning ?? hint}</p>
       )}
     </div>
   );
@@ -314,7 +315,7 @@ export const PriceTier = ({ tier }: { readonly tier: number }) => (
     {[1, 2, 3, 4].map((i) => (
       <span
         key={i}
-        className={`tier__cell${i <= tier ? "tier__cell--on" : ""}`}
+        className={cx("tier__cell", i <= tier && "tier__cell--on")}
         aria-hidden="true"
       />
     ))}
@@ -330,7 +331,7 @@ export const PeopleGrid = ({ pct }: { readonly pct: number }) => {
       {Array.from({ length: 100 }, (_, i) => (
         <span
           key={i}
-          className={`people__cell${i < full ? "people__cell--on" : ""}`}
+          className={cx("people__cell", i < full && "people__cell--on")}
           style={
             i === full && part > 0
               ? { ["--part" as string]: `${Math.max(part * 100, 18)}%` }

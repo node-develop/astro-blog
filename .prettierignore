@@ -25,6 +25,6 @@ src/content/posts/en/claude-md-12-rules.md
 # Vendored editorial standard: preserve supplied upstream bytes.
 .claude/skills/statejnik/references/editorial-standard-upstream.md
 
-# Standalone apps: generated data and research dumps.
-apps/*/src/data/
-apps/*/data-sources/
+# Standalone apps have their own formatting; the root Tailwind plugin trims
+# spaces inside class strings, which these apps do not use.
+apps/

@@ -5,6 +5,7 @@ import { regionName, t, type StringKey } from "../lib/i18n";
 import { COUNTRIES, countryName } from "../lib/state";
 import type { CalcState, Country, Lang, RegionId } from "../lib/types";
 import { Chip } from "./ui";
+import { cx } from "../lib/cx";
 
 type SortKey = "name" | "pop" | "inet" | "buy" | "rus" | "firms" | "avatars" | "tam";
 const REGIONS: readonly RegionId[] = [
@@ -197,16 +198,16 @@ export const CountryTable = ({
                   </td>
                   <td className="num opt">{compact(x.c.pop, lang)}</td>
                   <td className="num opt">{pctText(x.c.inet, lang)}</td>
-                  <td className={`num opt${x.c.buyS !== "findex" ? "num--est" : ""}`}>
+                  <td className={cx("num", "opt", x.c.buyS !== "findex" && "num--est")}>
                     {x.c.buy != null ? pctText(x.c.buy, lang) : "0"}
                   </td>
                   {state.lang === "ru" && (
-                    <td className={`num opt${x.c.rusE ? "num--est" : ""}`}>
+                    <td className={cx("num", "opt", x.c.rusE && "num--est")}>
                       {pctText(x.c.rus, lang)}
                     </td>
                   )}
                   {state.mode === "b2b" && (
-                    <td className={`num opt${x.c.firmsE ? "num--est" : ""}`}>
+                    <td className={cx("num", "opt", x.c.firmsE && "num--est")}>
                       {compact(x.c.firms, lang)}
                     </td>
                   )}

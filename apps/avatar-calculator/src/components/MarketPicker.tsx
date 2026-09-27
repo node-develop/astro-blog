@@ -4,6 +4,7 @@ import { regionName, t } from "../lib/i18n";
 import { COUNTRIES, COUNTRY_BY_ID, countryName } from "../lib/state";
 import type { Lang, PresetId } from "../lib/types";
 import { Chip } from "./ui";
+import { cx } from "../lib/cx";
 
 const norm = (s: string) => s.toLocaleLowerCase().replace(/ё/g, "е");
 
@@ -117,7 +118,7 @@ export const MarketPicker = ({
                   id={`${id}-o-${c.id}`}
                   role="option"
                   aria-selected={market.includes(c.id)}
-                  className={`combo__opt${i === active ? "combo__opt--active" : ""}`}
+                  className={cx("combo__opt", i === active && "combo__opt--active")}
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                 >

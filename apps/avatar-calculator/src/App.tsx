@@ -26,6 +26,7 @@ import {
   writeStore,
 } from "./lib/state";
 import type { CalcState, Country, Lang } from "./lib/types";
+import { cx } from "./lib/cx";
 
 const SCEN_KEY = "avatar-calc-scenarios";
 
@@ -463,7 +464,7 @@ export const App = () => {
       />
 
       <div
-        className={`bottombar${resultVisible ? "bottombar--hidden" : ""}`}
+        className={cx("bottombar", resultVisible && "bottombar--hidden")}
         aria-hidden={resultVisible}
       >
         <span className="bottombar__num">{compact(result.avatars, lang)}</span>

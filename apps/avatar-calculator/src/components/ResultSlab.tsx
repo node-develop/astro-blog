@@ -4,6 +4,7 @@ import { compact, currencySymbol, fromDisplay, money, toDisplay, whole } from ".
 import { levelText, t, verdictText } from "../lib/i18n";
 import type { CalcState, Currency, Lang } from "../lib/types";
 import { InfoTip, NumberField, Segmented, StatusChip, type Tone } from "./ui";
+import { cx } from "../lib/cx";
 
 type Update = (fn: (s: CalcState) => CalcState) => void;
 
@@ -115,7 +116,11 @@ export const ResultSlab = ({
           {VERDICT_ORDER.map((x) => (
             <span
               key={x}
-              className={`meter__cell${VERDICT_ORDER.indexOf(x) <= VERDICT_ORDER.indexOf(v) ? "meter__cell--on" : ""}${x === v ? "meter__cell--cur" : ""}`}
+              className={cx(
+                "meter__cell",
+                VERDICT_ORDER.indexOf(x) <= VERDICT_ORDER.indexOf(v) && "meter__cell--on",
+                x === v && "meter__cell--cur",
+              )}
             />
           ))}
         </span>

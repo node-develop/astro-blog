@@ -14,6 +14,7 @@ import { t } from "../lib/i18n";
 import { BENCHMARKS } from "../lib/state";
 import type { Benchmark, CalcState, Econ, Lang } from "../lib/types";
 import { InfoTip, Segmented, SliderField, StatusChip } from "./ui";
+import { cx } from "../lib/cx";
 
 type Update = (fn: (s: CalcState) => CalcState) => void;
 
@@ -347,7 +348,7 @@ const RevenueChart = ({
                 width={band * 0.6}
                 y={y(mo.revenue)}
                 height={Math.max(0, P.t + ih - y(mo.revenue))}
-                className={`chart__bar${hover === i ? "chart__bar--hover" : ""}`}
+                className={cx("chart__bar", hover === i && "chart__bar--hover")}
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover(null)}
               >

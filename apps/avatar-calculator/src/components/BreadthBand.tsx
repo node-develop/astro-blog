@@ -4,6 +4,7 @@ import { levelText, prosCons, t } from "../lib/i18n";
 import { pctText } from "../lib/format";
 import type { CalcState, Lang, LevelId } from "../lib/types";
 import { NumberField, PeopleGrid, PriceTier } from "./ui";
+import { cx } from "../lib/cx";
 
 type Cell = LevelId | "custom";
 
@@ -70,7 +71,7 @@ export const BreadthBand = ({
               role="radio"
               aria-checked={on}
               tabIndex={on ? 0 : -1}
-              className={`cell${on ? "cell--on" : ""}${nicheSet ? "cell--hint" : ""}`}
+              className={cx("cell", on && "cell--on", nicheSet && "cell--hint")}
               onClick={() => onLevel(l)}
               onKeyDown={onKey}
             >
@@ -85,7 +86,7 @@ export const BreadthBand = ({
             </button>
           );
         })}
-        <div className={`cell cell--custom${selected === "custom" ? "cell--on" : ""}`}>
+        <div className={cx("cell", "cell--custom", selected === "custom" && "cell--on")}>
           <button
             ref={(el) => {
               refs.current.custom = el;
