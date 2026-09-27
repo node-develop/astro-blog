@@ -48,3 +48,21 @@ python3 build_data.py   # merges firms.json and ru_and_gaps.json into ../src/dat
 `src/data/niches.json` holds 60 niches across the five lesson levels and the
 unit-economics benchmarks (CPL, CAC, conversion, churn, CPI) with sources.
 Prices and segment shares in the niche library are estimates.
+
+## Link preview
+
+`public/og.png` (1200x630) is the Open Graph image used by Telegram and other
+link previews; `index.html` points to it with an absolute `https://calc.artka.dev/og.png`.
+Edit `scripts/og.html` and re-render:
+
+```sh
+CHROMIUM_PATH=/path/to/chromium node scripts/render-og.mjs
+```
+
+## Analytics
+
+Google Analytics 4 turns on when `VITE_GA_ID` (`G-XXXXXXX`) is set at build
+time, e.g. as a Railway service variable. Without it no tracking code runs.
+It is skipped on localhost and for Do Not Track. Custom events: `select_market`,
+`select_mode`, `select_level`, `apply_niche`, `open_niches`, `open_economy`,
+`save_scenario`, `share`, `random_country`, `switch_language`.

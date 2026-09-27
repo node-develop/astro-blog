@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- Source for public/og.png (1200x630). Render with: node scripts/render-og.mjs -->
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: "Unbounded";
+        src: url("../node_modules/@fontsource-variable/unbounded/files/unbounded-cyrillic-wght-normal.woff2") format("woff2");
+        font-weight: 200 900;
+        unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+      }
+      @font-face {
+        font-family: "Unbounded";
+        src: url("../node_modules/@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2") format("woff2");
+        font-weight: 200 900;
+      }
+      @font-face {
+        font-family: "Golos";
+        src: url("../node_modules/@fontsource-variable/golos-text/files/golos-text-cyrillic-wght-normal.woff2") format("woff2");
+        font-weight: 400 900;
+        unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+      }
+      @font-face {
+        font-family: "Golos";
+        src: url("../node_modules/@fontsource-variable/golos-text/files/golos-text-latin-wght-normal.woff2") format("woff2");
+        font-weight: 400 900;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1200px; height: 630px; }
+      body {
+        background: #f3f1ea;
+        color: #0b0b0b;
+        font-family: "Golos", sans-serif;
+        position: relative;
+        overflow: hidden;
+        border: 16px solid #0b0b0b;
+      }
+      .top {
+        position: absolute; left: 56px; top: 48px;
+        display: flex; align-items: center;
+      }
+      .brand { display: flex; align-items: center; gap: 14px; font-family: "Unbounded"; font-weight: 800; font-size: 26px; text-transform: uppercase; letter-spacing: -0.02em; }
+      .mark { width: 40px; height: 40px; background: #0b0b0b; position: relative; }
+      .mark::before { content: ""; position: absolute; left: 8px; top: 8px; width: 11px; height: 11px; background: #f3f1ea; }
+      .mark::after { content: ""; position: absolute; left: 8px; bottom: 7px; width: 24px; height: 10px; background: #c2f000; }
+      .eyebrow { font-weight: 700; font-size: 18px; letter-spacing: 0.14em; text-transform: uppercase; color: #4b4a45; display: flex; align-items: center; gap: 12px; }
+      .eyebrow::before { content: ""; width: 32px; height: 4px; background: #0b0b0b; }
+      .eyebrow.lead { position: absolute; left: 56px; top: 128px; }
+      h1 {
+        position: absolute; left: 56px; top: 172px; width: 660px;
+        font-family: "Unbounded"; font-weight: 800; text-transform: uppercase;
+        font-size: 68px; line-height: 0.95; letter-spacing: -0.04em;
+      }
+      .formula { position: absolute; left: 56px; bottom: 132px; display: flex; align-items: center; gap: 12px; }
+      .term { font-weight: 700; font-size: 22px; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 18px; border: 3px solid #0b0b0b; background: #fff; }
+      .term.fill { background: #c2f000; }
+      .op { font-family: "Unbounded"; font-weight: 800; font-size: 30px; }
+      .foot { position: absolute; left: 56px; bottom: 56px; width: 680px; font-size: 21px; color: #4b4a45; }
+      .foot b { color: #0b0b0b; }
+      .card {
+        position: absolute; right: 68px; top: 128px; width: 300px;
+        background: #c2f000; border: 5px solid #0b0b0b; box-shadow: 12px 12px 0 #0b0b0b;
+        padding: 26px 26px 22px;
+      }
+      .pct { font-family: "Unbounded"; font-weight: 800; font-size: 64px; line-height: 1; letter-spacing: -0.03em; }
+      .name { font-weight: 700; font-size: 24px; margin: 8px 0 16px; }
+      .grid { display: grid; grid-template-columns: repeat(10, 18px); gap: 5px; }
+      .grid i { width: 18px; height: 18px; background: rgba(11, 11, 11, 0.18); display: block; }
+      .grid i.on { background: #0b0b0b; }
+      .url { position: absolute; right: 56px; top: 48px; font-family: "Unbounded"; font-weight: 800; font-size: 28px; letter-spacing: -0.02em; }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <div class="brand"><span class="mark"></span>artka.dev</div>
+    </div>
+    <div class="eyebrow lead">175 стран, реальные данные</div>
+    <h1>Калькулятор ширины аватара</h1>
+    <div class="card">
+      <div class="pct">1%</div>
+      <div class="name">Каждый сотый</div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="formula">
+      <span class="term">Аватары</span><span class="op">×</span><span class="term">Годовой чек</span><span class="op">=</span><span class="term fill">Выручка</span>
+    </div>
+    <p class="foot">Сколько людей купят ваш продукт и сколько денег это даст в год</p>
+    <div class="url">calc.artka.dev</div>
+    <script>
+      const g = document.getElementById("grid");
+      for (let i = 0; i < 100; i++) {
+        const c = document.createElement("i");
+        if (i === 0) c.className = "on";
+        g.appendChild(c);
+      }
+    </script>
+  </body>
+</html>

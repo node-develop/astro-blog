@@ -27,6 +27,7 @@ import {
 } from "./lib/state";
 import type { CalcState, Country, Lang } from "./lib/types";
 import { cx } from "./lib/cx";
+import { track } from "./lib/analytics";
 
 const SCEN_KEY = "avatar-calc-scenarios";
 
@@ -159,8 +160,10 @@ export const App = () => {
     }
   };
 
-  const setMarket = (market: readonly string[], preset: CalcState["preset"]) =>
+  const setMarket = (market: readonly string[], preset: CalcState["preset"]) => {
+    track("select_market", { market: preset ?? market.slice(0, 5).join(","), countries: market.length });
     update((s) => ({ ...s, market, preset, overrides: { inet: null, buy: null, rus: null } }));
+  };
 
   const random = () => {
     const pool = COUNTRIES.filter(
@@ -168,6 +171,7 @@ export const App = () => {
     );
     const c = pool[Math.floor(Math.random() * pool.length)];
     if (!c) return;
+    track("random_country", { country: c.id });
     setMarket([c.id], null);
     say(t(lang, "toast.random", { c: countryName(c, lang) }));
   };
@@ -178,6 +182,7 @@ export const App = () => {
       return;
     }
     setScenarios((sc) => [...sc, { id: String(Date.now()), state }]);
+    track("save_scenario", { count: scenarios.length + 1 });
     say(t(lang, "toast.saved"));
   };
 
@@ -186,6 +191,7 @@ export const App = () => {
     url.searchParams.set("s", encodeState(state));
     url.searchParams.set("lang", lang);
     const text = url.toString();
+    track("share", { market: state.preset ?? state.market.slice(0, 5).join(",") });
     navigator.clipboard
       ?.writeText(text)
       .then(() => say(t(lang, "toast.copied")))
@@ -233,7 +239,10 @@ export const App = () => {
           <button
             type="button"
             className="btn btn--ghost"
-            onClick={() => setLang(lang === "ru" ? "en" : "ru")}
+            onClick={() => {
+              track("switch_language", { to: lang === "ru" ? "en" : "ru" });
+              setLang(lang === "ru" ? "en" : "ru");
+            }}
             lang={lang === "ru" ? "en" : "ru"}
           >
             {t(lang, "lang.switch")}
@@ -302,7 +311,10 @@ export const App = () => {
                 { value: "b2c", label: t(lang, "mode.b2c") },
                 { value: "b2b", label: t(lang, "mode.b2b") },
               ]}
-              onChange={(mode) => update((s) => ({ ...s, mode }))}
+              onChange={(mode) => {
+                track("select_mode", { mode });
+                update((s) => ({ ...s, mode }));
+              }}
             />
           </div>
           <div className="setup__group">
@@ -311,7 +323,10 @@ export const App = () => {
               <div className="setup__niche">
                 <span className="setup__nicheName">{nicheName(niche, lang)}</span>
                 <span className="setup__nicheActs">
-                  <button type="button" className="textbtn" onClick={() => setDrawer(true)}>
+                  <button type="button" className="textbtn" onClick={() => {
+                    track("open_niches");
+                    setDrawer(true);
+                  }}>
                     {t(lang, "setup.changeNiche")}
                   </button>
                   <button
@@ -328,7 +343,10 @@ export const App = () => {
                 <button
                   type="button"
                   className="btn btn--secondary btn--block"
-                  onClick={() => setDrawer(true)}
+                  onClick={() => {
+                    track("open_niches");
+                    setDrawer(true);
+                  }}
                 >
                   {t(lang, "setup.pickNiche")}
                 </button>
@@ -341,7 +359,10 @@ export const App = () => {
         <BreadthBand
           lang={lang}
           state={state}
-          onLevel={(level) => update((s) => ({ ...s, level, customPct: null }))}
+          onLevel={(level) => {
+            track("select_level", { level: `1/${level}` });
+            update((s) => ({ ...s, level, customPct: null }));
+          }}
           onCustom={(p) => update((s) => ({ ...s, customPct: p }))}
         />
 
@@ -358,7 +379,10 @@ export const App = () => {
                   aria-controls={`panel-${id}`}
                   tabIndex={tab === id ? 0 : -1}
                   className="tab"
-                  onClick={() => setTab(id)}
+                  onClick={() => {
+                    if (id === "econ" && tab !== "econ") track("open_economy");
+                    setTab(id);
+                  }}
                   onKeyDown={(e) => {
                     const next =
                       e.key === "Home"
@@ -459,6 +483,7 @@ export const App = () => {
         countries={countries}
         onClose={() => setDrawer(false)}
         onApply={(n) => {
+          track("apply_niche", { niche: n.id, level: `1/${n.level}`, mode: n.model });
           update((s) => applyNiche(s, n, countries));
           setDrawer(false);
         }}
