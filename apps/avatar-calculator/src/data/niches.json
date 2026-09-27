@@ -1178,7 +1178,7 @@
     "default": 10000,
     "unit": "₽",
     "region": "RU",
-    "src": "Урок «Ширина аватара»; Gorbunov Team 2025"
+    "src": "практика автора; Gorbunov Team 2025"
    },
    {
     "id": "b2b-cpl-us",
@@ -1189,7 +1189,7 @@
     "default": 200,
     "unit": "$",
     "region": "US",
-    "src": "Урок «Ширина аватара»; WordStream 2025 (Business Services $104)"
+    "src": "практика автора; WordStream 2025 (Business Services $104)"
    },
    {
     "id": "b2b-cac-smb-ru",
@@ -1505,14 +1505,14 @@
    },
    {
     "id": "churn-b2b-lesson",
-    "label_ru": "Отток B2B по уроку (около 10% в год)",
-    "label_en": "B2B churn per lesson (~10%/year)",
+    "label_ru": "Отток B2B около 10% в год",
+    "label_en": "B2B churn around 10% a year",
     "low": 0.5,
     "high": 1.5,
     "default": 0.9,
     "unit": "%/мес",
     "region": "RU",
-    "src": "Урок «Ширина аватара»"
+    "src": "практика автора"
    }
   ],
   "ltv_cac": [
@@ -1602,7 +1602,7 @@
     "default": 0,
     "unit": "%",
     "region": "RU",
-    "src": "Урок «Ширина аватара» (окупаемость трафика часто около нуля)"
+    "src": "практика автора (окупаемость трафика часто около нуля)"
    }
   ],
   "cpi": [

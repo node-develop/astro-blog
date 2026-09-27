@@ -49,7 +49,7 @@ export const App = () => {
   const [state, setState] = useState<CalcState>(
     () =>
       decodeState(new URLSearchParams(location.search).get("s")) ??
-      sanitize(readStore<unknown>("avatar-calc-last", null)),
+      sanitize(readStore<unknown>("avatar-calc-last-v2", null)),
   );
   const [tab, setTab] = useState<"funnel" | "econ">("funnel");
   const [drawer, setDrawer] = useState(false);
@@ -95,7 +95,7 @@ export const App = () => {
       const url = new URL(location.href);
       url.searchParams.set("s", encodeState(state));
       history.replaceState(null, "", url);
-      writeStore("avatar-calc-last", state);
+      writeStore("avatar-calc-last-v2", state);
     }, 300);
     return () => window.clearTimeout(id);
   }, [state]);
@@ -310,22 +310,30 @@ export const App = () => {
             {niche ? (
               <div className="setup__niche">
                 <span className="setup__nicheName">{nicheName(niche, lang)}</span>
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={() => setDrawer(true)}
-                >
-                  {t(lang, "setup.changeNiche")}
-                </button>
+                <span className="setup__nicheActs">
+                  <button type="button" className="textbtn" onClick={() => setDrawer(true)}>
+                    {t(lang, "setup.changeNiche")}
+                  </button>
+                  <button
+                    type="button"
+                    className="textbtn"
+                    onClick={() => update((s) => ({ ...s, niche: null, customPct: null }))}
+                  >
+                    {t(lang, "setup.clearNiche")}
+                  </button>
+                </span>
               </div>
             ) : (
-              <button
-                type="button"
-                className="btn btn--secondary btn--block"
-                onClick={() => setDrawer(true)}
-              >
-                {t(lang, "setup.pickNiche")}
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--block"
+                  onClick={() => setDrawer(true)}
+                >
+                  {t(lang, "setup.pickNiche")}
+                </button>
+                <p className="note">{t(lang, "setup.nicheHint")}</p>
+              </>
             )}
           </div>
         </section>
@@ -441,12 +449,6 @@ export const App = () => {
 
         <footer className="foot">
           <p>{t(lang, "foot.note")}</p>
-          <p>
-            {t(lang, "foot.data")}{" "}
-            <a href="https://github.com/node-develop/astro-blog/tree/feat/avatar-calculator/apps/avatar-calculator/data-sources">
-              GitHub
-            </a>
-          </p>
         </footer>
       </main>
 

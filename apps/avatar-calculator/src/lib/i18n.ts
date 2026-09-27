@@ -48,7 +48,7 @@ const LEVELS_RU: Readonly<Record<LevelId, LevelText>> = {
       "Приложения для детей",
     ],
     advice:
-      "По мнению автора урока, самая перспективная зона: аватаров хватает для масштаба. Если найти аномалию, например нишу, где предложения меньше спроса, можно брать чек выше рынка.",
+      "На мой взгляд, самая перспективная зона: аватаров хватает для масштаба. Если найти аномалию, например нишу, где предложения меньше спроса, можно брать чек выше рынка.",
   },
   50: {
     name: "Каждый пятидесятый",
@@ -67,7 +67,7 @@ const LEVELS_RU: Readonly<Record<LevelId, LevelText>> = {
       "Сервисы для блогеров",
     ],
     advice:
-      "Хорошая зона в паре с аномалией. Пример из урока: сервисов подготовки к собеседованиям в США около 20, а на российском рынке один. Такой дефицит дает нормальный чек.",
+      "Хорошая зона в паре с аномалией. Пример: сервисов подготовки к собеседованиям в США около 20, а на российском рынке один. Такой дефицит дает нормальный чек.",
   },
   100: {
     name: "Каждый сотый",
@@ -101,7 +101,7 @@ const LEVELS_RU: Readonly<Record<LevelId, LevelText>> = {
       "AI для сельского хозяйства",
     ],
     advice:
-      "В B2B урок советует избегать этого уровня: лидов почти нет, и запуск может буксовать годами. Идите сюда только с высоким чеком и прямыми продажами.",
+      "В B2B я бы обходил этот уровень: лидов почти нет, и запуск может буксовать годами. Идите сюда только с высоким чеком и прямыми продажами.",
   },
 };
 
@@ -143,7 +143,7 @@ const LEVELS_EN: Readonly<Record<LevelId, LevelText>> = {
       "Kids apps",
     ],
     advice:
-      "The lesson author calls this the most promising zone: enough avatars to scale. Find an anomaly, such as a niche with less supply than demand, and you can charge above market.",
+      "To me this is the most promising zone: enough avatars to scale. Find an anomaly, such as a niche with less supply than demand, and you can charge above market.",
   },
   50: {
     name: "Every fiftieth",
@@ -162,7 +162,7 @@ const LEVELS_EN: Readonly<Record<LevelId, LevelText>> = {
       "Blogger tools",
     ],
     advice:
-      "Good in combination with an anomaly. Example from the lesson: the US has about 20 interview prep services, the Russian market has one. That gap supports a normal price.",
+      "Good in combination with an anomaly. Example: the US has about 20 interview prep services, the Russian market has one. That gap supports a normal price.",
   },
   100: {
     name: "Every hundredth",
@@ -196,7 +196,7 @@ const LEVELS_EN: Readonly<Record<LevelId, LevelText>> = {
       "AI for agriculture",
     ],
     advice:
-      "In B2B the lesson says to avoid this level: there are almost no leads and a launch can stall for years. Go here only with a high price and direct sales.",
+      "In B2B I would stay away from this level: there are almost no leads and a launch can stall for years. Go here only with a high price and direct sales.",
   },
 };
 
@@ -340,7 +340,7 @@ const RU = {
   "brand.back": "artka.dev",
   "theme.toggle": "Сменить тему",
   "lang.switch": "English",
-  "head.eyebrow": "Инструмент из урока «Широта аватара»",
+  "head.eyebrow": "Калькулятор рынка от artka.dev",
   "head.title": "Калькулятор ширины аватара",
   "head.lede":
     "Сколько людей могут купить ваш продукт и сколько денег это дает в год. Выберите рынок, ширину аватара и цену.",
@@ -360,9 +360,11 @@ const RU = {
   "setup.mode": "Режим",
   "mode.b2c": "Люди (B2C)",
   "mode.b2b": "Бизнес (B2B)",
-  "setup.niche": "Ниша",
+  "setup.niche": "Ниша, по желанию",
   "setup.pickNiche": "Выбрать нишу",
   "setup.changeNiche": "Сменить",
+  "setup.nicheHint": "Можно не выбирать: без ниши считаем только по ширине аватара.",
+  "setup.clearNiche": "Убрать",
   "setup.emptyMarket": "Выберите хотя бы одну страну или регион.",
   "band.title": "Ширина аватара",
   "band.sub": "Какая часть платежеспособной аудитории рынка и есть ваш клиент.",
@@ -373,7 +375,7 @@ const RU = {
   "band.lessonOpen": "Что значит «{level}»",
   "band.lessonClose": "Свернуть",
   "band.tiers": "Чек: $ до $10 в месяц, $$ от $10 до $30, $$$ от $30 до $150, $$$$ больше $150",
-  "lesson.examples": "Примеры из урока",
+  "lesson.examples": "Примеры",
   "lesson.plus": "Плюсы",
   "lesson.minus": "Минусы",
   "lesson.wide": "Широкий аватар",
@@ -407,8 +409,8 @@ const RU = {
   "funnel.src.wb": "ВБ, {y}",
   "funnel.src.findex": "Findex, {y}",
   "funnel.src.est": "оценка",
-  "funnel.src.lesson": "урок",
-  "funnel.scale": "Полосы в одном масштабе от первого шага. Тонкая полоска внизу и есть урок.",
+  "funnel.src.lesson": "оценка",
+  "funnel.scale": "Полосы в одном масштабе от первого шага. Тонкая полоска внизу и есть ваш рынок.",
   "tip.pop": "Все жители страны по данным Всемирного банка.",
   "tip.online": "Доля людей, которые пользуются интернетом (ITU через Всемирный банк).",
   "tip.age":
@@ -416,7 +418,7 @@ const RU = {
   "tip.buy":
     "Доля взрослых, которые покупали что-то в интернете за год (Global Findex). «Платят онлайн» строже: сами платили продавцу картой или кошельком.",
   "tip.soft":
-    "Какая часть онлайн-покупателей платит за цифровые продукты. На доске урока: 40% не покупают софт. Поправьте под свою нишу.",
+    "Какая часть онлайн-покупателей платит за цифровые продукты. Примерно 40% онлайн-покупателей софт не покупают, поэтому по умолчанию 60%. Поправьте под свою нишу.",
   "tip.lang":
     "Для продукта на русском берем тех, кто свободно говорит по-русски. Для местного языка берем всех.",
   "tip.firms": "Активные компании и ИП. «С сотрудниками» убирает бизнесы из одного человека.",
@@ -440,7 +442,7 @@ const RU = {
   "result.howHide": "Скрыть расчет",
   "result.how.1":
     "Берем население и оставляем тех, кто в интернете, подходит по возрасту, покупает онлайн, платит за софт и понимает язык продукта. В режиме B2B начинаем с числа бизнесов.",
-  "result.how.2": "Из них ваш аватар: выбранная доля по шкале урока.",
+  "result.how.2": "Из них ваш аватар: выбранная доля по шкале ширины.",
   "result.how.3": "Годовой чек: цена в месяц, умноженная на 12, или цена разовой покупки.",
   "result.how.4": "Рынок в год: аватары, умноженные на годовой чек.",
   "result.how.5":
@@ -566,7 +568,6 @@ const RU = {
   "err.rate": "Курс должен быть больше нуля",
   "foot.note":
     "Расчет для быстрой прикидки, не для инвест-модели. Findex за 2021 год для богатых стран занижает покупки онлайн; для России взята оценка ВЦИОМ 2024 (71% взрослых 18+).",
-  "foot.data": "Исходные данные и скрипты сборки лежат в репозитории.",
 } as const;
 
 export type StringKey = keyof typeof RU;
@@ -575,7 +576,7 @@ const EN: Readonly<Record<StringKey, string>> = {
   "brand.back": "artka.dev",
   "theme.toggle": "Switch theme",
   "lang.switch": "Русский",
-  "head.eyebrow": "Tool from the lesson on avatar breadth",
+  "head.eyebrow": "Market calculator by artka.dev",
   "head.title": "Avatar breadth calculator",
   "head.lede":
     "How many people can buy your product and how much that earns per year. Pick a market, an avatar breadth and a price.",
@@ -595,9 +596,11 @@ const EN: Readonly<Record<StringKey, string>> = {
   "setup.mode": "Mode",
   "mode.b2c": "People (B2C)",
   "mode.b2b": "Business (B2B)",
-  "setup.niche": "Niche",
+  "setup.niche": "Niche, optional",
   "setup.pickNiche": "Pick a niche",
   "setup.changeNiche": "Change",
+  "setup.nicheHint": "You can skip it: without a niche the result uses the avatar breadth alone.",
+  "setup.clearNiche": "Remove",
   "setup.emptyMarket": "Pick at least one country or region.",
   "band.title": "Avatar breadth",
   "band.sub": "What share of the paying audience is actually your customer.",
@@ -608,7 +611,7 @@ const EN: Readonly<Record<StringKey, string>> = {
   "band.lessonOpen": 'What "{level}" means',
   "band.lessonClose": "Collapse",
   "band.tiers": "Price: $ under $10 a month, $$ $10 to $30, $$$ $30 to $150, $$$$ over $150",
-  "lesson.examples": "Examples from the lesson",
+  "lesson.examples": "Examples",
   "lesson.plus": "Pros",
   "lesson.minus": "Cons",
   "lesson.wide": "Wide avatar",
@@ -642,9 +645,9 @@ const EN: Readonly<Record<StringKey, string>> = {
   "funnel.src.wb": "WB, {y}",
   "funnel.src.findex": "Findex, {y}",
   "funnel.src.est": "estimate",
-  "funnel.src.lesson": "lesson",
+  "funnel.src.lesson": "estimate",
   "funnel.scale":
-    "Bars share one scale from the first step. The thin sliver at the bottom is the lesson.",
+    "Bars share one scale from the first step. The thin sliver at the bottom is your market.",
   "tip.pop": "Everyone living in the country, World Bank data.",
   "tip.online": "Share of people who use the internet (ITU via the World Bank).",
   "tip.age":
@@ -652,7 +655,7 @@ const EN: Readonly<Record<StringKey, string>> = {
   "tip.buy":
     'Share of adults who bought something online in the past year (Global Findex). "Pay online" is stricter: they paid a merchant by card or wallet themselves.',
   "tip.soft":
-    "Share of online buyers who pay for digital products. The lesson board says 40% never buy software. Adjust to your niche.",
+    "Share of online buyers who pay for digital products. Roughly 40% of online buyers never pay for software, so the default is 60%. Adjust to your niche.",
   "tip.lang":
     "For a Russian-language product we count fluent Russian speakers. For the local language we count everyone.",
   "tip.firms": 'Active companies and sole traders. "With employees" removes one-person businesses.',
@@ -676,7 +679,7 @@ const EN: Readonly<Record<StringKey, string>> = {
   "result.howHide": "Hide",
   "result.how.1":
     "Take the population and keep those online, of the right age, buying online, paying for software and speaking the product language. In B2B mode we start from the number of businesses.",
-  "result.how.2": "Your avatar is a share of them, picked on the lesson scale.",
+  "result.how.2": "Your avatar is a share of them, picked on the breadth scale.",
   "result.how.3": "Annual check: monthly price times 12, or the one-off price.",
   "result.how.4": "Market per year: avatars times the annual check.",
   "result.how.5":
@@ -801,7 +804,6 @@ const EN: Readonly<Record<StringKey, string>> = {
   "err.rate": "The rate must be above zero",
   "foot.note":
     "A quick estimate, not an investment model. Findex 2021 understates online buying in rich countries; for Russia we use the VTsIOM 2024 estimate (71% of adults 18+).",
-  "foot.data": "Source data and build scripts live in the repository.",
 };
 
 export const t = (
