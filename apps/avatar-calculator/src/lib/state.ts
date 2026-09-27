@@ -1,14 +1,26 @@
 import countriesJson from "../data/countries.json";
 import gallupJson from "../data/gallup.json";
+import msAiJson from "../data/ms_ai.json";
 import nichesJson from "../data/niches.json";
 import type { Benchmark, CalcState, Country, Lang, Niche, AiLadder } from "./types";
 
 const AI_LADDER = gallupJson.ladder as Readonly<Record<string, AiLadder>>;
+const MS_SHARE = msAiJson.share as Readonly<
+  Record<string, { readonly q2_26: number; readonly h1_25: number | null }>
+>;
 /** Countries with the Gallup AI ladder attached where the 2026 survey covers them. */
 export const COUNTRIES: readonly Country[] = (countriesJson as unknown as readonly Country[]).map(
-  (c) => ({ ...c, ai: AI_LADDER[c.id] ?? null }),
+  (c) => ({
+    ...c,
+    ai: AI_LADDER[c.id] ?? null,
+    aiMs: MS_SHARE[c.id]?.q2_26 ?? null,
+    aiMsPrev: MS_SHARE[c.id]?.h1_25 ?? null,
+  }),
 );
 export const GALLUP = gallupJson;
+/** Longest free-text niche idea we keep. */
+export const IDEA_MAX = 120;
+export const MS_AI = msAiJson;
 export const NICHES = (nichesJson as unknown as { niches: readonly Niche[] }).niches;
 export const BENCHMARKS = (
   nichesJson as unknown as { benchmarks: Readonly<Record<string, readonly Benchmark[]>> }
@@ -32,6 +44,7 @@ export const DEFAULT_STATE: CalcState = {
   level: 10,
   customPct: null,
   niche: null,
+  idea: "",
   pricing: "subscription",
   price: 490 / FALLBACK_RATES.rub,
   share: 2,
@@ -92,6 +105,7 @@ export const sanitize = (raw: unknown): CalcState => {
     level: pick("level", DEFAULT_STATE.level),
     customPct: pick("customPct", DEFAULT_STATE.customPct),
     niche: pick("niche", DEFAULT_STATE.niche),
+    idea: pick("idea", DEFAULT_STATE.idea),
     pricing: pick("pricing", DEFAULT_STATE.pricing),
     price: pick("price", DEFAULT_STATE.price),
     share: pick("share", DEFAULT_STATE.share),
@@ -127,6 +141,7 @@ export const sanitize = (raw: unknown): CalcState => {
       typeof merged.niche === "string" && NICHES.some((n) => n.id === merged.niche)
         ? merged.niche
         : null,
+    idea: typeof merged.idea === "string" ? merged.idea.slice(0, IDEA_MAX) : "",
     customPct:
       typeof merged.customPct === "number" && merged.customPct > 0 && merged.customPct <= 100
         ? merged.customPct

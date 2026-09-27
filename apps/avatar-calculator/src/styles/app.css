@@ -2077,3 +2077,14 @@ th[aria-sort] .sortbtn,
     scroll-behavior: auto;
   }
 }
+.aipanel__sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.aipanel__sources p {
+  margin: 0;
+}
+.setup__idea {
+  margin-top: var(--space-3);
+}

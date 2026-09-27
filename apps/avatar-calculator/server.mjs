@@ -5,6 +5,7 @@ import { createServer } from "node:http";
 import { createReadStream, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { createRateLimiter, handleFeedback } from "./feedback.mjs";
+import { handleExport, handleSearch } from "./searchlog.mjs";
 
 const ROOT = join(import.meta.dirname, "dist");
 const PORT = Number(process.env.PORT ?? 8080);
@@ -27,6 +28,16 @@ const feedbackDeps = {
   limiter: createRateLimiter({ limit: 5, windowMs: 10 * 60_000 }),
   globalLimiter: createRateLimiter({ limit: 200, windowMs: 60 * 60_000 }),
   log: (m) => console.error(m),
+};
+
+// On Railway SEARCH_LOG_PATH points into a mounted volume so the log survives redeploys.
+const searchDeps = {
+  path: process.env.SEARCH_LOG_PATH ?? join(import.meta.dirname, "data", "searches.jsonl"),
+  token: process.env.SEARCH_EXPORT_TOKEN ?? "",
+  limiter: createRateLimiter({ limit: 60, windowMs: 10 * 60_000 }),
+  globalLimiter: createRateLimiter({ limit: 3000, windowMs: 60 * 60_000 }),
+  log: (m) => console.error(m),
+  now: () => new Date(),
 };
 
 const isFile = (p) => {
@@ -62,6 +73,19 @@ const server = createServer((req, res) => {
     }
     handleFeedback(req, res, feedbackDeps).catch((e) => {
       feedbackDeps.log(`feedback: unexpected ${e instanceof Error ? e.message : String(e)}`);
+      if (!res.headersSent) res.writeHead(500).end();
+    });
+    return;
+  }
+  const api = url.pathname.startsWith(PREFIX) ? url.pathname.slice(PREFIX.length) : url.pathname;
+  if (api === "/api/search" || api === "/api/searches") {
+    const post = api === "/api/search";
+    if (req.method !== (post ? "POST" : "GET")) {
+      res.writeHead(405, { allow: post ? "POST" : "GET" }).end();
+      return;
+    }
+    (post ? handleSearch : handleExport)(req, res, searchDeps).catch((e) => {
+      searchDeps.log(`search: unexpected ${e instanceof Error ? e.message : String(e)}`);
       if (!res.headersSent) res.writeHead(500).end();
     });
     return;

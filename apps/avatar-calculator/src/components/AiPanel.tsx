@@ -1,6 +1,6 @@
 import { pctText } from "../lib/format";
 import { t, type StringKey } from "../lib/i18n";
-import { GALLUP, countryName } from "../lib/state";
+import { GALLUP, MS_AI, countryName } from "../lib/state";
 import type { AiLadder, Country, Lang } from "../lib/types";
 
 type Metric = "helpCountry" | "betterLife" | "trust" | "worried" | "positive";
@@ -16,17 +16,32 @@ const SEGMENTS: readonly { key: keyof AiLadder; label: StringKey }[] = [
   { key: "an", label: "ai.awareNever" },
   { key: "na", label: "ai.notAware" },
 ];
-const byUse = (table: Readonly<Record<string, readonly number[]>>, id: string) => table[id];
 
-/** Population-weighted ladder over the market countries the survey covers. */
-const weightedLadder = (cs: readonly Country[]): AiLadder | null => {
-  const covered = cs.filter((c): c is Country & { ai: AiLadder } => c.ai != null);
-  const pop = covered.reduce((s, c) => s + c.pop, 0);
-  if (!pop) return null;
-  const avg = (k: keyof AiLadder) => covered.reduce((s, c) => s + c.ai[k] * c.pop, 0) / pop;
-  return { d: avg("d"), w: avg("w"), m: avg("m"), an: avg("an"), na: avg("na") };
+const byUse = (table: object, id: string): readonly number[] | undefined =>
+  (table as Readonly<Record<string, readonly number[]>>)[id];
+
+type WithLadder = Country & { ai: AiLadder };
+type WithMs = Country & { aiMs: number };
+
+const weightedBy = <T extends Country>(cs: readonly T[], f: (c: T) => number): number => {
+  const pop = cs.reduce((s, c) => s + c.pop, 0);
+  return pop ? cs.reduce((s, c) => s + f(c) * c.pop, 0) / pop : 0;
 };
 
+/** Population-weighted ladder over the market countries Gallup covers. */
+const weightedLadder = (cs: readonly WithLadder[]): AiLadder => ({
+  d: weightedBy(cs, (c) => c.ai.d),
+  w: weightedBy(cs, (c) => c.ai.w),
+  m: weightedBy(cs, (c) => c.ai.m),
+  an: weightedBy(cs, (c) => c.ai.an),
+  na: weightedBy(cs, (c) => c.ai.na),
+});
+
+/**
+ * AI on the selected market. Shows only what the sources publish for these
+ * countries: Gallup's survey (37 countries) and Microsoft's usage share
+ * (146 countries). Renders nothing when neither covers the market.
+ */
 export const AiPanel = ({
   lang,
   countries,
@@ -34,25 +49,41 @@ export const AiPanel = ({
   readonly lang: Lang;
   readonly countries: readonly Country[];
 }) => {
-  const covered = countries.filter((c) => c.ai != null);
-  const ladder = weightedLadder(countries);
-  const single = countries.length === 1 && covered.length === 1 ? covered[0] : undefined;
+  const gallup = countries.filter((c): c is WithLadder => c.ai != null);
+  const ms = countries.filter((c): c is WithMs => c.aiMs != null);
+  if (gallup.length === 0 && ms.length === 0) return null;
+
+  const ladder = gallup.length > 0 ? weightedLadder(gallup) : null;
+  const single = countries.length === 1 ? gallup[0] : undefined;
   const med = GALLUP.medians;
-  const pickMetric = (m: Metric): number | undefined =>
+  const metric = (m: Metric): number | undefined =>
     single ? (GALLUP[m] as Readonly<Record<string, number>>)[single.id] : undefined;
   const trustRow = single ? byUse(GALLUP.trustByUse, single.id) : undefined;
   const worryRow = single ? byUse(GALLUP.worryByUse, single.id) : undefined;
 
-  const tile = (label: StringKey, value: number | undefined, median: number | undefined) => (
-    <div className="aitile" key={label}>
-      <p className="label">{t(lang, label)}</p>
-      <p className="aitile__val">{value != null ? pctText(value, lang) : "?"}</p>
-      <p className="aitile__note">
-        {value == null && <span>{t(lang, "ai.noData")}. </span>}
-        {median != null && t(lang, "ai.median", { v: pctText(median, lang) })}
-      </p>
-    </div>
-  );
+  const msNow = weightedBy(ms, (c) => c.aiMs);
+  const msPrevCs = ms.filter((c) => c.aiMsPrev != null);
+  const msPrev = msPrevCs.length === ms.length ? weightedBy(ms, (c) => c.aiMsPrev ?? 0) : null;
+  const hasCis = ms.some((c) => c.reg === "cis");
+
+  const tiles: readonly { label: StringKey; value: number | undefined; median?: number | undefined }[] = [
+    { label: "ai.metric.aware", value: ladder ? 100 - ladder.na : undefined, median: med.aware },
+    { label: "ai.metric.ever", value: ladder ? ladder.d + ladder.w + ladder.m : undefined, median: med.ever },
+    { label: "ai.metric.weekly", value: ladder ? ladder.d + ladder.w : undefined, median: med.computed.weekly },
+    { label: "ai.metric.helpCountry", value: metric("helpCountry") },
+    { label: "ai.metric.betterLife", value: metric("betterLife") },
+    { label: "ai.metric.trust", value: metric("trust"), median: METRIC_MEDIAN.trust },
+    { label: "ai.metric.worried", value: metric("worried"), median: METRIC_MEDIAN.worried },
+    { label: "ai.metric.positive", value: metric("positive"), median: METRIC_MEDIAN.positive },
+  ];
+  const shown = tiles.filter((x): x is typeof x & { value: number } => x.value != null);
+
+  const scope =
+    countries.length === 1 && countries[0]
+      ? countryName(countries[0], lang)
+      : gallup.length > 0 && gallup.length < countries.length
+        ? t(lang, "ai.coverage", { a: gallup.length, b: countries.length })
+        : "";
 
   return (
     <section className="aipanel" aria-labelledby="ai-title">
@@ -61,12 +92,7 @@ export const AiPanel = ({
           {t(lang, "ai.title")}
         </h2>
         <p className="section-sub">
-          {t(lang, "ai.sub")}{" "}
-          {single
-            ? countryName(single, lang)
-            : covered.length > 0
-              ? t(lang, "ai.coverage", { a: covered.length, b: countries.length })
-              : t(lang, "ai.none")}
+          {t(lang, ladder ? "ai.sub" : "ai.subUse")} {scope}
         </p>
       </div>
 
@@ -76,9 +102,7 @@ export const AiPanel = ({
           <div
             className="ladder__bar"
             role="img"
-            aria-label={SEGMENTS.map(
-              (s) => `${t(lang, s.label)} ${pctText(ladder[s.key], lang)}`,
-            ).join(", ")}
+            aria-label={SEGMENTS.map((s) => `${t(lang, s.label)} ${pctText(ladder[s.key], lang)}`).join(", ")}
           >
             {SEGMENTS.map((s) => (
               <span
@@ -99,16 +123,31 @@ export const AiPanel = ({
         </figure>
       )}
 
-      <div className="aitiles">
-        {tile("ai.metric.aware", ladder ? 100 - ladder.na : undefined, med.aware)}
-        {tile("ai.metric.ever", ladder ? ladder.d + ladder.w + ladder.m : undefined, med.ever)}
-        {tile("ai.metric.weekly", ladder ? ladder.d + ladder.w : undefined, med.computed.weekly)}
-        {tile("ai.metric.helpCountry", pickMetric("helpCountry"), undefined)}
-        {tile("ai.metric.betterLife", pickMetric("betterLife"), undefined)}
-        {tile("ai.metric.trust", pickMetric("trust"), METRIC_MEDIAN.trust)}
-        {tile("ai.metric.worried", pickMetric("worried"), METRIC_MEDIAN.worried)}
-        {tile("ai.metric.positive", pickMetric("positive"), METRIC_MEDIAN.positive)}
-      </div>
+      {(shown.length > 0 || ms.length > 0) && (
+        <div className="aitiles">
+          {shown.map((x) => (
+            <div className="aitile" key={x.label}>
+              <p className="label">{t(lang, x.label)}</p>
+              <p className="aitile__val">{pctText(x.value, lang)}</p>
+              {x.median != null && (
+                <p className="aitile__note">{t(lang, "ai.median", { v: pctText(x.median, lang) })}</p>
+              )}
+            </div>
+          ))}
+          {ms.length > 0 && (
+            <div className="aitile aitile--ms">
+              <p className="label">{t(lang, "ai.metric.ms")}</p>
+              <p className="aitile__val">{pctText(msNow, lang)}</p>
+              <p className="aitile__note">
+                {msPrev != null &&
+                  t(lang, "ai.msGrowth", { v: pctText(msPrev, lang) })}
+                {ms.length < countries.length &&
+                  ` ${t(lang, "ai.msCoverage", { a: ms.length, b: countries.length })}`}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {single && GALLUP.negativeOutweighs.includes(single.id) && (
         <p className="aipanel__flag">{t(lang, "ai.negOver")}</p>
@@ -131,25 +170,23 @@ export const AiPanel = ({
                 </tr>
               </thead>
               <tbody>
-                {trustRow && (
-                  <tr>
-                    <th scope="row">{t(lang, "ai.trust")}</th>
-                    {trustRow.map((v, i) => (
-                      <td key={i} className="num">
-                        {pctText(v, lang)}
-                      </td>
-                    ))}
-                  </tr>
-                )}
-                {worryRow && (
-                  <tr>
-                    <th scope="row">{t(lang, "ai.worry")}</th>
-                    {worryRow.map((v, i) => (
-                      <td key={i} className="num">
-                        {pctText(v, lang)}
-                      </td>
-                    ))}
-                  </tr>
+                {(
+                  [
+                    ["ai.trust", trustRow],
+                    ["ai.worry", worryRow],
+                  ] as const
+                ).map(
+                  ([label, row]) =>
+                    row && (
+                      <tr key={label}>
+                        <th scope="row">{t(lang, label)}</th>
+                        {row.map((v, i) => (
+                          <td key={i} className="num">
+                            {pctText(v, lang)}
+                          </td>
+                        ))}
+                      </tr>
+                    ),
                 )}
               </tbody>
             </table>
@@ -157,12 +194,25 @@ export const AiPanel = ({
         </div>
       )}
 
-      <p className="note">
-        {t(lang, "ai.note")} {lang === "ru" ? "Источник" : "Source"}:{" "}
-        <a href={GALLUP.source.url} target="_blank" rel="noopener noreferrer">
-          {t(lang, "ai.source")}
-        </a>
-      </p>
+      <div className="note aipanel__sources">
+        {ladder && (
+          <p>
+            {t(lang, "ai.note")} {lang === "ru" ? "Источник" : "Source"}:{" "}
+            <a href={GALLUP.source.url} target="_blank" rel="noopener noreferrer">
+              {t(lang, "ai.source")}
+            </a>
+          </p>
+        )}
+        {ms.length > 0 && (
+          <p>
+            {t(lang, "ai.msNote")}
+            {hasCis && ` ${t(lang, "ai.msCis")}`} {lang === "ru" ? "Источник" : "Source"}:{" "}
+            <a href={MS_AI.source.paper} target="_blank" rel="noopener noreferrer">
+              {t(lang, "ai.msSource")}
+            </a>
+          </p>
+        )}
+      </div>
     </section>
   );
 };

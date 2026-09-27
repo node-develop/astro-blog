@@ -21,6 +21,7 @@ import {
   countryName,
   decodeState,
   encodeState,
+  IDEA_MAX,
   initialLang,
   nicheName,
   readStore,
@@ -30,6 +31,7 @@ import {
 import type { CalcState, Country, Lang } from "./lib/types";
 import { cx } from "./lib/cx";
 import { track } from "./lib/analytics";
+import { buildRecord, recordKey, sendRecord, shouldLog } from "./lib/searchLog";
 
 const SCEN_KEY = "avatar-calc-scenarios";
 
@@ -110,6 +112,22 @@ export const App = () => {
   }, [lang]);
 
   useEffect(() => writeStore(SCEN_KEY, scenarios), [scenarios]);
+
+  /* Anonymous search log: once the settings rest for a few seconds, record a
+     niche or idea search, skipping repeats of the same search this visit. */
+  const sid = useRef(crypto.randomUUID().slice(0, 12));
+  const lastLogged = useRef<string | null>(null);
+  useEffect(() => {
+    if (!shouldLog(state) || countries.length === 0) return;
+    const id = window.setTimeout(() => {
+      const rec = buildRecord(state, countries, lang, sid.current);
+      const key = recordKey(rec);
+      if (key === lastLogged.current) return;
+      lastLogged.current = key;
+      sendRecord(rec);
+    }, 4000);
+    return () => window.clearTimeout(id);
+  }, [state, countries, lang]);
 
   /* Live exchange rates; the fallback stays if the request fails or the user already edited them. */
   useEffect(() => {
@@ -355,6 +373,19 @@ export const App = () => {
                 <p className="note">{t(lang, "setup.nicheHint")}</p>
               </>
             )}
+            <label className="field setup__idea">
+              <span className="field__label">{t(lang, "setup.idea")}</span>
+              <input
+                className="search"
+                value={state.idea}
+                maxLength={IDEA_MAX}
+                placeholder={t(lang, "setup.ideaPh")}
+                onChange={(e) => {
+                  const idea = e.target.value;
+                  update((s) => ({ ...s, idea }));
+                }}
+              />
+            </label>
           </div>
         </section>
 
@@ -479,6 +510,7 @@ export const App = () => {
 
         <footer className="foot">
           <p>{t(lang, "foot.note")}</p>
+          <p>{t(lang, "foot.privacy")}</p>
         </footer>
       </main>
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AI_MEDIAN, aiShareOf, computeResult, marketPpp } from "../lib/calc";
+import { aiShareOf, computeResult, marketPpp } from "../lib/calc";
 import { compact, money, pctText } from "../lib/format";
 import { regionName, t, type StringKey } from "../lib/i18n";
 import { COUNTRIES, countryName } from "../lib/state";
@@ -67,7 +67,7 @@ export const CountryTable = ({
           : k === "firms"
             ? x.c.firms
             : k === "ai"
-              ? (aiShareOf(x.c, state.ai.level) ?? -1)
+              ? (aiShareOf(x.c, state.ai.level)?.value ?? -1)
             : k === "buy"
               ? (x.c.buy ?? -1)
               : x.c[k];
@@ -217,7 +217,10 @@ export const CountryTable = ({
                   )}
                   {aiOn && (
                     <td className={cx("num", "opt", x.c.ai == null && "num--est")}>
-                      {pctText(aiShareOf(x.c, state.ai.level) ?? AI_MEDIAN[state.ai.level], lang)}
+                      {(() => {
+                        const a = aiShareOf(x.c, state.ai.level);
+                        return a ? pctText(a.value, lang) : lang === "ru" ? "нет" : "n/a";
+                      })()}
                     </td>
                   )}
                   <td className="num">
@@ -242,8 +245,8 @@ export const CountryTable = ({
       )}
       <p className="note">
         {lang === "ru"
-          ? "Серые цифры: оценка или среднее по региону."
-          : "Grey figures are estimates or regional averages."}
+          ? "Серые цифры: оценка или среднее по региону. Доля AI серым: пересчет из данных Microsoft."
+          : "Grey figures are estimates or regional averages. Grey AI share: rescaled from Microsoft data."}
       </p>
     </section>
   );

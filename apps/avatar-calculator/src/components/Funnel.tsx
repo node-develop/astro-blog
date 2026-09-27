@@ -2,7 +2,7 @@ import { AI_MEDIAN, aiShareOf, breadthPct, buyRate, inetRate, langRate, shownLev
 import { compact, pctText } from "../lib/format";
 import { levelText, t, type StringKey } from "../lib/i18n";
 import type { AiLevel, CalcState, Country, FunnelStep, Lang } from "../lib/types";
-import { GALLUP, NICHES } from "../lib/state";
+import { GALLUP, MS_AI, NICHES } from "../lib/state";
 import { track } from "../lib/analytics";
 import { Chip, InfoTip, NumberField, Segmented, StatusChip } from "./ui";
 import { cx } from "../lib/cx";
@@ -162,11 +162,14 @@ export const Funnel = ({
         };
       }
       case "ai": {
-        const covered = countries.filter((c) => aiShareOf(c, state.ai.level) != null);
+        const shares = countries.map((c) => aiShareOf(c, state.ai.level));
+        const fromGallup = shares.some((x) => x?.src === "gallup");
+        const fromMs = shares.some((x) => x?.src === "ms");
+        const gaps = shares.some((x) => x == null);
         const avg = weighted(
           countries,
           (c) => c.pop,
-          (c) => aiShareOf(c, state.ai.level) ?? AI_MEDIAN[state.ai.level],
+          (c) => aiShareOf(c, state.ai.level)?.value ?? AI_MEDIAN[state.ai.level],
         );
         return {
           ctrl: (
@@ -185,7 +188,7 @@ export const Funnel = ({
                 label={t(lang, "funnel.ai")}
                 hideLabel
                 compact
-                value={o.ai ?? avg}
+                value={o.ai ?? Math.round(avg * 10) / 10}
                 min={0}
                 max={100}
                 suffix="%"
@@ -196,12 +199,22 @@ export const Funnel = ({
           ),
           meta: (
             <>
-              {covered.length > 0 && (
+              {fromGallup && (
                 <a href={GALLUP.source.url} target="_blank" rel="noopener noreferrer">
                   {t(lang, "funnel.ai.src")}
                 </a>
               )}
-              {o.ai == null && covered.length < countries.length && (
+              {fromMs && (
+                <a href={MS_AI.source.paper} target="_blank" rel="noopener noreferrer">
+                  {t(lang, "funnel.ai.srcMs")}
+                </a>
+              )}
+              {o.ai == null && fromMs && (
+                <StatusChip tone="warning">
+                  {t(lang, "funnel.est")}: {t(lang, "funnel.ai.msEst")}
+                </StatusChip>
+              )}
+              {o.ai == null && gaps && (
                 <StatusChip tone="warning">
                   {t(lang, "funnel.est")}: {t(lang, "funnel.ai.median")}
                 </StatusChip>
@@ -365,7 +378,7 @@ export const Funnel = ({
 
   return (
     <div className="funnel">
-      {state.mode === "b2c" && (
+      {state.mode === "b2c" && countries.some((c) => c.ai != null || c.aiMs != null) && (
         <div className="funnel__ai">
           <label className="check">
             <input

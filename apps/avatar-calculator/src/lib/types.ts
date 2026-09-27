@@ -57,6 +57,10 @@ export interface Country {
   readonly firmsY: number | null;
   /** Gallup AI adoption ladder; only the 37 countries in the 2026 survey have it. */
   readonly ai?: AiLadder | null;
+  /** Microsoft AI Diffusion: % of people aged 15-64 who used generative AI, Q2 2026. */
+  readonly aiMs?: number | null;
+  /** The same share in H1 2025, for the growth line. */
+  readonly aiMsPrev?: number | null;
 }
 
 export interface Niche {
@@ -136,6 +140,8 @@ export interface CalcState {
   /** A custom breadth, %. Wins over the level when set. */
   readonly customPct: number | null;
   readonly niche: string | null;
+  /** The user's own niche idea in free text, up to IDEA_MAX characters. */
+  readonly idea: string;
   readonly pricing: Pricing;
   /** Price per month (subscription) or per purchase (one-off), USD. */
   readonly price: number;

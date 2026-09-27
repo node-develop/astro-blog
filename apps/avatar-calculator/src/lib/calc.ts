@@ -1,4 +1,5 @@
 import gallup from "../data/gallup.json";
+import msAi from "../data/ms_ai.json";
 import type {
   AiLevel,
   CalcState,
@@ -78,20 +79,38 @@ export const buyRate = (c: Country, s: Pick<CalcState, "buyBasis" | "overrides">
 export const inetRate = (c: Country, s: Pick<CalcState, "overrides">): number =>
   s.overrides.inet ?? c.inet;
 
-/**
- * Share of adults who use AI at a level, from the Gallup ladder. Countries
- * outside the 37 surveyed get the median of those 37 (flagged in the UI).
- */
+/** Median of the 37 Gallup countries; fills in for a country with no data inside a mixed market. */
 export const AI_MEDIAN: Readonly<Record<AiLevel, number>> = gallup.medians.computed;
 
-export const aiShareOf = (c: Country, level: AiLevel): number | null => {
+/** Microsoft share times these ratios gives a Gallup-like share (median over the countries both cover). */
+export const MS_RATIO: Readonly<Record<AiLevel, number>> = msAi.calibration.ratio;
+
+export type AiSource = "gallup" | "ms";
+
+/**
+ * Share of adults who use AI at a level. Gallup's survey where it exists,
+ * otherwise Microsoft's usage share scaled onto Gallup's ladder (an estimate,
+ * capped by the country's internet share). Null when neither source has it.
+ */
+export const aiShareOf = (
+  c: Country,
+  level: AiLevel,
+): { readonly value: number; readonly src: AiSource } | null => {
   const l = c.ai;
-  if (!l) return null;
-  return level === "daily" ? l.d : level === "weekly" ? l.d + l.w : l.d + l.w + l.m;
+  if (l) {
+    const value = level === "daily" ? l.d : level === "weekly" ? l.d + l.w : l.d + l.w + l.m;
+    return { value, src: "gallup" };
+  }
+  if (c.aiMs == null) return null;
+  return { value: Math.min(c.aiMs * MS_RATIO[level], c.inet, 100), src: "ms" };
 };
 
 export const aiRate = (c: Country, s: Pick<CalcState, "ai" | "overrides">): number =>
-  s.overrides.ai ?? aiShareOf(c, s.ai.level) ?? AI_MEDIAN[s.ai.level];
+  s.overrides.ai ?? aiShareOf(c, s.ai.level)?.value ?? AI_MEDIAN[s.ai.level];
+
+/** The AI step only applies to B2C and only when some market country has data. */
+export const aiActive = (countries: readonly Country[], s: CalcState): boolean =>
+  s.mode === "b2c" && s.ai.enabled && countries.some((c) => c.ai != null || c.aiMs != null);
 
 export const langRate = (c: Country, s: Pick<CalcState, "lang" | "overrides">): number =>
   s.lang === "local" ? 100 : (s.overrides.rus ?? c.rus);
@@ -143,7 +162,9 @@ export const marketFunnel = (
   countries: readonly Country[],
   s: CalcState,
 ): readonly FunnelStep[] => {
-  const per = countries.map((c) => countryFunnel(c, s));
+  const on = aiActive(countries, s);
+  const eff = on === s.ai.enabled ? s : { ...s, ai: { ...s.ai, enabled: on } };
+  const per = countries.map((c) => countryFunnel(c, eff));
   const first = per[0];
   if (!first) return [];
   return first.map((step, i) => ({

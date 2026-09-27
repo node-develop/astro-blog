@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  aiShareOf,
   applyNiche,
+  MS_RATIO,
   computeEcon,
   computeResult,
   countryFunnel,
@@ -123,23 +125,36 @@ describe("AI users step (Gallup and Microsoft)", () => {
     expect(daily.at(-1)!.value).toBeLessThan(weekly.at(-1)!.value);
   });
 
-  it("falls back to the 37-country median and honours a typed override", () => {
-    const noLadder = { ...withLadder, ai: null };
-    const med = countryFunnel(noLadder, { ...base, ai: { enabled: true, level: "ever" } });
-    const aged = med.find((x) => x.key === "age")?.value ?? 0;
-    expect(med.find((x) => x.key === "ai")?.value).toBeCloseTo(aged * (43.2 / 80));
-    const typed = countryFunnel(noLadder, {
-      ...base,
-      ai: { enabled: true, level: "ever" },
-      overrides: { inet: null, buy: null, rus: null, ai: 8 },
-    });
-    expect(typed.find((x) => x.key === "ai")?.value).toBeCloseTo(aged * 0.1);
+  it("uses Microsoft's share, rescaled and capped by internet, where Gallup has no ladder", () => {
+    const msOnly = { ...withLadder, ai: null, aiMs: 20 };
+    const a = aiShareOf(msOnly, "weekly");
+    expect(a?.src).toBe("ms");
+    expect(a?.value).toBeCloseTo(20 * MS_RATIO.weekly);
+    expect(aiShareOf({ ...msOnly, aiMs: 90 }, "ever")?.value).toBe(80);
+    expect(aiShareOf(withLadder, "weekly")).toEqual({ value: 40, src: "gallup" });
   });
 
-  it("uses the real Gallup ladder for Russia", () => {
+  it("skips the step when no market country has data, else fills gaps with the median", () => {
+    const bare = { ...withLadder, ai: null, aiMs: null };
+    const on = { ...base, ai: { enabled: true, level: "ever" as const } };
+    expect(aiShareOf(bare, "ever")).toBeNull();
+    expect(computeResult([bare], on).funnel.some((x) => x.key === "ai")).toBe(false);
+    const mixed = computeResult([bare, withLadder], on).funnel;
+    const alone = computeResult([withLadder], on).funnel;
+    const aged = (f: typeof mixed) => f.find((x) => x.key === "age")?.value ?? 0;
+    const ai = (f: typeof mixed) => f.find((x) => x.key === "ai")?.value ?? 0;
+    expect(ai(mixed) - ai(alone)).toBeCloseTo((aged(mixed) - aged(alone)) * (43.2 / 80));
+    const typed = countryFunnel(bare, { ...on, overrides: { inet: null, buy: null, rus: null, ai: 8 } });
+    expect(typed.find((x) => x.key === "ai")?.value).toBeCloseTo(aged(alone) * 0.1);
+  });
+
+  it("attaches Gallup and Microsoft data to real countries", () => {
     const ru = COUNTRY_BY_ID.get("RU")!;
     expect(ru.ai?.d).toBe(20.8);
-    expect(COUNTRY_BY_ID.get("DE")?.ai).toBeNull();
+    expect(ru.aiMs).toBe(9.9);
+    const de = COUNTRY_BY_ID.get("DE")!;
+    expect(de.ai).toBeNull();
+    expect(aiShareOf(de, "weekly")?.src).toBe("ms");
   });
 });
 
