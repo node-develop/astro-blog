@@ -1028,6 +1028,18 @@ a:hover {
   gap: var(--space-2);
   align-items: center;
 }
+/* Funnel controls live in a 17rem column: segments share it and wrap their text
+   instead of spilling over the bar. */
+.frow__ctrl .seg {
+  width: 100%;
+}
+.frow__ctrl .seg__opt {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+  padding-inline: var(--space-2);
+  line-height: 1.2;
+}
 .frow__meta {
   display: flex;
   flex-wrap: wrap;
@@ -2056,16 +2068,7 @@ th[aria-sort] .sortbtn,
   .market__row .btn {
     width: 100%;
   }
-  .frow__ctrl .seg {
-    width: 100%;
-  }
-  .frow__ctrl .seg__opt {
-    flex: 1 1 0;
-    min-width: 0;
-    white-space: normal;
-    padding-inline: var(--space-2);
-    line-height: 1.2;
-  }
+
 }
 @media (prefers-reduced-motion: reduce) {
   .btn:hover:not(:disabled),
