@@ -1,0 +1,1743 @@
+{
+ "niches": [
+  {
+   "id": "vpn",
+   "name_ru": "VPN-сервисы",
+   "name_en": "VPN services",
+   "level": 2,
+   "segment_share_pct": 30,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 290,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "Amnezia VPN",
+    "Outline (ключи через Telegram-ботов)",
+    "NordVPN",
+    "Surfshark"
+   ],
+   "anomaly": "В России спрос создают блокировки, в США VPN остаётся нишевым товаром",
+   "note_ru": "В России VPN нужен почти каждому второму, чек около 290 рублей в месяц."
+  },
+  {
+   "id": "money-transfers",
+   "name_ru": "Переводы денег",
+   "name_en": "Money transfers",
+   "level": 2,
+   "segment_share_pct": 40,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 100,
+   "price_us_usd_month": 5,
+   "example_products": [
+    "Т-Банк",
+    "Золотая Корона",
+    "Wise",
+    "Remitly"
+   ],
+   "anomaly": "Переводы из России за рубеж ограничены, комиссии посредников 3-10%",
+   "note_ru": "Зарабатывают на комиссии, выручка с человека небольшая, но людей очень много."
+  },
+  {
+   "id": "search-ai-chat",
+   "name_ru": "Поиск и AI-помощники общего назначения",
+   "name_en": "Search and general AI assistants",
+   "level": 2,
+   "segment_share_pct": 20,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 300,
+   "price_us_usd_month": 20,
+   "example_products": [
+    "Алиса Про",
+    "GigaChat",
+    "Perplexity Pro",
+    "ChatGPT Plus"
+   ],
+   "anomaly": null,
+   "note_ru": "Рынок занят гигантами, новичку сюда заходить почти бессмысленно."
+  },
+  {
+   "id": "cashback-discounts",
+   "name_ru": "Скидки и кешбэк",
+   "name_en": "Discounts and cashback",
+   "level": 2,
+   "segment_share_pct": 45,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 50,
+   "price_us_usd_month": 3,
+   "example_products": [
+    "Letyshops",
+    "Мегабонус",
+    "Rakuten",
+    "Honey"
+   ],
+   "anomaly": null,
+   "note_ru": "Сервис получает процент с покупок, с одного человека выходит копейка."
+  },
+  {
+   "id": "taxi-delivery",
+   "name_ru": "Такси и доставка",
+   "name_en": "Ride-hailing and delivery",
+   "level": 2,
+   "segment_share_pct": 50,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 25,
+   "example_products": [
+    "Яндекс Го",
+    "Самокат",
+    "Uber",
+    "DoorDash"
+   ],
+   "anomaly": null,
+   "note_ru": "Чек здесь это комиссия платформы с заказов, а не вся сумма поездки."
+  },
+  {
+   "id": "taxi-price-compare",
+   "name_ru": "Сравнение цен на такси",
+   "name_en": "Taxi price comparison",
+   "level": 2,
+   "segment_share_pct": 15,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 2,
+   "price_us_usd_month": 0.3,
+   "example_products": [
+    "Такси-агрегаторы в RuStore",
+    "Obi",
+    "Bellhop"
+   ],
+   "anomaly": "Деньги приносит не пользователь, а перепродажа установок, около 10 рублей за установку",
+   "note_ru": "Пользователь не платит, зарабатывают на передаче людей сервисам такси."
+  },
+  {
+   "id": "mobile-games",
+   "name_ru": "Мобильные игры",
+   "name_en": "Mobile games",
+   "level": 2,
+   "segment_share_pct": 30,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "Standoff 2",
+    "Royal Match",
+    "Genshin Impact"
+   ],
+   "anomaly": null,
+   "note_ru": "Платит малая доля игроков, но их траты окупают всех остальных."
+  },
+  {
+   "id": "online-cinema",
+   "name_ru": "Онлайн-кинотеатры",
+   "name_en": "Video streaming",
+   "level": 2,
+   "segment_share_pct": 45,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 399,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "Кинопоиск",
+    "Иви",
+    "Okko",
+    "Netflix"
+   ],
+   "anomaly": null,
+   "note_ru": "Классика широкого аватара: подписка 300-600 рублей, в США Netflix 10-15 долларов."
+  },
+  {
+   "id": "tarot-astrology",
+   "name_ru": "Таро и астрология",
+   "name_en": "Tarot and astrology",
+   "level": 2,
+   "segment_share_pct": 15,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "Nebula",
+    "Co-Star",
+    "Telegram-боты с раскладами"
+   ],
+   "anomaly": "Высокая готовность платить при простом продукте",
+   "note_ru": "Люди охотно платят за расклады, продукт можно собрать очень быстро."
+  },
+  {
+   "id": "pets",
+   "name_ru": "Сервисы для владельцев животных",
+   "name_en": "Pet owner services",
+   "level": 2,
+   "segment_share_pct": 25,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "Петстори",
+    "Pawp",
+    "Chewy"
+   ],
+   "anomaly": null,
+   "note_ru": "Онлайн-ветеринар и напоминания о прививках для каждого второго владельца."
+  },
+  {
+   "id": "travel",
+   "name_ru": "Туризм и бронирования",
+   "name_en": "Travel and booking",
+   "level": 2,
+   "segment_share_pct": 35,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 40,
+   "example_products": [
+    "Островок",
+    "Туту",
+    "Booking.com",
+    "Airbnb"
+   ],
+   "anomaly": null,
+   "note_ru": "Выручка это комиссия 7-15% с брони, покупка случается пару раз в год."
+  },
+  {
+   "id": "online-casino",
+   "name_ru": "Онлайн-казино и ставки",
+   "name_en": "Online casino and betting",
+   "level": 2,
+   "segment_share_pct": 10,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 150,
+   "example_products": [
+    "1xBet",
+    "Pin-Up",
+    "DraftKings",
+    "FanDuel"
+   ],
+   "anomaly": "Широкий аватар, но чек как в B2B; в России законны только лицензированные букмекеры",
+   "note_ru": "Аномалия рынка: аудитория массовая, а траты игрока сравнимы с бизнес-клиентом."
+  },
+  {
+   "id": "presentation-generator",
+   "name_ru": "Генераторы презентаций",
+   "name_en": "AI presentation generators",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "Gamma",
+    "Beautiful.ai",
+    "Pitch"
+   ],
+   "anomaly": "В России почти нет сильных местных аналогов",
+   "note_ru": "Нужны офисным сотрудникам и студентам, которые делают слайды каждую неделю."
+  },
+  {
+   "id": "chatgpt-wrapper",
+   "name_ru": "Обёртки ChatGPT и доступ к нейросетям",
+   "name_en": "ChatGPT wrappers and AI access",
+   "level": 10,
+   "segment_share_pct": 12,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 20,
+   "example_products": [
+    "BotHub",
+    "GPTunnel",
+    "Chad AI",
+    "ChatGPT Plus"
+   ],
+   "anomaly": "В России нельзя напрямую оплатить OpenAI, поэтому живут посредники",
+   "note_ru": "Продают доступ к зарубежным нейросетям с оплатой российской картой."
+  },
+  {
+   "id": "content-ai",
+   "name_ru": "Генерация текстов и картинок",
+   "name_en": "AI content generation",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 700,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "Шедеврум",
+    "Jasper",
+    "Copy.ai",
+    "Midjourney"
+   ],
+   "anomaly": null,
+   "note_ru": "Пишут посты, статьи и картинки для тех, кто делает контент по работе."
+  },
+  {
+   "id": "freelance-marketplace",
+   "name_ru": "Биржи фрилансеров",
+   "name_en": "Freelance marketplaces",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "transaction",
+   "price_ru_rub_month": 800,
+   "price_us_usd_month": 50,
+   "example_products": [
+    "Kwork",
+    "FL.ru",
+    "Upwork",
+    "Fiverr"
+   ],
+   "anomaly": null,
+   "note_ru": "Площадка берёт процент со сделок между заказчиком и исполнителем."
+  },
+  {
+   "id": "resume-builder",
+   "name_ru": "Конструктор резюме",
+   "name_en": "Resume builder",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 250,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "hh.ru (платные услуги соискателям)",
+    "Resume.io",
+    "Zety"
+   ],
+   "anomaly": null,
+   "note_ru": "Нужен в момент поиска работы, поэтому люди платят недолго."
+  },
+  {
+   "id": "english-learning",
+   "name_ru": "Изучение английского",
+   "name_en": "English learning",
+   "level": 10,
+   "segment_share_pct": 12,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 800,
+   "price_us_usd_month": 13,
+   "example_products": [
+    "Skyeng",
+    "Puzzle English",
+    "Duolingo",
+    "Babbel"
+   ],
+   "anomaly": null,
+   "note_ru": "Огромный спрос и сильная конкуренция, реклама здесь дорогая."
+  },
+  {
+   "id": "gaming-services",
+   "name_ru": "Подписки и сервисы для геймеров",
+   "name_en": "Gamer subscriptions and services",
+   "level": 10,
+   "segment_share_pct": 10,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 12,
+   "example_products": [
+    "Kupikod",
+    "Xbox Game Pass",
+    "Discord Nitro"
+   ],
+   "anomaly": "В России спрос на пополнение Steam и зарубежных игровых сервисов через посредников",
+   "note_ru": "Геймеры платят регулярно, особенно за доступ к зарубежным магазинам."
+  },
+  {
+   "id": "notes-productivity",
+   "name_ru": "Заметки и планировщики задач",
+   "name_en": "Notes and productivity",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 350,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "YouGile",
+    "Weeek",
+    "Notion",
+    "Obsidian"
+   ],
+   "anomaly": "После ухода Notion из России освободилось место для местных замен",
+   "note_ru": "Нужны тем, кто ведёт задачи и заметки каждый день."
+  },
+  {
+   "id": "cloud-storage",
+   "name_ru": "Облачное хранение файлов",
+   "name_en": "Cloud file storage",
+   "level": 10,
+   "segment_share_pct": 20,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 200,
+   "price_us_usd_month": 5,
+   "example_products": [
+    "Яндекс Диск",
+    "Облако Mail",
+    "Google One",
+    "iCloud+"
+   ],
+   "anomaly": null,
+   "note_ru": "Платят за место под фото и документы, рынок держат крупные компании."
+  },
+  {
+   "id": "fitness-app",
+   "name_ru": "Фитнес-приложения",
+   "name_en": "Fitness apps",
+   "level": 10,
+   "segment_share_pct": 10,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 15,
+   "example_products": [
+    "FitStars",
+    "Strava",
+    "Freeletics",
+    "Fitbod"
+   ],
+   "anomaly": null,
+   "note_ru": "Много желающих, но люди быстро бросают тренировки и подписку."
+  },
+  {
+   "id": "kids-apps",
+   "name_ru": "Приложения для детей",
+   "name_en": "Apps for kids",
+   "level": 10,
+   "segment_share_pct": 10,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "Учи.ру",
+    "Lingokids",
+    "ABCmouse"
+   ],
+   "anomaly": null,
+   "note_ru": "Платят родители, им важны польза и безопасность для ребёнка."
+  },
+  {
+   "id": "dating",
+   "name_ru": "Знакомства",
+   "name_en": "Dating apps",
+   "level": 10,
+   "segment_share_pct": 8,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "Мамба",
+    "Twinby",
+    "Tinder",
+    "Hinge"
+   ],
+   "anomaly": "Tinder ушёл из России, рынок заняли местные сервисы",
+   "note_ru": "Платит в основном меньшая часть мужской аудитории, но платит охотно."
+  },
+  {
+   "id": "vibe-coding",
+   "name_ru": "Вайб-кодинг для разработчиков",
+   "name_en": "Vibe coding tools for developers",
+   "level": 50,
+   "segment_share_pct": 1.5,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 2000,
+   "price_us_usd_month": 20,
+   "example_products": [
+    "Cursor",
+    "Lovable",
+    "Bolt.new",
+    "GigaCode"
+   ],
+   "anomaly": "Из России трудно оплатить зарубежные AI-инструменты",
+   "note_ru": "Разработчики платят за ускорение работы, чек выше, чем у массовых сервисов."
+  },
+  {
+   "id": "freelancer-tools",
+   "name_ru": "Учёт и счета для фрилансеров",
+   "name_en": "Freelancer invoicing and bookkeeping",
+   "level": 50,
+   "segment_share_pct": 3,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 300,
+   "price_us_usd_month": 20,
+   "example_products": [
+    "Консоль.про",
+    "Bonsai",
+    "HoneyBook"
+   ],
+   "anomaly": null,
+   "note_ru": "Помогает самозанятым выставлять счета и платить налоги без ошибок."
+  },
+  {
+   "id": "video-editing",
+   "name_ru": "Инструменты для видеомонтажёров",
+   "name_en": "Video editing tools",
+   "level": 50,
+   "segment_share_pct": 1.5,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1000,
+   "price_us_usd_month": 25,
+   "example_products": [
+    "Movavi",
+    "CapCut Pro",
+    "Descript"
+   ],
+   "anomaly": null,
+   "note_ru": "Монтажёры платят за скорость: субтитры, нарезка, шаблоны."
+  },
+  {
+   "id": "blogger-tools",
+   "name_ru": "Инструменты для блогеров",
+   "name_en": "Creator tools",
+   "level": 50,
+   "segment_share_pct": 2,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 700,
+   "price_us_usd_month": 20,
+   "example_products": [
+    "SMMplanner",
+    "Popsters",
+    "Later",
+    "Buffer"
+   ],
+   "anomaly": null,
+   "note_ru": "Отложенный постинг и аналитика для тех, кто ведёт блог всерьёз."
+  },
+  {
+   "id": "back-pain",
+   "name_ru": "Упражнения при болях в спине",
+   "name_en": "Back pain exercise programs",
+   "level": 50,
+   "segment_share_pct": 3,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 700,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "Курсы ЛФК на GetCourse",
+    "Kaia Health",
+    "Hinge Health"
+   ],
+   "anomaly": "В США платит работодатель или страховка, в России человек платит сам",
+   "note_ru": "Конкретная боль, поэтому человек готов платить за понятную программу."
+  },
+  {
+   "id": "sleep",
+   "name_ru": "Проблемы со сном",
+   "name_en": "Sleep improvement",
+   "level": 50,
+   "segment_share_pct": 3,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "Calm",
+    "Headspace",
+    "Sleep Cycle",
+    "Endel"
+   ],
+   "anomaly": null,
+   "note_ru": "Приложения со звуками и практиками для тех, кто плохо спит."
+  },
+  {
+   "id": "bmw-owners",
+   "name_ru": "Сервисы для владельцев BMW",
+   "name_en": "BMW owner tools",
+   "level": 50,
+   "segment_share_pct": 1,
+   "model": "b2c",
+   "pricing": "one-off",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "BimmerCode",
+    "BimmerLink",
+    "Carly"
+   ],
+   "anomaly": null,
+   "note_ru": "Кодирование и диагностика машины через телефон, платят один раз."
+  },
+  {
+   "id": "rental-landlords",
+   "name_ru": "Сдача квартир",
+   "name_en": "Rental property management",
+   "level": 50,
+   "segment_share_pct": 2,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1000,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "Суточно.ру (для хозяев)",
+    "Hospitable",
+    "TurboTenant"
+   ],
+   "anomaly": null,
+   "note_ru": "Хозяевам квартир нужен календарь броней, договоры и учёт платежей."
+  },
+  {
+   "id": "nail-masters",
+   "name_ru": "Мастера маникюра",
+   "name_en": "Nail technicians",
+   "level": 50,
+   "segment_share_pct": 1,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 500,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "DIKIDI",
+    "YCLIENTS",
+    "Booksy",
+    "Vagaro"
+   ],
+   "anomaly": null,
+   "note_ru": "Онлайн-запись и база клиентов для мастера, который работает один."
+  },
+  {
+   "id": "home-renovation",
+   "name_ru": "Ремонт",
+   "name_en": "Home renovation",
+   "level": 50,
+   "segment_share_pct": 3,
+   "model": "b2c",
+   "pricing": "one-off",
+   "price_ru_rub_month": 1500,
+   "price_us_usd_month": 50,
+   "example_products": [
+    "Planner 5D",
+    "Профи.ру",
+    "Houzz",
+    "Angi"
+   ],
+   "anomaly": null,
+   "note_ru": "Ремонт делают редко, но платят за планировку, смету и поиск мастеров."
+  },
+  {
+   "id": "wedding",
+   "name_ru": "Свадьба",
+   "name_en": "Wedding planning",
+   "level": 50,
+   "segment_share_pct": 1.5,
+   "model": "b2c",
+   "pricing": "one-off",
+   "price_ru_rub_month": 1000,
+   "price_us_usd_month": 40,
+   "example_products": [
+    "Wedding Planner",
+    "Zola",
+    "The Knot"
+   ],
+   "anomaly": null,
+   "note_ru": "Разовая покупка перед свадьбой: приглашения, списки гостей, бюджет."
+  },
+  {
+   "id": "interview-prep",
+   "name_ru": "Подготовка к собеседованиям",
+   "name_en": "Interview preparation",
+   "level": 50,
+   "segment_share_pct": 1,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1500,
+   "price_us_usd_month": 35,
+   "example_products": [
+    "LeetCode Premium",
+    "Exponent",
+    "interviewing.io"
+   ],
+   "anomaly": "В США около 20 сервисов, в России почти один; ниша не занята",
+   "note_ru": "Спрос есть, а сервисов в России почти нет, это явный пробел на рынке."
+  },
+  {
+   "id": "pregnancy-parents",
+   "name_ru": "Беременность и первый год ребёнка",
+   "name_en": "Pregnancy and newborn apps",
+   "level": 50,
+   "segment_share_pct": 2,
+   "model": "b2c",
+   "pricing": "subscription",
+   "price_ru_rub_month": 400,
+   "price_us_usd_month": 10,
+   "example_products": [
+    "Pregnancy+",
+    "Flo",
+    "Ovia"
+   ],
+   "anomaly": null,
+   "note_ru": "Нужен ограниченное время, зато мотивация платить очень высокая."
+  },
+  {
+   "id": "crm-plugins",
+   "name_ru": "CRM и плагины к ним",
+   "name_en": "CRM and CRM plugins",
+   "level": 100,
+   "segment_share_pct": 20,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 700,
+   "price_us_usd_month": 60,
+   "example_products": [
+    "amoCRM",
+    "Битрикс24",
+    "HubSpot",
+    "Pipedrive"
+   ],
+   "anomaly": null,
+   "note_ru": "CRM в России стоит 5-10 тысяч рублей в год, плагины продают поверх неё."
+  },
+  {
+   "id": "marketplace-cards",
+   "name_ru": "Карточки и аналитика для маркетплейсов",
+   "name_en": "Marketplace listing and analytics tools",
+   "level": 100,
+   "segment_share_pct": 5,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 2000,
+   "price_us_usd_month": 50,
+   "example_products": [
+    "MPStats",
+    "Moneyplace",
+    "Helium 10",
+    "Jungle Scout"
+   ],
+   "anomaly": "В России рынок раздут ростом Wildberries и Ozon",
+   "note_ru": "Селлерам нужны карточки товаров и аналитика продаж конкурентов."
+  },
+  {
+   "id": "telegram-analytics",
+   "name_ru": "Аналитика Telegram",
+   "name_en": "Telegram analytics",
+   "level": 100,
+   "segment_share_pct": 1,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1500,
+   "price_us_usd_month": 30,
+   "example_products": [
+    "TGStat",
+    "Telemetr",
+    "Popsters"
+   ],
+   "anomaly": "Ниша живёт почти только в СНГ, в США Telegram мало используют",
+   "note_ru": "Покупают рекламщики и владельцы каналов, чтобы не платить за накрученные каналы."
+  },
+  {
+   "id": "lead-generation",
+   "name_ru": "Лидогенерация",
+   "name_en": "Lead generation",
+   "level": 100,
+   "segment_share_pct": 10,
+   "model": "b2b",
+   "pricing": "transaction",
+   "price_ru_rub_month": 15000,
+   "price_us_usd_month": 500,
+   "example_products": [
+    "Контур.Компас",
+    "Apollo.io",
+    "ZoomInfo"
+   ],
+   "anomaly": null,
+   "note_ru": "B2B-лид стоит около 10 тысяч рублей или 200-300 долларов, за это и платят."
+  },
+  {
+   "id": "ai-sales-agent",
+   "name_ru": "AI-продавец",
+   "name_en": "AI sales agent",
+   "level": 100,
+   "segment_share_pct": 5,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 10000,
+   "price_us_usd_month": 500,
+   "example_products": [
+    "Salebot",
+    "11x",
+    "Artisan"
+   ],
+   "anomaly": null,
+   "note_ru": "Бот отвечает на заявки и доводит клиента до покупки вместо менеджера."
+  },
+  {
+   "id": "ai-support",
+   "name_ru": "AI-поддержка клиентов",
+   "name_en": "AI customer support",
+   "level": 100,
+   "segment_share_pct": 8,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 7000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Jivo",
+    "Intercom Fin",
+    "Zendesk AI"
+   ],
+   "anomaly": null,
+   "note_ru": "Снимает с людей типовые вопросы, бизнес считает экономию на зарплатах."
+  },
+  {
+   "id": "seo-tools",
+   "name_ru": "SEO-сервисы",
+   "name_en": "SEO tools",
+   "level": 100,
+   "segment_share_pct": 5,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 3000,
+   "price_us_usd_month": 140,
+   "example_products": [
+    "Топвизор",
+    "Pixel Tools",
+    "Ahrefs",
+    "Semrush"
+   ],
+   "anomaly": null,
+   "note_ru": "Покупают SEO-специалисты и агентства, клиенты держатся годами."
+  },
+  {
+   "id": "online-accounting",
+   "name_ru": "Онлайн-бухгалтерия для ИП и малого бизнеса",
+   "name_en": "Online accounting for small business",
+   "level": 100,
+   "segment_share_pct": 25,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1500,
+   "price_us_usd_month": 35,
+   "example_products": [
+    "Контур.Эльба",
+    "Моё дело",
+    "QuickBooks",
+    "Xero"
+   ],
+   "anomaly": null,
+   "note_ru": "Нужна почти каждому ИП, рынок плотно занят крупными игроками."
+  },
+  {
+   "id": "salon-booking",
+   "name_ru": "Онлайн-запись для салонов и клиник",
+   "name_en": "Booking software for salons and clinics",
+   "level": 100,
+   "segment_share_pct": 3,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 2500,
+   "price_us_usd_month": 80,
+   "example_products": [
+    "YCLIENTS",
+    "DIKIDI",
+    "Fresha",
+    "Mindbody"
+   ],
+   "anomaly": null,
+   "note_ru": "Салон платит за запись, напоминания клиентам и учёт мастеров."
+  },
+  {
+   "id": "recruiting-ats",
+   "name_ru": "Системы для найма",
+   "name_en": "Recruiting and ATS",
+   "level": 100,
+   "segment_share_pct": 5,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Хантфлоу",
+    "Potok",
+    "Workable",
+    "Greenhouse"
+   ],
+   "anomaly": null,
+   "note_ru": "Компании ведут кандидатов и вакансии, чек растёт с числом рекрутеров."
+  },
+  {
+   "id": "online-cash-register",
+   "name_ru": "Онлайн-кассы и ОФД",
+   "name_en": "Online cash registers and POS",
+   "level": 100,
+   "segment_share_pct": 30,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 1500,
+   "price_us_usd_month": 60,
+   "example_products": [
+    "Эвотор",
+    "Контур.Маркет",
+    "Square",
+    "Toast"
+   ],
+   "anomaly": "В России спрос создан законом 54-ФЗ об онлайн-кассах",
+   "note_ru": "Закон обязал торговлю ставить кассы, поэтому спрос есть у всех магазинов."
+  },
+  {
+   "id": "legal-ai",
+   "name_ru": "AI-проверка договоров",
+   "name_en": "AI contract review",
+   "level": 100,
+   "segment_share_pct": 2,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Doczilla",
+    "Spellbook",
+    "Harvey"
+   ],
+   "anomaly": null,
+   "note_ru": "Юристы проверяют договоры быстрее, платит юрфирма или отдел компании."
+  },
+  {
+   "id": "streaming-server",
+   "name_ru": "Стриминг-сервер",
+   "name_en": "Video streaming server software",
+   "level": 1000,
+   "segment_share_pct": 0.1,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 15000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Flussonic",
+    "Wowza",
+    "Ant Media Server"
+   ],
+   "anomaly": null,
+   "note_ru": "Покупают операторы связи и видеоплатформы, клиентов мало, чек большой."
+  },
+  {
+   "id": "ux-research",
+   "name_ru": "UX-исследования",
+   "name_en": "UX research tools",
+   "level": 1000,
+   "segment_share_pct": 0.2,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 8000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Maze",
+    "Dovetail",
+    "UserTesting"
+   ],
+   "anomaly": null,
+   "note_ru": "Нужны продуктовым командам, которые регулярно тестируют интерфейсы."
+  },
+  {
+   "id": "gitlab-plugin",
+   "name_ru": "Плагины для GitLab",
+   "name_en": "GitLab plugins",
+   "level": 1000,
+   "segment_share_pct": 0.1,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 200,
+   "example_products": [
+    "CodeRabbit",
+    "SonarQube",
+    "Snyk"
+   ],
+   "anomaly": "В России многие компании держат свой GitLab, западные сервисы им недоступны",
+   "note_ru": "Проверка кода и безопасности для команд, которые держат свой GitLab."
+  },
+  {
+   "id": "metal-price-parser",
+   "name_ru": "Парсер цен на металл",
+   "name_en": "Metal price monitoring",
+   "level": 1000,
+   "segment_share_pct": 0.05,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 400,
+   "example_products": [
+    "MetalTorg.ru",
+    "Fastmarkets",
+    "Argus Metals"
+   ],
+   "anomaly": null,
+   "note_ru": "Металлотрейдеры следят за ценами конкурентов, клиентов единицы, но они платят."
+  },
+  {
+   "id": "docker-tools",
+   "name_ru": "Инструменты для Docker и контейнеров",
+   "name_en": "Docker and container tooling",
+   "level": 1000,
+   "segment_share_pct": 0.3,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 3000,
+   "price_us_usd_month": 150,
+   "example_products": [
+    "Docker Business",
+    "Portainer",
+    "Rancher"
+   ],
+   "anomaly": null,
+   "note_ru": "Покупают команды разработки, которые держат много сервисов в контейнерах."
+  },
+  {
+   "id": "agro-ai",
+   "name_ru": "AI для сельского хозяйства",
+   "name_en": "Agriculture AI",
+   "level": 1000,
+   "segment_share_pct": 0.1,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 20000,
+   "price_us_usd_month": 500,
+   "example_products": [
+    "Cognitive Agro Pilot",
+    "ExactFarming",
+    "Climate FieldView",
+    "Taranis"
+   ],
+   "anomaly": null,
+   "note_ru": "Мониторинг полей и прогноз урожая для агрохолдингов с большими площадями."
+  },
+  {
+   "id": "dental-clinic-software",
+   "name_ru": "Программы для стоматологий",
+   "name_en": "Dental practice software",
+   "level": 1000,
+   "segment_share_pct": 0.2,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 400,
+   "example_products": [
+    "IDENT",
+    "Dental4Windows",
+    "Dentrix",
+    "Curve Dental"
+   ],
+   "anomaly": null,
+   "note_ru": "Запись, карты пациентов и учёт для стоматологических клиник."
+  },
+  {
+   "id": "construction-estimates",
+   "name_ru": "Сметы для строительных компаний",
+   "name_en": "Construction estimating software",
+   "level": 1000,
+   "segment_share_pct": 0.3,
+   "model": "b2b",
+   "pricing": "one-off",
+   "price_ru_rub_month": 5000,
+   "price_us_usd_month": 250,
+   "example_products": [
+    "Гранд-Смета",
+    "Smeta.ru",
+    "Buildertrend",
+    "ProEst"
+   ],
+   "anomaly": null,
+   "note_ru": "Лицензию покупают разово на годы, поэтому чек считают в пересчёте на месяц."
+  },
+  {
+   "id": "vet-clinic-software",
+   "name_ru": "Программы для ветклиник",
+   "name_en": "Veterinary clinic software",
+   "level": 1000,
+   "segment_share_pct": 0.1,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 4000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "VetManager",
+    "Enote",
+    "ezyVet"
+   ],
+   "anomaly": null,
+   "note_ru": "Учёт приёмов, склада лекарств и истории болезни животных."
+  },
+  {
+   "id": "fleet-fuel-monitoring",
+   "name_ru": "Контроль топлива и транспорта",
+   "name_en": "Fleet and fuel monitoring",
+   "level": 1000,
+   "segment_share_pct": 0.3,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 10000,
+   "price_us_usd_month": 300,
+   "example_products": [
+    "Wialon",
+    "Omnicomm",
+    "Samsara"
+   ],
+   "anomaly": null,
+   "note_ru": "Перевозчики платят за каждую машину, чтобы видеть маршрут и слив топлива."
+  },
+  {
+   "id": "financial-due-diligence-ai",
+   "name_ru": "AI для финансовой проверки компаний",
+   "name_en": "AI for financial due diligence",
+   "level": 1000,
+   "segment_share_pct": 0.05,
+   "model": "b2b",
+   "pricing": "subscription",
+   "price_ru_rub_month": 30000,
+   "price_us_usd_month": 1000,
+   "example_products": [
+    "DataSnipper",
+    "MindBridge",
+    "Datarails"
+   ],
+   "anomaly": null,
+   "note_ru": "Аудиторы и инвестфонды проверяют отчётность быстрее, клиенты редкие, чек очень высокий."
+  }
+ ],
+ "benchmarks": {
+  "cac": [
+   {
+    "id": "b2c-app-cac-payer-us",
+    "label_ru": "Стоимость платящего подписчика приложения",
+    "label_en": "Subscription app cost per paying user",
+    "low": 25,
+    "high": 150,
+    "default": 60,
+    "unit": "$",
+    "region": "US",
+    "src": "Расчёт: CPI SEM Nexus 2026 / конверсия в оплату RevenueCat SOSA 2026"
+   },
+   {
+    "id": "b2c-app-cac-payer-ru",
+    "label_ru": "Стоимость платящего подписчика приложения",
+    "label_en": "Subscription app cost per paying user",
+    "low": 1000,
+    "high": 5000,
+    "default": 2000,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Расчёт: CPI Kokoc 2026 / конверсия в оплату RevenueCat SOSA 2026"
+   },
+   {
+    "id": "b2c-cac-us-paid",
+    "label_ru": "CAC B2C-компании через платную рекламу",
+    "label_en": "B2C CAC via paid ads",
+    "low": 230,
+    "high": 480,
+    "default": 290,
+    "unit": "$",
+    "region": "US",
+    "src": "First Page Sage, CAC by Channel 2026"
+   },
+   {
+    "id": "b2c-cpl-ru-direct",
+    "label_ru": "Стоимость заявки B2C в Яндекс Директе",
+    "label_en": "B2C cost per lead, Yandex Direct",
+    "low": 500,
+    "high": 3000,
+    "default": 1500,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Synapse 2025; smirnov.marketing 2026"
+   },
+   {
+    "id": "cpl-us-google-all",
+    "label_ru": "Стоимость лида в Google Ads, все отрасли",
+    "label_en": "Google Ads cost per lead, all industries",
+    "low": 40,
+    "high": 130,
+    "default": 70,
+    "unit": "$",
+    "region": "US",
+    "src": "WordStream/LocaliQ Google Ads Benchmarks 2025"
+   },
+   {
+    "id": "b2b-cpl-ru",
+    "label_ru": "Стоимость B2B-лида",
+    "label_en": "B2B cost per lead",
+    "low": 3000,
+    "high": 15000,
+    "default": 10000,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Урок «Ширина аватара»; Gorbunov Team 2025"
+   },
+   {
+    "id": "b2b-cpl-us",
+    "label_ru": "Стоимость B2B-лида",
+    "label_en": "B2B cost per lead",
+    "low": 100,
+    "high": 300,
+    "default": 200,
+    "unit": "$",
+    "region": "US",
+    "src": "Урок «Ширина аватара»; WordStream 2025 (Business Services $104)"
+   },
+   {
+    "id": "b2b-cac-smb-ru",
+    "label_ru": "CAC простого B2B SaaS (чек 5-20 тыс. ₽/мес)",
+    "label_en": "CAC, simple B2B SaaS",
+    "low": 20000,
+    "high": 60000,
+    "default": 40000,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Gorbunov Team 2025"
+   },
+   {
+    "id": "b2b-cac-mid-ru",
+    "label_ru": "CAC B2B SaaS среднего сегмента (чек 20-80 тыс. ₽/мес)",
+    "label_en": "CAC, mid-market B2B SaaS",
+    "low": 60000,
+    "high": 180000,
+    "default": 100000,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Gorbunov Team 2025"
+   },
+   {
+    "id": "b2b-cac-ent-ru",
+    "label_ru": "CAC крупного B2B SaaS (чек 100-600 тыс. ₽/мес)",
+    "label_en": "CAC, enterprise B2B SaaS",
+    "low": 150000,
+    "high": 600000,
+    "default": 300000,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Gorbunov Team 2025"
+   },
+   {
+    "id": "b2b-cac-smb-us",
+    "label_ru": "CAC B2B SaaS для малого бизнеса",
+    "label_en": "CAC, SMB B2B SaaS",
+    "low": 200,
+    "high": 1000,
+    "default": 500,
+    "unit": "$",
+    "region": "US",
+    "src": "Optifai Sales Ops Benchmark 2026; First Page Sage 2026"
+   },
+   {
+    "id": "b2b-cac-mid-us",
+    "label_ru": "CAC B2B SaaS среднего сегмента",
+    "label_en": "CAC, mid-market B2B SaaS",
+    "low": 3000,
+    "high": 30000,
+    "default": 10000,
+    "unit": "$",
+    "region": "US",
+    "src": "Benchmarkit 2025 (New CAC ratio 2.0 от годового чека)"
+   },
+   {
+    "id": "b2b-cac-paid-search-us",
+    "label_ru": "B2B CAC: платный поиск",
+    "label_en": "B2B CAC: paid search",
+    "low": 350,
+    "high": 1200,
+    "default": 800,
+    "unit": "$",
+    "region": "US",
+    "src": "First Page Sage 2026 (PPC $802); Optifai 2026"
+   },
+   {
+    "id": "b2b-cac-paid-social-us",
+    "label_ru": "B2B CAC: реклама в соцсетях (LinkedIn)",
+    "label_en": "B2B CAC: paid social (LinkedIn)",
+    "low": 600,
+    "high": 1500,
+    "default": 980,
+    "unit": "$",
+    "region": "US",
+    "src": "First Page Sage 2026 (LinkedIn Ads $982)"
+   },
+   {
+    "id": "b2b-cac-content-seo-us",
+    "label_ru": "B2B CAC: контент и SEO",
+    "label_en": "B2B CAC: content and SEO",
+    "low": 200,
+    "high": 1800,
+    "default": 900,
+    "unit": "$",
+    "region": "US",
+    "src": "First Page Sage 2026 (SEO $647-1786); Optifai 2026 (inbound $200)"
+   },
+   {
+    "id": "b2b-cac-outbound-us",
+    "label_ru": "B2B CAC: холодные продажи",
+    "label_en": "B2B CAC: outbound / SDR",
+    "low": 400,
+    "high": 3000,
+    "default": 1980,
+    "unit": "$",
+    "region": "US",
+    "src": "First Page Sage 2026 (SDR $1980); Optifai 2026 (outbound $400)"
+   },
+   {
+    "id": "b2b-cac-referral-us",
+    "label_ru": "B2B CAC: рекомендации и партнёры",
+    "label_en": "B2B CAC: referral and partners",
+    "low": 150,
+    "high": 700,
+    "default": 400,
+    "unit": "$",
+    "region": "US",
+    "src": "Optifai 2026 ($150); First Page Sage 2026 (networking $711)"
+   },
+   {
+    "id": "cpc-yandex-ru",
+    "label_ru": "Цена клика в Яндекс Директе (B2B и услуги)",
+    "label_en": "Yandex Direct CPC, B2B and services",
+    "low": 60,
+    "high": 700,
+    "default": 200,
+    "unit": "₽",
+    "region": "RU",
+    "src": "smirnov.marketing 2026"
+   },
+   {
+    "id": "cpc-google-us",
+    "label_ru": "Цена клика в Google Ads",
+    "label_en": "Google Ads CPC",
+    "low": 3.5,
+    "high": 6.5,
+    "default": 5.3,
+    "unit": "$",
+    "region": "US",
+    "src": "WordStream/LocaliQ 2025 (среднее $5.26)"
+   }
+  ],
+  "conversion": [
+   {
+    "id": "landing-to-lead-saas",
+    "label_ru": "Посетитель лендинга SaaS в заявку",
+    "label_en": "SaaS landing visit to lead",
+    "low": 1.9,
+    "high": 9.2,
+    "default": 3.8,
+    "unit": "%",
+    "region": "global",
+    "src": "Unbounce Conversion Benchmark Report 2024 (медиана SaaS 3.8%)"
+   },
+   {
+    "id": "landing-to-lead-all",
+    "label_ru": "Посетитель лендинга в заявку, все отрасли",
+    "label_en": "Landing visit to lead, all industries",
+    "low": 2.5,
+    "high": 11.4,
+    "default": 6.6,
+    "unit": "%",
+    "region": "global",
+    "src": "Unbounce 2024 (медиана 6.6%); WordStream 2025 (среднее 7.5%)"
+   },
+   {
+    "id": "b2c-install-to-paid-freemium",
+    "label_ru": "Установка в оплату, B2C freemium",
+    "label_en": "Install to paid, B2C freemium",
+    "low": 1,
+    "high": 5,
+    "default": 2,
+    "unit": "%",
+    "region": "global",
+    "src": "RevenueCat State of Subscription Apps 2026 (2.1% к 35 дню)"
+   },
+   {
+    "id": "b2c-install-to-paid-hard-paywall",
+    "label_ru": "Установка в оплату, жёсткий пейвол",
+    "label_en": "Install to paid, hard paywall",
+    "low": 5,
+    "high": 15,
+    "default": 10.7,
+    "unit": "%",
+    "region": "global",
+    "src": "RevenueCat SOSA 2026"
+   },
+   {
+    "id": "b2c-install-to-paid-all",
+    "label_ru": "Установка в оплату, медиана по всем приложениям",
+    "label_en": "Install to paid, all apps median",
+    "low": 1,
+    "high": 5,
+    "default": 1.7,
+    "unit": "%",
+    "region": "global",
+    "src": "RevenueCat SOSA 2025 (1.7% за 30 дней)"
+   },
+   {
+    "id": "b2c-trial-to-paid",
+    "label_ru": "Пробный период в оплату, B2C",
+    "label_en": "Trial to paid, B2C apps",
+    "low": 25,
+    "high": 45,
+    "default": 35,
+    "unit": "%",
+    "region": "global",
+    "src": "RevenueCat SOSA 2026 (25.5% короткий триал, 42.5% длинный)"
+   },
+   {
+    "id": "b2b-trial-no-card",
+    "label_ru": "Пробный период без карты в оплату, B2B SMB",
+    "label_en": "Trial to paid, B2B opt-in (no card)",
+    "low": 4,
+    "high": 15,
+    "default": 6,
+    "unit": "%",
+    "region": "global",
+    "src": "ChartMogul SaaS Conversion Report"
+   },
+   {
+    "id": "b2b-trial-with-card",
+    "label_ru": "Пробный период с картой в оплату, B2B SMB",
+    "label_en": "Trial to paid, B2B opt-out (card required)",
+    "low": 25,
+    "high": 60,
+    "default": 35,
+    "unit": "%",
+    "region": "global",
+    "src": "ChartMogul SaaS Conversion Report"
+   },
+   {
+    "id": "b2b-freemium-to-paid",
+    "label_ru": "Бесплатный тариф в оплату, B2B",
+    "label_en": "Freemium to paid, B2B",
+    "low": 3,
+    "high": 12,
+    "default": 4,
+    "unit": "%",
+    "region": "global",
+    "src": "ChartMogul SaaS Conversion Report"
+   },
+   {
+    "id": "b2b-lead-to-customer",
+    "label_ru": "B2B-лид в клиента",
+    "label_en": "B2B lead to customer",
+    "low": 5,
+    "high": 25,
+    "default": 10,
+    "unit": "%",
+    "region": "RU",
+    "src": "Gorbunov Team 2025"
+   }
+  ],
+  "churn": [
+   {
+    "id": "churn-b2c-apps",
+    "label_ru": "Отток B2C-подписок в приложениях",
+    "label_en": "B2C subscription app churn",
+    "low": 3,
+    "high": 15,
+    "default": 8,
+    "unit": "%/мес",
+    "region": "global",
+    "src": "Lenny's Newsletter (хорошо 3-5%); RevenueCat SOSA 2026"
+   },
+   {
+    "id": "churn-b2c-web-subscriptions",
+    "label_ru": "Отток B2C-подписок (медиа, обучение, e-commerce)",
+    "label_en": "B2C subscription churn (media, education, ecommerce)",
+    "low": 4,
+    "high": 5,
+    "default": 4.5,
+    "unit": "%/мес",
+    "region": "global",
+    "src": "Recurly Churn Benchmarks 2026"
+   },
+   {
+    "id": "churn-b2c-annual-plan-y1",
+    "label_ru": "Доля годовых подписок, отменённых за первый год",
+    "label_en": "Annual plans cancelled within year 1",
+    "low": 56,
+    "high": 72,
+    "default": 65,
+    "unit": "%/год",
+    "region": "global",
+    "src": "RevenueCat SOSA 2025-2026"
+   },
+   {
+    "id": "churn-b2b-smb",
+    "label_ru": "Отток B2B SaaS, малый бизнес",
+    "label_en": "B2B SaaS churn, SMB",
+    "low": 2.5,
+    "high": 7,
+    "default": 3.5,
+    "unit": "%/мес",
+    "region": "global",
+    "src": "Lenny's Newsletter; Recurly 2026 (SaaS 3.2%); Baremetrics"
+   },
+   {
+    "id": "churn-b2b-mid",
+    "label_ru": "Отток B2B SaaS, средний сегмент",
+    "label_en": "B2B SaaS churn, mid-market",
+    "low": 1,
+    "high": 2.5,
+    "default": 1.5,
+    "unit": "%/мес",
+    "region": "global",
+    "src": "Lenny's Newsletter; Benchmarkit 2025 (GRR 88%)"
+   },
+   {
+    "id": "churn-b2b-enterprise",
+    "label_ru": "Отток B2B SaaS, крупный бизнес",
+    "label_en": "B2B SaaS churn, enterprise",
+    "low": 0.5,
+    "high": 2,
+    "default": 0.8,
+    "unit": "%/мес",
+    "region": "global",
+    "src": "Lenny's Newsletter (хорошо 1-2%, отлично <0.5%)"
+   },
+   {
+    "id": "churn-b2b-lesson",
+    "label_ru": "Отток B2B по уроку (около 10% в год)",
+    "label_en": "B2B churn per lesson (~10%/year)",
+    "low": 0.5,
+    "high": 1.5,
+    "default": 0.9,
+    "unit": "%/мес",
+    "region": "RU",
+    "src": "Урок «Ширина аватара»"
+   }
+  ],
+  "ltv_cac": [
+   {
+    "id": "ltv-cac-target",
+    "label_ru": "Целевое LTV:CAC",
+    "label_en": "Target LTV:CAC",
+    "low": 3,
+    "high": 5,
+    "default": 3,
+    "unit": "x",
+    "region": "global",
+    "src": "Отраслевой ориентир 3:1; Aleph x Benchmarkit 2026"
+   },
+   {
+    "id": "ltv-cac-observed-saas",
+    "label_ru": "Фактическое LTV:CAC в B2B SaaS",
+    "label_en": "Observed LTV:CAC, B2B SaaS",
+    "low": 4.1,
+    "high": 5.6,
+    "default": 4.1,
+    "unit": "x",
+    "region": "global",
+    "src": "Aleph x Benchmarkit 2026 (горизонтальный 4.1x, вертикальный 5.6x)"
+   },
+   {
+    "id": "ltv-cac-ru",
+    "label_ru": "CAC не больше 20-35% от LTV",
+    "label_en": "CAC at most 20-35% of LTV",
+    "low": 2.9,
+    "high": 5,
+    "default": 3.5,
+    "unit": "x",
+    "region": "RU",
+    "src": "Gorbunov Team 2025"
+   },
+   {
+    "id": "payback-b2b-smb",
+    "label_ru": "Окупаемость CAC, B2B малый бизнес",
+    "label_en": "CAC payback, SMB B2B",
+    "low": 6,
+    "high": 18,
+    "default": 11,
+    "unit": "мес",
+    "region": "global",
+    "src": "Aleph x Benchmarkit 2026 (медиана 11)"
+   },
+   {
+    "id": "payback-b2b-all",
+    "label_ru": "Окупаемость CAC, B2B SaaS в целом",
+    "label_en": "CAC payback, all B2B SaaS",
+    "low": 6,
+    "high": 24,
+    "default": 16,
+    "unit": "мес",
+    "region": "global",
+    "src": "Aleph x Benchmarkit 2026 (медиана 16, лучшие 6)"
+   },
+   {
+    "id": "payback-b2b-enterprise",
+    "label_ru": "Окупаемость CAC, крупный B2B",
+    "label_en": "CAC payback, enterprise B2B",
+    "low": 18,
+    "high": 30,
+    "default": 22,
+    "unit": "мес",
+    "region": "global",
+    "src": "Aleph x Benchmarkit 2026 (медиана 22)"
+   },
+   {
+    "id": "payback-b2c-apps",
+    "label_ru": "Окупаемость рекламы, B2C-приложения",
+    "label_en": "Ad spend payback, B2C apps",
+    "low": 3,
+    "high": 12,
+    "default": 6,
+    "unit": "мес",
+    "region": "global",
+    "src": "Adapty 2025 (ROAS 2-3x достигают около 10% приложений)"
+   },
+   {
+    "id": "wide-avatar-traffic-margin",
+    "label_ru": "Прибыль с рекламы у широкого аватара",
+    "label_en": "Ad profit margin, wide avatar",
+    "low": -20,
+    "high": 20,
+    "default": 0,
+    "unit": "%",
+    "region": "RU",
+    "src": "Урок «Ширина аватара» (окупаемость трафика часто около нуля)"
+   }
+  ],
+  "cpi": [
+   {
+    "id": "cpi-us",
+    "label_ru": "CPI в США",
+    "label_en": "CPI, United States",
+    "low": 3.5,
+    "high": 6.5,
+    "default": 4.5,
+    "unit": "$",
+    "region": "US",
+    "src": "SEM Nexus 2026 (AppsFlyer, Adjust, Sensor Tower)"
+   },
+   {
+    "id": "cpi-north-america",
+    "label_ru": "CPI в Северной Америке",
+    "label_en": "CPI, North America",
+    "low": 2.5,
+    "high": 5,
+    "default": 3.5,
+    "unit": "$",
+    "region": "US",
+    "src": "Business of Apps 2025; Mapendo 2025"
+   },
+   {
+    "id": "cpi-western-europe",
+    "label_ru": "CPI в Западной Европе (UK, Германия)",
+    "label_en": "CPI, Western Europe (UK, DE)",
+    "low": 2,
+    "high": 5,
+    "default": 3.5,
+    "unit": "$",
+    "region": "EU",
+    "src": "SEM Nexus 2026; Business of Apps 2025"
+   },
+   {
+    "id": "cpi-ru-android",
+    "label_ru": "CPI в России, Android",
+    "label_en": "CPI, Russia Android",
+    "low": 20,
+    "high": 100,
+    "default": 86,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Kokoc 2026"
+   },
+   {
+    "id": "cpi-ru-ios",
+    "label_ru": "CPI в России, iOS",
+    "label_en": "CPI, Russia iOS",
+    "low": 100,
+    "high": 300,
+    "default": 140,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Kokoc 2026"
+   },
+   {
+    "id": "cpi-ru-games",
+    "label_ru": "CPI в России, игры",
+    "label_en": "CPI, Russia games",
+    "low": 231,
+    "high": 289,
+    "default": 260,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Kokoc 2026"
+   },
+   {
+    "id": "cpi-ru-ecommerce",
+    "label_ru": "CPI в России, e-commerce",
+    "label_en": "CPI, Russia e-commerce",
+    "low": 108,
+    "high": 172,
+    "default": 140,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Kokoc 2026"
+   },
+   {
+    "id": "cpi-ru-finance",
+    "label_ru": "CPI в России, финансы",
+    "label_en": "CPI, Russia finance",
+    "low": 129,
+    "high": 198,
+    "default": 160,
+    "unit": "₽",
+    "region": "RU",
+    "src": "Kokoc 2026"
+   },
+   {
+    "id": "cpi-latam",
+    "label_ru": "CPI в Латинской Америке",
+    "label_en": "CPI, Latin America",
+    "low": 0.5,
+    "high": 2,
+    "default": 1,
+    "unit": "$",
+    "region": "LATAM",
+    "src": "Business of Apps 2025; SEM Nexus 2026 (Бразилия $0.8-2)"
+   },
+   {
+    "id": "cpi-tier3",
+    "label_ru": "CPI в странах Tier 3 (Индия, Пакистан, Египет, Нигерия)",
+    "label_en": "CPI, Tier 3 (India, Pakistan, Egypt, Nigeria)",
+    "low": 0.1,
+    "high": 0.7,
+    "default": 0.3,
+    "unit": "$",
+    "region": "Tier3",
+    "src": "SEM Nexus 2026"
+   },
+   {
+    "id": "cpi-global-ios",
+    "label_ru": "CPI iOS в среднем по миру",
+    "label_en": "CPI, global iOS average",
+    "low": 1.5,
+    "high": 3.6,
+    "default": 3.6,
+    "unit": "$",
+    "region": "global",
+    "src": "Mapendo 2025; Business of Apps 2025"
+   },
+   {
+    "id": "cpi-global-android",
+    "label_ru": "CPI Android в среднем по миру",
+    "label_en": "CPI, global Android average",
+    "low": 1.2,
+    "high": 4,
+    "default": 1.2,
+    "unit": "$",
+    "region": "global",
+    "src": "Mapendo 2025; Business of Apps 2025"
+   }
+  ]
+ }
+}

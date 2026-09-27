@@ -15,6 +15,8 @@ export default [
       "eslint.config.js",
       "*.d.ts",
       "src/env.d.ts",
+      // Standalone apps carry their own tsconfig, tests and build (see apps/*/README.md).
+      "apps/**",
     ],
   },
   {

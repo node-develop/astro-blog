@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="artka.dev">
+  <rect width="32" height="32" fill="#C2F000"></rect>
+  <g fill="none" stroke="#0B0B0B" stroke-linejoin="miter" stroke-linecap="butt">
+    <path d="M7 26 L16 7 L25 26" stroke-width="5.2"></path>
+    <path d="M10.6 20.2 H21.4" stroke-width="4.6"></path>
+  </g>
+</svg>

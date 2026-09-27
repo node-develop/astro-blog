@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Калькулятор ширины аватара</title>
+    <meta
+      name="description"
+      content="Сколько людей в стране могут купить ваш продукт и какой рынок это дает. Калькулятор по уроку «Широта аватара»: 175 стран, данные Всемирного банка и Global Findex, библиотека ниш и экономика клиента."
+    />
+    <meta property="og:title" content="Калькулятор ширины аватара" />
+    <meta
+      property="og:description"
+      content="Аватары, умноженные на годовой чек, дают выручку. Посчитайте свой рынок по 175 странам."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f3f1ea" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      // No-flash theme: the same key the blog uses, then the system setting.
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem("artka-theme");
+        } catch (e) {}
+        if (t !== "dark" && t !== "light")
+          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Калькулятору нужен JavaScript.</noscript>
+    <script type="module" src="./src/main.tsx"></script>
+  </body>
+</html>

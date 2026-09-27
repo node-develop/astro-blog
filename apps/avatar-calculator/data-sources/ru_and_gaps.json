@@ -1,0 +1,484 @@
+{
+ "ru": {
+  "RU": {
+   "ru_pct": 97,
+   "native_pct": 85,
+   "note": "Near-universal fluency; native ~85% (2010/2021 census)",
+   "src": "Rosstat census 2010/2021",
+   "est": false
+  },
+  "BY": {
+   "ru_pct": 95,
+   "native_pct": 38,
+   "note": "Russian native ~38%, spoken at home ~71%; almost all fluent",
+   "src": "Belstat census 2019",
+   "est": false
+  },
+  "KZ": {
+   "ru_pct": 84,
+   "native_pct": 20,
+   "note": "83.7% speak Russian (2021 census); native incl. ethnic Russians ~20%",
+   "src": "stat.gov.kz census 2021",
+   "est": false
+  },
+  "UA": {
+   "ru_pct": 70,
+   "native_pct": 20,
+   "note": "Most adults fluent; at home: Russian only 11%, both 35% (Socis Dec 2025); willingness to use Russian products lower than fluency",
+   "src": "Socis 2025, KIIS",
+   "est": true
+  },
+  "LV": {
+   "ru_pct": 65,
+   "native_pct": 34,
+   "note": "Russian home language ~1/3; most older Latvians fluent",
+   "src": "CSB Latvia census 2021, est.",
+   "est": true
+  },
+  "AM": {
+   "ru_pct": 65,
+   "native_pct": 1,
+   "note": "Adults: 60% intermediate + 14% advanced (CB 2021); +~1% 2022 relocants",
+   "src": "CRRC Caucasus Barometer 2021",
+   "est": true
+  },
+  "MD": {
+   "ru_pct": 55,
+   "native_pct": 11.6,
+   "note": "Native 11.6%, usually spoken 15.9% (2024 census, excl. Transnistria); most adults 35+ fluent",
+   "src": "NBS Moldova census 2024",
+   "est": true
+  },
+  "EE": {
+   "ru_pct": 50,
+   "native_pct": 29,
+   "note": "Mother tongue 29% + 38% as foreign language (partly weak)",
+   "src": "Statistics Estonia census 2021",
+   "est": true
+  },
+  "KG": {
+   "ru_pct": 50,
+   "native_pct": 5,
+   "note": "Census 2009 ~48-53% speak Russian; ministry claims 80% (overstated)",
+   "src": "NSC census 2009, 24.kg",
+   "est": true
+  },
+  "GE": {
+   "ru_pct": 50,
+   "native_pct": 1.2,
+   "note": "Adults: 40% intermediate + 20% advanced (CB 2021); +~2-3% 2022 relocants",
+   "src": "CRRC CB 2021, Geostat 2014",
+   "est": true
+  },
+  "UZ": {
+   "ru_pct": 35,
+   "native_pct": 2,
+   "note": "Official claims ~50% 'speak'; confident use lower, urban-concentrated",
+   "src": "Rossotrudnichestvo 2023, est.",
+   "est": true
+  },
+  "LT": {
+   "ru_pct": 30,
+   "native_pct": 6.8,
+   "note": "Native 6.8%; ~60% report some knowledge, confident lower",
+   "src": "Statistics Lithuania census 2021",
+   "est": true
+  },
+  "AZ": {
+   "ru_pct": 25,
+   "native_pct": 0.8,
+   "note": "7% advanced + intermediate share; Baku much higher",
+   "src": "CRRC CB 2013, AzStat",
+   "est": true
+  },
+  "TJ": {
+   "ru_pct": 25,
+   "native_pct": 0.5,
+   "note": "Labour migration to Russia keeps working knowledge high among men",
+   "src": "Ethnologue, est.",
+   "est": true
+  },
+  "TM": {
+   "ru_pct": 15,
+   "native_pct": 1.9,
+   "note": "Native ~2%; Russian mostly among urban/older",
+   "src": "est.",
+   "est": true
+  },
+  "IL": {
+   "ru_pct": 13,
+   "native_pct": 11,
+   "note": "~1.2-1.3M Russian speakers incl. 2022+ aliyah",
+   "src": "Israel CBS 2011 (15%), est. update",
+   "est": true
+  },
+  "BG": {
+   "ru_pct": 12,
+   "native_pct": 0.3,
+   "note": "Eurobarometer 2012: 23% can converse in Russian; confident ~half",
+   "src": "Eurobarometer 386 (2012)",
+   "est": true
+  },
+  "CY": {
+   "ru_pct": 5,
+   "native_pct": 2.3,
+   "note": "Native 2.3% (2021 census) + Ukrainians, Pontic Greeks, 2022 relocants",
+   "src": "CYSTAT census 2021, est.",
+   "est": true
+  },
+  "PL": {
+   "ru_pct": 6,
+   "native_pct": 0.17,
+   "note": "~2M Ukrainians/Belarusians (mostly Russian-fluent) + older Poles",
+   "src": "GUS 2021, UNHCR, Eurobarometer 2012",
+   "est": true
+  },
+  "CZ": {
+   "ru_pct": 6,
+   "native_pct": 0.9,
+   "note": "Native 0.9% + ~580k Ukrainians, many bilingual",
+   "src": "CZSO census 2021, est.",
+   "est": true
+  },
+  "MN": {
+   "ru_pct": 5,
+   "native_pct": null,
+   "note": "Older educated generation studied Russian; youth low",
+   "src": "est.",
+   "est": true
+  },
+  "DE": {
+   "ru_pct": 4,
+   "native_pct": 2.3,
+   "note": "Russian at home 2.3% (Mikrozensus 2024); + Aussiedler/Ukrainian bilinguals",
+   "src": "Destatis Mikrozensus 2024",
+   "est": true
+  },
+  "ME": {
+   "ru_pct": 4,
+   "native_pct": null,
+   "note": "Russians + Ukrainians (~20-30k) plus Russian-owned tourism sector",
+   "src": "est., MONSTAT residence data",
+   "est": true
+  },
+  "SK": {
+   "ru_pct": 4,
+   "native_pct": 0.1,
+   "note": "Ukrainian refugees ~130k + older Slovaks (Eurobarometer 17%)",
+   "src": "ŠÚ SR census 2021, est.",
+   "est": true
+  },
+  "AE": {
+   "ru_pct": 3,
+   "native_pct": null,
+   "note": "Russian, Ukrainian, Central Asian expats ~300k of ~10.5M",
+   "src": "est. (expat estimates 2023-2025)",
+   "est": true
+  },
+  "RS": {
+   "ru_pct": 2.5,
+   "native_pct": 0.04,
+   "note": "2022+ relocants (~100k+) + Serbians with some Russian",
+   "src": "RZS 2022, est.",
+   "est": true
+  },
+  "IE": {
+   "ru_pct": 2,
+   "native_pct": null,
+   "note": "Ukrainians ~110k + Latvian/Lithuanian Russian-speakers",
+   "src": "CSO 2022, est.",
+   "est": true
+  },
+  "GR": {
+   "ru_pct": 2,
+   "native_pct": null,
+   "note": "Pontic Greeks from ex-USSR + Russians/Ukrainians/Georgians",
+   "src": "est.",
+   "est": true
+  },
+  "FI": {
+   "ru_pct": 2,
+   "native_pct": 1.6,
+   "note": "Native Russian 1.6% (2021) + Ukrainians",
+   "src": "Statistics Finland 2021",
+   "est": true
+  },
+  "AT": {
+   "ru_pct": 1.2,
+   "native_pct": null,
+   "note": "Russians, Chechens, Ukrainians",
+   "src": "Statistik Austria, est.",
+   "est": true
+  },
+  "RO": {
+   "ru_pct": 0.8,
+   "native_pct": 0.1,
+   "note": "Lipovans, Ukrainian refugees, Moldovans",
+   "src": "INS 2021, est.",
+   "est": true
+  },
+  "IT": {
+   "ru_pct": 0.7,
+   "native_pct": null,
+   "note": "Ukrainians ~250k, Moldovans, Russians",
+   "src": "ISTAT, est.",
+   "est": true
+  },
+  "PT": {
+   "ru_pct": 0.8,
+   "native_pct": null,
+   "note": "Ukrainians, Moldovans, Russians",
+   "src": "SEF/AIMA, est.",
+   "est": true
+  },
+  "ES": {
+   "ru_pct": 0.7,
+   "native_pct": 0.3,
+   "note": "Russian native 0.3% + Ukrainians",
+   "src": "INE 2021, est.",
+   "est": true
+  },
+  "LU": {
+   "ru_pct": 0.8,
+   "native_pct": 0.6,
+   "note": "Russian speakers 0.6% (2021 census)",
+   "src": "STATEC 2021",
+   "est": true
+  },
+  "CA": {
+   "ru_pct": 0.7,
+   "native_pct": 0.6,
+   "note": "Knowledge of Russian ~0.6% (2021 census)",
+   "src": "StatCan census 2021",
+   "est": false
+  },
+  "HU": {
+   "ru_pct": 0.8,
+   "native_pct": null,
+   "note": "Ukrainian refugees + older generation",
+   "src": "est.",
+   "est": true
+  },
+  "TR": {
+   "ru_pct": 0.6,
+   "native_pct": null,
+   "note": "Russian/Ukrainian residents (~150k) + Central Asian migrants; tourist-season higher",
+   "src": "est. (Göç İdaresi residence permits)",
+   "est": true
+  },
+  "BE": {
+   "ru_pct": 0.4,
+   "native_pct": null,
+   "note": "Russian/Ukrainian communities",
+   "src": "est.",
+   "est": true
+  },
+  "NL": {
+   "ru_pct": 0.3,
+   "native_pct": null,
+   "note": "Russian/Ukrainian communities",
+   "src": "est.",
+   "est": true
+  },
+  "SE": {
+   "ru_pct": 0.4,
+   "native_pct": 0.3,
+   "note": "Russian ~0.3% native (2012) + Ukrainians",
+   "src": "est.",
+   "est": true
+  },
+  "NO": {
+   "ru_pct": 0.4,
+   "native_pct": 0.3,
+   "note": "Russian ~0.3% (2012) + Ukrainians",
+   "src": "est.",
+   "est": true
+  },
+  "DK": {
+   "ru_pct": 0.3,
+   "native_pct": null,
+   "note": "Ukrainians + Russians",
+   "src": "est.",
+   "est": true
+  },
+  "CH": {
+   "ru_pct": 0.4,
+   "native_pct": null,
+   "note": "Russian community",
+   "src": "BFS, est.",
+   "est": true
+  },
+  "GB": {
+   "ru_pct": 0.4,
+   "native_pct": null,
+   "note": "Russian main language ~67k (2021) + Ukrainians, Baltic migrants",
+   "src": "ONS census 2021, est.",
+   "est": true
+  },
+  "FR": {
+   "ru_pct": 0.3,
+   "native_pct": null,
+   "note": "Russian/Ukrainian communities",
+   "src": "est.",
+   "est": true
+  },
+  "US": {
+   "ru_pct": 0.35,
+   "native_pct": 0.3,
+   "note": "~1.0M speak Russian at home (ACS 2023)",
+   "src": "US Census ACS 2023",
+   "est": false
+  },
+  "AU": {
+   "ru_pct": 0.3,
+   "native_pct": 0.2,
+   "note": "Russian at home 0.2% (2021 census) + others",
+   "src": "ABS census 2021",
+   "est": true
+  },
+  "TH": {
+   "ru_pct": 0.15,
+   "native_pct": null,
+   "note": "Long-stay Russians in Phuket/Pattaya; below 0.3% threshold, above default",
+   "src": "est.",
+   "est": true
+  }
+ },
+ "ecom_gaps": {
+  "BY": {
+   "ecom_pct": 60,
+   "src": "Analogy to Russia (71%, VTsIOM 2024); internet ~90%, Wildberries/Ozon active",
+   "est": true
+  },
+  "QA": {
+   "ecom_pct": 65,
+   "src": "Analogy to UAE/Saudi Findex, internet ~99% (DataReportal 2025)",
+   "est": true
+  },
+  "KW": {
+   "ecom_pct": 65,
+   "src": "Analogy to UAE/Saudi Findex, internet ~99% (DataReportal 2025)",
+   "est": true
+  },
+  "BH": {
+   "ecom_pct": 60,
+   "src": "Analogy to GCC peers, internet ~99% (DataReportal 2025)",
+   "est": true
+  },
+  "OM": {
+   "ecom_pct": 50,
+   "src": "Analogy to Saudi Findex, internet ~95% (DataReportal 2025)",
+   "est": true
+  },
+  "TM": {
+   "ecom_pct": 5,
+   "src": "Internet ~40% and heavily restricted; minimal e-commerce",
+   "est": true
+  },
+  "XK": {
+   "ecom_pct": 35,
+   "src": "Analogy to North Macedonia/Serbia Findex; internet ~95%",
+   "est": true
+  },
+  "PR": {
+   "ecom_pct": 60,
+   "src": "Below US level (~80%); internet ~80%",
+   "est": true
+  },
+  "TT": {
+   "ecom_pct": 35,
+   "src": "Analogy to Caribbean/LatAm upper-middle; internet ~80%",
+   "est": true
+  },
+  "AO": {
+   "ecom_pct": 8,
+   "src": "Analogy to SSA lower-middle; internet ~45% (DataReportal 2025)",
+   "est": true
+  },
+  "MZ": {
+   "ecom_pct": 4,
+   "src": "Analogy to SSA low income; internet ~20%",
+   "est": true
+  },
+  "RW": {
+   "ecom_pct": 6,
+   "src": "Analogy to Uganda/Tanzania Findex; internet ~35%",
+   "est": true
+  },
+  "SD": {
+   "ecom_pct": 3,
+   "src": "Conflict, internet ~30%",
+   "est": true
+  },
+  "SY": {
+   "ecom_pct": 2,
+   "src": "Conflict, sanctions, no card payments",
+   "est": true
+  },
+  "CU": {
+   "ecom_pct": 3,
+   "src": "Very limited e-commerce, sanctions",
+   "est": true
+  },
+  "HT": {
+   "ecom_pct": 3,
+   "src": "Internet ~40%, crisis",
+   "est": true
+  },
+  "PG": {
+   "ecom_pct": 3,
+   "src": "Internet ~30%",
+   "est": true
+  },
+  "TL": {
+   "ecom_pct": 3,
+   "src": "Internet ~40%, small market",
+   "est": true
+  },
+  "BI": {
+   "ecom_pct": 1,
+   "src": "Internet ~11%",
+   "est": true
+  },
+  "ER": {
+   "ecom_pct": 0.5,
+   "src": "Internet <10%, closed economy",
+   "est": true
+  },
+  "SO": {
+   "ecom_pct": 3,
+   "src": "Mobile money widespread but little online buying",
+   "est": true
+  },
+  "DJ": {
+   "ecom_pct": 5,
+   "src": "Internet ~65%, small market",
+   "est": true
+  },
+  "GQ": {
+   "ecom_pct": 4,
+   "src": "Internet ~55%, low financial inclusion",
+   "est": true
+  },
+  "CF": {
+   "ecom_pct": 1,
+   "src": "Internet ~10%",
+   "est": true
+  },
+  "GW": {
+   "ecom_pct": 2,
+   "src": "Internet ~30%",
+   "est": true
+  },
+  "KP": {
+   "ecom_pct": 0,
+   "src": "No open internet",
+   "est": true
+  }
+ },
+ "russia_ecom_check": {
+  "value": 71,
+  "src": "VTsIOM, Sept 2024 telephone survey, 18+, n=1600 (wciom.ru 'По маркетплейсам! Тренды онлайн-потребления 2024')",
+  "note": "71% of adults bought online in last 12 months; Findex 2021 = 46% (15+, stricter wording). DataReportal/Data Insight point the same way; use ~65-71 for 15+."
+ }
+}

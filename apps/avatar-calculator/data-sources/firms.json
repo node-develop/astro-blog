@@ -1,0 +1,594 @@
+{
+ "RU": {
+  "firms_total": 6760000,
+  "firms_employer": 2500000,
+  "year": 2025,
+  "est": false,
+  "src": "ФНС Единый реестр МСП (10.12.2025)",
+  "note": "МСП: ИП и юрлица; работодатели оценка; без 13+ млн самозанятых НПД"
+ },
+ "KZ": {
+  "firms_total": 2259549,
+  "firms_employer": 500000,
+  "year": 2025,
+  "est": false,
+  "src": "stat.gov.kz, на 01.12.2025",
+  "note": "действующие юрлица 438,6 тыс. + действующие ИП 1,82 млн; работодатели оценка"
+ },
+ "BY": {
+  "firms_total": 360000,
+  "firms_employer": 140000,
+  "year": 2025,
+  "est": true,
+  "src": "Белстат, МСП (оценка)",
+  "note": "ИП ~245 тыс. + организации ~115 тыс.; оценка"
+ },
+ "UZ": {
+  "firms_total": 780000,
+  "firms_employer": 450000,
+  "year": 2025,
+  "est": true,
+  "src": "stat.uz (493 тыс. действующих предприятий) + оценка ИП",
+  "note": "предприятия без дехканских хозяйств + ИП (оценка)"
+ },
+ "KG": {
+  "firms_total": 250000,
+  "firms_employer": 50000,
+  "year": 2024,
+  "est": true,
+  "src": "оценка по Нацстаткому КР",
+  "note": "юрлица + ИП (патентщики), оценка"
+ },
+ "TJ": {
+  "firms_total": 250000,
+  "firms_employer": 30000,
+  "year": 2024,
+  "est": true,
+  "src": "оценка",
+  "note": "юрлица + ИП, оценка"
+ },
+ "AM": {
+  "firms_total": 120000,
+  "firms_employer": 45000,
+  "year": 2024,
+  "est": true,
+  "src": "оценка по данным КГД/Armstat",
+  "note": "юрлица + ИП, оценка"
+ },
+ "GE": {
+  "firms_total": 220000,
+  "firms_employer": 70000,
+  "year": 2024,
+  "est": true,
+  "src": "Geostat (оценка)",
+  "note": "активные экономические субъекты вкл. ИП, оценка"
+ },
+ "AZ": {
+  "firms_total": 600000,
+  "firms_employer": 80000,
+  "year": 2024,
+  "est": true,
+  "src": "оценка по Госкомстату АР",
+  "note": "юрлица + индивидуальные предприниматели, низкая точность"
+ },
+ "UA": {
+  "firms_total": 2650000,
+  "firms_employer": 600000,
+  "year": 2025,
+  "est": true,
+  "src": "Опендатабот / ДПС (2,2 млн активных ФОП) + оценка юрлиц",
+  "note": "активные ФОП + юрлица; работодатели: 302 тыс. ФОП + юрлица (оценка)"
+ },
+ "MD": {
+  "firms_total": 90000,
+  "firms_employer": 55000,
+  "year": 2023,
+  "est": true,
+  "src": "NBS Moldova (оценка)",
+  "note": "предприятия + индивидуальные предприниматели, оценка"
+ },
+ "TM": {
+  "firms_total": 40000,
+  "firms_employer": 15000,
+  "year": 2023,
+  "est": true,
+  "src": "оценка",
+  "note": "частный сектор мал, данных почти нет"
+ },
+ "EE": {
+  "firms_total": 168518,
+  "firms_employer": 90440,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "LV": {
+  "firms_total": 152706,
+  "firms_employer": 80236,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "LT": {
+  "firms_total": 371281,
+  "firms_employer": 89570,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "TR": {
+  "firms_total": 3966943,
+  "firms_employer": 2078471,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "RS": {
+  "firms_total": 214350,
+  "firms_employer": 159043,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "IL": {
+  "firms_total": 600000,
+  "firms_employer": 250000,
+  "year": 2023,
+  "est": true,
+  "src": "CBS Israel business demography (оценка)",
+  "note": "активные бизнесы вкл. osek patur/murshe"
+ },
+ "PL": {
+  "firms_total": 2821170,
+  "firms_employer": 830087,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "DE": {
+  "firms_total": 3240939,
+  "firms_employer": 2117805,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "GB": {
+  "firms_total": 5700000,
+  "firms_employer": 1400000,
+  "year": 2025,
+  "est": false,
+  "src": "DBT Business Population Estimates 2025",
+  "note": "частные бизнесы вкл. без сотрудников; работодатели ~1,4 млн"
+ },
+ "FR": {
+  "firms_total": 5615765,
+  "firms_employer": 1453935,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "ES": {
+  "firms_total": 3552872,
+  "firms_employer": 1602185,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "IT": {
+  "firms_total": 4639890,
+  "firms_employer": 1554936,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "NL": {
+  "firms_total": 2424297,
+  "firms_employer": 320342,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "BE": {
+  "firms_total": 931405,
+  "firms_employer": 201480,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "AT": {
+  "firms_total": 628058,
+  "firms_employer": 246040,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "CH": {
+  "firms_total": 630000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "BFS STATENT (оценка)",
+  "note": "рыночные предприятия (Eurostat даёт только ~180 тыс., неполный охват)"
+ },
+ "SE": {
+  "firms_total": 873878,
+  "firms_employer": 350835,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "NO": {
+  "firms_total": 476080,
+  "firms_employer": 146316,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "DK": {
+  "firms_total": 379306,
+  "firms_employer": 138996,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "FI": {
+  "firms_total": 478708,
+  "firms_employer": 123340,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "IE": {
+  "firms_total": 410205,
+  "firms_employer": 228841,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "PT": {
+  "firms_total": 1470937,
+  "firms_employer": 419741,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "CZ": {
+  "firms_total": 1366927,
+  "firms_employer": 243453,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "SK": {
+  "firms_total": 682029,
+  "firms_employer": 141326,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "HU": {
+  "firms_total": 905324,
+  "firms_employer": 288351,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "RO": {
+  "firms_total": 1030603,
+  "firms_employer": 550909,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "BG": {
+  "firms_total": 415087,
+  "firms_employer": 189338,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "GR": {
+  "firms_total": 964851,
+  "firms_employer": 366144,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "HR": {
+  "firms_total": 252125,
+  "firms_employer": 157255,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "SI": {
+  "firms_total": 208069,
+  "firms_employer": 76834,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "CY": {
+  "firms_total": 94381,
+  "firms_employer": 62862,
+  "year": 2024,
+  "est": false,
+  "src": "Eurostat bd_size (business demography)",
+  "note": "активные предприятия бизнес-сектора (промышленность, стройка, рыночные услуги, без с/х и госсектора), включая самозанятых без сотрудников"
+ },
+ "US": {
+  "firms_total": 36200000,
+  "firms_employer": 6400000,
+  "year": 2022,
+  "est": false,
+  "src": "SBA Advocacy 2025 / Census SUSB + Nonemployer Statistics",
+  "note": "работодатели (SUSB) + ~30 млн nonemployer"
+ },
+ "CA": {
+  "firms_total": 3200000,
+  "firms_employer": 1220000,
+  "year": 2023,
+  "est": true,
+  "src": "StatCan Canadian Business Counts / ISED KSBS",
+  "note": "работодатели 1,22 млн (дек. 2023) + без сотрудников (оценка)"
+ },
+ "MX": {
+  "firms_total": 5500000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "INEGI Censos Económicos / EDN (оценка)",
+  "note": "экономические единицы (установления), оценка"
+ },
+ "BR": {
+  "firms_total": 24200000,
+  "firms_employer": 4000000,
+  "year": 2025,
+  "est": false,
+  "src": "Mapa de Empresas 2025 (gov.br)",
+  "note": "активные CNPJ вкл. ~15 млн MEI; работодатели оценка"
+ },
+ "AR": {
+  "firms_total": 2000000,
+  "firms_employer": 500000,
+  "year": 2024,
+  "est": true,
+  "src": "SIPA (работодатели) + монотрибутисты (оценка)",
+  "note": "работодатели ~500 тыс.; всего вкл. monotributistas (оценка)"
+ },
+ "CL": {
+  "firms_total": 1300000,
+  "firms_employer": 400000,
+  "year": 2023,
+  "est": true,
+  "src": "SII (оценка)",
+  "note": "компании и ИП с продажами, оценка"
+ },
+ "CO": {
+  "firms_total": 1700000,
+  "firms_employer": 600000,
+  "year": 2024,
+  "est": true,
+  "src": "RUES / Confecámaras (оценка)",
+  "note": "активные зарегистрированные бизнесы вкл. personas naturales"
+ },
+ "PE": {
+  "firms_total": 3400000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "INEI Demografía Empresarial (оценка)",
+  "note": "активные предприятия вкл. personas naturales"
+ },
+ "IN": {
+  "firms_total": 75000000,
+  "firms_employer": 12000000,
+  "year": 2024,
+  "est": true,
+  "src": "NSO ASUSE 2023-24 + MCA (оценка)",
+  "note": "неинкорпорированные несельхоз. заведения + компании; работодатели оценка"
+ },
+ "ID": {
+  "firms_total": 64200000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "KemenKopUKM (оценка)",
+  "note": "UMKM вкл. микро/неформальные"
+ },
+ "VN": {
+  "firms_total": 6000000,
+  "firms_employer": 940000,
+  "year": 2024,
+  "est": true,
+  "src": "GSO Vietnam (оценка)",
+  "note": "~0,94 млн предприятий + ~5 млн household businesses"
+ },
+ "TH": {
+  "firms_total": 3240000,
+  "firms_employer": 900000,
+  "year": 2023,
+  "est": true,
+  "src": "OSMEP (оценка)",
+  "note": "MSME вкл. ИП; работодатели ~ юрлица (оценка)"
+ },
+ "PH": {
+  "firms_total": 1110000,
+  "firms_employer": null,
+  "year": 2022,
+  "est": false,
+  "src": "DTI / PSA",
+  "note": "бизнес-предприятия (установления)"
+ },
+ "MY": {
+  "firms_total": 1106000,
+  "firms_employer": null,
+  "year": 2022,
+  "est": false,
+  "src": "DOSM MSME (Economic Census 2023)",
+  "note": "MSME + крупные"
+ },
+ "SG": {
+  "firms_total": 320000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "SingStat (оценка)",
+  "note": "предприятия, оценка"
+ },
+ "JP": {
+  "firms_total": 3680000,
+  "firms_employer": null,
+  "year": 2021,
+  "est": false,
+  "src": "Economic Census 2021 (企業等)",
+  "note": "предприятия вкл. индивидуальных предпринимателей"
+ },
+ "KR": {
+  "firms_total": 8500000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": false,
+  "src": "MSS / Statistics Korea",
+  "note": "МСП (8,5 млн) вкл. без сотрудников"
+ },
+ "CN": {
+  "firms_total": 185000000,
+  "firms_employer": 33000000,
+  "year": 2024,
+  "est": true,
+  "src": "SAMR (зарег. рыночные субъекты) / экономическая перепись 2023",
+  "note": "всего вкл. ~125 млн 个体工商户 (зарегистрированные, не все активны); работодатели ~ юрлица-предприятия"
+ },
+ "AU": {
+  "firms_total": 2660000,
+  "firms_employer": 1100000,
+  "year": 2024,
+  "est": true,
+  "src": "ABS Counts of Australian Businesses (июнь 2024)",
+  "note": "действующие бизнесы; работодатели ~1,1 млн (оценка)"
+ },
+ "NZ": {
+  "firms_total": 620000,
+  "firms_employer": 190000,
+  "year": 2024,
+  "est": true,
+  "src": "Stats NZ Business Demography (оценка)",
+  "note": "предприятия вкл. без сотрудников"
+ },
+ "AE": {
+  "firms_total": 1100000,
+  "firms_employer": 800000,
+  "year": 2024,
+  "est": true,
+  "src": "Минэкономики ОАЭ (оценка)",
+  "note": "лицензированные компании вкл. фризоны"
+ },
+ "SA": {
+  "firms_total": 1600000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "Monsha'at SME Monitor (оценка)",
+  "note": "МСП по коммерческим регистрациям"
+ },
+ "QA": {
+  "firms_total": 90000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "оценка",
+  "note": "коммерческие регистрации, оценка"
+ },
+ "KW": {
+  "firms_total": 60000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "оценка",
+  "note": "оценка"
+ },
+ "EG": {
+  "firms_total": 4000000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "CAPMAS Economic Census 2017/18 + рост (оценка)",
+  "note": "заведения вкл. микро"
+ },
+ "MA": {
+  "firms_total": 1000000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "HCP / OMPIC (оценка)",
+  "note": "предприятия вкл. auto-entrepreneurs, оценка"
+ },
+ "NG": {
+  "firms_total": 39600000,
+  "firms_employer": null,
+  "year": 2021,
+  "est": true,
+  "src": "SMEDAN/NBS MSME Survey 2021",
+  "note": "MSME в основном нано/микро, неформальные"
+ },
+ "KE": {
+  "firms_total": 7400000,
+  "firms_employer": null,
+  "year": 2021,
+  "est": true,
+  "src": "KNBS MSME Survey 2016 (оценка)",
+  "note": "MSME вкл. нелицензированные (1,56 млн лицензированы)"
+ },
+ "ZA": {
+  "firms_total": 2600000,
+  "firms_employer": 700000,
+  "year": 2023,
+  "est": true,
+  "src": "SEDA SMME Quarterly (оценка)",
+  "note": "SMME вкл. неформальные; формальные ~0,8 млн"
+ },
+ "PK": {
+  "firms_total": 5200000,
+  "firms_employer": null,
+  "year": 2023,
+  "est": true,
+  "src": "SMEDA (оценка)",
+  "note": "МСП, оценка"
+ },
+ "BD": {
+  "firms_total": 11800000,
+  "firms_employer": null,
+  "year": 2024,
+  "est": true,
+  "src": "BBS Economic Census 2024 (оценка)",
+  "note": "экономические заведения вкл. микро"
+ }
+}
