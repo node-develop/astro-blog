@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
-import { VERDICT_ORDER, shownLevel, verdictOf, type Result } from "../lib/calc";
-import { compact, currencySymbol, fromDisplay, money, toDisplay, whole } from "../lib/format";
+import { VERDICT_ORDER, priceAnchors, shownLevel, verdictOf, type Result } from "../lib/calc";
+import {
+  compact,
+  currencySymbol,
+  fromDisplay,
+  money,
+  pctText,
+  toDisplay,
+  whole,
+} from "../lib/format";
 import { levelText, t, verdictText } from "../lib/i18n";
-import type { CalcState, Currency, Lang } from "../lib/types";
+import type { CalcState, Country, Currency, Lang } from "../lib/types";
 import { InfoTip, NumberField, Segmented, StatusChip, type Tone } from "./ui";
 import { cx } from "../lib/cx";
 
@@ -21,6 +29,7 @@ export const ResultSlab = ({
   state,
   update,
   result,
+  countries,
   context,
   rateDate,
   onSave,
@@ -32,6 +41,7 @@ export const ResultSlab = ({
   readonly state: CalcState;
   readonly update: Update;
   readonly result: Result;
+  readonly countries: readonly Country[];
   readonly context: string;
   readonly rateDate: string | null;
   readonly onSave: () => void;
@@ -46,6 +56,9 @@ export const ResultSlab = ({
   const cur = state.currency;
   const m = (usd: number) => money(usd, cur, state.rates, lang);
   const lvlName = levelText(lang, shownLevel(state)).name.toLocaleLowerCase(lang);
+  const anchors = priceAnchors(countries, state);
+  const hasAnchors =
+    anchors.incomePct != null || anchors.mobUsd != null || anchors.affordPct != null;
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -193,6 +206,37 @@ export const ResultSlab = ({
           </dd>
         </div>
       </dl>
+      {state.mode === "b2c" && hasAnchors && state.price > 0 && (
+        <div className="anchors">
+          <p className="label">{t(lang, "anchor.title")}</p>
+          <ul>
+            {anchors.incomePct != null && (
+              <li>
+                {t(lang, "anchor.income", { v: pctText(anchors.incomePct, lang) })}
+                {anchors.cons && <span className="note"> {t(lang, "anchor.cons")}</span>}
+              </li>
+            )}
+            {anchors.affordPct != null && (
+              <li>
+                {t(lang, "anchor.afford", {
+                  v: pctText(anchors.affordPct, lang),
+                  b: pctText(state.afford.budget, lang),
+                })}
+                {anchors.affordN < anchors.n && (
+                  <span className="note">
+                    {" "}
+                    {t(lang, "anchor.partial", { a: anchors.affordN, b: anchors.n })}
+                  </span>
+                )}
+              </li>
+            )}
+            {anchors.mobUsd != null && (
+              <li>{t(lang, "anchor.mobile", { v: m(anchors.mobUsd) })}</li>
+            )}
+          </ul>
+          <p className="note">{t(lang, "anchor.src")}</p>
+        </div>
+      )}
 
       <div className="result__rev">
         <p className="label">{t(lang, "result.revenue")}</p>

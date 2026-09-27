@@ -1,8 +1,18 @@
-import { AI_MEDIAN, aiShareOf, breadthPct, buyRate, inetRate, langRate, shownLevel } from "../lib/calc";
+import {
+  AI_MEDIAN,
+  affordLine,
+  affordShareOf,
+  aiShareOf,
+  breadthPct,
+  buyRate,
+  inetRate,
+  langRate,
+  shownLevel,
+} from "../lib/calc";
 import { compact, pctText } from "../lib/format";
 import { levelText, t, type StringKey } from "../lib/i18n";
 import type { AiLevel, CalcState, Country, FunnelStep, Lang } from "../lib/types";
-import { GALLUP, MS_AI, NICHES } from "../lib/state";
+import { AFFORD_SOURCES, GALLUP, MS_AI, NICHES } from "../lib/state";
 import { track } from "../lib/analytics";
 import { Chip, InfoTip, NumberField, Segmented, StatusChip } from "./ui";
 import { cx } from "../lib/cx";
@@ -31,6 +41,7 @@ const LABEL: Readonly<Record<FunnelStep["key"], StringKey>> = {
   online: "funnel.online",
   age: "funnel.age",
   ai: "funnel.ai",
+  afford: "funnel.afford",
   buy: "funnel.buy",
   soft: "funnel.soft",
   lang: "funnel.lang",
@@ -43,6 +54,7 @@ const TIP: Partial<Record<FunnelStep["key"], StringKey>> = {
   online: "tip.online",
   age: "tip.age",
   ai: "tip.ai",
+  afford: "tip.afford",
   buy: "tip.buy",
   soft: "tip.soft",
   lang: "tip.lang",
@@ -224,6 +236,53 @@ export const Funnel = ({
           ),
         };
       }
+      case "afford": {
+        const known = countries.filter((c) => affordShareOf(c, state) != null);
+        const plEst = known.some((c) => c.plE);
+        const gaps = countries.length - known.length;
+        const byConsumption = known.some((c) => c.inc?.wt === "c");
+        const one = single ? countries[0] : undefined;
+        return {
+          ctrl: (
+            <div className="ctrl-row">
+              <NumberField
+                label={t(lang, "funnel.afford.budget")}
+                compact
+                value={state.afford.budget}
+                min={0.1}
+                max={50}
+                step={0.5}
+                suffix="%"
+                error={t(lang, "err.pct")}
+                onChange={(v) => update((s) => ({ ...s, afford: { ...s.afford, budget: v } }))}
+              />
+            </div>
+          ),
+          meta: (
+            <>
+              <a href={AFFORD_SOURCES.pip.url} target="_blank" rel="noopener noreferrer">
+                {t(lang, "funnel.afford.src")}
+              </a>
+              {one && affordLine(one, state) != null && (
+                <span>
+                  {t(lang, "funnel.afford.line", {
+                    v: `$${Math.round((affordLine(one, state) ?? 0) * 10) / 10}`,
+                  })}
+                </span>
+              )}
+              {plEst && (
+                <StatusChip tone="warning">{t(lang, "funnel.afford.plEst")}</StatusChip>
+              )}
+              {byConsumption && (
+                <StatusChip tone="warning">{t(lang, "funnel.afford.cons")}</StatusChip>
+              )}
+              {gaps > 0 && (
+                <StatusChip tone="warning">{t(lang, "funnel.afford.gap", { n: gaps })}</StatusChip>
+              )}
+            </>
+          ),
+        };
+      }
       case "buy":
         return {
           ctrl: (
@@ -378,6 +437,21 @@ export const Funnel = ({
 
   return (
     <div className="funnel">
+      {state.mode === "b2c" && countries.some((c) => c.inc != null && c.pl != null) && (
+        <div className="funnel__opt">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={state.afford.enabled}
+              onChange={(e) => {
+                track("toggle_afford", { on: e.target.checked });
+                update((s) => ({ ...s, afford: { ...s.afford, enabled: e.target.checked } }));
+              }}
+            />
+            <span>{t(lang, "funnel.afford.toggle")}</span>
+          </label>
+        </div>
+      )}
       {state.mode === "b2c" && countries.some((c) => c.ai != null || c.aiMs != null) && (
         <div className="funnel__ai">
           <label className="check">

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { aiShareOf, computeResult, marketPpp } from "../lib/calc";
+import { aiShareOf, computeResult, marketPriceLevel } from "../lib/calc";
 import { compact, money, pctText } from "../lib/format";
 import { regionName, t, type StringKey } from "../lib/i18n";
 import { COUNTRIES, countryName } from "../lib/state";
@@ -35,12 +35,12 @@ export const CountryTable = ({
   const [limit, setLimit] = useState(20);
   const [ppp, setPpp] = useState(true);
 
-  const basePpp = marketPpp(selected);
+  const basePl = marketPriceLevel(selected);
   const rows = useMemo(
     () =>
       COUNTRIES.map((c) => {
         const factor =
-          ppp && basePpp > 0 && c.ppp ? Math.min(3, Math.max(0.2, c.ppp / basePpp)) : 1;
+          ppp && basePl > 0 && c.pl ? Math.min(3, Math.max(0.2, c.pl / basePl)) : 1;
         // Overrides typed for the selected market must not leak into other countries.
         const r = computeResult([c], {
           ...state,
@@ -49,7 +49,7 @@ export const CountryTable = ({
         });
         return { c, avatars: r.avatars, tam: r.tam };
       }),
-    [state, ppp, basePpp],
+    [state, ppp, basePl],
   );
   const filtered = rows
     .filter(({ c }) => !reg || c.reg === reg)

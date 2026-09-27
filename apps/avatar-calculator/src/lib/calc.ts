@@ -1,5 +1,6 @@
 import gallup from "../data/gallup.json";
 import msAi from "../data/ms_ai.json";
+import affordJson from "../data/afford.json";
 import type {
   AiLevel,
   CalcState,
@@ -112,6 +113,116 @@ export const aiRate = (c: Country, s: Pick<CalcState, "ai" | "overrides">): numb
 export const aiActive = (countries: readonly Country[], s: CalcState): boolean =>
   s.mode === "b2c" && s.ai.enabled && countries.some((c) => c.ai != null || c.aiMs != null);
 
+/* ── Affordability (World Bank PIP + WDI price level) ────────────────── */
+
+/** Daily income lines of the PIP distribution, 2021 PPP $ per person. */
+export const INCOME_LINES: readonly number[] = affordJson.lines;
+/** US CPI now vs 2021: PIP lines are in 2021 PPP dollars, prices in today's. */
+export const US_DEFLATOR: number = affordJson.usDeflator;
+const DAYS_PER_MONTH = 365.25 / 12;
+
+/** Price per month in USD; a one-off purchase is spread over a year. */
+export const monthlyUsd = (s: Pick<CalcState, "price" | "pricing">): number =>
+  s.pricing === "subscription" ? s.price : s.price / 12;
+
+/** % of people with daily income below `line`, log-linear between the PIP points. */
+export const shareBelow = (cdf: readonly number[], line: number): number => {
+  const first = INCOME_LINES[0] ?? 1;
+  if (line <= first) return ((cdf[0] ?? 0) * Math.max(line, 0)) / first;
+  for (let i = 1; i < INCOME_LINES.length; i++) {
+    const hi = INCOME_LINES[i] ?? 0;
+    if (line <= hi) {
+      const lo = INCOME_LINES[i - 1] ?? 0;
+      const t = (Math.log(line) - Math.log(lo)) / (Math.log(hi) - Math.log(lo));
+      const a = cdf[i - 1] ?? 0;
+      return a + t * ((cdf[i] ?? a) - a);
+    }
+  }
+  return cdf[cdf.length - 1] ?? 100;
+};
+
+/**
+ * The monthly price in 2021 PPP dollars: USD to local money and on to PPP
+ * through the consumer price level, then back to 2021 dollars. Null without a price level.
+ */
+export const monthlyPpp2021 = (
+  c: Country,
+  s: Pick<CalcState, "price" | "pricing">,
+): number | null => (c.pl ? monthlyUsd(s) / c.pl / US_DEFLATOR : null);
+
+/** The daily income (2021 PPP $) at which the price takes `budget` % of it. */
+export const affordLine = (
+  c: Country,
+  s: Pick<CalcState, "price" | "pricing" | "afford">,
+): number | null => {
+  const p = monthlyPpp2021(c, s);
+  return p == null ? null : p / (Math.max(s.afford.budget, 0.01) / 100) / DAYS_PER_MONTH;
+};
+
+/** % of people who can afford the price within the budget share, or null without data. */
+export const affordShareOf = (
+  c: Country,
+  s: Pick<CalcState, "price" | "pricing" | "afford">,
+): number | null => {
+  const line = affordLine(c, s);
+  return c.inc && line != null ? clamp(100 - shareBelow(c.inc.cdf, line), 0, 100) : null;
+};
+
+/** The price as % of the median monthly income, both in 2021 PPP dollars. */
+export const priceToMedianPct = (
+  c: Country,
+  s: Pick<CalcState, "price" | "pricing">,
+): number | null => {
+  const p = monthlyPpp2021(c, s);
+  return p != null && c.inc?.med ? (p / (c.inc.med * DAYS_PER_MONTH)) * 100 : null;
+};
+
+export interface PriceAnchors {
+  /** Price as % of the median monthly income. */
+  readonly incomePct: number | null;
+  /** A mobile plan with calls and 5 GB, USD per month. */
+  readonly mobUsd: number | null;
+  /** % of people who can afford the price at the chosen budget share. */
+  readonly affordPct: number | null;
+  /** Market countries with affordability data, and all of them. */
+  readonly affordN: number;
+  readonly n: number;
+  /** Some countries measure consumption, not income. */
+  readonly cons: boolean;
+}
+
+/** Population-weighted price anchors over the market countries that have the data. */
+export const priceAnchors = (countries: readonly Country[], s: CalcState): PriceAnchors => {
+  const avg = (f: (c: Country) => number | null | undefined): number | null => {
+    const xs = countries.flatMap((c) => {
+      const v = f(c);
+      return v == null ? [] : [{ v, w: c.pop }];
+    });
+    const pop = xs.reduce((a, x) => a + x.w, 0);
+    return pop > 0 ? xs.reduce((a, x) => a + x.v * x.w, 0) / pop : null;
+  };
+  return {
+    incomePct: avg((c) => priceToMedianPct(c, s)),
+    mobUsd: avg((c) => c.mob),
+    affordPct: avg((c) => affordShareOf(c, s)),
+    affordN: countries.filter((c) => affordShareOf(c, s) != null).length,
+    n: countries.length,
+    cons: countries.some((c) => c.inc?.wt === "c"),
+  };
+};
+
+export const affordActive = (countries: readonly Country[], s: CalcState): boolean =>
+  s.mode === "b2c" && s.afford.enabled && countries.some((c) => c.inc != null && c.pl != null);
+
+/** Optional steps switched off when no market country has data for them. */
+export const effectiveState = (countries: readonly Country[], s: CalcState): CalcState => {
+  const ai = aiActive(countries, s);
+  const afford = affordActive(countries, s);
+  return ai === s.ai.enabled && afford === s.afford.enabled
+    ? s
+    : { ...s, ai: { ...s.ai, enabled: ai }, afford: { ...s.afford, enabled: afford } };
+};
+
 export const langRate = (c: Country, s: Pick<CalcState, "lang" | "overrides">): number =>
   s.lang === "local" ? 100 : (s.overrides.rus ?? c.rus);
 
@@ -142,7 +253,9 @@ export const countryFunnel = (c: Country, s: CalcState): readonly FunnelStep[] =
   // Gallup reports AI users as a share of all adults; among people already
   // online that is ai / internet (capped at 100%).
   const withAi = s.ai.enabled ? aged * clamp(inet > 0 ? aiRate(c, s) / inet : 0, 0, 1) : aged;
-  const buyers = withAi * clamp(inet > 0 ? buyRate(c, s) / inet : 0, 0, 1);
+  // Countries without PIP data pass through: the chip in the funnel says so.
+  const afforded = s.afford.enabled ? withAi * pct(affordShareOf(c, s) ?? 100) : withAi;
+  const buyers = afforded * clamp(inet > 0 ? buyRate(c, s) / inet : 0, 0, 1);
   const payers = buyers * pct(s.soft);
   const spoken = payers * lang;
   return [
@@ -150,6 +263,7 @@ export const countryFunnel = (c: Country, s: CalcState): readonly FunnelStep[] =
     { key: "online", value: online },
     { key: "age", value: aged },
     ...(s.ai.enabled ? [{ key: "ai" as const, value: withAi }] : []),
+    ...(s.afford.enabled ? [{ key: "afford" as const, value: afforded }] : []),
     { key: "buy", value: buyers },
     { key: "soft", value: payers },
     { key: "lang", value: spoken },
@@ -162,8 +276,7 @@ export const marketFunnel = (
   countries: readonly Country[],
   s: CalcState,
 ): readonly FunnelStep[] => {
-  const on = aiActive(countries, s);
-  const eff = on === s.ai.enabled ? s : { ...s, ai: { ...s.ai, enabled: on } };
+  const eff = effectiveState(countries, s);
   const per = countries.map((c) => countryFunnel(c, eff));
   const first = per[0];
   if (!first) return [];
@@ -323,19 +436,17 @@ export const presetMembers = (all: readonly Country[], p: PresetId): readonly st
     ? all.map((c) => c.id)
     : all.filter((c) => c.reg === (p as RegionId)).map((c) => c.id);
 
-/** PPP-weighted income of a market, for scaling prices between countries. */
-export const marketPpp = (countries: readonly Country[]): number => {
-  const withPpp = countries.filter((c) => c.ppp != null);
-  const pop = withPpp.reduce((s, c) => s + c.pop, 0);
-  return pop > 0 ? withPpp.reduce((s, c) => s + (c.ppp ?? 0) * c.pop, 0) / pop : 0;
+/** Population-weighted consumer price level of a market (US = 1), for scaling prices between countries. */
+export const marketPriceLevel = (countries: readonly Country[]): number => {
+  const known = countries.filter((c) => c.pl != null);
+  const pop = known.reduce((s, c) => s + c.pop, 0);
+  return pop > 0 ? known.reduce((s, c) => s + (c.pl ?? 0) * c.pop, 0) / pop : 0;
 };
-
-export const US_PPP = 90_000;
 
 /**
  * A niche's monthly price in USD for a market. Russian-speaking CIS markets use
- * the Russian ruble price; other markets scale the US price by income (PPP),
- * clamped so poor markets do not drop to zero and rich ones do not exceed the US.
+ * the Russian ruble price; other markets scale the US price by the consumer
+ * price level, clamped so cheap markets do not drop to zero and dear ones do not exceed the US.
  */
 export const nichePriceUsd = (
   n: Niche,
@@ -344,7 +455,8 @@ export const nichePriceUsd = (
 ): number => {
   const cisOnly = countries.length > 0 && countries.every((c) => CIS_IDS.includes(c.id));
   if (cisOnly && rubPerUsd > 0) return n.price_ru_rub_month / rubPerUsd;
-  const factor = clamp(marketPpp(countries) / US_PPP, 0.2, 1);
+  const level = marketPriceLevel(countries);
+  const factor = level > 0 ? clamp(level, 0.2, 1) : 1;
   return n.price_us_usd_month * factor;
 };
 

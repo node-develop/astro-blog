@@ -52,7 +52,8 @@ export type AnalyticsEvent =
   | "random_country"
   | "switch_language"
   | "send_feedback"
-  | "toggle_ai";
+  | "toggle_ai"
+  | "toggle_afford";
 
 export const track = (
   event: AnalyticsEvent,

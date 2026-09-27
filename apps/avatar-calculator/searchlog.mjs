@@ -42,6 +42,9 @@ export const validateSearch = (raw) => {
   if (!r.market.every((id) => typeof id === "string" && ISO.test(id))) return null;
   if (!(r.customPct === null || finite(r.customPct, 0, 100))) return null;
   if (!finite(r.priceUsd, 0, 1e9) || !finite(r.share, 0, 100)) return null;
+  // Records from before the affordability step have no `afford` field.
+  const afford = r.afford === undefined || r.afford === null ? null : r.afford;
+  if (!(afford === null || finite(afford, 0.1, 50))) return null;
   if (!finite(r.avatars, 0, 1e10) || !finite(r.tam, 0, 1e16) || !finite(r.revenue, 0, 1e16)) return null;
   if (!Array.isArray(r.top) || r.top.length > 5) return null;
   if (!r.top.every((x) => x && typeof x.id === "string" && ISO.test(x.id) && finite(x.avatars, 0, 1e10))) {
@@ -63,6 +66,7 @@ export const validateSearch = (raw) => {
     currency: r.currency,
     share: r.share,
     ai: r.ai,
+    afford,
     avatars: r.avatars,
     tam: r.tam,
     revenue: r.revenue,
@@ -73,7 +77,7 @@ export const validateSearch = (raw) => {
 
 const CSV_COLS = [
   "ts", "sid", "lang", "mode", "niche", "idea", "preset", "market", "level", "customPct",
-  "pricing", "priceUsd", "currency", "share", "ai", "avatars", "tam", "revenue", "verdict", "top",
+  "pricing", "priceUsd", "currency", "share", "ai", "afford", "avatars", "tam", "revenue", "verdict", "top",
 ];
 const csvCell = (v) => {
   const s =

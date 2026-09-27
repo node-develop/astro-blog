@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  affordShareOf,
   aiShareOf,
+  INCOME_LINES,
+  nichePriceUsd,
+  priceAnchors,
+  shareBelow,
+  US_DEFLATOR,
   applyNiche,
   MS_RATIO,
   computeEcon,
@@ -259,7 +265,11 @@ describe("levels, verdicts, ideas and URL state", () => {
   it("round-trips state through the share link and drops junk", () => {
     const st = { ...DEFAULT_STATE, market: ["KZ", "UZ"], level: 1000 as const, price: 42 };
     expect(decodeState(encodeState(st))).toEqual(st);
-    expect(sanitize({ market: ["??"], level: 7, price: "x" })).toEqual(DEFAULT_STATE);
+    // An object without `afford` predates the step, so it stays off there.
+    expect(sanitize({ market: ["??"], level: 7, price: "x" })).toEqual({
+      ...DEFAULT_STATE,
+      afford: { ...DEFAULT_STATE.afford, enabled: false },
+    });
     const hostile = sanitize({
       market: ["RU", "RU"],
       econ: { horizon: 200000, view: "x" },
@@ -271,5 +281,70 @@ describe("levels, verdicts, ideas and URL state", () => {
     expect(hostile.econ.view).toBe("month");
     expect(hostile.rates).toEqual(DEFAULT_STATE.rates);
     expect(hostile.share).toBe(DEFAULT_STATE.share);
+  });
+});
+
+describe("affordability step (World Bank PIP and WDI)", () => {
+  // A flat toy distribution: cdf rises evenly across the PIP lines.
+  const cdf = INCOME_LINES.map((_, i) => ((i + 1) / INCOME_LINES.length) * 100);
+  const rich: Country = { ...country, inc: { cdf, med: 30, wt: "i" }, pl: 0.5 };
+  const base = s({ lang: "local", soft: 100, level: 2, pricing: "subscription", price: 10 });
+
+  it("interpolates the income distribution between PIP lines", () => {
+    expect(shareBelow(cdf, INCOME_LINES[3]!)).toBeCloseTo(cdf[3]!);
+    const mid = shareBelow(cdf, Math.sqrt(INCOME_LINES[3]! * INCOME_LINES[4]!));
+    expect(mid).toBeCloseTo((cdf[3]! + cdf[4]!) / 2);
+    expect(shareBelow(cdf, 1e6)).toBe(100);
+  });
+
+  it("fewer people afford a dearer price, more with a bigger budget share", () => {
+    const at = (price: number, budget: number) =>
+      affordShareOf(rich, { ...base, price, afford: { enabled: true, budget } })!;
+    expect(at(20, 3)).toBeLessThan(at(10, 3));
+    expect(at(10, 6)).toBeGreaterThan(at(10, 3));
+    // $10 at price level 0.5 is $20 PPP today, $20 / deflator in 2021 dollars; 3% of income a month.
+    const line = 20 / US_DEFLATOR / 0.03 / (365.25 / 12);
+    expect(at(10, 3)).toBeCloseTo(100 - shareBelow(cdf, line));
+    expect(US_DEFLATOR).toBeGreaterThan(1.1);
+    expect(affordShareOf({ ...rich, pl: null }, { ...base, afford: { enabled: true, budget: 3 } })).toBeNull();
+  });
+
+  it("cuts the funnel only where PIP has data and only when switched on", () => {
+    const onState = { ...base, afford: { enabled: true, budget: 3 } };
+    const off = countryFunnel(rich, { ...base, afford: { enabled: false, budget: 3 } });
+    const on = countryFunnel(rich, onState);
+    expect(off.some((x) => x.key === "afford")).toBe(false);
+    const age = on.find((x) => x.key === "age")!.value;
+    const kept = on.find((x) => x.key === "afford")!.value;
+    expect(kept).toBeCloseTo((age * affordShareOf(rich, onState)!) / 100);
+    const bare = { ...country, inc: null };
+    const bareFunnel = computeResult([bare], onState).funnel;
+    expect(bareFunnel.some((x) => x.key === "afford")).toBe(false);
+  });
+
+  it("keeps old saved or shared states on their old numbers", () => {
+    const old = sanitize({ market: ["RU"], level: 10 });
+    expect(old.afford.enabled).toBe(false);
+    expect(sanitize(null).afford.enabled).toBe(true);
+    expect(sanitize({ market: ["RU"], afford: { enabled: true, budget: 99 } }).afford).toEqual({
+      enabled: true,
+      budget: 3,
+    });
+  });
+
+  it("has sensible data for Russia and scales niche prices by price level", () => {
+    const ru = COUNTRY_BY_ID.get("RU")!;
+    const p = affordShareOf(ru, { ...DEFAULT_STATE })!;
+    expect(p).toBeGreaterThan(50);
+    expect(p).toBeLessThan(100);
+    const a = priceAnchors([ru], DEFAULT_STATE);
+    expect(a.incomePct).toBeGreaterThan(0.5);
+    expect(a.incomePct).toBeLessThan(5);
+    expect(a.mobUsd).toBeGreaterThan(1);
+    const n = NICHES.find((x) => x.price_us_usd_month > 0)!;
+    const us = COUNTRY_BY_ID.get("US")!;
+    const india = COUNTRY_BY_ID.get("IN")!;
+    expect(nichePriceUsd(n, [us], 84)).toBeCloseTo(n.price_us_usd_month);
+    expect(nichePriceUsd(n, [india], 84)).toBeLessThan(n.price_us_usd_month * 0.5);
   });
 });

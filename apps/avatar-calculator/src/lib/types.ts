@@ -61,6 +61,20 @@ export interface Country {
   readonly aiMs?: number | null;
   /** The same share in H1 2025, for the growth line. */
   readonly aiMsPrev?: number | null;
+  /** World Bank PIP: % of people below each INCOME_LINES daily income (2021 PPP $), median, income or consumption survey. */
+  readonly inc?: {
+    readonly cdf: readonly number[];
+    readonly med: number | null;
+    readonly wt: "i" | "c";
+  } | null;
+  /** Consumer price level vs the US (US = 1), World Bank WDI. */
+  readonly pl?: number | null;
+  /** The price level is estimated from GDP, the consumer series was missing or broken. */
+  readonly plE?: boolean;
+  /** ITU: mobile plan with calls and 5 GB, USD per month, 2025. */
+  readonly mob?: number | null;
+  /** ITU: fixed broadband 5 GB, USD per month, 2025. */
+  readonly fbb?: number | null;
 }
 
 export interface Niche {
@@ -152,6 +166,8 @@ export interface CalcState {
   readonly econ: Econ;
   /** Optional B2C step: keep only people who use AI (for AI products). */
   readonly ai: { readonly enabled: boolean; readonly level: AiLevel };
+  /** B2C step: keep people for whom the price fits in `budget` % of their income. */
+  readonly afford: { readonly enabled: boolean; readonly budget: number };
 }
 
 export interface FunnelStep {
@@ -160,6 +176,7 @@ export interface FunnelStep {
     | "online"
     | "age"
     | "ai"
+    | "afford"
     | "buy"
     | "soft"
     | "lang"

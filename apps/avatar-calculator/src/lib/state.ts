@@ -1,13 +1,31 @@
 import countriesJson from "../data/countries.json";
 import gallupJson from "../data/gallup.json";
 import msAiJson from "../data/ms_ai.json";
+import affordJson from "../data/afford.json";
 import nichesJson from "../data/niches.json";
 import type { Benchmark, CalcState, Country, Lang, Niche, AiLadder } from "./types";
 
+type AffordRow = {
+  readonly cdf?: readonly number[];
+  readonly med?: number | null;
+  readonly wt?: "i" | "c";
+  readonly pl?: number;
+  readonly plE?: boolean;
+  readonly mob?: number;
+  readonly fbb?: number;
+};
+const AFFORD = affordJson.countries as Readonly<Record<string, AffordRow>>;
 const AI_LADDER = gallupJson.ladder as Readonly<Record<string, AiLadder>>;
 const MS_SHARE = msAiJson.share as Readonly<
   Record<string, { readonly q2_26: number; readonly h1_25: number | null }>
 >;
+const affordFields = (r: AffordRow | undefined) => ({
+  inc: r?.cdf ? { cdf: r.cdf, med: r.med ?? null, wt: r.wt ?? "i" } : null,
+  pl: r?.pl ?? null,
+  plE: r?.plE === true,
+  mob: r?.mob ?? null,
+  fbb: r?.fbb ?? null,
+});
 /** Countries with the Gallup AI ladder attached where the 2026 survey covers them. */
 export const COUNTRIES: readonly Country[] = (countriesJson as unknown as readonly Country[]).map(
   (c) => ({
@@ -15,8 +33,10 @@ export const COUNTRIES: readonly Country[] = (countriesJson as unknown as readon
     ai: AI_LADDER[c.id] ?? null,
     aiMs: MS_SHARE[c.id]?.q2_26 ?? null,
     aiMsPrev: MS_SHARE[c.id]?.h1_25 ?? null,
+    ...affordFields(AFFORD[c.id]),
   }),
 );
+export const AFFORD_SOURCES = affordJson.sources;
 export const GALLUP = gallupJson;
 /** Longest free-text niche idea we keep. */
 export const IDEA_MAX = 120;
@@ -61,6 +81,7 @@ export const DEFAULT_STATE: CalcState = {
     view: "month",
   },
   ai: { enabled: false, level: "weekly" },
+  afford: { enabled: true, budget: 3 },
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
@@ -113,6 +134,7 @@ export const sanitize = (raw: unknown): CalcState => {
     rates: pick("rates", DEFAULT_STATE.rates),
     econ: pick("econ", DEFAULT_STATE.econ),
     ai: pick("ai", DEFAULT_STATE.ai),
+    afford: pick("afford", DEFAULT_STATE.afford),
   };
   const enumOk = <T extends string | number>(v: T, allowed: readonly T[], d: T): T =>
     allowed.includes(v) ? v : d;
@@ -173,6 +195,11 @@ export const sanitize = (raw: unknown): CalcState => {
     ai: {
       enabled: merged.ai.enabled === true,
       level: enumOk(merged.ai.level, ["ever", "weekly", "daily"], "weekly"),
+    },
+    afford: {
+      // A saved or shared state from before this step keeps its old numbers.
+      enabled: isObj(raw.afford) ? raw.afford.enabled === true : false,
+      budget: num(merged.afford.budget, 0.1, 50, DEFAULT_STATE.afford.budget),
     },
   };
 };

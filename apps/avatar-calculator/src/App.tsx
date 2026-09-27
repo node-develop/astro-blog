@@ -469,6 +469,7 @@ export const App = () => {
               state={state}
               update={update}
               result={result}
+              countries={countries}
               context={context}
               rateDate={rateDate}
               onSave={save}

@@ -1,4 +1,4 @@
-import { aiActive, avatarsOf, computeResult, countryFunnel, verdictOf } from "./calc";
+import { avatarsOf, computeResult, countryFunnel, effectiveState, verdictOf } from "./calc";
 import type { CalcState, Country, Lang } from "./types";
 
 /**
@@ -23,6 +23,8 @@ export interface SearchRecord {
   readonly currency: CalcState["currency"];
   readonly share: number;
   readonly ai: CalcState["ai"]["level"] | null;
+  /** Budget share, % of income, when the affordability step applied. */
+  readonly afford: number | null;
   readonly avatars: number;
   /** USD per year. */
   readonly tam: number;
@@ -47,8 +49,8 @@ export const buildRecord = (
   sid: string,
 ): SearchRecord => {
   const r = computeResult(countries, s);
-  // Same AI switch as the market funnel, so per-country numbers add up to the total.
-  const eff = { ...s, ai: { ...s.ai, enabled: aiActive(countries, s) } };
+  // Same optional steps as the market funnel, so per-country numbers add up to the total.
+  const eff = effectiveState(countries, s);
   const top = countries
     .map((c) => ({ id: c.id, avatars: Math.round(avatarsOf(countryFunnel(c, eff))) }))
     .toSorted((a, b) => b.avatars - a.avatars)
@@ -69,6 +71,7 @@ export const buildRecord = (
     currency: s.currency,
     share: s.share,
     ai: eff.ai.enabled ? s.ai.level : null,
+    afford: eff.afford.enabled ? s.afford.budget : null,
     avatars: Math.round(r.avatars),
     tam: Math.round(r.tam),
     revenue: Math.round(r.revenue),
@@ -79,7 +82,7 @@ export const buildRecord = (
 
 /** The fields that make two records the same search (the session id and result follow from them). */
 export const recordKey = (r: SearchRecord): string =>
-  JSON.stringify([r.mode, r.niche, r.idea, r.market, r.level, r.customPct, r.pricing, r.priceUsd, r.share, r.ai]);
+  JSON.stringify([r.mode, r.niche, r.idea, r.market, r.level, r.customPct, r.pricing, r.priceUsd, r.share, r.ai, r.afford]);
 
 export const sendRecord = (r: SearchRecord): void => {
   if (navigator.doNotTrack === "1" || ["localhost", "127.0.0.1"].includes(location.hostname)) return;
