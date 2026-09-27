@@ -61,24 +61,6 @@ CHROMIUM_PATH=/path/to/chromium node scripts/render-og.mjs
 
 ## Analytics
 
-Google Analytics 4 turns on when `VITE_GA_ID` (`G-XXXXXXX`) is set at build
-time, e.g. as a Railway service variable. Without it no tracking code runs.
-It is skipped on localhost and for Do Not Track. Custom events: `select_market`,
-`select_mode`, `select_level`, `apply_niche`, `open_niches`, `open_economy`,
-`save_scenario`, `share`, `random_country`, `switch_language`.
-
-## Link preview
-
-`public/og.png` (1200x630) is the Open Graph image used by Telegram and other
-link previews; `index.html` points to it with an absolute `https://calc.artka.dev/og.png`.
-Edit `scripts/og.html` and re-render:
-
-```sh
-CHROMIUM_PATH=/path/to/chromium node scripts/render-og.mjs
-```
-
-## Analytics
-
 Google Analytics 4, property `G-X53SL63MK2` (set in `src/lib/analytics.ts`,
 overridable with `VITE_GA_ID` at build time). Skipped on localhost and for
 Do Not Track. Custom events: `select_market`, `select_mode`, `select_level`,
