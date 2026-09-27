@@ -1777,6 +1777,173 @@ th[aria-sort] .sortbtn,
   max-width: 80ch;
 }
 
+/* ── AI attitudes (Gallup and Microsoft) ─────────────────────────── */
+.funnel__ai {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-bg-subtle);
+}
+.funnel__suggest {
+  font-size: var(--fs-sm);
+}
+.frow__meta a {
+  font-size: var(--fs-xs);
+}
+.aipanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.aipanel .section-head {
+  margin-bottom: 0;
+}
+.ladder {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.ladder__bar {
+  display: flex;
+  height: 32px;
+  border: var(--stroke-bold) solid var(--color-border-strong);
+  background: var(--color-bg-elevated);
+}
+.ladder__seg {
+  display: block;
+  height: 100%;
+}
+.ladder__seg--d {
+  background: var(--color-fg);
+}
+.ladder__seg--w {
+  background: color-mix(in srgb, var(--color-fg) 62%, var(--color-bg-elevated));
+}
+.ladder__seg--m {
+  background: color-mix(in srgb, var(--color-fg) 32%, var(--color-bg-elevated));
+}
+.ladder__seg--an {
+  background: var(--color-fill);
+}
+.ladder__seg--na {
+  background: var(--color-bg-subtle);
+}
+.ladder__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--fs-sm);
+}
+.ladder__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ladder__sw {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  border: var(--stroke-hair) solid var(--color-border-strong);
+}
+.aitiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.aitile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--stroke-bold) solid var(--color-fg);
+  background: var(--color-bg-elevated);
+}
+.aitile__val {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: var(--fs-2xl);
+  line-height: 1.05;
+}
+.aitile__note {
+  font-size: var(--fs-xs);
+  color: var(--color-fg-subtle);
+  line-height: var(--lh-snug);
+}
+.aipanel__flag {
+  font-size: var(--fs-sm);
+  border-left: var(--stroke-slab) solid var(--color-warning);
+  padding-left: var(--space-3);
+}
+.aipanel__byuse {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.aipanel__byuse h3 {
+  margin: 0;
+}
+
+/* ── Feedback ────────────────────────────────────────────────────── */
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 760px;
+}
+.feedback .section-head {
+  margin-bottom: 0;
+}
+.feedback__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.feedback__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.feedback__text {
+  width: 100%;
+  min-height: 140px;
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--color-fg);
+  background: var(--color-bg-elevated);
+  border: var(--stroke-bold) solid var(--color-border-strong);
+  resize: vertical;
+}
+.feedback__text:focus-visible {
+  outline: var(--stroke-bold) solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.feedback__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.feedback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.feedback__done {
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-fill);
+  color: var(--color-on-fill);
+  border: var(--stroke-bold) solid var(--color-border-strong);
+  font-weight: 700;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 1180px) {
   .band__cells {
@@ -1869,8 +2036,12 @@ th[aria-sort] .sortbtn,
     grid-column: 1 / -1;
   }
   .lesson__pc,
-  .tiles {
+  .tiles,
+  .feedback__row {
     grid-template-columns: 1fr;
+  }
+  .aitiles {
+    grid-template-columns: 1fr 1fr;
   }
   .tbl .opt {
     display: none;
@@ -1883,6 +2054,16 @@ th[aria-sort] .sortbtn,
   }
   .market__row .btn {
     width: 100%;
+  }
+  .frow__ctrl .seg {
+    width: 100%;
+  }
+  .frow__ctrl .seg__opt {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+    padding-inline: var(--space-2);
+    line-height: 1.2;
   }
 }
 @media (prefers-reduced-motion: reduce) {

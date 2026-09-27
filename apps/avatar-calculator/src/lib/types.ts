@@ -8,6 +8,17 @@ export type ProductLang = "ru" | "local";
 export type Pricing = "subscription" | "one-off";
 export type Currency = "usd" | "rub" | "eur";
 export type CacMode = "cac" | "cpl";
+/** How often people use AI (Gallup and Microsoft, 2026). */
+export type AiLevel = "ever" | "weekly" | "daily";
+
+/** Gallup AI adoption ladder, % of adults 15+: daily, weekly, monthly or less, aware but never used, not aware. */
+export interface AiLadder {
+  readonly d: number;
+  readonly w: number;
+  readonly m: number;
+  readonly an: number;
+  readonly na: number;
+}
 
 export interface Country {
   readonly id: string;
@@ -44,6 +55,8 @@ export interface Country {
   readonly emp: number;
   readonly firmsE: boolean;
   readonly firmsY: number | null;
+  /** Gallup AI adoption ladder; only the 37 countries in the 2026 survey have it. */
+  readonly ai?: AiLadder | null;
 }
 
 export interface Niche {
@@ -58,6 +71,8 @@ export interface Niche {
   readonly price_us_usd_month: number;
   readonly example_products: readonly string[];
   readonly anomaly: string | null;
+  /** A consumer AI product: the AI-users step of the funnel applies. */
+  readonly ai?: boolean;
   readonly note_ru: string;
 }
 
@@ -84,6 +99,8 @@ export interface Overrides {
   readonly inet: number | null;
   readonly buy: number | null;
   readonly rus: number | null;
+  /** Share of adults who use AI at the chosen level, %. */
+  readonly ai: number | null;
 }
 
 export interface Econ {
@@ -127,10 +144,21 @@ export interface CalcState {
   readonly currency: Currency;
   readonly rates: { readonly rub: number; readonly eur: number };
   readonly econ: Econ;
+  /** Optional B2C step: keep only people who use AI (for AI products). */
+  readonly ai: { readonly enabled: boolean; readonly level: AiLevel };
 }
 
 export interface FunnelStep {
   readonly key:
-    "pop" | "online" | "age" | "buy" | "soft" | "lang" | "firms" | "b2bOnline" | "avatars";
+    | "pop"
+    | "online"
+    | "age"
+    | "ai"
+    | "buy"
+    | "soft"
+    | "lang"
+    | "firms"
+    | "b2bOnline"
+    | "avatars";
   readonly value: number;
 }

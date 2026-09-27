@@ -1,8 +1,14 @@
 import countriesJson from "../data/countries.json";
+import gallupJson from "../data/gallup.json";
 import nichesJson from "../data/niches.json";
-import type { Benchmark, CalcState, Country, Lang, Niche } from "./types";
+import type { Benchmark, CalcState, Country, Lang, Niche, AiLadder } from "./types";
 
-export const COUNTRIES = countriesJson as unknown as readonly Country[];
+const AI_LADDER = gallupJson.ladder as Readonly<Record<string, AiLadder>>;
+/** Countries with the Gallup AI ladder attached where the 2026 survey covers them. */
+export const COUNTRIES: readonly Country[] = (countriesJson as unknown as readonly Country[]).map(
+  (c) => ({ ...c, ai: AI_LADDER[c.id] ?? null }),
+);
+export const GALLUP = gallupJson;
 export const NICHES = (nichesJson as unknown as { niches: readonly Niche[] }).niches;
 export const BENCHMARKS = (
   nichesJson as unknown as { benchmarks: Readonly<Record<string, readonly Benchmark[]>> }
@@ -20,7 +26,7 @@ export const DEFAULT_STATE: CalcState = {
   buyBasis: "buy",
   soft: 60,
   lang: "local",
-  overrides: { inet: null, buy: null, rus: null },
+  overrides: { inet: null, buy: null, rus: null, ai: null },
   b2bBase: "all",
   b2bOnline: 40,
   level: 10,
@@ -41,6 +47,7 @@ export const DEFAULT_STATE: CalcState = {
     horizon: 12,
     view: "month",
   },
+  ai: { enabled: false, level: "weekly" },
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
@@ -91,6 +98,7 @@ export const sanitize = (raw: unknown): CalcState => {
     currency: pick("currency", DEFAULT_STATE.currency),
     rates: pick("rates", DEFAULT_STATE.rates),
     econ: pick("econ", DEFAULT_STATE.econ),
+    ai: pick("ai", DEFAULT_STATE.ai),
   };
   const enumOk = <T extends string | number>(v: T, allowed: readonly T[], d: T): T =>
     allowed.includes(v) ? v : d;
@@ -131,6 +139,7 @@ export const sanitize = (raw: unknown): CalcState => {
       inet: merged.overrides.inet == null ? null : num(merged.overrides.inet, 0, 100, 0) || null,
       buy: merged.overrides.buy == null ? null : num(merged.overrides.buy, 0, 100, 0) || null,
       rus: merged.overrides.rus == null ? null : num(merged.overrides.rus, 0, 100, 0) || null,
+      ai: merged.overrides.ai == null ? null : num(merged.overrides.ai, 0, 100, 0) || null,
     },
     rates: {
       rub: num(merged.rates.rub, 1e-6, 1e6, FALLBACK_RATES.rub),
@@ -145,6 +154,10 @@ export const sanitize = (raw: unknown): CalcState => {
       budget: num(e.budget, 0, 1e10, de.budget),
       horizon: enumOk(e.horizon, [12, 24], 12),
       view: enumOk(e.view, ["month", "cum"], "month"),
+    },
+    ai: {
+      enabled: merged.ai.enabled === true,
+      level: enumOk(merged.ai.level, ["ever", "weekly", "daily"], "weekly"),
     },
   };
 };

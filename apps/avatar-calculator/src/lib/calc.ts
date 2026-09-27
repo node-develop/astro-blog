@@ -1,4 +1,6 @@
+import gallup from "../data/gallup.json";
 import type {
+  AiLevel,
   CalcState,
   Country,
   Econ,
@@ -76,6 +78,21 @@ export const buyRate = (c: Country, s: Pick<CalcState, "buyBasis" | "overrides">
 export const inetRate = (c: Country, s: Pick<CalcState, "overrides">): number =>
   s.overrides.inet ?? c.inet;
 
+/**
+ * Share of adults who use AI at a level, from the Gallup ladder. Countries
+ * outside the 37 surveyed get the median of those 37 (flagged in the UI).
+ */
+export const AI_MEDIAN: Readonly<Record<AiLevel, number>> = gallup.medians.computed;
+
+export const aiShareOf = (c: Country, level: AiLevel): number | null => {
+  const l = c.ai;
+  if (!l) return null;
+  return level === "daily" ? l.d : level === "weekly" ? l.d + l.w : l.d + l.w + l.m;
+};
+
+export const aiRate = (c: Country, s: Pick<CalcState, "ai" | "overrides">): number =>
+  s.overrides.ai ?? aiShareOf(c, s.ai.level) ?? AI_MEDIAN[s.ai.level];
+
 export const langRate = (c: Country, s: Pick<CalcState, "lang" | "overrides">): number =>
   s.lang === "local" ? 100 : (s.overrides.rus ?? c.rus);
 
@@ -103,13 +120,17 @@ export const countryFunnel = (c: Country, s: CalcState): readonly FunnelStep[] =
   const inet = inetRate(c, s);
   const online = c.pop * pct(inet);
   const aged = online * pct(ageShare(c, s));
-  const buyers = aged * clamp(inet > 0 ? buyRate(c, s) / inet : 0, 0, 1);
+  // Gallup reports AI users as a share of all adults; among people already
+  // online that is ai / internet (capped at 100%).
+  const withAi = s.ai.enabled ? aged * clamp(inet > 0 ? aiRate(c, s) / inet : 0, 0, 1) : aged;
+  const buyers = withAi * clamp(inet > 0 ? buyRate(c, s) / inet : 0, 0, 1);
   const payers = buyers * pct(s.soft);
   const spoken = payers * lang;
   return [
     { key: "pop", value: c.pop },
     { key: "online", value: online },
     { key: "age", value: aged },
+    ...(s.ai.enabled ? [{ key: "ai" as const, value: withAi }] : []),
     { key: "buy", value: buyers },
     { key: "soft", value: payers },
     { key: "lang", value: spoken },

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AiPanel } from "./components/AiPanel";
 import { BreadthBand } from "./components/BreadthBand";
 import { CountryTable } from "./components/CountryTable";
 import { Economy } from "./components/Economy";
+import { FeedbackForm } from "./components/FeedbackForm";
 import { Funnel } from "./components/Funnel";
 import { MarketPicker } from "./components/MarketPicker";
 import { NicheDrawer } from "./components/NicheDrawer";
@@ -162,7 +164,7 @@ export const App = () => {
 
   const setMarket = (market: readonly string[], preset: CalcState["preset"]) => {
     track("select_market", { market: preset ?? market.slice(0, 5).join(","), countries: market.length });
-    update((s) => ({ ...s, market, preset, overrides: { inet: null, buy: null, rus: null } }));
+    update((s) => ({ ...s, market, preset, overrides: { inet: null, buy: null, rus: null, ai: null } }));
   };
 
   const random = () => {
@@ -449,6 +451,8 @@ export const App = () => {
           </div>
         </div>
 
+        <AiPanel lang={lang} countries={countries} />
+
         <Scenarios
           lang={lang}
           scenarios={scenarios}
@@ -470,6 +474,8 @@ export const App = () => {
             });
           }}
         />
+
+        <FeedbackForm lang={lang} state={state} />
 
         <footer className="foot">
           <p>{t(lang, "foot.note")}</p>

@@ -4,6 +4,7 @@
 import { createServer } from "node:http";
 import { createReadStream, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
+import { createRateLimiter, handleFeedback } from "./feedback.mjs";
 
 const ROOT = join(import.meta.dirname, "dist");
 const PORT = Number(process.env.PORT ?? 8080);
@@ -18,6 +19,14 @@ const TYPES = {
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".txt": "text/plain; charset=utf-8",
+};
+
+const feedbackDeps = {
+  env: process.env,
+  fetch: globalThis.fetch,
+  limiter: createRateLimiter({ limit: 5, windowMs: 10 * 60_000 }),
+  globalLimiter: createRateLimiter({ limit: 200, windowMs: 60 * 60_000 }),
+  log: (m) => console.error(m),
 };
 
 const isFile = (p) => {
@@ -44,6 +53,17 @@ const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   if (url.pathname === "/health") {
     res.writeHead(200, { "content-type": "text/plain" }).end("ok");
+    return;
+  }
+  if (url.pathname === "/api/feedback" || url.pathname === `${PREFIX}/api/feedback`) {
+    if (req.method !== "POST") {
+      res.writeHead(405, { allow: "POST" }).end();
+      return;
+    }
+    handleFeedback(req, res, feedbackDeps).catch((e) => {
+      feedbackDeps.log(`feedback: unexpected ${e instanceof Error ? e.message : String(e)}`);
+      if (!res.headersSent) res.writeHead(500).end();
+    });
     return;
   }
   if (url.pathname === PREFIX) {

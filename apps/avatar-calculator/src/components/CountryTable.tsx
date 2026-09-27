@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { computeResult, marketPpp } from "../lib/calc";
+import { AI_MEDIAN, aiShareOf, computeResult, marketPpp } from "../lib/calc";
 import { compact, money, pctText } from "../lib/format";
 import { regionName, t, type StringKey } from "../lib/i18n";
 import { COUNTRIES, countryName } from "../lib/state";
@@ -7,7 +7,7 @@ import type { CalcState, Country, Lang, RegionId } from "../lib/types";
 import { Chip } from "./ui";
 import { cx } from "../lib/cx";
 
-type SortKey = "name" | "pop" | "inet" | "buy" | "rus" | "firms" | "avatars" | "tam";
+type SortKey = "name" | "pop" | "inet" | "buy" | "rus" | "firms" | "ai" | "avatars" | "tam";
 const REGIONS: readonly RegionId[] = [
   "cis",
   "europe",
@@ -45,7 +45,7 @@ export const CountryTable = ({
         const r = computeResult([c], {
           ...state,
           price: state.price * factor,
-          overrides: { inet: null, buy: null, rus: null },
+          overrides: { inet: null, buy: null, rus: null, ai: null },
         });
         return { c, avatars: r.avatars, tam: r.tam };
       }),
@@ -66,6 +66,8 @@ export const CountryTable = ({
           ? x.tam
           : k === "firms"
             ? x.c.firms
+            : k === "ai"
+              ? (aiShareOf(x.c, state.ai.level) ?? -1)
             : k === "buy"
               ? (x.c.buy ?? -1)
               : x.c[k];
@@ -77,6 +79,7 @@ export const CountryTable = ({
     );
   });
   const maxAv = Math.max(1, ...filtered.map((x) => x.avatars));
+  const aiOn = state.mode === "b2c" && state.ai.enabled;
   const sel = new Set(selected.map((c) => c.id));
 
   const cols: readonly { k: SortKey; label: StringKey; cls?: string }[] = [
@@ -90,6 +93,7 @@ export const CountryTable = ({
     ...(state.mode === "b2b"
       ? [{ k: "firms" as const, label: "countries.col.firms" as const, cls: "opt" }]
       : []),
+    ...(aiOn ? [{ k: "ai" as const, label: "countries.col.ai" as const, cls: "opt" }] : []),
     { k: "avatars", label: "countries.col.avatars" },
     { k: "tam", label: "countries.col.tam" },
   ];
@@ -209,6 +213,11 @@ export const CountryTable = ({
                   {state.mode === "b2b" && (
                     <td className={cx("num", "opt", x.c.firmsE && "num--est")}>
                       {compact(x.c.firms, lang)}
+                    </td>
+                  )}
+                  {aiOn && (
+                    <td className={cx("num", "opt", x.c.ai == null && "num--est")}>
+                      {pctText(aiShareOf(x.c, state.ai.level) ?? AI_MEDIAN[state.ai.level], lang)}
                     </td>
                   )}
                   <td className="num">

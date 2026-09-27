@@ -1,7 +1,9 @@
-import { breadthPct, buyRate, inetRate, langRate, shownLevel } from "../lib/calc";
+import { AI_MEDIAN, aiShareOf, breadthPct, buyRate, inetRate, langRate, shownLevel } from "../lib/calc";
 import { compact, pctText } from "../lib/format";
 import { levelText, t, type StringKey } from "../lib/i18n";
-import type { CalcState, Country, FunnelStep, Lang } from "../lib/types";
+import type { AiLevel, CalcState, Country, FunnelStep, Lang } from "../lib/types";
+import { GALLUP, NICHES } from "../lib/state";
+import { track } from "../lib/analytics";
 import { Chip, InfoTip, NumberField, Segmented, StatusChip } from "./ui";
 import { cx } from "../lib/cx";
 
@@ -28,6 +30,7 @@ const LABEL: Readonly<Record<FunnelStep["key"], StringKey>> = {
   pop: "funnel.pop",
   online: "funnel.online",
   age: "funnel.age",
+  ai: "funnel.ai",
   buy: "funnel.buy",
   soft: "funnel.soft",
   lang: "funnel.lang",
@@ -39,6 +42,7 @@ const TIP: Partial<Record<FunnelStep["key"], StringKey>> = {
   pop: "tip.pop",
   online: "tip.online",
   age: "tip.age",
+  ai: "tip.ai",
   buy: "tip.buy",
   soft: "tip.soft",
   lang: "tip.lang",
@@ -153,6 +157,56 @@ export const Funnel = ({
             <>
               <span>{t(lang, "funnel.src.wb", { y: yearSpan(countries.map((c) => c.ageY)) })}</span>
               {count === 1 && <span>{t(lang, "funnel.ageKeep")}</span>}
+            </>
+          ),
+        };
+      }
+      case "ai": {
+        const covered = countries.filter((c) => aiShareOf(c, state.ai.level) != null);
+        const avg = weighted(
+          countries,
+          (c) => c.pop,
+          (c) => aiShareOf(c, state.ai.level) ?? AI_MEDIAN[state.ai.level],
+        );
+        return {
+          ctrl: (
+            <div className="ctrl-row">
+              <Segmented<AiLevel>
+                label={t(lang, "funnel.ai")}
+                value={state.ai.level}
+                options={[
+                  { value: "ever", label: t(lang, "funnel.ai.ever") },
+                  { value: "weekly", label: t(lang, "funnel.ai.weekly") },
+                  { value: "daily", label: t(lang, "funnel.ai.daily") },
+                ]}
+                onChange={(v) => update((s) => ({ ...s, ai: { ...s.ai, level: v } }))}
+              />
+              <NumberField
+                label={t(lang, "funnel.ai")}
+                hideLabel
+                compact
+                value={o.ai ?? avg}
+                min={0}
+                max={100}
+                suffix="%"
+                error={t(lang, "err.pct")}
+                onChange={(v) => setOverride("ai", v)}
+              />
+            </div>
+          ),
+          meta: (
+            <>
+              {covered.length > 0 && (
+                <a href={GALLUP.source.url} target="_blank" rel="noopener noreferrer">
+                  {t(lang, "funnel.ai.src")}
+                </a>
+              )}
+              {o.ai == null && covered.length < countries.length && (
+                <StatusChip tone="warning">
+                  {t(lang, "funnel.est")}: {t(lang, "funnel.ai.median")}
+                </StatusChip>
+              )}
+              {edited("ai")}
             </>
           ),
         };
@@ -311,6 +365,37 @@ export const Funnel = ({
 
   return (
     <div className="funnel">
+      {state.mode === "b2c" && (
+        <div className="funnel__ai">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={state.ai.enabled}
+              onChange={(e) => {
+                track("toggle_ai", { on: e.target.checked });
+                update((s) => ({
+                  ...s,
+                  ai: { ...s.ai, enabled: e.target.checked },
+                  overrides: { ...s.overrides, ai: null },
+                }));
+              }}
+            />
+            <span>{t(lang, "funnel.ai.toggle")}</span>
+          </label>
+          {!state.ai.enabled && NICHES.find((n) => n.id === state.niche)?.ai && (
+            <p className="funnel__suggest">
+              {t(lang, "funnel.ai.suggest")}{" "}
+              <button
+                type="button"
+                className="textbtn textbtn--sm"
+                onClick={() => update((s) => ({ ...s, ai: { ...s.ai, enabled: true } }))}
+              >
+                {t(lang, "funnel.ai.enable")}
+              </button>
+            </p>
+          )}
+        </div>
+      )}
       <ol className="funnel__list">
         {funnel.map((step, i) => {
           const prev = funnel[i - 1];

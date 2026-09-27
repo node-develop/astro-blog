@@ -96,7 +96,7 @@ describe("countryFunnel", () => {
     });
     const pay = countryFunnel(country, { ...base, buyBasis: "pay" }).at(-1)?.value ?? 0;
     const over =
-      countryFunnel(country, { ...base, overrides: { inet: null, buy: 25, rus: null } }).at(-1)
+      countryFunnel(country, { ...base, overrides: { inet: null, buy: 25, rus: null, ai: null } }).at(-1)
         ?.value ?? 0;
     expect(pay).toBeCloseTo(32_000_000 * 0.4 * 0.5);
     expect(over).toBeCloseTo(32_000_000 * 0.25 * 0.5);
@@ -106,6 +106,40 @@ describe("countryFunnel", () => {
     const f = countryFunnel(country, s({ mode: "b2b", b2bOnline: 40, lang: "local", level: 100 }));
     expect(f[0]?.value).toBe(500_000);
     expect(f.at(-1)?.value).toBeCloseTo(500_000 * 0.4 * 0.01);
+  });
+});
+
+describe("AI users step (Gallup and Microsoft)", () => {
+  const withLadder: Country = { ...country, inet: 80, ai: { d: 20, w: 20, m: 10, an: 30, na: 20 } };
+  const base = s({ lang: "local", soft: 100, level: 2, ages: { kids: false, adults: true, seniors: false } });
+
+  it("keeps only AI users among people online, at the chosen frequency", () => {
+    const off = countryFunnel(withLadder, base);
+    const weekly = countryFunnel(withLadder, { ...base, ai: { enabled: true, level: "weekly" } });
+    const aged = off.find((x) => x.key === "age")?.value ?? 0;
+    expect(off.some((x) => x.key === "ai")).toBe(false);
+    expect(weekly.find((x) => x.key === "ai")?.value).toBeCloseTo(aged * (40 / 80));
+    const daily = countryFunnel(withLadder, { ...base, ai: { enabled: true, level: "daily" } });
+    expect(daily.at(-1)!.value).toBeLessThan(weekly.at(-1)!.value);
+  });
+
+  it("falls back to the 37-country median and honours a typed override", () => {
+    const noLadder = { ...withLadder, ai: null };
+    const med = countryFunnel(noLadder, { ...base, ai: { enabled: true, level: "ever" } });
+    const aged = med.find((x) => x.key === "age")?.value ?? 0;
+    expect(med.find((x) => x.key === "ai")?.value).toBeCloseTo(aged * (43.2 / 80));
+    const typed = countryFunnel(noLadder, {
+      ...base,
+      ai: { enabled: true, level: "ever" },
+      overrides: { inet: null, buy: null, rus: null, ai: 8 },
+    });
+    expect(typed.find((x) => x.key === "ai")?.value).toBeCloseTo(aged * 0.1);
+  });
+
+  it("uses the real Gallup ladder for Russia", () => {
+    const ru = COUNTRY_BY_ID.get("RU")!;
+    expect(ru.ai?.d).toBe(20.8);
+    expect(COUNTRY_BY_ID.get("DE")?.ai).toBeNull();
   });
 });
 

@@ -50,7 +50,9 @@ export type AnalyticsEvent =
   | "save_scenario"
   | "share"
   | "random_country"
-  | "switch_language";
+  | "switch_language"
+  | "send_feedback"
+  | "toggle_ai";
 
 export const track = (
   event: AnalyticsEvent,
