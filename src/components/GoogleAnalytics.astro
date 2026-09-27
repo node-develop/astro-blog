@@ -1,0 +1,30 @@
+---
+/**
+ * Google Analytics 4 — Google's standard static gtag snippet.
+ *
+ * Rendered by Analytics.astro in production builds only. Static on purpose:
+ * Google's "tag installed" check reads the HTML. Do Not Track is honoured via
+ * GA's documented opt-out flag `window["ga-disable-<ID>"]`, set before config.
+ */
+interface Props {
+  /** GA4 measurement ID, e.g. G-XXXXXXX. */
+  id: string;
+}
+
+const { id } = Astro.props;
+const src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
+---
+
+<script is:inline async src={src}></script>
+<script is:inline define:vars={{ id }}>
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function gtag() {
+    // gtag must push the `arguments` object itself, not a copy.
+    window.dataLayer.push(arguments);
+  };
+  if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
+    window["ga-disable-" + id] = true;
+  }
+  window.gtag("js", new Date());
+  window.gtag("config", id);
+</script>

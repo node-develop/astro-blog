@@ -303,7 +303,7 @@ const socialLabel = (url: string): string => {
       type="application/ld+json"
       set:html={safeJsonLd(buildGraph({ locale, extraNodes: extraSchemaNodes }))}
     />
-    <Analytics domain="artka.dev" />
+    <Analytics domain="artka.dev" gaId="G-X53SL63MK2" />
     <slot name="head" />
     <ClientRouter />
   </head>

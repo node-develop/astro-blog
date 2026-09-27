@@ -1,6 +1,17 @@
 ---
+import GoogleAnalytics from "~/components/GoogleAnalytics.astro";
+
 /**
- * Analytics — Plausible (self-hosted ready, DNT-aware).
+ * Analytics — Plausible (self-hosted ready, DNT-aware) and, when `gaId` is
+ * passed, Google Analytics 4.
+ *
+ * GA4 is rendered as Google's standard static gtag snippet (not injected by
+ * script) so Google's "tag installed" check can see it in the HTML. It is only
+ * emitted in production builds. Do Not Track is honoured through GA's
+ * documented opt-out flag `window["ga-disable-<ID>"]`, set before `config`.
+ * With <ClientRouter />, identical head elements persist across navigations,
+ * so the snippet runs once; GA4 enhanced measurement records the SPA page
+ * views from history changes.
  *
  * Usage in BaseLayout.astro <head>:
  *
@@ -22,9 +33,12 @@ interface Props {
   domain: string;
   /** Plausible script URL. Default: hosted plausible.io */
   src?: string;
+  /** GA4 measurement ID (G-XXXXXXX). Omit to skip Google Analytics. */
+  gaId?: string;
 }
 
-const { domain, src = "https://plausible.io/js/script.js" } = Astro.props;
+const { domain, src = "https://plausible.io/js/script.js", gaId } = Astro.props;
+const withGa = Boolean(gaId) && import.meta.env.PROD;
 ---
 
 <script is:inline define:vars={{ domain, src }}>
@@ -48,3 +62,5 @@ const { domain, src = "https://plausible.io/js/script.js" } = Astro.props;
     }
   })();
 </script>
+
+{withGa && gaId && <GoogleAnalytics id={gaId} />}

@@ -76,15 +76,15 @@ const adminGuard = defineMiddleware(async (context, next) => {
  */
 const CSP_REPORT_ONLY = [
   "default-src 'self'",
-  // Inline scripts are needed for the theme bootstrap and Plausible loader.
+  // Inline scripts are needed for the theme bootstrap, Plausible loader and GA4 snippet.
   // Tighten to 'strict-dynamic' + nonces in a follow-up if we ever need it.
   // Cal.com: the booking embed on /contact/ loads embed.js and the booker iframe.
-  `script-src 'self' 'unsafe-inline' https://plausible.io ${CAL_ORIGIN}`,
+  `script-src 'self' 'unsafe-inline' https://plausible.io https://www.googletagmanager.com ${CAL_ORIGIN}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
   `frame-src https://giscus.app ${CAL_ORIGIN}`,
-  `connect-src 'self' https://plausible.io https://giscus.app ${CAL_ORIGIN}`,
+  `connect-src 'self' https://plausible.io https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://giscus.app ${CAL_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
