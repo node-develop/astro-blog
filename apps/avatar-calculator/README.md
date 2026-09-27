@@ -17,8 +17,10 @@ pnpm start      # node server.mjs, serves dist/ on $PORT (default 8080)
 
 ## Deploy
 
-Railway service with root directory `/apps/avatar-calculator`, config in
-`railway.json` (Railpack, `pnpm build`, `node server.mjs`, healthcheck `/health`).
+Railway service `avatar-calculator` (project of the same name), deployed from this
+branch with root directory `/apps/avatar-calculator`. Settings live on the service:
+Railpack builder, build `pnpm build`, start `node server.mjs`, healthcheck `/health`,
+watch pattern `/apps/avatar-calculator/**`.
 The build uses a relative base, and `server.mjs` answers on both `/` and
 `/avatar-calculator/`, so the same image can later sit behind
 `artka.dev/avatar-calculator` without a rebuild.
