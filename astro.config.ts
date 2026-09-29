@@ -136,6 +136,14 @@ export default defineConfig({
   security: { checkOrigin: true },
   vite: {
     plugins: [tailwindcss(), pagefindDevMiddleware()],
+    build: {
+      // The public shell and homepage CSS total ~10 KB compressed. Deliver
+      // these small sheets with the HTML instead of three blocking round trips
+      // on mobile. Keep larger sheets (including KaTeX) separately cacheable,
+      // and preserve Vite's default handling of fonts, images and scripts.
+      assetsInlineLimit: (filePath, content) =>
+        filePath.endsWith(".css") ? content.byteLength < 24 * 1024 : undefined,
+    },
   },
   // Every internal link is still a prefetch candidate, but `viewport` made the
   // browser fetch all 45 links on /blog/ (~317 KB against a 9.5 KB page) just

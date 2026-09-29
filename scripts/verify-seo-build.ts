@@ -66,7 +66,7 @@ const PROBE_PAGE = "about/index.html";
  * build time, leaving the original bare specifier in the emitted file —
  * a broken font request that looks like a successful build. Assert every
  * `<link rel="preload" as="font">` href on a real page appears verbatim
- * inside at least one emitted CSS file.
+ * inside an inline style on that page or an emitted CSS file.
  */
 export const assertFontPreloadsResolved = async (
   distClientDir: string = DIST_CLIENT_DIR,
@@ -86,9 +86,14 @@ export const assertFontPreloadsResolved = async (
     cssFiles.map((name) => readFile(resolve(astroDir, name), "utf8")),
   );
 
+  const inlineStyles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(
+    (match) => match[1] ?? "",
+  );
+  const styles = [...cssContents, ...inlineStyles];
+
   return preloadHrefs
-    .filter((href) => !cssContents.some((css) => css.includes(href)))
-    .map((href) => `font preload href not found in any emitted CSS: ${href}`);
+    .filter((href) => !styles.some((css) => css.includes(href)))
+    .map((href) => `font preload href not found in emitted or inline CSS: ${href}`);
 };
 
 /** `safeJsonLd` escapes `<` and `>`, so a block can never contain `</script>`. */
