@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  assertFontPreloadsResolved,
   assertNoDanglingGraphRefs,
   assertOgAuthorNames,
   assertSeoBuildOutput,
@@ -421,6 +422,42 @@ describe("assertNoDanglingGraphRefs", () => {
 
     expect(await assertNoDanglingGraphRefs(missing)).toEqual([
       `build output is unreadable: ${missing}`,
+    ]);
+  });
+});
+
+describe("assertFontPreloadsResolved", () => {
+  let root = "";
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "font-preloads-"));
+    await mkdir(join(root, "about"));
+    await mkdir(join(root, "_astro"));
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const preload = '<link rel="preload" as="font" href="/_astro/display.woff2">';
+  const face = '@font-face{font-family:display;src:url("/_astro/display.woff2")}';
+
+  it("accepts a font referenced by inline CSS", async () => {
+    await writeFile(join(root, "about/index.html"), `${preload}<style>${face}</style>`);
+    expect(await assertFontPreloadsResolved(root)).toEqual([]);
+  });
+
+  it("accepts a font referenced by external CSS", async () => {
+    await writeFile(join(root, "about/index.html"), preload);
+    await writeFile(join(root, "_astro/global.css"), face);
+    expect(await assertFontPreloadsResolved(root)).toEqual([]);
+  });
+
+  it("rejects a preload with no matching font CSS", async () => {
+    await writeFile(
+      join(root, "about/index.html"),
+      `${preload}<script>${JSON.stringify(face)}</script>`,
+    );
+    expect(await assertFontPreloadsResolved(root)).toEqual([
+      "font preload href not found in emitted or inline CSS: /_astro/display.woff2",
     ]);
   });
 });

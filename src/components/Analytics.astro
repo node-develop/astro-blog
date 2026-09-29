@@ -5,13 +5,12 @@ import GoogleAnalytics from "~/components/GoogleAnalytics.astro";
  * Analytics — Plausible (self-hosted ready, DNT-aware) and, when `gaId` is
  * passed, Google Analytics 4.
  *
- * GA4 is rendered as Google's standard static gtag snippet (not injected by
- * script) so Google's "tag installed" check can see it in the HTML. It is only
- * emitted in production builds. Do Not Track is honoured through GA's
- * documented opt-out flag `window["ga-disable-<ID>"]`, set before `config`.
- * With <ClientRouter />, identical head elements persist across navigations,
- * so the snippet runs once; GA4 enhanced measurement records the SPA page
- * views from history changes.
+ * GA4 is emitted only in production builds. Its initial page view is queued
+ * immediately; the library loads after window.load and an idle opportunity
+ * so it does not compete with the first screen. Do Not Track prevents loading
+ * and sets GA's documented opt-out flag `window["ga-disable-<ID>"]`.
+ * Initialization is guarded across ClientRouter navigation; GA4 enhanced
+ * measurement records subsequent page views from history changes.
  *
  * Usage in BaseLayout.astro <head>:
  *

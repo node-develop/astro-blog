@@ -222,6 +222,16 @@ const size = text.length <= 30 ? "xl" : text.length <= 50 ? "lg" : "md";
     }
   }
   @media (max-width: 767px) {
+    /* Paint the first screen immediately on phones. The clipped title and
+       delayed fade otherwise hide useful content while the page is ready. */
+    .masthead__title {
+      transform: none;
+      animation: none;
+    }
+    .masthead__foot {
+      opacity: 1;
+      animation: none;
+    }
     .masthead {
       padding: var(--space-6) 0 var(--space-6);
     }

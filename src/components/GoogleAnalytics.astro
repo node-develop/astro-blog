@@ -1,10 +1,8 @@
 ---
 /**
- * Google Analytics 4 — Google's standard static gtag snippet.
- *
- * Rendered by Analytics.astro in production builds only. Static on purpose:
- * Google's "tag installed" check reads the HTML. Do Not Track is honoured via
- * GA's documented opt-out flag `window["ga-disable-<ID>"]`, set before config.
+ * GA4 queues its initial page view immediately, then downloads the library
+ * after the page loads and the browser has an idle opportunity. This keeps
+ * its network and parsing work out of the first-screen resource waterfall.
  */
 interface Props {
   /** GA4 measurement ID, e.g. G-XXXXXXX. */
@@ -15,16 +13,69 @@ const { id } = Astro.props;
 const src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
 ---
 
-<script is:inline async src={src}></script>
-<script is:inline define:vars={{ id }}>
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag() {
-    // gtag must push the `arguments` object itself, not a copy.
-    window.dataLayer.push(arguments);
-  };
-  if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
-    window["ga-disable-" + id] = true;
-  }
-  window.gtag("js", new Date());
-  window.gtag("config", id);
+<script is:inline define:vars={{ id, src }}>
+  (function () {
+    // The shell can be visited again through ClientRouter. Initialize once
+    // per document, including while the deferred library is still pending.
+    var key = "__artkaGa_" + id;
+    if (window[key]) return;
+    window[key] = true;
+
+    if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
+      window["ga-disable-" + id] = true;
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      function gtag() {
+        window.dataLayer.push(arguments);
+      };
+    window.gtag("js", new Date());
+    // Queue explicit views until the library can observe history changes.
+    // Keep page URLs on events rather than pinning all future events to the
+    // landing URL through a persistent config override.
+    window.gtag("config", id, { send_page_view: false });
+    var previousLocation = document.referrer;
+    var lastLocation = "";
+    function queuePageView() {
+      var location = window.location.href;
+      if (location === lastLocation) return;
+      window.gtag("event", "page_view", {
+        send_to: id,
+        page_location: location,
+        page_title: document.title,
+        page_referrer: previousLocation,
+      });
+      previousLocation = location;
+      lastLocation = location;
+    }
+    queuePageView();
+    document.addEventListener("astro:page-load", queuePageView);
+
+    function load() {
+      var script = document.createElement("script");
+      script.async = true;
+      script.src = src;
+      script.addEventListener(
+        "load",
+        function () {
+          // GA enhanced measurement owns subsequent history-based views.
+          document.removeEventListener("astro:page-load", queuePageView);
+        },
+        { once: true },
+      );
+      document.head.appendChild(script);
+    }
+    function schedule() {
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(load, { timeout: 2000 });
+      } else {
+        window.setTimeout(load, 0);
+      }
+    }
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+  })();
 </script>
