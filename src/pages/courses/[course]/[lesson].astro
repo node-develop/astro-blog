@@ -67,7 +67,7 @@ const { course, lesson, prev, next, index, total } = Astro.props as {
   index: number;
   total: number;
 };
-const { Content, remarkPluginFrontmatter } = await render(lesson);
+const { Content, headings, remarkPluginFrontmatter } = await render(lesson);
 ---
 
 <LessonLayout
@@ -77,6 +77,7 @@ const { Content, remarkPluginFrontmatter } = await render(lesson);
   next={next}
   index={index}
   total={total}
+  headings={headings}
   Content={Content}
   hasMath={remarkPluginFrontmatter.hasMath === true}
 />
