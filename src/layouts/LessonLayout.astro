@@ -11,10 +11,12 @@
  * Persists `lastVisited`, `completed`, `bookmarks` via course-progress.
  */
 import "~/styles/content.css";
+import type { MarkdownHeading } from "astro";
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import CourseSidebar from "~/components/CourseSidebar.astro";
 import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import MobilePostTOC from "~/components/MobilePostTOC.astro";
 import { getLocaleFromPath } from "~/lib/i18n/routing";
 import { t } from "~/i18n";
 import {
@@ -39,12 +41,23 @@ interface Props {
   next?: CollectionEntry<"lesson">;
   index: number; // 1-based
   total: number;
+  headings: readonly MarkdownHeading[];
   /** Astro Content component returned by `entry.render()`. Optional fallback to slot. */
   Content?: unknown;
   hasMath?: boolean;
 }
 
-const { course, lesson, prev, next, index, total, Content, hasMath = false } = Astro.props;
+const {
+  course,
+  lesson,
+  prev,
+  next,
+  index,
+  total,
+  headings,
+  Content,
+  hasMath = false,
+} = Astro.props;
 const ContentComponent = Content as unknown as (props: { components?: unknown }) => unknown;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const localePrefix = locale === "en" ? "/en" : "";
@@ -177,6 +190,8 @@ const labels =
       </h1>
       {lesson.data.blurb && <p class="lesson__blurb">{lesson.data.blurb}</p>}
     </header>
+
+    <MobilePostTOC headings={headings} />
 
     <section class="lesson__body prose">
       {Content ? <ContentComponent components={mdxComponents} /> : <slot />}
