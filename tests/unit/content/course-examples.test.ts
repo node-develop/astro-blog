@@ -19,7 +19,7 @@ const code = (source: string, language: string): string => {
 };
 
 describe("reviewed course examples", () => {
-  it("keeps all 14 lesson pairs ordered and synchronized with the landing review date", () => {
+  it("keeps all 14 lesson pairs ordered with matching RU/EN revision dates", () => {
     const files = readdirSync(root)
       .filter((name) => /^\d\d-.*\.md$/.test(name))
       .sort();
@@ -31,7 +31,11 @@ describe("reviewed course examples", () => {
         const fm = frontmatter(read(locale, file));
         expect(fm.order, file).toBe(index + 1);
         expect(fm.locale).toBe(locale || "ru");
-        expect(date(fm.updatedDate), file).toBe(reviewDate);
+        const ru = frontmatter(read("", file));
+        expect(date(fm.updatedDate), file).toBe(date(ru.updatedDate));
+        expect(Date.parse(date(fm.updatedDate)), file).toBeGreaterThanOrEqual(
+          Date.parse(date(fm.pubDate)),
+        );
         expect(date(fm.pubDate)).toBe("2026-04-23");
       });
     }

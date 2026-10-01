@@ -244,7 +244,7 @@ describe("static routes", () => {
 // --- the build-time guard ------------------------------------------------------
 
 const SCRIPT = join(process.cwd(), "scripts", "translate-check.ts");
-const TSX = join(process.cwd(), "node_modules", ".bin", "tsx");
+const TSX_LOADER = import.meta.resolve("tsx");
 
 const lessonFile = (title: string, locale?: Locale): string =>
   `---\ntitle: "${title}"\npubDate: 2026-04-23\n${locale ? `locale: ${locale}\n` : ""}---\n\nBody.\n`;
@@ -270,7 +270,10 @@ describe("pnpm translate:check on courses and lessons", () => {
     }
     // The script resolves content from process.cwd(), so the throwaway tree is
     // all it sees; its own imports resolve from the repo as usual.
-    const result = spawnSync(TSX, [SCRIPT], { cwd: root, encoding: "utf8" });
+    const result = spawnSync(process.execPath, ["--import", TSX_LOADER, SCRIPT], {
+      cwd: root,
+      encoding: "utf8",
+    });
     return { status: result.status, output: `${result.stdout}\n${result.stderr}` };
   };
 
