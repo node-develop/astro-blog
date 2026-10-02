@@ -11,6 +11,8 @@ updatedDate: 2026-09-08
 
 Suppose you ask for the same API review before every change. A skill stores that procedure in SKILL.md so you can invoke it again. Other useful examples include reviewing a contract, preparing a PR description or investigating a recurring error. Start with something you can perform manually. Otherwise SKILL.md becomes a wish list without an observable outcome.
 
+For a longer workflow, see [creating video with repeatable exports and checks](/en/blog/claude-code-video-guide/).
+
 ## Example: review an API contract
 
 Create `.claude/skills/review-contract/SKILL.md`:

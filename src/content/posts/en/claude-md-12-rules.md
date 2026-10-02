@@ -22,7 +22,7 @@ keywords:
 - multi-step ai workflows
 - behavioral contract llm
 lang: en
-sourceHash: 06731ad8eede9f9a1b93c021c2080dbc70df39de10a6e756784739c4747450bf
+sourceHash: 1185960e44e2bcafc065cd256e468c8ef84fbc89ada35d75de00fdf65c133d09
 manuallyEdited: true
 updatedDate: 2026-09-07
 ---
@@ -74,6 +74,8 @@ The [artka.dev repository](https://github.com/node-develop/astro-blog) has separ
 ```
 
 These commands may be wrong for another project. Its package.json, CI and README should determine the template. Copying command names without checking them merely introduces another failure.
+
+In a [Claude Code video project](/en/blog/claude-code-video-guide/), that contract fixes scene timing, approved copy and render checks.
 
 ## What instructions cannot enforce
 
