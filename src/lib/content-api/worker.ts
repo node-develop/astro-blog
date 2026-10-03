@@ -1,4 +1,4 @@
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { contentApiKeys, contentArticles, contentPublications, postsMeta } from "../db/schema";
 import { hash } from "./auth";
@@ -33,14 +33,22 @@ export const processPublication = async () =>
       sql`select pg_try_advisory_xact_lock(${CONTENT_LOCK}) as locked`,
     );
     if (!lock[0]?.locked) return { worked: false };
-    // Serialise whole deployments: a newer job must not replace an unverified build.
+    // Oldest job that is due. A job waiting for its next attempt (a build still
+    // deploying, a backoff after an error) must not hold up the ones behind it.
+    // The advisory lock above still allows only one step at a time, and
+    // content_publications_one_active_idx only one active job per article.
     const [job] = await tx
       .select()
       .from(contentPublications)
-      .where(inArray(contentPublications.state, ["queued", "publishing"]))
+      .where(
+        and(
+          inArray(contentPublications.state, ["queued", "publishing"]),
+          lte(contentPublications.nextAttemptAt, new Date()),
+        ),
+      )
       .orderBy(asc(contentPublications.createdAt), asc(contentPublications.id))
       .limit(1);
-    if (!job || job.nextAttemptAt > new Date()) return { worked: false };
+    if (!job) return { worked: false };
     const article = await requireArticle(tx, job.articleId);
     try {
       const [key] = await tx.select().from(contentApiKeys).where(eq(contentApiKeys.id, job.keyId));
