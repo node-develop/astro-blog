@@ -182,12 +182,7 @@ export const openApiDocument = {
       ),
     },
     "/articles/{id}/": {
-      get: operation(
-        "Read document, latest manual revision and remote content",
-        "articles:read",
-        undefined,
-        [id],
-      ),
+      get: operation("Read document and latest publication", "articles:read", undefined, [id]),
       put: operation(
         "Replace an article using expectedVersion",
         "articles:write (+ articles:publish for mode=publish)",
@@ -362,32 +357,6 @@ export const openApiDocument = {
           publication: { oneOf: [{ type: "null" }, { $ref: "#/components/schemas/Publication" }] },
           warnings: { type: "array", items: { type: "string" } },
           unchanged: { type: "boolean" },
-          manualEditsPending: { type: "boolean" },
-          manualRevision: {
-            oneOf: [
-              { type: "null" },
-              {
-                type: "object",
-                properties: {
-                  id: { type: "integer" },
-                  slug: { type: "string" },
-                  frontmatter: { type: "object" },
-                  body: { type: "string" },
-                  authorId: { type: "string", format: "uuid" },
-                  createdAt: { type: "string", format: "date-time" },
-                },
-              },
-            ],
-          },
-          remote: {
-            type: "object",
-            required: ["available"],
-            properties: {
-              available: { type: "boolean" },
-              content: { type: ["string", "null"] },
-              hash: { type: ["string", "null"] },
-            },
-          },
         },
       },
     },

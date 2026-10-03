@@ -56,12 +56,6 @@ export const createArticleSchema = z.strictObject({
 });
 export const updateArticleSchema = createArticleSchema.extend({
   expectedVersion: z.number().int().positive(),
-  acknowledgedManualRevisionId: z.number().int().nonnegative().default(0),
-  expectedRemoteHash: z
-    .string()
-    .regex(/^[a-f0-9]{64}$/)
-    .nullable()
-    .optional(),
 });
 export const publishArticleSchema = z.strictObject({
   expectedVersion: z.number().int().positive(),

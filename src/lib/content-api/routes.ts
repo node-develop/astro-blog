@@ -15,7 +15,7 @@ import {
   type ApiScope,
 } from "./contract";
 import { apiError } from "./errors";
-import { articlePath, articleUrl, readRemoteArticle } from "./github";
+import { articleUrl } from "./github";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
 import { handleApi, idempotencyKey, jsonResponse, readBytes, readJson } from "./http";
 import { MAX_IMAGE_BYTES, uploadImage } from "./media";
@@ -26,7 +26,6 @@ import {
   createArticle,
   enqueuePublication,
   getVersion,
-  latestManualRevision,
   listArticles,
   listMedia,
   listPublications,
@@ -277,26 +276,9 @@ export const routes: readonly Route[] = [
         .where(eq(contentPublications.articleId, id))
         .orderBy(desc(contentPublications.createdAt))
         .limit(1);
-      const manualRevision = await latestManualRevision(db, article.slug);
-      let remote: { available: boolean; content?: string | null; hash?: string | null } = {
-        available: false,
-      };
-      if (process.env.GITHUB_PAT) {
-        try {
-          remote = {
-            available: true,
-            ...(await readRemoteArticle(articlePath(article.slug, article.lang))),
-          };
-        } catch {
-          /* Local document stays readable during a GitHub outage. */
-        }
-      }
       return jsonResponse({
         ...articleView(article),
         publication: publication ? publicationView(publication) : null,
-        manualRevision,
-        manualEditsPending: (manualRevision?.id ?? 0) !== article.baseManualRevisionId,
-        remote,
       });
     },
   },

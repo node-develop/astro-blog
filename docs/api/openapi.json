@@ -925,7 +925,7 @@
     },
     "/articles/{id}/": {
       "get": {
-        "summary": "Read document, latest manual revision and remote content",
+        "summary": "Read document and latest publication",
         "description": "Required scope: articles:read. 60 requests/minute/key (Bearer only).",
         "security": [
           {
@@ -2985,23 +2985,6 @@
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
-          },
-          "acknowledgedManualRevisionId": {
-            "default": 0,
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "expectedRemoteHash": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^[a-f0-9]{64}$"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "required": [
@@ -4063,64 +4046,6 @@
           },
           "unchanged": {
             "type": "boolean"
-          },
-          "manualEditsPending": {
-            "type": "boolean"
-          },
-          "manualRevision": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "frontmatter": {
-                    "type": "object"
-                  },
-                  "body": {
-                    "type": "string"
-                  },
-                  "authorId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "createdAt": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              }
-            ]
-          },
-          "remote": {
-            "type": "object",
-            "required": [
-              "available"
-            ],
-            "properties": {
-              "available": {
-                "type": "boolean"
-              },
-              "content": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "hash": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            }
           }
         }
       }

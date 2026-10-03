@@ -11,7 +11,6 @@ import {
   contentAssets,
   contentApiRequests,
   contentPublications,
-  postRevisions,
 } from "../db/schema";
 import {
   encodeCursor,
@@ -31,7 +30,7 @@ import {
 import { articleStatus } from "./status";
 import { hash } from "./auth";
 import { apiError } from "./errors";
-import { articlePath, articleUrl, readRemoteArticle } from "./github";
+import { articlePath, articleUrl } from "./github";
 import { inspectMarkdown, serializeArticle } from "./markdown";
 
 export const CONTENT_LOCK = 71423091;
@@ -85,14 +84,19 @@ export const articleView = (article: Article) => ({
   createdAt: article.createdAt.toISOString(),
   updatedAt: article.updatedAt.toISOString(),
 });
-export const latestManualRevision = async (tx: Tx | Database, slug: string) => {
-  const [revision] = await tx
-    .select()
-    .from(postRevisions)
-    .where(eq(postRevisions.slug, slug))
-    .orderBy(desc(postRevisions.id))
-    .limit(1);
-  return revision ?? null;
+// TODO(cutover): a related slug that has no row in content_articles may still be a legacy file
+// post. Removed in prompt 3.6 with the file posts (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+const isPublishedPostFile = (slug: string, lang: string): boolean => {
+  const prefix = lang === "en" ? "en/" : "";
+  for (const extension of ["md", "mdx"]) {
+    const path = resolve(`src/content/posts/${prefix}${slug}.${extension}`);
+    if (!existsSync(path)) continue;
+    const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(path, "utf8"));
+    if (!match) continue;
+    const fm = yaml.load(match[1]!) as { draft?: boolean } | null;
+    if (fm && fm.draft !== true) return true;
+  }
+  return false;
 };
 
 export const validateDocument = async (document: ArticleDocument, tx: Tx | Database = db) => {
@@ -112,24 +116,16 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
     throw apiError(422, "missing_assets", "Upload referenced images before saving the article.", {
       assetIds: missing,
     });
-  const prefix = document.lang === "en" ? "en/" : "";
-  const isPublishedFile = (slug: string): boolean => {
-    for (const extension of ["md", "mdx"]) {
-      const path = resolve(`src/content/posts/${prefix}${slug}.${extension}`);
-      if (!existsSync(path)) continue;
-      const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(path, "utf8"));
-      if (!match) continue;
-      const fm = yaml.load(match[1]!) as { draft?: boolean } | null;
-      if (fm && fm.draft !== true) return true;
-    }
-    return false;
-  };
   for (const slug of document.relatedSlugs) {
     const [related] = await tx
       .select()
       .from(contentArticles)
       .where(and(eq(contentArticles.slug, slug), eq(contentArticles.lang, document.lang)));
-    if (slug === document.slug || (!related?.publishedVersion && !isPublishedFile(slug)))
+    // A database row wins over a file: the file is consulted only when there is no row.
+    const published = related
+      ? related.publishedVersion !== null
+      : isPublishedPostFile(slug, document.lang);
+    if (slug === document.slug || !published)
       throw apiError(
         422,
         "invalid_related_article",
@@ -212,28 +208,9 @@ const requireIdle = async (tx: Tx, id: string) => {
 
 export const enqueuePublication = async (tx: Tx, article: Article, keyId: string) => {
   await requireIdle(tx, article.id);
-  const manual = await latestManualRevision(tx, article.slug);
-  if ((manual?.id ?? 0) !== article.baseManualRevisionId)
-    throw apiError(
-      409,
-      "manual_edit_conflict",
-      "The admin has newer edits. Read and reconcile them before publishing.",
-    );
   const { assets } = await validateDocument(article.document, tx);
   const id = randomUUID();
   const now = new Date();
-  const [previous] = await tx
-    .select()
-    .from(contentPublications)
-    .where(eq(contentPublications.articleId, article.id))
-    .orderBy(desc(contentPublications.createdAt))
-    .limit(1);
-  // A retry after a failed deployment writes a fresh revision marker, triggering
-  // a fresh build. Only accept the exact prior snapshot as the remote baseline.
-  const baseRemoteHash =
-    previous?.state === "failed" && previous.commitSha && previous.version === article.version
-      ? hash(previous.content)
-      : article.baseRemoteHash;
   const content = await serializeArticle(
     article.document,
     assets,
@@ -249,7 +226,6 @@ export const enqueuePublication = async (tx: Tx, article: Article, keyId: string
       version: article.version,
       content,
       keyId,
-      baseRemoteHash,
       createdAt: now,
     })
     .returning();
@@ -286,10 +262,12 @@ export const createArticle = async (
       { articleIds: candidates.map((a) => a.id) },
     );
   const path = articlePath(document.slug, document.lang);
+  // TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
+  // overwrite the file. Slug occupancy becomes database-only in prompt 3.6
+  // (docs/superpowers/plans/2026-10-03-api-only-migration.md).
   if (existsSync(resolve(path)) || existsSync(resolve(`${path}x`)))
     throw apiError(409, "slug_conflict", "An existing site article owns this slug.");
   const { warnings } = await validateDocument(document, tx);
-  const manual = await latestManualRevision(tx, document.slug);
   const [article] = await tx
     .insert(contentArticles)
     .values({
@@ -298,7 +276,6 @@ export const createArticle = async (
       slug: document.slug,
       lang: document.lang,
       keyId,
-      baseManualRevisionId: manual?.id ?? 0,
     })
     .returning();
   const job = mode === "publish" ? await enqueuePublication(tx, article!, keyId) : null;
@@ -315,8 +292,6 @@ export const updateArticle = async (
     article: ArticleDocument;
     mode: "draft" | "publish";
     expectedVersion: number;
-    acknowledgedManualRevisionId: number;
-    expectedRemoteHash?: string | null | undefined;
   },
   keyId: string,
 ): Promise<MutationResult> => {
@@ -332,33 +307,13 @@ export const updateArticle = async (
     input.article.lang !== current.lang
   )
     throw apiError(409, "immutable_identity", "externalId, slug and lang cannot change.");
-  const manual = await latestManualRevision(tx, current.slug);
-  if (
-    (manual?.id ?? 0) !== current.baseManualRevisionId &&
-    input.acknowledgedManualRevisionId !== manual?.id
-  )
-    throw apiError(
-      409,
-      "manual_edit_conflict",
-      "Read the manual revision and explicitly acknowledge its ID after merging the edits.",
-      { manualRevisionId: manual?.id },
-    );
   const { warnings } = await validateDocument(input.article, tx);
-  let baseRemoteHash = current.baseRemoteHash;
-  if (input.expectedRemoteHash !== undefined) {
-    const remote = await readRemoteArticle(articlePath(current.slug, current.lang));
-    if (remote.hash !== input.expectedRemoteHash)
-      throw apiError(409, "remote_edit_conflict", "Remote content changed since it was read.");
-    baseRemoteHash = remote.hash;
-  }
   const [article] = await tx
     .update(contentArticles)
     .set({
       document: input.article,
       version: current.version + 1,
       updatedAt: new Date(),
-      baseManualRevisionId: manual?.id ?? 0,
-      baseRemoteHash,
     })
     .where(eq(contentArticles.id, id))
     .returning();

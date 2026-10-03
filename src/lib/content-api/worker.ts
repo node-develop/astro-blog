@@ -1,10 +1,9 @@
 import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { contentApiKeys, contentArticles, contentPublications, postsMeta } from "../db/schema";
-import { hash } from "./auth";
 import { apiError, isApiError } from "./errors";
 import { articlePath, articleUrl, commitArticle } from "./github";
-import { CONTENT_LOCK, latestManualRevision, requireArticle, validateDocument } from "./service";
+import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
 import { buildSearchVectorSql } from "../search/vector";
 
 export const verifyPublication = async (url: string, revision: string): Promise<boolean> => {
@@ -60,9 +59,6 @@ export const processPublication = async () =>
         );
       if (article.version !== job.version)
         throw apiError(409, "version_conflict", "Article changed after publication was queued.");
-      const manual = await latestManualRevision(tx, article.slug);
-      if ((manual?.id ?? 0) !== article.baseManualRevisionId)
-        throw apiError(409, "manual_edit_conflict", "Newer manual edits exist.");
       if (job.state === "queued") {
         // Pre-create visible metadata for the build and runtime lists. No page is
         // public until GitHub's build includes the non-draft Markdown document.
@@ -70,11 +66,21 @@ export const processPublication = async () =>
           .insert(postsMeta)
           .values({ slug: article.slug, order: 2_000_000_000, hiddenFromList: false })
           .onConflictDoNothing({ target: postsMeta.slug });
-        const sha = await commitArticle(
-          articlePath(article.slug, article.lang),
-          job.content,
-          job.baseRemoteHash,
-        );
+        // TODO(cutover): an article owns its file once it was published or committed before;
+        // a first commit must not overwrite a legacy file post that appeared at the same path.
+        // Removed with commitArticle (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+        // Note for 1.5: once unpublish commits exist, `commit_sha` alone must not imply ownership
+        // (an unpublish commit deletes the file); restrict this query to publish publications.
+        const own = await tx
+          .select({ id: contentPublications.id, commitSha: contentPublications.commitSha })
+          .from(contentPublications)
+          .where(eq(contentPublications.articleId, article.id));
+        const sha = await commitArticle(articlePath(article.slug, article.lang), job.content, {
+          overwrite: article.publishedVersion !== null || own.some((p) => p.commitSha !== null),
+          // A commit accepted by GitHub whose response was lost leaves no commit_sha, but the file
+          // carries the publication id as apiRevision.
+          ownedRevisions: own.map((p) => p.id),
+        });
         await tx
           .update(contentPublications)
           .set({
@@ -127,7 +133,6 @@ export const processPublication = async () =>
             .set({
               publishedContent: job.content,
               publishedVersion: job.version,
-              baseRemoteHash: hash(job.content),
               firstPublishedAt: article.firstPublishedAt ?? job.createdAt,
             })
             .where(eq(contentArticles.id, article.id));

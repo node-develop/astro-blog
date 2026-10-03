@@ -33,12 +33,31 @@ export const readRemoteArticle = async (path: string) => {
   }
 };
 
-// Check the file at an immutable tree, then advance the branch without force.
-// A concurrent editor changes the parent, forcing a fresh check before retry.
+const REVISION_LINE = /^apiRevision:\s*["']?([0-9a-fA-F-]{36})["']?\s*$/m;
+/** The `apiRevision` marker the API wrote into the frontmatter; survives prettier reformatting. */
+export const fileApiRevision = (file: string): string | null => {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(file)?.[1];
+  return (frontmatter && REVISION_LINE.exec(frontmatter)?.[1]?.toLowerCase()) || null;
+};
+
+// Read the file at an immutable parent, then advance the branch without force. A concurrent
+// push moves the parent and forces a fresh read before the retry.
+//
+// There is no stored baseline: the API is the single writer of the articles it owns, so with
+// `overwrite` the file is replaced whatever it holds (prettier may have reformatted it since the
+// last publication). Without `overwrite` (the article has never been committed) a file that
+// already sits at the path belongs to someone else and is not touched, unless its `apiRevision`
+// is one of `ownedRevisions` (ids of this article's own publications): then it is our own commit
+// whose response was lost before the database recorded it.
+// TODO(cutover): the `overwrite` guard exists only while legacy file posts live in git; it goes
+// away with commitArticle in stage 2 (docs/superpowers/plans/2026-10-03-api-only-migration.md).
 export const commitArticle = async (
   path: string,
   content: string,
-  expectedHash: string | null,
+  {
+    overwrite,
+    ownedRevisions = [],
+  }: Readonly<{ overwrite: boolean; ownedRevisions?: readonly string[] }>,
 ): Promise<string> => {
   const { client, owner, repo, branch } = github();
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -59,12 +78,10 @@ export const commitArticle = async (
     if (mdx !== null)
       throw apiError(409, "slug_conflict", "An MDX article already owns this address.");
     if (current === content) return parent; // Recovery after GitHub accepted a previous attempt.
-    if ((current === null ? null : hash(current)) !== expectedHash)
-      throw apiError(
-        409,
-        "remote_edit_conflict",
-        "GitHub content changed. Read the latest article and reconcile it before retrying.",
-      );
+    const revision = current === null ? null : fileApiRevision(current);
+    const ownsFile = overwrite || (revision !== null && ownedRevisions.includes(revision));
+    if (current !== null && !ownsFile)
+      throw apiError(409, "slug_conflict", "An existing site article owns this slug.");
     const { data: parentCommit } = await client.git.getCommit({ owner, repo, commit_sha: parent });
     const { data: blob } = await client.git.createBlob({ owner, repo, content, encoding: "utf-8" });
     const { data: tree } = await client.git.createTree({
@@ -94,5 +111,7 @@ export const commitArticle = async (
       if (attempt === 2 || (status !== 409 && status !== 422)) throw error;
     }
   }
+  // Unreachable: the last attempt rethrows the original error. Kept only for the return type;
+  // it goes away with commitArticle in stage 2.
   throw apiError(409, "branch_busy", "The publication branch is changing; retry later.");
 };
