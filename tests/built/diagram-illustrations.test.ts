@@ -31,16 +31,6 @@ const lessonPages = (): readonly { route: string; html: string }[] =>
 const figuresOf = (html: string): readonly string[] =>
   html.match(/<figure class="diagram">[\s\S]*?<\/figure>/g) ?? [];
 
-/**
- * Diagrams still without accTitle/accDescr. The Mailu post is owned by the
- * content API (`apiRevision`): editing its file in git would diverge from the
- * article stored in the database, so it waits for an API-side edit.
- */
-const WITHOUT_TEXT_ALTERNATIVE = new Set([
-  "/blog/custom-domain-email-mailu-dokploy/",
-  "/en/blog/custom-domain-email-mailu-dokploy/",
-]);
-
 describe("Mermaid diagrams in built posts and lessons", () => {
   const posts = postPages();
   const pages = [...posts, ...lessonPages()];
@@ -69,18 +59,16 @@ describe("Mermaid diagrams in built posts and lessons", () => {
   });
 
   it("every diagram has a text alternative and a caption (accDescr, accTitle)", () => {
-    const missing = withDiagrams
-      .filter((page) => !WITHOUT_TEXT_ALTERNATIVE.has(page.route))
-      .flatMap((page) =>
-        figuresOf(page.html)
-          .filter(
-            (figure) =>
-              /<img[^>]*\salt=""/.test(figure) ||
-              !/<img[^>]*\salt="[^"]+"/.test(figure) ||
-              !/<\/span>\s*\S[^<]*<\/figcaption>/.test(figure),
-          )
-          .map(() => page.route),
-      );
+    const missing = withDiagrams.flatMap((page) =>
+      figuresOf(page.html)
+        .filter(
+          (figure) =>
+            /<img[^>]*\salt=""/.test(figure) ||
+            !/<img[^>]*\salt="[^"]+"/.test(figure) ||
+            !/<\/span>\s*\S[^<]*<\/figcaption>/.test(figure),
+        )
+        .map(() => page.route),
+    );
     expect(missing).toEqual([]);
   });
 
