@@ -27,6 +27,28 @@ describe("matchRoute over the real route table", () => {
     });
   });
 
+  it("sends articles/by-slug/versions to by-slug, not to the versions route", () => {
+    expect(hit("GET", "articles/by-slug/versions")).toEqual({
+      pattern: "articles/by-slug/:slug",
+      params: { slug: "versions" },
+    });
+    expect(hit("GET", `articles/${id}/versions`)).toEqual({
+      pattern: "articles/:id/versions",
+      params: { id },
+    });
+    expect(hit("GET", `articles/${id}/versions/3`)).toEqual({
+      pattern: "articles/:id/versions/:n",
+      params: { id, n: "3" },
+    });
+  });
+
+  it("sends a bare articles/by-slug to the :id route, not to a by-slug route", () => {
+    expect(hit("GET", "articles/by-slug")).toEqual({
+      pattern: "articles/:id",
+      params: { id: "by-slug" },
+    });
+  });
+
   it("ignores one trailing slash", () => {
     expect(hit("POST", "articles/")?.pattern).toBe("articles");
     expect(hit("GET", "whoami/")?.pattern).toBe("whoami");

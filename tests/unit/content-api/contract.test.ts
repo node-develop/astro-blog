@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { articleDocumentSchema, createArticleSchema } from "../../../src/lib/content-api/contract";
+import { z } from "zod";
+import {
+  articleDocumentSchema,
+  createArticleSchema,
+  cursorSchema,
+  encodeCursor,
+} from "../../../src/lib/content-api/contract";
 import { inspectMarkdown, serializeArticle } from "../../../src/lib/content-api/markdown";
 import { inspectImage } from "../../../src/lib/content-api/media";
 import { readBytes, readJson } from "../../../src/lib/content-api/http";
@@ -133,5 +139,25 @@ describe("content API contract and rendering", () => {
         }),
       ),
     ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("list query and cursor", () => {
+  const good = { at: "2026-10-01T12:30:45.123456Z", id: "349ad05b-41ae-4b63-93ab-d7679c82c886" };
+  const raw = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
+
+  it("round-trips a cursor including the microseconds", () => {
+    expect(cursorSchema.parse(encodeCursor(good))).toEqual(good);
+  });
+  it.each([
+    ["not base64url JSON", "!!!"],
+    ["not JSON", Buffer.from("{oops").toString("base64url")],
+    ["not an object", raw([1, 2])],
+    ["millisecond precision only", raw({ ...good, at: "2026-10-01T12:30:45.123Z" })],
+    ["impossible date", raw({ ...good, at: "2026-13-45T99:00:00.000000Z" })],
+    ["id not a uuid", raw({ ...good, id: "nope" })],
+    ["extra key", raw({ ...good, extra: 1 })],
+  ])("rejects a cursor that is %s with a ZodError", (_name, value) => {
+    expect(() => cursorSchema.parse(value)).toThrow(z.ZodError);
   });
 });

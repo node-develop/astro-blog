@@ -1,11 +1,16 @@
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
+import { getMetaBySlug } from "../db/repo/posts-meta";
 import { db } from "../db";
 import { contentPublications } from "../db/schema";
 import { authorize, equalSecret, requireScope, type Principal } from "./auth";
 import {
   createArticleSchema,
+  listArticlesQuerySchema,
+  listMediaQuerySchema,
+  listPublicationsQuerySchema,
   publishArticleSchema,
+  slugSchema,
   updateArticleSchema,
   type ApiScope,
 } from "./contract";
@@ -17,9 +22,15 @@ import { MAX_IMAGE_BYTES, uploadImage } from "./media";
 import { openApiDocument } from "./openapi";
 import {
   articleView,
+  articlesBySlug,
   createArticle,
   enqueuePublication,
+  getVersion,
   latestManualRevision,
+  listArticles,
+  listMedia,
+  listPublications,
+  listVersions,
   mutateOnce,
   publicationView,
   requireArticle,
@@ -124,6 +135,15 @@ export const createDispatcher =
     });
 
 const articleId = (params: Readonly<Record<string, string>>): string => z.uuid().parse(params.id);
+const queryOf = (request: Request): Record<string, string> =>
+  Object.fromEntries(new URL(request.url).searchParams);
+const versionNumber = (params: Readonly<Record<string, string>>): number =>
+  Number(
+    z
+      .string()
+      .regex(/^[1-9]\d{0,8}$/)
+      .parse(params.n),
+  );
 
 export const routes: readonly Route[] = [
   {
@@ -213,6 +233,38 @@ export const routes: readonly Route[] = [
   },
   {
     method: "GET",
+    pattern: "articles",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ request }) =>
+      jsonResponse(await listArticles(db, listArticlesQuerySchema.parse(queryOf(request)))),
+  },
+  {
+    // Before articles/:id/versions: both have three segments and the first match wins.
+    method: "GET",
+    pattern: "articles/by-slug/:slug",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ params }) =>
+      jsonResponse(await articlesBySlug(db, slugSchema.parse(params.slug))),
+  },
+  {
+    method: "GET",
+    pattern: "articles/:id/versions",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ params }) => jsonResponse(await listVersions(db, articleId(params))),
+  },
+  {
+    method: "GET",
+    pattern: "articles/:id/versions/:n",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ params }) =>
+      jsonResponse(await getVersion(db, articleId(params), versionNumber(params))),
+  },
+  {
+    method: "GET",
     pattern: "articles/:id",
     scope: "articles:read",
     idempotent: false,
@@ -282,6 +334,41 @@ export const routes: readonly Route[] = [
         };
       });
       return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    method: "GET",
+    pattern: "publications",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ request }) =>
+      jsonResponse(await listPublications(db, listPublicationsQuerySchema.parse(queryOf(request)))),
+  },
+  {
+    // Reading the media list needs articles:read, not media:write: an agent needs assetIds to
+    // reference images, and a read-only key must not gain the right to upload.
+    method: "GET",
+    pattern: "media",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ request }) =>
+      jsonResponse(await listMedia(db, listMediaQuerySchema.parse(queryOf(request)))),
+  },
+  {
+    method: "GET",
+    pattern: "posts-meta/:slug",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async ({ params }) => {
+      const meta = await getMetaBySlug(slugSchema.parse(params.slug));
+      if (!meta) throw apiError(404, "not_found", "Post metadata not found.");
+      return jsonResponse({
+        slug: meta.slug,
+        order: meta.order,
+        pinned: meta.pinned,
+        hiddenFromList: meta.hiddenFromList,
+        updatedAt: meta.updatedAt.toISOString(),
+      });
     },
   },
   {

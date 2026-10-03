@@ -67,6 +67,33 @@ curl --fail-with-body "$CONTENT_API_BASE/articles/" \
 - `Idempotency-Key` у сессии привязан к пользователю: два администратора с одинаковым ключом не видят ответов друг друга.
 - `GET /whoami/` возвращает `{kind: "key" | "session", keyName, scopes}`; запрос по ключу считается в лимите.
 
+## Чтение
+
+Все маршруты чтения требуют скоуп `articles:read` (в том числе `GET /media/`: агенту нужны `assetId`, чтобы сослаться на картинку, а ключ только для чтения не должен получать право загрузки). Ответы описаны в OpenAPI теми же Zod-схемами; поля не из схемы в ответ не попадают.
+
+| Маршрут | Ответ |
+| --- | --- |
+| `GET /articles/?lang&status&agent&tag&q&limit&cursor` | страница статей: `id, slug, lang, title, tags, url, provenance.agent, version, publishedVersion, status, updatedAt` |
+| `GET /articles/by-slug/{slug}/` | `{ru, en, translation}`; `translation` = `{sourceVersion, stale}` или `null`, если нет одной из сторон |
+| `GET /articles/{id}/versions/` | `{currentVersion, items}` без документов, новые первыми |
+| `GET /articles/{id}/versions/{n}/` | одна версия с документом; нет такой: `404 not_found`, `details: {version, currentVersion}` |
+| `GET /publications/?articleId&state&limit&cursor` | страница публикаций с полем `kind` (`publish`/`unpublish`) |
+| `GET /media/?limit&cursor` | страница загруженных изображений: `id, url, width, height, mimeType, byteSize, createdAt` |
+| `GET /posts-meta/{slug}/` | `{slug, order, pinned, hiddenFromList, updatedAt}` |
+
+**Статус статьи** (`status`), первое подходящее правило:
+
+1. последняя публикация `queued` или `publishing` (в том числе снятие с публикации): `publishing`;
+2. последняя публикация `failed`: `failed`;
+3. задан `unpublished_at`: `unpublished`;
+4. `publishedVersion` пуст: `draft`;
+5. `version > publishedVersion`: `changed`;
+6. иначе `published`.
+
+**Пагинация.** `limit` 1..100 (по умолчанию 20). `nextCursor` непрозрачный: передавайте его без изменений; `null` значит последняя страница. Испорченный курсор и неизвестный параметр запроса дают `422 validation_error`. Статьи идут по `(updatedAt, id)` по убыванию, публикации и изображения по `(createdAt, id)`. Правка статьи во время обхода переносит её в начало списка, поэтому при обходе её можно пропустить; для надёжной сверки обходите список заново.
+
+**Границы.** Маршруты видят только статьи, созданные через API. Файловые посты сюда не входят: `404` у `by-slug` не значит, что slug свободен (создание вернёт `409 slug_conflict`, если slug занят файлом). `stale: true` при `sourceVersion: null` значит, что версия RU-источника перевода неизвестна. История версий может иметь дыры (версии до ввода истории не восстанавливаются): отдаётся то, что есть.
+
 ## Поля статьи
 
 Обязательные: `externalId`, `lang` (`ru`/`en`), `slug`, `title`, `description`, `summary`, `body`, `tags`, `sources`, `provenance.agent`.

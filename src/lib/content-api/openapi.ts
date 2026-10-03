@@ -1,10 +1,20 @@
 import { z } from "zod";
 import {
+  articleBySlugSchema,
   articleDocumentSchema,
+  articleListSchema,
+  articleStatusSchema,
+  articleVersionSchema,
   createArticleSchema,
+  mediaListSchema,
+  postMetaSchema,
+  publicationListSchema,
+  publicationSchema,
+  publicationStateSchema,
   publishArticleSchema,
   scopeSchema,
   updateArticleSchema,
+  versionListSchema,
 } from "./contract";
 
 const schema = (value: z.ZodType) =>
@@ -20,6 +30,27 @@ const once = {
   required: true,
   schema: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
 };
+const slugParam = {
+  name: "slug",
+  in: "path",
+  required: true,
+  schema: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$", maxLength: 100 },
+};
+const query = (name: string, schema: object, description?: string) => ({
+  name,
+  in: "query",
+  required: false,
+  ...(description ? { description } : {}),
+  schema,
+});
+const pagination = [
+  query("limit", { type: "integer", minimum: 1, maximum: 100, default: 20 }),
+  query(
+    "cursor",
+    { type: "string" },
+    "Opaque: pass the nextCursor of the previous page unchanged. Malformed values give 422.",
+  ),
+];
 const operation = (
   summary: string,
   scope: string,
@@ -81,6 +112,24 @@ export const openApiDocument = {
   servers: [{ url: "/api/v1" }],
   paths: {
     "/articles/": {
+      get: operation(
+        "List articles, newest update first, with a computed status",
+        "articles:read",
+        undefined,
+        [
+          query("lang", { type: "string", enum: ["ru", "en"] }),
+          query("status", { $ref: "#/components/schemas/ArticleStatus" }),
+          query("agent", { type: "string", minLength: 1, maxLength: 100 }, "provenance.agent"),
+          query("tag", { type: "string" }),
+          query(
+            "q",
+            { type: "string", minLength: 1, maxLength: 200 },
+            "Substring of slug or title",
+          ),
+          ...pagination,
+        ],
+        "ArticleList",
+      ),
       post: operation(
         "Create an article",
         "articles:write (+ articles:publish for mode=publish)",
@@ -95,6 +144,41 @@ export const openApiDocument = {
         "CreateArticle",
         [],
         "ValidationResult",
+      ),
+    },
+    "/articles/by-slug/{slug}/": {
+      get: operation(
+        "Read the ru and en versions of a slug (API-managed articles only)",
+        "articles:read",
+        undefined,
+        [slugParam],
+        "ArticleBySlug",
+      ),
+    },
+    "/articles/{id}/versions/": {
+      get: operation(
+        "List saved versions, newest first (history may have gaps)",
+        "articles:read",
+        undefined,
+        [id],
+        "ArticleVersionList",
+      ),
+    },
+    "/articles/{id}/versions/{n}/": {
+      get: operation(
+        "Read one saved version with its document",
+        "articles:read",
+        undefined,
+        [
+          id,
+          {
+            name: "n",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1, maximum: 999999999 },
+          },
+        ],
+        "ArticleVersion",
       ),
     },
     "/articles/{id}/": {
@@ -119,6 +203,28 @@ export const openApiDocument = {
         [id, once],
       ),
     },
+    "/publications/": {
+      get: operation(
+        "List publications, newest first",
+        "articles:read",
+        undefined,
+        [
+          query("articleId", { type: "string", format: "uuid" }),
+          query("state", { $ref: "#/components/schemas/PublicationState" }),
+          ...pagination,
+        ],
+        "PublicationList",
+      ),
+    },
+    "/posts-meta/{slug}/": {
+      get: operation(
+        "Read order, pinned and hidden flags of a post",
+        "articles:read",
+        undefined,
+        [slugParam],
+        "PostMeta",
+      ),
+    },
     "/publications/{id}/": {
       get: operation(
         "Read publication status",
@@ -138,6 +244,13 @@ export const openApiDocument = {
       ),
     },
     "/media/": {
+      get: operation(
+        "List uploaded images, newest first; needs articles:read so that a read-only key can find assetIds",
+        "articles:read",
+        undefined,
+        pagination,
+        "MediaList",
+      ),
       post: {
         ...operation(
           "Upload image bytes; repeated bytes return the same asset",
@@ -204,42 +317,17 @@ export const openApiDocument = {
           }),
         }),
       ),
-      Publication: {
-        type: "object",
-        required: [
-          "id",
-          "articleId",
-          "version",
-          "state",
-          "commitSha",
-          "attempts",
-          "error",
-          "createdAt",
-          "updatedAt",
-          "statusUrl",
-        ],
-        properties: {
-          id: { type: "string", format: "uuid" },
-          articleId: { type: "string", format: "uuid" },
-          version: { type: "integer", minimum: 1 },
-          state: { type: "string", enum: ["queued", "publishing", "published", "failed"] },
-          commitSha: { type: ["string", "null"] },
-          attempts: { type: "integer", minimum: 0 },
-          error: {
-            oneOf: [
-              { type: "null" },
-              {
-                type: "object",
-                required: ["code", "message"],
-                properties: { code: { type: "string" }, message: { type: "string" } },
-              },
-            ],
-          },
-          createdAt: { type: "string", format: "date-time" },
-          updatedAt: { type: "string", format: "date-time" },
-          statusUrl: { type: "string" },
-        },
-      },
+      // Not strict here: PublicationStatus extends it with `url` through allOf.
+      Publication: schema(z.object(publicationSchema.shape)),
+      PublicationState: schema(publicationStateSchema),
+      ArticleStatus: schema(articleStatusSchema),
+      ArticleList: schema(articleListSchema),
+      ArticleBySlug: schema(articleBySlugSchema),
+      ArticleVersionList: schema(versionListSchema),
+      ArticleVersion: schema(articleVersionSchema),
+      PublicationList: schema(publicationListSchema),
+      MediaList: schema(mediaListSchema),
+      PostMeta: schema(postMetaSchema),
       PublicationStatus: {
         allOf: [
           { $ref: "#/components/schemas/Publication" },
