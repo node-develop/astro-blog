@@ -23,6 +23,13 @@ export type Principal =
       userId: string;
     }>;
 
+/** Who made a write: the key behind it and, for an admin session, the person. */
+export type Actor = Readonly<{ keyId: string; userId: string | null }>;
+export const actorOf = (principal: Principal): Actor => ({
+  keyId: principal.keyId,
+  userId: principal.kind === "session" ? principal.userId : null,
+});
+
 /** `"any"` means: authenticated is enough, no particular scope. */
 export const authenticate = async (request: Request, scope: ApiScope | "any") => {
   const bearer = /^Bearer (artka_[A-Za-z0-9_-]{43})$/.exec(

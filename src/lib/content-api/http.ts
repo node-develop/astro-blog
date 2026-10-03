@@ -46,6 +46,24 @@ export const idempotencyKey = (request: Request): string => {
     );
   return key;
 };
+/**
+ * `If-Match: "<article version>"`: exactly one strong quoted positive integer. Missing is 428;
+ * `*`, weak (`W/"3"`), lists and anything else that is not that form is 400. Pairs with the
+ * `ETag` of GET /articles/{id}/.
+ */
+export const ifMatchVersion = (request: Request): number => {
+  const header = request.headers.get("if-match");
+  if (header === null)
+    throw apiError(428, "precondition_required", 'Send If-Match: "<article version>".');
+  const match = /^"([1-9]\d{0,8})"$/.exec(header);
+  if (!match?.[1])
+    throw apiError(
+      400,
+      "invalid_if_match",
+      'If-Match must be one strong quoted article version, for example "3".',
+    );
+  return Number(match[1]);
+};
 export const jsonResponse = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
     status,

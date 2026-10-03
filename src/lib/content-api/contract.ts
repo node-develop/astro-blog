@@ -60,6 +60,21 @@ export const updateArticleSchema = createArticleSchema.extend({
 export const publishArticleSchema = z.strictObject({
   expectedVersion: z.number().int().positive(),
 });
+/** One publication per item, all of one slug pair (ru + en); 1..2 items, no repeated ids. */
+export const publishBatchSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        id: z.uuid(),
+        expectedVersion: z.number().int().positive(),
+      }),
+    )
+    .min(1)
+    .max(2)
+    .refine((items) => new Set(items.map((item) => item.id)).size === items.length, {
+      message: "items must not repeat an id",
+    }),
+});
 export const scopeSchema = z.enum([
   "articles:read",
   "articles:write",
@@ -207,8 +222,10 @@ export const publicationSchema = z.strictObject({
   createdAt: instant,
   updatedAt: instant,
   statusUrl: z.string(),
+  /** Optional: replays of responses stored before 1.5 do not carry it. */
+  kind: z.enum(["publish", "unpublish"]).optional(),
 });
-/** `kind` exists only in the list: single-publication and write responses (and stored idempotent replays) never carry it. */
+/** Listings always carry `kind`. */
 export const publicationListItemSchema = publicationSchema.extend({
   kind: z.enum(["publish", "unpublish"]),
 });

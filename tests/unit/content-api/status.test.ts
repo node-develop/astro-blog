@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { articleStatus, type StatusInput } from "~/lib/content-api/status";
+import {
+  articleStatus,
+  ownsCommittedFile,
+  type PublicationEvent,
+  type StatusInput,
+} from "~/lib/content-api/status";
 
 const base: StatusInput = {
   version: 3,
@@ -44,5 +49,50 @@ describe("articleStatus", () => {
     ["unpublished over draft", { publishedVersion: null, unpublishedAt: at }, "unpublished"],
   ])("%s -> %s", (_name, override, expected) => {
     expect(articleStatus({ ...base, ...override })).toBe(expected);
+  });
+});
+
+describe("ownsCommittedFile", () => {
+  const event = (
+    kind: PublicationEvent["kind"],
+    state: PublicationEvent["state"],
+    commitSha: string | null,
+    day: number,
+  ): PublicationEvent => ({
+    kind,
+    state,
+    commitSha,
+    createdAt: new Date(Date.UTC(2026, 9, day)),
+  });
+  it.each<[string, PublicationEvent[], boolean]>([
+    ["no publications", [], false],
+    ["a publish that never reached git", [event("publish", "failed", null, 1)], false],
+    ["a publish with a commit", [event("publish", "failed", "sha", 1)], true],
+    [
+      "the file was removed after the commit",
+      [event("publish", "published", "a", 1), event("unpublish", "published", "b", 2)],
+      false,
+    ],
+    [
+      "published again after an unpublish",
+      [
+        event("unpublish", "published", "b", 2),
+        event("publish", "publishing", "c", 3),
+        event("publish", "published", "a", 1),
+      ],
+      true,
+    ],
+    [
+      "an unpublish that has not finished does not take the file away",
+      [event("publish", "published", "a", 1), event("unpublish", "publishing", "b", 2)],
+      true,
+    ],
+    [
+      "a failed unpublish does not take the file away",
+      [event("publish", "published", "a", 1), event("unpublish", "failed", "b", 2)],
+      true,
+    ],
+  ])("%s -> %s", (_name, events, expected) => {
+    expect(ownsCommittedFile(events)).toBe(expected);
   });
 });

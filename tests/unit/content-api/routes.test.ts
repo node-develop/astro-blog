@@ -55,7 +55,7 @@ describe("matchRoute over the real route table", () => {
   });
 
   it.each([
-    ["DELETE", `articles/${id}`],
+    ["PATCH", `articles/${id}`],
     ["POST", `articles/${id}`],
     ["GET", `articles/${id}/publish`],
     ["GET", "articles//publish"],

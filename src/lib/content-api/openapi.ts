@@ -12,6 +12,7 @@ import {
   publicationSchema,
   publicationStateSchema,
   publishArticleSchema,
+  publishBatchSchema,
   scopeSchema,
   updateArticleSchema,
   versionListSchema,
@@ -36,6 +37,14 @@ const slugParam = {
   required: true,
   schema: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$", maxLength: 100 },
 };
+const ifMatch = {
+  name: "If-Match",
+  in: "header",
+  required: true,
+  description:
+    'The article version as one strong quoted integer, e.g. "3" (the ETag of GET /articles/{id}/). Missing: 428; malformed (*, W/"3", a list): 400; not the current version: 412.',
+  schema: { type: "string", pattern: '^"[1-9][0-9]{0,8}"$' },
+};
 const query = (name: string, schema: object, description?: string) => ({
   name,
   in: "query",
@@ -57,6 +66,7 @@ const operation = (
   input?: string,
   parameters: unknown[] = [],
   model = "ArticleResult",
+  more: Readonly<{ success?: readonly number[]; errors?: Readonly<Record<string, string>> }> = {},
 ) => ({
   summary,
   description: `Required scope: ${scope}. 60 requests/minute/key (Bearer only).`,
@@ -72,15 +82,17 @@ const operation = (
     : {}),
   responses: {
     ...Object.fromEntries(
-      (model === "MediaResult"
-        ? [201]
-        : model === "ValidationResult"
-          ? [200]
-          : input === "CreateArticle"
-            ? [201, 202]
-            : input
-              ? [200, 202]
-              : [200]
+      (more.success
+        ? more.success
+        : model === "MediaResult"
+          ? [201]
+          : model === "ValidationResult"
+            ? [200]
+            : input === "CreateArticle"
+              ? [201, 202]
+              : input
+                ? [200, 202]
+                : [200]
       ).map((code) => [
         String(code),
         response(
@@ -89,11 +101,14 @@ const operation = (
         ),
       ]),
     ),
-    "400": response("Malformed JSON or missing Idempotency-Key"),
+    "400": response("Malformed JSON, missing Idempotency-Key or malformed If-Match"),
     "401": response("Missing, invalid or revoked key, or no admin session"),
     "403": response("Insufficient scope or origin mismatch"),
     "404": response("Not found"),
     "409": response("Identity, idempotency, version or edit conflict"),
+    ...Object.fromEntries(
+      Object.entries(more.errors ?? {}).map(([code, text]) => [code, response(text)]),
+    ),
     "413": response("Request too large"),
     "415": response("Unsupported Content-Type"),
     "422": response("Validation failed"),
@@ -189,6 +204,50 @@ export const openApiDocument = {
         "UpdateArticle",
         [id, once],
       ),
+      delete: operation(
+        "Delete a draft that never went live (409 unpublish_first, was_published, publication_in_progress otherwise)",
+        "articles:write",
+        undefined,
+        [id, ifMatch],
+        "DeleteResult",
+        { errors: { "412": "If-Match is not the current version", "428": "If-Match is missing" } },
+      ),
+    },
+    "/articles/{id}/versions/{n}/restore/": {
+      post: operation(
+        "Save the document of version n as a new version",
+        "articles:write",
+        "PublishArticle",
+        [
+          id,
+          {
+            name: "n",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1, maximum: 999999999 },
+          },
+          once,
+        ],
+        "RestoreResult",
+        { success: [200] },
+      ),
+    },
+    "/articles/{id}/unpublish/": {
+      post: operation(
+        "Remove this language's page: queues an unpublish publication",
+        "articles:publish",
+        "PublishArticle",
+        [id, once],
+      ),
+    },
+    "/publish/": {
+      post: operation(
+        "Publish the ru and en twins of one slug together, all or nothing",
+        "articles:publish",
+        "PublishBatch",
+        [once],
+        "BatchResult",
+      ),
     },
     "/articles/{id}/publish/": {
       post: operation(
@@ -282,6 +341,28 @@ export const openApiDocument = {
       CreateArticle: schema(createArticleSchema),
       UpdateArticle: schema(updateArticleSchema),
       PublishArticle: schema(publishArticleSchema),
+      PublishBatch: schema(publishBatchSchema),
+      DeleteResult: schema(z.object({ id: z.uuid(), deleted: z.literal(true) })),
+      RestoreResult: {
+        allOf: [
+          { $ref: "#/components/schemas/ArticleResult" },
+          {
+            type: "object",
+            required: ["restoredFrom"],
+            properties: { restoredFrom: { type: "integer", minimum: 1 } },
+          },
+        ],
+      },
+      BatchResult: {
+        type: "object",
+        required: ["batchId", "items"],
+        description:
+          "202 when at least one item was queued, 200 (batchId null) when every item was unchanged.",
+        properties: {
+          batchId: { type: ["string", "null"], format: "uuid" },
+          items: { type: "array", items: { $ref: "#/components/schemas/ArticleResult" } },
+        },
+      },
       Error: schema(
         z.object({
           error: z.object({
@@ -350,7 +431,13 @@ export const openApiDocument = {
           version: { type: "integer", minimum: 1 },
           article: { $ref: "#/components/schemas/ArticleDocument" },
           publishedVersion: { type: ["integer", "null"] },
-          state: { type: "string", enum: ["draft", "published"] },
+          state: {
+            type: "string",
+            enum: ["draft", "published"],
+            deprecated: true,
+            description: "Deprecated: use status.",
+          },
+          status: { $ref: "#/components/schemas/ArticleStatus" },
           url: { type: "string", format: "uri" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },

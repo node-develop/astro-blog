@@ -3,13 +3,14 @@ import { desc, eq } from "drizzle-orm";
 import { getMetaBySlug } from "../db/repo/posts-meta";
 import { db } from "../db";
 import { contentPublications } from "../db/schema";
-import { authorize, equalSecret, requireScope, type Principal } from "./auth";
+import { actorOf, authorize, equalSecret, requireScope, type Principal } from "./auth";
 import {
   createArticleSchema,
   listArticlesQuerySchema,
   listMediaQuerySchema,
   listPublicationsQuerySchema,
   publishArticleSchema,
+  publishBatchSchema,
   slugSchema,
   updateArticleSchema,
   type ApiScope,
@@ -17,14 +18,23 @@ import {
 import { apiError } from "./errors";
 import { articleUrl } from "./github";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
-import { handleApi, idempotencyKey, jsonResponse, readBytes, readJson } from "./http";
+import {
+  handleApi,
+  idempotencyKey,
+  ifMatchVersion,
+  jsonResponse,
+  readBytes,
+  readJson,
+} from "./http";
 import { MAX_IMAGE_BYTES, uploadImage } from "./media";
 import { openApiDocument } from "./openapi";
 import {
   articleView,
   articlesBySlug,
   createArticle,
+  deleteDraft,
   enqueuePublication,
+  enqueueUnpublication,
   getVersion,
   listArticles,
   listMedia,
@@ -32,9 +42,13 @@ import {
   listVersions,
   mutateOnce,
   publicationView,
+  publishBatch,
   requireArticle,
+  requireIdle,
+  restoreVersion,
   updateArticle,
   validateDocument,
+  withContentLock,
   type MutationResult,
   type Tx,
 } from "./service";
@@ -223,7 +237,7 @@ export const routes: readonly Route[] = [
       const input = createArticleSchema.parse(await readJson(request));
       if (input.mode === "publish") requireScope(principal, "articles:publish");
       const result = await once(input, (tx) =>
-        createArticle(tx, input.article, input.mode, principal.keyId),
+        createArticle(tx, input.article, input.mode, actorOf(principal)),
       );
       return jsonResponse(result.data, result.status, {
         location: `/api/v1/articles/${result.data.id}/`,
@@ -274,12 +288,18 @@ export const routes: readonly Route[] = [
         .select()
         .from(contentPublications)
         .where(eq(contentPublications.articleId, id))
-        .orderBy(desc(contentPublications.createdAt))
+        .orderBy(desc(contentPublications.createdAt), desc(contentPublications.id))
         .limit(1);
-      return jsonResponse({
-        ...articleView(article),
-        publication: publication ? publicationView(publication) : null,
-      });
+      // The ETag is the article version, for If-Match only: `status` and `publication` change
+      // without a version bump, so it is not a cache validator and If-None-Match is not supported.
+      return jsonResponse(
+        {
+          ...articleView(article, publication ?? null),
+          publication: publication ? publicationView(publication) : null,
+        },
+        200,
+        { etag: `"${article.version}"` },
+      );
     },
   },
   {
@@ -291,7 +311,7 @@ export const routes: readonly Route[] = [
       const id = articleId(params);
       const input = updateArticleSchema.parse(await readJson(request));
       if (input.mode === "publish") requireScope(principal, "articles:publish");
-      const result = await once(input, (tx) => updateArticle(tx, id, input, principal.keyId));
+      const result = await once(input, (tx) => updateArticle(tx, id, input, actorOf(principal)));
       return jsonResponse(result.data, result.status);
     },
   },
@@ -307,14 +327,78 @@ export const routes: readonly Route[] = [
         const article = await requireArticle(tx, id);
         if (article.version !== input.expectedVersion)
           throw apiError(409, "version_conflict", "Read the current version before publishing.");
-        if (article.publishedVersion === article.version)
-          return { status: 200, data: { ...articleView(article), unchanged: true } };
-        const publication = await enqueuePublication(tx, article, principal.keyId);
+        const latest = await requireIdle(tx, id);
+        // An unpublish that was the last word (even a failed one whose commit landed) is not
+        // "already published": publishing again restores the page.
+        if (article.publishedVersion === article.version && latest?.kind !== "unpublish")
+          return { status: 200, data: { ...articleView(article, latest), unchanged: true } };
+        const publication = await enqueuePublication(tx, article, actorOf(principal), {
+          idle: true,
+        });
         return {
           status: 202,
-          data: { ...articleView(article), publication: publicationView(publication) },
+          data: { ...articleView(article, publication), publication: publicationView(publication) },
         };
       });
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    method: "POST",
+    pattern: "articles/:id/versions/:n/restore",
+    scope: "articles:write",
+    idempotent: true,
+    handler: async ({ request, params, principal, once }) => {
+      const id = articleId(params);
+      const n = versionNumber(params);
+      const input = publishArticleSchema.parse(await readJson(request));
+      const result = await once(input, (tx) =>
+        restoreVersion(tx, id, n, input.expectedVersion, actorOf(principal)),
+      );
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    // Not idempotent: a repeat gets 404 (or 412) instead of a replay. The lock serialises it with
+    // writers and the worker.
+    method: "DELETE",
+    pattern: "articles/:id",
+    scope: "articles:write",
+    idempotent: false,
+    handler: async ({ request, params }) => {
+      const id = articleId(params);
+      const ifMatch = ifMatchVersion(request);
+      const result = await withContentLock((tx) => deleteDraft(tx, id, ifMatch));
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    method: "POST",
+    pattern: "articles/:id/unpublish",
+    scope: "articles:publish",
+    idempotent: true,
+    handler: async ({ request, params, principal, once }) => {
+      const id = articleId(params);
+      const input = publishArticleSchema.parse(await readJson(request));
+      const result = await once(input, async (tx) =>
+        enqueueUnpublication(
+          tx,
+          await requireArticle(tx, id),
+          input.expectedVersion,
+          actorOf(principal),
+        ),
+      );
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    method: "POST",
+    pattern: "publish",
+    scope: "articles:publish",
+    idempotent: true,
+    handler: async ({ request, principal, once }) => {
+      const input = publishBatchSchema.parse(await readJson(request));
+      const result = await once(input, (tx) => publishBatch(tx, input.items, actorOf(principal)));
       return jsonResponse(result.data, result.status);
     },
   },

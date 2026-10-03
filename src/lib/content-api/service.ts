@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import * as yaml from "~/lib/yaml";
 import { resolve } from "node:path";
-import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db, type Database } from "../db";
 import {
@@ -13,6 +13,7 @@ import {
   contentPublications,
 } from "../db/schema";
 import {
+  articleDocumentSchema,
   encodeCursor,
   type ArticleDocument,
   type Cursor,
@@ -27,8 +28,8 @@ import {
   type publicationListSchema,
   type versionListSchema,
 } from "./contract";
-import { articleStatus } from "./status";
-import { hash } from "./auth";
+import { articleStatus, ownsCommittedFile } from "./status";
+import { hash, type Actor } from "./auth";
 import { apiError } from "./errors";
 import { articlePath, articleUrl } from "./github";
 import { inspectMarkdown, serializeArticle } from "./markdown";
@@ -54,6 +55,7 @@ export const publicationView = (
     Publication,
     | "id"
     | "articleId"
+    | "kind"
     | "version"
     | "state"
     | "commitSha"
@@ -65,6 +67,7 @@ export const publicationView = (
 ) => ({
   id: job.id,
   articleId: job.articleId,
+  kind: job.kind,
   version: job.version,
   state: job.state,
   commitSha: job.commitSha,
@@ -74,12 +77,22 @@ export const publicationView = (
   updatedAt: job.updatedAt.toISOString(),
   statusUrl: `/api/v1/publications/${job.id}/`,
 });
-export const articleView = (article: Article) => ({
+/**
+ * `latest` is the article's newest publication (or the job just created). `state` is kept for
+ * compatibility and deprecated: use `status`.
+ */
+export const articleView = (article: Article, latest: Pick<Publication, "state"> | null) => ({
   id: article.id,
   version: article.version,
   article: article.document,
   publishedVersion: article.publishedVersion,
   state: article.publishedVersion === article.version ? "published" : "draft",
+  status: articleStatus({
+    version: article.version,
+    publishedVersion: article.publishedVersion,
+    unpublishedAt: article.unpublishedAt,
+    latestPublication: latest,
+  }),
   url: articleUrl(article.slug, article.lang),
   createdAt: article.createdAt.toISOString(),
   updatedAt: article.updatedAt.toISOString(),
@@ -144,14 +157,20 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
   };
 };
 
+/** One writer at a time across replicas: the transaction holds the content advisory lock. */
+export const withContentLock = <T>(operation: (tx: Tx) => Promise<T>): Promise<T> =>
+  db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(${CONTENT_LOCK})`);
+    return operation(tx);
+  });
+
 export const mutateOnce = async (
   keyId: string,
   idempotencyKey: string,
   request: unknown,
   operation: (tx: Tx) => Promise<MutationResult>,
 ): Promise<MutationResult> =>
-  db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(${CONTENT_LOCK})`);
+  withContentLock(async (tx) => {
     const digest = hash(canonicalJson(request));
     const [previous] = await tx
       .select()
@@ -187,7 +206,12 @@ export const requireArticle = async (tx: Tx | Database, id: string) => {
   if (!article) throw apiError(404, "not_found", "Article not found.");
   return article;
 };
-const requireIdle = async (tx: Tx, id: string) => {
+/**
+ * Refuses while a publication is active and returns the article's newest publication (or null),
+ * so a caller that needs `status` does not ask again. Callers that enqueue a job should pass that
+ * job to `articleView` instead: the returned row is from before the enqueue.
+ */
+export const requireIdle = async (tx: Tx, id: string): Promise<Publication | null> => {
   const [active] = await tx
     .select()
     .from(contentPublications)
@@ -204,13 +228,41 @@ const requireIdle = async (tx: Tx, id: string) => {
       "Wait for the active publication before changing this article.",
       { publicationId: active.id },
     );
+  const [latest] = await tx
+    .select()
+    .from(contentPublications)
+    .where(eq(contentPublications.articleId, id))
+    .orderBy(desc(contentPublications.createdAt), desc(contentPublications.id))
+    .limit(1);
+  return latest ?? null;
 };
 
-export const enqueuePublication = async (tx: Tx, article: Article, keyId: string) => {
-  await requireIdle(tx, article.id);
+const publicationEvents = (tx: Tx, id: string) =>
+  tx
+    .select({
+      kind: contentPublications.kind,
+      state: contentPublications.state,
+      commitSha: contentPublications.commitSha,
+      createdAt: contentPublications.createdAt,
+    })
+    .from(contentPublications)
+    .where(eq(contentPublications.articleId, id));
+
+/**
+ * `createdAt` fixes the order of jobs of one batch (the worker takes the oldest due job first);
+ * `batchId` ties the publications requested together.
+ */
+export const enqueuePublication = async (
+  tx: Tx,
+  article: Article,
+  actor: Actor,
+  opts: Readonly<{ batchId?: string; createdAt?: Date; idle?: true }> = {},
+) => {
+  // `idle`: the caller has just run requireIdle for this article in the same transaction.
+  if (!opts.idle) await requireIdle(tx, article.id);
   const { assets } = await validateDocument(article.document, tx);
   const id = randomUUID();
-  const now = new Date();
+  const now = opts.createdAt ?? new Date();
   const content = await serializeArticle(
     article.document,
     assets,
@@ -225,18 +277,48 @@ export const enqueuePublication = async (tx: Tx, article: Article, keyId: string
       articleId: article.id,
       version: article.version,
       content,
-      keyId,
+      keyId: actor.keyId,
+      batchId: opts.batchId ?? null,
       createdAt: now,
     })
     .returning();
   return job!;
 };
 
+const recordVersion = async (tx: Tx, article: Article, actor: Actor) => {
+  await tx.insert(contentArticleVersions).values({
+    articleId: article.id,
+    version: article.version,
+    document: article.document,
+    actorKeyId: actor.keyId,
+    actorUserId: actor.userId,
+  });
+};
+
+/**
+ * The one write path of a new document version: bumps the version and keeps the history row in
+ * the same transaction. Used by update, restore and (prompt 1.6) translate.
+ */
+export const writeVersion = async (
+  tx: Tx,
+  current: Article,
+  document: ArticleDocument,
+  actor: Actor,
+): Promise<Article> => {
+  const [article] = await tx
+    .update(contentArticles)
+    .set({ document, version: current.version + 1, updatedAt: new Date() })
+    .where(eq(contentArticles.id, current.id))
+    .returning();
+  await recordVersion(tx, article!, actor);
+  return article!;
+};
+
 export const createArticle = async (
   tx: Tx,
   document: ArticleDocument,
   mode: "draft" | "publish",
-  keyId: string,
+  actor: Actor,
 ): Promise<MutationResult> => {
   const candidates = await tx
     .select()
@@ -275,13 +357,14 @@ export const createArticle = async (
       externalId: document.externalId,
       slug: document.slug,
       lang: document.lang,
-      keyId,
+      keyId: actor.keyId,
     })
     .returning();
-  const job = mode === "publish" ? await enqueuePublication(tx, article!, keyId) : null;
+  await recordVersion(tx, article!, actor);
+  const job = mode === "publish" ? await enqueuePublication(tx, article!, actor) : null;
   return {
     status: job ? 202 : 201,
-    data: { ...articleView(article!), publication: job && publicationView(job), warnings },
+    data: { ...articleView(article!, job), publication: job && publicationView(job), warnings },
   };
 };
 
@@ -293,14 +376,14 @@ export const updateArticle = async (
     mode: "draft" | "publish";
     expectedVersion: number;
   },
-  keyId: string,
+  actor: Actor,
 ): Promise<MutationResult> => {
   const current = await requireArticle(tx, id);
   if (current.version !== input.expectedVersion)
     throw apiError(409, "version_conflict", "Read the current article before updating.", {
       version: current.version,
     });
-  await requireIdle(tx, id);
+  const latest = await requireIdle(tx, id);
   if (
     input.article.externalId !== current.externalId ||
     input.article.slug !== current.slug ||
@@ -308,19 +391,228 @@ export const updateArticle = async (
   )
     throw apiError(409, "immutable_identity", "externalId, slug and lang cannot change.");
   const { warnings } = await validateDocument(input.article, tx);
-  const [article] = await tx
-    .update(contentArticles)
-    .set({
-      document: input.article,
-      version: current.version + 1,
-      updatedAt: new Date(),
-    })
-    .where(eq(contentArticles.id, id))
-    .returning();
-  const job = input.mode === "publish" ? await enqueuePublication(tx, article!, keyId) : null;
+  const article = await writeVersion(tx, current, input.article, actor);
+  const job =
+    input.mode === "publish" ? await enqueuePublication(tx, article, actor, { idle: true }) : null;
   return {
     status: job ? 202 : 200,
-    data: { ...articleView(article!), publication: job && publicationView(job), warnings },
+    data: {
+      ...articleView(article, job ?? latest),
+      publication: job && publicationView(job),
+      warnings,
+    },
+  };
+};
+
+/** A new version that carries the document of version `n`; history is never rewritten. */
+export const restoreVersion = async (
+  tx: Tx,
+  id: string,
+  n: number,
+  expectedVersion: number,
+  actor: Actor,
+): Promise<MutationResult> => {
+  const current = await requireArticle(tx, id);
+  if (current.version !== expectedVersion)
+    throw apiError(409, "version_conflict", "Read the current article before restoring.", {
+      version: current.version,
+    });
+  const latest = await requireIdle(tx, id);
+  const [row] = await tx
+    .select()
+    .from(contentArticleVersions)
+    .where(and(eq(contentArticleVersions.articleId, id), eq(contentArticleVersions.version, n)));
+  if (!row)
+    throw apiError(404, "not_found", "Version not found.", {
+      version: n,
+      currentVersion: current.version,
+    });
+  // History is "as saved": a document written under an older contract may no longer pass.
+  const parsed = articleDocumentSchema.safeParse(row.document);
+  if (!parsed.success)
+    throw apiError(
+      422,
+      "version_incompatible",
+      "This version no longer satisfies the current article contract.",
+      {
+        version: n,
+        issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
+      },
+    );
+  if (
+    parsed.data.externalId !== current.externalId ||
+    parsed.data.slug !== current.slug ||
+    parsed.data.lang !== current.lang
+  )
+    throw apiError(
+      409,
+      "immutable_identity",
+      "This version has a different externalId, slug or lang than the article.",
+      { version: n },
+    );
+  const { warnings } = await validateDocument(parsed.data, tx);
+  const article = await writeVersion(tx, current, parsed.data, actor);
+  return {
+    status: 200,
+    data: { ...articleView(article, latest), restoredFrom: n, warnings },
+  };
+};
+
+/**
+ * Deletes a draft that never went live. Checks, in order: 404; 412 when `ifMatch` is not the
+ * current version; 409 `publication_in_progress`; 409 `unpublish_first` while the article is
+ * published or its file sits in git (a failed first publication whose commit landed: deleting the
+ * row would leave a non-draft file for the next build); 409 `was_published` for an article that
+ * ever went live, so the history of anything that was public survives. Publications are deleted
+ * first (`content_publications.article_id` is RESTRICT); versions go with the article (CASCADE).
+ * `posts_meta` is shared by both languages and is left alone.
+ */
+export const deleteDraft = async (tx: Tx, id: string, ifMatch: number): Promise<MutationResult> => {
+  const article = await requireArticle(tx, id);
+  if (article.version !== ifMatch)
+    throw apiError(412, "precondition_failed", "If-Match does not match the current version.", {
+      version: article.version,
+    });
+  await requireIdle(tx, id);
+  if (article.publishedVersion !== null || ownsCommittedFile(await publicationEvents(tx, id)))
+    throw apiError(
+      409,
+      "unpublish_first",
+      "The article is published or its file is already committed; unpublish it first.",
+    );
+  if (article.firstPublishedAt !== null)
+    throw apiError(
+      409,
+      "was_published",
+      "The article was published before; its history is kept and it cannot be deleted.",
+    );
+  await tx.delete(contentPublications).where(eq(contentPublications.articleId, id));
+  await tx.delete(contentArticles).where(eq(contentArticles.id, id));
+  return { status: 200, data: { id, deleted: true } };
+};
+
+/**
+ * Queues the removal of the article's file (this language only). An article that is not
+ * published and has no file in git has nothing to remove: `unchanged` when it already was
+ * unpublished, else 409 `not_published`. Refused while a published article of the same language
+ * links to it (409 `referenced_by_related`). The check reads that article's `publishedContent`
+ * (the committed Markdown), not its draft document: only the live link would die. Nothing is validated against the document: it is not being published.
+ */
+export const enqueueUnpublication = async (
+  tx: Tx,
+  article: Article,
+  expectedVersion: number,
+  actor: Actor,
+): Promise<MutationResult> => {
+  if (article.version !== expectedVersion)
+    throw apiError(409, "version_conflict", "Read the current version before unpublishing.", {
+      version: article.version,
+    });
+  const latest = await requireIdle(tx, article.id);
+  if (
+    article.publishedVersion === null &&
+    !ownsCommittedFile(await publicationEvents(tx, article.id))
+  ) {
+    if (article.unpublishedAt)
+      return { status: 200, data: { ...articleView(article, latest), unchanged: true } };
+    throw apiError(409, "not_published", "The article is not published.");
+  }
+  const referencing = await tx
+    .select({ id: contentArticles.id })
+    .from(contentArticles)
+    .where(
+      and(
+        eq(contentArticles.lang, article.lang),
+        ne(contentArticles.id, article.id),
+        isNotNull(contentArticles.publishedVersion),
+        // What is live, not the draft: the hard link sits in the committed Markdown.
+        sql`strpos(${contentArticles.publishedContent}, ${`(${article.lang === "en" ? "/en" : ""}/blog/${article.slug}/)`}) > 0`,
+      ),
+    );
+  if (referencing.length)
+    throw apiError(
+      409,
+      "referenced_by_related",
+      "Published articles link to this one in relatedSlugs; remove the links first.",
+      { articleIds: referencing.map((row) => row.id) },
+    );
+  const [job] = await tx
+    .insert(contentPublications)
+    .values({
+      articleId: article.id,
+      kind: "unpublish",
+      version: article.version,
+      content: "",
+      keyId: actor.keyId,
+      // App clock like enqueuePublication: "newest publication" compares both kinds.
+      createdAt: new Date(),
+    })
+    .returning();
+  return {
+    status: 202,
+    data: { ...articleView(article, job!), publication: publicationView(job!) },
+  };
+};
+
+/**
+ * Publishes the ru and en twins of one slug together, all or nothing (the caller's transaction).
+ * An item whose published version is already current and whose newest publication is not an
+ * unpublish is `unchanged` and gets no row. The jobs share a `batchId` and are created one
+ * millisecond apart in the order ru, en, so the worker handles ru first.
+ */
+export const publishBatch = async (
+  tx: Tx,
+  items: readonly Readonly<{ id: string; expectedVersion: number }>[],
+  actor: Actor,
+): Promise<MutationResult> => {
+  const articles = await items.reduce<Promise<readonly Article[]>>(
+    async (acc, item) => [...(await acc), await requireArticle(tx, item.id)],
+    Promise.resolve([]),
+  );
+  const slugs = [...new Set(articles.map((a) => a.slug))];
+  if (slugs.length > 1)
+    throw apiError(
+      422,
+      "batch_slug_mismatch",
+      "All items of a batch must be the ru and en versions of one slug.",
+      { slugs },
+    );
+  items.forEach((item, index) => {
+    const article = articles[index]!;
+    if (article.version !== item.expectedVersion)
+      throw apiError(409, "version_conflict", "Read the current version before publishing.", {
+        id: article.id,
+        version: article.version,
+      });
+  });
+  const ordered = [...articles].sort((a, b) => (a.lang === b.lang ? 0 : a.lang === "ru" ? -1 : 1));
+  const batchId = randomUUID();
+  const start = Date.now();
+  // Sequential on purpose: one transaction connection, and `createdAt` follows the queue order.
+  const outcomes = await ordered.reduce<
+    Promise<readonly Readonly<{ queued: boolean; result: Record<string, unknown> }>[]>
+  >(async (accPromise, article) => {
+    const acc = await accPromise;
+    const latest = await requireIdle(tx, article.id);
+    if (article.publishedVersion === article.version && latest?.kind !== "unpublish")
+      return [
+        ...acc,
+        { queued: false, result: { ...articleView(article, latest), unchanged: true } },
+      ];
+    const job = await enqueuePublication(tx, article, actor, {
+      batchId,
+      createdAt: new Date(start + acc.filter((o) => o.queued).length),
+      idle: true,
+    });
+    return [
+      ...acc,
+      { queued: true, result: { ...articleView(article, job), publication: publicationView(job) } },
+    ];
+  }, Promise.resolve([]));
+  const queued = outcomes.some((o) => o.queued);
+  return {
+    status: queued ? 202 : 200,
+    data: { batchId: queued ? batchId : null, items: outcomes.map((o) => o.result) },
   };
 };
 
@@ -559,7 +851,7 @@ export const listPublications = async (
     id: row.id,
   }));
   return {
-    items: items.map((row) => ({ ...publicationView(row), kind: row.kind })),
+    items: items.map((row) => publicationView(row)),
     nextCursor,
   };
 };

@@ -18,7 +18,9 @@ vi.mock("~/lib/db", () => ({
 const remote = vi.hoisted(() => ({
   content: null as string | null,
   commits: 0,
-  live: "",
+  deletes: 0,
+  /** The page body; `null` is a 404. */
+  live: "" as string | null,
   sitemap: "",
 }));
 vi.mock("../../src/lib/content-api/github", async (original) => {
@@ -41,6 +43,22 @@ vi.mock("../../src/lib/content-api/github", async (original) => {
         remote.content = content;
         remote.commits++;
         return `commit-${remote.commits}`;
+      },
+    ),
+    // Same contract as the real adapter: a missing file is a recovery, a foreign file is refused.
+    deleteArticle: vi.fn(
+      async (
+        _path: string,
+        { overwrite, ownedRevisions = [] }: { overwrite: boolean; ownedRevisions?: string[] },
+      ) => {
+        if (remote.content === null) return "parent";
+        const revision = actual.fileApiRevision(remote.content);
+        const owns = overwrite || (revision !== null && ownedRevisions.includes(revision));
+        if (!owns)
+          throw Object.assign(new Error("Existing file"), { status: 409, code: "slug_conflict" });
+        remote.content = null;
+        remote.deletes++;
+        return `delete-${remote.deletes}`;
       },
     ),
   };
@@ -71,6 +89,7 @@ const call = async (
   body?: unknown,
   key = "request-1",
   bearer = token,
+  extra: Record<string, string> = {},
 ) => {
   const response = await ALL({
     params: { path },
@@ -80,11 +99,16 @@ const call = async (
         authorization: `Bearer ${bearer}`,
         "content-type": "application/json",
         "idempotency-key": key,
+        ...extra,
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }),
   } as unknown as APIContext);
-  return { status: response.status, body: await response.json() };
+  return {
+    status: response.status,
+    body: await response.json(),
+    headers: response.headers,
+  };
 };
 
 describe("content API with PostgreSQL", () => {
@@ -119,6 +143,7 @@ describe("content API with PostgreSQL", () => {
     keyId = key!.id;
     remote.content = null;
     remote.commits = 0;
+    remote.deletes = 0;
     remote.live = "";
     remote.sitemap = "";
     vi.clearAllMocks();
@@ -127,7 +152,9 @@ describe("content API with PostgreSQL", () => {
       vi.fn(async (url: string | URL) =>
         String(url).includes("sitemap-")
           ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
-          : new Response(remote.live, { headers: { "content-type": "text/html" } }),
+          : remote.live === null
+            ? new Response("", { status: 404 })
+            : new Response(remote.live, { headers: { "content-type": "text/html" } }),
       ),
     );
   });
@@ -494,5 +521,513 @@ describe("content API with PostgreSQL", () => {
     expect((await state.db!.select().from(schema.contentPublications))[0]?.error?.code).toBe(
       "key_revoked",
     );
+  });
+
+  // ── Prompt 1.5: versions, restore, delete, unpublish, batch, status ──────────────────────────
+  const liveHtml = (url: string, revision: string) =>
+    `<html><head><link rel="canonical" href="${url}"><meta name="description" content="Description"></head><article data-content-revision="${revision}"></article></html>`;
+  const sitemapOf = (...urls: string[]) =>
+    `<?xml version="1.0"?><urlset>${urls.map((u) => `<url><loc>${u}</loc></url>`).join("")}</urlset>`;
+  const OTHER_URL = "https://artka.dev/blog/some-other-post/";
+  /** Runs one publication through commit, live page and sitemap to `published`. */
+  const goLive = async (url: string, publicationId: string) => {
+    await processPublication();
+    remote.live = liveHtml(url, publicationId);
+    remote.sitemap = sitemapOf(url, OTHER_URL);
+    await due();
+    await processPublication();
+  };
+  const publishedArticle = async () => {
+    const article = await make("publish");
+    await goLive(article.url, article.publication.id);
+    const read = (await call("GET", `articles/${article.id}`)).body;
+    expect(read.status).toBe("published");
+    return { ...article, version: read.version as number };
+  };
+  const versionRows = (articleId: string) =>
+    state
+      .db!.select()
+      .from(schema.contentArticleVersions)
+      .where(eq(schema.contentArticleVersions.articleId, articleId))
+      .orderBy(schema.contentArticleVersions.version);
+  const publicationRows = () => state.db!.select().from(schema.contentPublications);
+  const articleRow = async (id: string) =>
+    (
+      await state.db!.select().from(schema.contentArticles).where(eq(schema.contentArticles.id, id))
+    )[0]!;
+  const makeEnglish = async () => {
+    const result = await call(
+      "POST",
+      "articles",
+      { article: { ...document, lang: "en" } },
+      "english",
+    );
+    expect(result.status).toBe(201);
+    return result.body;
+  };
+
+  it("writes a version row with the actor for every save and exposes status", async () => {
+    const created = await make();
+    expect(created).toMatchObject({ status: "draft", state: "draft" });
+    const updated = await call(
+      "PUT",
+      `articles/${created.id}`,
+      { article: { ...document, title: "Second title" }, expectedVersion: 1 },
+      "put-1",
+    );
+    expect(updated.body).toMatchObject({ status: "draft", version: 2 });
+    const rows = await versionRows(created.id);
+    expect(rows.map((r) => [r.version, r.document.title, r.actorKeyId, r.actorUserId])).toEqual([
+      [1, "Integration API article", keyId, null],
+      [2, "Second title", keyId, null],
+    ]);
+    const read = await call("GET", `articles/${created.id}`);
+    expect(read.body.status).toBe("draft");
+    expect(read.headers.get("etag")).toBe('"2"');
+  });
+
+  it("reports publishing in the 202 bodies of create, update, publish and unpublish", async () => {
+    const created = await make("publish");
+    expect(created.status).toBe("publishing");
+    expect(created.publication.kind).toBe("publish");
+    await goLive(created.url, created.publication.id);
+    const put = await call(
+      "PUT",
+      `articles/${created.id}`,
+      { article: { ...document, title: "Changed" }, expectedVersion: 1 },
+      "put-changed",
+    );
+    expect(put.body.status).toBe("changed");
+    const publish = await call(
+      "POST",
+      `articles/${created.id}/publish`,
+      { expectedVersion: 2 },
+      "publish-2",
+    );
+    expect([publish.status, publish.body.status]).toEqual([202, "publishing"]);
+    expect((await call("GET", `articles/${created.id}`)).body.status).toBe("publishing");
+    await state.db!.update(schema.contentPublications).set({ state: "failed" });
+    expect((await call("GET", `articles/${created.id}`)).body.status).toBe("failed");
+    const putPublish = await call(
+      "PUT",
+      `articles/${created.id}`,
+      { article: { ...document, title: "Changed again" }, expectedVersion: 2, mode: "publish" },
+      "put-publish",
+    );
+    expect([putPublish.status, putPublish.body.status]).toEqual([202, "publishing"]);
+  });
+
+  it("restores an old version as a new one, with the actor, and keeps the history", async () => {
+    const created = await make();
+    await call(
+      "PUT",
+      `articles/${created.id}`,
+      { article: { ...document, title: "Second title" }, expectedVersion: 1 },
+      "put-1",
+    );
+    const restored = await call(
+      "POST",
+      `articles/${created.id}/versions/1/restore`,
+      { expectedVersion: 2 },
+      "restore-1",
+    );
+    expect(restored.status).toBe(200);
+    expect(restored.body).toMatchObject({
+      version: 3,
+      restoredFrom: 1,
+      status: "draft",
+      article: { title: "Integration API article" },
+    });
+    const rows = await versionRows(created.id);
+    expect(rows.map((r) => [r.version, r.document.title])).toEqual([
+      [1, "Integration API article"],
+      [2, "Second title"],
+      [3, "Integration API article"],
+    ]);
+    expect(rows[2]!.actorKeyId).toBe(keyId);
+    expect((await articleRow(created.id)).version).toBe(3);
+    // Stale expectedVersion, a version that was never saved, and a gap in old history.
+    expect(
+      (
+        await call(
+          "POST",
+          `articles/${created.id}/versions/1/restore`,
+          { expectedVersion: 2 },
+          "restore-stale",
+        )
+      ).body.error.code,
+    ).toBe("version_conflict");
+    const missing = await call(
+      "POST",
+      `articles/${created.id}/versions/9/restore`,
+      { expectedVersion: 3 },
+      "restore-missing",
+    );
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.details).toEqual({ version: 9, currentVersion: 3 });
+    await client`delete from content_article_versions where version = 2`;
+    expect(
+      (
+        await call(
+          "POST",
+          `articles/${created.id}/versions/2/restore`,
+          { expectedVersion: 3 },
+          "restore-gap",
+        )
+      ).status,
+    ).toBe(404);
+    // A stored document that the contract no longer accepts is refused, not repaired.
+    await client`update content_article_versions set document = document - 'sources' where version = 1`;
+    const incompatible = await call(
+      "POST",
+      `articles/${created.id}/versions/1/restore`,
+      { expectedVersion: 3 },
+      "restore-old",
+    );
+    expect([incompatible.status, incompatible.body.error.code]).toEqual([
+      422,
+      "version_incompatible",
+    ]);
+  });
+
+  it("deletes a draft together with its failed publication and history", async () => {
+    const article = await make("publish");
+    remote.content = "A legacy post pushed to the same path";
+    await processPublication(); // slug_conflict: failed, nothing committed.
+    expect((await publicationRows())[0]).toMatchObject({ state: "failed", commitSha: null });
+    const deleted = await call("DELETE", `articles/${article.id}`, undefined, "d", token, {
+      "if-match": '"1"',
+    });
+    expect([deleted.status, deleted.body]).toEqual([200, { id: article.id, deleted: true }]);
+    expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(0);
+    expect(await publicationRows()).toHaveLength(0);
+    expect(await versionRows(article.id)).toHaveLength(0);
+    expect((await call("GET", `articles/${article.id}`)).status).toBe(404);
+  });
+
+  it("checks If-Match before deleting and refuses articles that are or were public", async () => {
+    const draft = await make();
+    const del = (id: string, ifMatch?: string) =>
+      call(
+        "DELETE",
+        `articles/${id}`,
+        undefined,
+        "d",
+        token,
+        ifMatch ? { "if-match": ifMatch } : {},
+      );
+    expect((await del(draft.id)).status).toBe(428);
+    expect((await del(draft.id, "*")).status).toBe(400);
+    const stale = await del(draft.id, '"7"');
+    expect([stale.status, stale.body.error.code, stale.body.error.details]).toEqual([
+      412,
+      "precondition_failed",
+      { version: 1 },
+    ]);
+    expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(1);
+    // Published.
+    await state.db!.update(schema.contentArticles).set({ publishedVersion: 1 });
+    const published = await del(draft.id, '"1"');
+    expect([published.status, published.body.error.code]).toEqual([409, "unpublish_first"]);
+    // Went live once and was unpublished: the history stays.
+    await state
+      .db!.update(schema.contentArticles)
+      .set({ publishedVersion: null, firstPublishedAt: new Date(), unpublishedAt: new Date() });
+    const was = await del(draft.id, '"1"');
+    expect([was.status, was.body.error.code]).toEqual([409, "was_published"]);
+    expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(1);
+  });
+
+  it("refuses to delete a draft whose file is already in git, and an active publication", async () => {
+    const article = await make("publish");
+    const del = () =>
+      call("DELETE", `articles/${article.id}`, undefined, "d", token, { "if-match": '"1"' });
+    await processPublication(); // The commit lands.
+    expect((await del()).body.error.code).toBe("publication_in_progress");
+    await state.db!.update(schema.contentPublications).set({ state: "failed" });
+    const refused = await del();
+    expect([refused.status, refused.body.error.code]).toEqual([409, "unpublish_first"]);
+    expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(1);
+    // Unpublishing the stray file frees the draft for deletion.
+    const unpublish = await call(
+      "POST",
+      `articles/${article.id}/unpublish`,
+      { expectedVersion: 1 },
+      "stray",
+    );
+    expect(unpublish.status).toBe(202);
+    await processPublication();
+    remote.live = null;
+    remote.sitemap = sitemapOf(OTHER_URL);
+    await due();
+    await processPublication();
+    expect(remote.content).toBeNull();
+    expect((await del()).status).toBe(200);
+  });
+
+  it("unpublishes end to end: page and sitemap must both be clear, then a republication restores it", async () => {
+    const article = await publishedArticle();
+    const queued = await call(
+      "POST",
+      `articles/${article.id}/unpublish`,
+      { expectedVersion: 1 },
+      "unpublish",
+    );
+    expect(queued.status).toBe(202);
+    expect(queued.body).toMatchObject({ status: "publishing", publication: { kind: "unpublish" } });
+    const unpublishId = queued.body.publication.id;
+    const state_ = async () => (await call("GET", `publications/${unpublishId}`)).body;
+    // The file goes away in a commit; the page still answers 200.
+    await processPublication();
+    expect(remote.deletes).toBe(1);
+    expect(remote.content).toBeNull();
+    expect(await state_()).toMatchObject({ state: "publishing", kind: "unpublish" });
+    await due();
+    await processPublication();
+    expect((await state_()).state).toBe("publishing");
+    // The page is gone but the sitemap still lists it.
+    remote.live = null;
+    remote.sitemap = sitemapOf(article.url, OTHER_URL);
+    await due();
+    await processPublication();
+    expect((await state_()).state).toBe("publishing");
+    // An empty sitemap proves nothing.
+    remote.sitemap = "";
+    await due();
+    await processPublication();
+    expect((await state_()).state).toBe("publishing");
+    remote.sitemap = sitemapOf(OTHER_URL);
+    await due();
+    await processPublication();
+    expect((await state_()).state).toBe("published");
+    const after = await call("GET", `articles/${article.id}`);
+    expect(after.body).toMatchObject({ status: "unpublished", publishedVersion: null });
+    const row = await articleRow(article.id);
+    expect(row.unpublishedAt).not.toBeNull();
+    expect(row.publishedContent).toBeNull();
+    expect(row.firstPublishedAt).not.toBeNull();
+    const [unpublishRow] = (await publicationRows()).filter((p) => p.id === unpublishId);
+    expect(unpublishRow!.hooksDoneAt).not.toBeNull();
+    // A second unpublish has nothing to do; a draft cannot be unpublished.
+    const again = await call(
+      "POST",
+      `articles/${article.id}/unpublish`,
+      { expectedVersion: 1 },
+      "unpublish-again",
+    );
+    expect([again.status, again.body.unchanged]).toEqual([200, true]);
+    const draft = await call(
+      "POST",
+      "articles",
+      { article: { ...document, externalId: "other", slug: "other-draft" } },
+      "other-draft",
+    );
+    const notPublished = await call(
+      "POST",
+      `articles/${draft.body.id}/unpublish`,
+      { expectedVersion: 1 },
+      "unpublish-draft",
+    );
+    expect([notPublished.status, notPublished.body.error.code]).toEqual([409, "not_published"]);
+    // Publishing again clears unpublishedAt once the new version is live.
+    const republish = await call(
+      "POST",
+      `articles/${article.id}/publish`,
+      { expectedVersion: 1 },
+      "republish",
+    );
+    expect(republish.status).toBe(202);
+    expect((await articleRow(article.id)).unpublishedAt).not.toBeNull();
+    await goLive(article.url, republish.body.publication.id);
+    expect((await articleRow(article.id)).unpublishedAt).toBeNull();
+    expect((await call("GET", `articles/${article.id}`)).body).toMatchObject({
+      status: "published",
+      publishedVersion: 1,
+    });
+  });
+
+  it("lets POST /publish restore a page whose unpublish failed after its commit", async () => {
+    const article = await publishedArticle();
+    await call("POST", `articles/${article.id}/unpublish`, { expectedVersion: 1 }, "unpublish");
+    await processPublication();
+    expect(remote.content).toBeNull();
+    // The page never disappears: the unpublish times out and fails; publishedVersion is intact.
+    await client`update content_publications set updated_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second' where kind = 'unpublish'`;
+    await processPublication();
+    expect((await call("GET", `articles/${article.id}`)).body).toMatchObject({
+      status: "failed",
+      publishedVersion: 1,
+    });
+    const retry = await call(
+      "POST",
+      `articles/${article.id}/publish`,
+      { expectedVersion: 1 },
+      "restore-page",
+    );
+    expect([retry.status, retry.body.unchanged]).toEqual([202, undefined]);
+    await processPublication();
+    expect(remote.content).toContain(retry.body.publication.id);
+  });
+
+  it("will not unpublish an article that a published article links to", async () => {
+    const target = await publishedArticle();
+    const linking = await call(
+      "POST",
+      "articles",
+      {
+        article: {
+          ...document,
+          externalId: "linking",
+          slug: "linking-article",
+          relatedSlugs: [document.slug],
+        },
+      },
+      "linking",
+    );
+    expect(linking.status).toBe(201);
+    const unpublish = () =>
+      call("POST", `articles/${target.id}/unpublish`, { expectedVersion: 1 }, "u-related");
+    // A draft does not count: only published articles carry a committed link.
+    expect((await unpublish()).status).toBe(202);
+    await state
+      .db!.update(schema.contentPublications)
+      .set({ state: "failed" })
+      .where(eq(schema.contentPublications.kind, "unpublish"));
+    // Published, but its live Markdown does not link (the draft does): nothing would die.
+    await state
+      .db!.update(schema.contentArticles)
+      .set({ publishedVersion: 1, publishedContent: "# live, no links" })
+      .where(eq(schema.contentArticles.id, linking.body.id));
+    expect((await unpublish()).status).toBe(202);
+    await state
+      .db!.update(schema.contentPublications)
+      .set({ state: "failed" })
+      .where(eq(schema.contentPublications.kind, "unpublish"));
+    // The live Markdown carries the hard link, whatever the current draft says.
+    await state
+      .db!.update(schema.contentArticles)
+      .set({ publishedContent: `- [x](/blog/${document.slug}/)` })
+      .where(eq(schema.contentArticles.id, linking.body.id));
+    await client`update content_articles set document = jsonb_set(document, '{relatedSlugs}', '[]') where id = ${linking.body.id}`;
+    const refused = await call(
+      "POST",
+      `articles/${target.id}/unpublish`,
+      { expectedVersion: 1 },
+      "u-related-2",
+    );
+    expect([refused.status, refused.body.error.code]).toEqual([409, "referenced_by_related"]);
+    expect(refused.body.error.details).toEqual({ articleIds: [linking.body.id] });
+  });
+
+  it("publishes a ru/en pair in one batch with one batch id, ru first", async () => {
+    const ru = await make();
+    const en = await makeEnglish();
+    const result = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: en.id, expectedVersion: 1 },
+          { id: ru.id, expectedVersion: 1 },
+        ],
+      },
+      "batch",
+    );
+    expect(result.status).toBe(202);
+    expect(result.body.items.map((i: { id: string }) => i.id)).toEqual([ru.id, en.id]);
+    expect(result.body.items.map((i: { status: string }) => i.status)).toEqual([
+      "publishing",
+      "publishing",
+    ]);
+    const rows = await publicationRows();
+    expect(rows).toHaveLength(2);
+    expect(new Set(rows.map((r) => r.batchId))).toEqual(new Set([result.body.batchId]));
+    expect(result.body.batchId).toEqual(expect.any(String));
+    const [first, second] = [...rows].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    expect([first!.articleId, second!.articleId]).toEqual([ru.id, en.id]);
+    // The same key replays the same answer.
+    const replay = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: en.id, expectedVersion: 1 },
+          { id: ru.id, expectedVersion: 1 },
+        ],
+      },
+      "batch",
+    );
+    expect(replay.body.batchId).toBe(result.body.batchId);
+    expect(await publicationRows()).toHaveLength(2);
+  });
+
+  it("rejects a batch of different slugs, stale versions and a failing item without leaving rows", async () => {
+    const ru = await make();
+    const en = await makeEnglish();
+    const other = await call(
+      "POST",
+      "articles",
+      { article: { ...document, externalId: "other", slug: "other-slug" } },
+      "other",
+    );
+    const mismatch = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: ru.id, expectedVersion: 1 },
+          { id: other.body.id, expectedVersion: 1 },
+        ],
+      },
+      "mismatch",
+    );
+    expect([mismatch.status, mismatch.body.error.code]).toEqual([422, "batch_slug_mismatch"]);
+    expect(mismatch.body.error.details.slugs.sort()).toEqual([document.slug, "other-slug"].sort());
+    const stale = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: ru.id, expectedVersion: 1 },
+          { id: en.id, expectedVersion: 5 },
+        ],
+      },
+      "stale",
+    );
+    expect([stale.status, stale.body.error.details]).toEqual([409, { id: en.id, version: 1 }]);
+    // The second item fails while it is queued: the first item's row must roll back with it.
+    await client`update content_articles set document = jsonb_set(document, '{relatedSlugs}', '["no-such-article"]') where lang = 'en'`;
+    const failing = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: ru.id, expectedVersion: 1 },
+          { id: en.id, expectedVersion: 1 },
+        ],
+      },
+      "failing",
+    );
+    expect([failing.status, failing.body.error.code]).toEqual([422, "invalid_related_article"]);
+    expect(await publicationRows()).toHaveLength(0);
+  });
+
+  it("skips unchanged batch items and answers 200 when nothing is queued", async () => {
+    const ru = await make();
+    const en = await makeEnglish();
+    await client`update content_articles set published_version = 1 where lang = 'ru'`;
+    const items = [
+      { id: ru.id, expectedVersion: 1 },
+      { id: en.id, expectedVersion: 1 },
+    ];
+    const mixed = await call("POST", "publish", { items }, "mixed");
+    expect(mixed.status).toBe(202);
+    expect(mixed.body.items[0]).toMatchObject({ id: ru.id, unchanged: true });
+    expect(await publicationRows()).toHaveLength(1);
+    await client`update content_articles set published_version = 1`;
+    await client`delete from content_publications`;
+    const none = await call("POST", "publish", { items }, "none");
+    expect([none.status, none.body.batchId]).toEqual([200, null]);
+    expect(await publicationRows()).toHaveLength(0);
   });
 });

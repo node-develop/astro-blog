@@ -5,6 +5,7 @@ import {
   createArticleSchema,
   cursorSchema,
   encodeCursor,
+  publishBatchSchema,
 } from "../../../src/lib/content-api/contract";
 import { inspectMarkdown, serializeArticle } from "../../../src/lib/content-api/markdown";
 import { inspectImage } from "../../../src/lib/content-api/media";
@@ -159,5 +160,15 @@ describe("list query and cursor", () => {
     ["extra key", raw({ ...good, extra: 1 })],
   ])("rejects a cursor that is %s with a ZodError", (_name, value) => {
     expect(() => cursorSchema.parse(value)).toThrow(z.ZodError);
+  });
+});
+
+describe("publishBatchSchema", () => {
+  const a = "349ad05b-41ae-4b63-93ab-d7679c82c886";
+  const b = "5d1a0c52-3a0f-4a53-a0e0-8a2e4d6b7f10";
+  const item = (id: string) => ({ id, expectedVersion: 1 });
+  it("rejects a repeated id but accepts two distinct ones", () => {
+    expect(publishBatchSchema.safeParse({ items: [item(a), item(a)] }).success).toBe(false);
+    expect(publishBatchSchema.safeParse({ items: [item(a), item(b)] }).success).toBe(true);
   });
 });

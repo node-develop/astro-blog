@@ -2,8 +2,9 @@ import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { contentApiKeys, contentArticles, contentPublications, postsMeta } from "../db/schema";
 import { apiError, isApiError } from "./errors";
-import { articlePath, articleUrl, commitArticle } from "./github";
+import { articlePath, articleUrl, commitArticle, deleteArticle } from "./github";
 import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
+import { ownsCommittedFile } from "./status";
 import { buildSearchVectorSql } from "../search/vector";
 
 export const verifyPublication = async (url: string, revision: string): Promise<boolean> => {
@@ -20,6 +21,31 @@ export const verifyPublication = async (url: string, revision: string): Promise<
     /<meta[^>]+name="description"/.test(html) &&
     !/<meta[^>]+name="robots"[^>]+content="[^"]*noindex/.test(html)
   );
+};
+
+const PENDING_RETRY_MS = 15_000;
+const sitemapUrl = (url: string, lang: string): URL => new URL(`/sitemap-${lang}.xml`, url);
+
+/**
+ * The inverse of `verifyPublication`: the page answers 404/410 AND the sitemap is a real sitemap
+ * (an XML `<urlset>` with at least one `<loc>`) that does not list the url. An empty body, an
+ * error page or a sitemap of another origin proves nothing, so it counts as not yet gone.
+ */
+export const verifyUnpublished = async (url: string, lang: string): Promise<boolean> => {
+  const page = await fetch(url, {
+    redirect: "error",
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (page.status !== 404 && page.status !== 410) return false;
+  const sitemap = await fetch(sitemapUrl(url, lang), {
+    redirect: "error",
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!sitemap.ok) return false;
+  const xml = await sitemap.text();
+  return xml.includes("<urlset") && xml.includes("<loc>") && !xml.includes(`<loc>${url}</loc>`);
 };
 
 /** One durable step per call. PostgreSQL owns the lock, including across replicas.
@@ -60,27 +86,39 @@ export const processPublication = async () =>
       if (article.version !== job.version)
         throw apiError(409, "version_conflict", "Article changed after publication was queued.");
       if (job.state === "queued") {
-        // Pre-create visible metadata for the build and runtime lists. No page is
-        // public until GitHub's build includes the non-draft Markdown document.
-        await tx
-          .insert(postsMeta)
-          .values({ slug: article.slug, order: 2_000_000_000, hiddenFromList: false })
-          .onConflictDoNothing({ target: postsMeta.slug });
         // TODO(cutover): an article owns its file once it was published or committed before;
         // a first commit must not overwrite a legacy file post that appeared at the same path.
         // Removed with commitArticle (docs/superpowers/plans/2026-10-03-api-only-migration.md).
-        // Note for 1.5: once unpublish commits exist, `commit_sha` alone must not imply ownership
-        // (an unpublish commit deletes the file); restrict this query to publish publications.
+        // Only a `publish` commit proves ownership; an unpublish commit removes the file.
         const own = await tx
-          .select({ id: contentPublications.id, commitSha: contentPublications.commitSha })
+          .select({
+            id: contentPublications.id,
+            kind: contentPublications.kind,
+            state: contentPublications.state,
+            commitSha: contentPublications.commitSha,
+            createdAt: contentPublications.createdAt,
+          })
           .from(contentPublications)
           .where(eq(contentPublications.articleId, article.id));
-        const sha = await commitArticle(articlePath(article.slug, article.lang), job.content, {
-          overwrite: article.publishedVersion !== null || own.some((p) => p.commitSha !== null),
+        const ownership = {
+          overwrite: article.publishedVersion !== null || ownsCommittedFile(own),
           // A commit accepted by GitHub whose response was lost leaves no commit_sha, but the file
           // carries the publication id as apiRevision.
-          ownedRevisions: own.map((p) => p.id),
-        });
+          ownedRevisions: own.filter((p) => p.kind === "publish").map((p) => p.id),
+        };
+        const path = articlePath(article.slug, article.lang);
+        const sha =
+          job.kind === "unpublish"
+            ? await deleteArticle(path, ownership)
+            : await (async () => {
+                // Pre-create visible metadata for the build and runtime lists. No page is
+                // public until GitHub's build includes the non-draft Markdown document.
+                await tx
+                  .insert(postsMeta)
+                  .values({ slug: article.slug, order: 2_000_000_000, hiddenFromList: false })
+                  .onConflictDoNothing({ target: postsMeta.slug });
+                return commitArticle(path, job.content, ownership);
+              })();
         await tx
           .update(contentPublications)
           .set({
@@ -88,9 +126,47 @@ export const processPublication = async () =>
             commitSha: sha,
             error: null,
             updatedAt: new Date(),
-            nextAttemptAt: new Date(Date.now() + 15_000),
+            nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS),
           })
           .where(eq(contentPublications.id, job.id));
+      } else if (job.kind === "unpublish") {
+        const url = articleUrl(article.slug, article.lang);
+        if (await verifyUnpublished(url, article.lang)) {
+          // Back to a draft: the published pointers go, `firstPublishedAt` stays so a later
+          // publication keeps its pubDate. `posts_meta` is shared by both languages and keeps
+          // order and pinned for a republication. The jobs hooks (IndexNow, social) are for
+          // publications only, hence hooksDoneAt.
+          await tx
+            .update(contentArticles)
+            .set({
+              unpublishedAt: new Date(),
+              publishedVersion: null,
+              publishedContent: null,
+              buildPublicationId: null,
+            })
+            .where(eq(contentArticles.id, article.id));
+          await tx
+            .update(contentPublications)
+            .set({
+              state: "published",
+              error: null,
+              updatedAt: new Date(),
+              hooksDoneAt: new Date(),
+            })
+            .where(eq(contentPublications.id, job.id));
+        } else if (Date.now() - job.updatedAt.getTime() > 30 * 60_000) {
+          throw apiError(
+            504,
+            "deployment_timeout",
+            "The page or its sitemap entry did not disappear within 30 minutes. Inspect CI/Dokploy and retry unpublishing.",
+          );
+        } else {
+          // Page still live or sitemap still lists it: pending, not an error.
+          await tx
+            .update(contentPublications)
+            .set({ nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS) })
+            .where(eq(contentPublications.id, job.id));
+        }
       } else {
         const url = articleUrl(article.slug, article.lang);
         const live = await verifyPublication(url, job.id);
@@ -116,7 +192,7 @@ export const processPublication = async () =>
               "Referenced images are not publicly readable yet.",
             );
           // Check the discovery surface as well; hidden metadata must not count as success.
-          const sitemap = new URL(`/sitemap-${article.lang}.xml`, url);
+          const sitemap = sitemapUrl(url, article.lang);
           const response = await fetch(sitemap, {
             redirect: "error",
             signal: AbortSignal.timeout(10_000),
@@ -133,6 +209,7 @@ export const processPublication = async () =>
             .set({
               publishedContent: job.content,
               publishedVersion: job.version,
+              unpublishedAt: null,
               firstPublishedAt: article.firstPublishedAt ?? job.createdAt,
             })
             .where(eq(contentArticles.id, article.id));

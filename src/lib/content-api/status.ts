@@ -19,3 +19,29 @@ export const articleStatus = (a: StatusInput): ArticleStatus => {
   if (a.version > a.publishedVersion) return "changed";
   return "published";
 };
+
+export type PublicationEvent = Readonly<{
+  kind: "publish" | "unpublish";
+  state: Publication["state"];
+  commitSha: string | null;
+  createdAt: Date;
+}>;
+
+/**
+ * Does the article's file sit in git right now? The newest of two kinds of event decides: a
+ * `publish` that recorded a commit puts the file there, an `unpublish` that finished took it away.
+ * Failed or queued unpublications prove nothing. Pure: no database.
+ */
+export const ownsCommittedFile = (publications: readonly PublicationEvent[]): boolean => {
+  const events = publications.filter(
+    (p) =>
+      (p.kind === "publish" && p.commitSha !== null) ||
+      (p.kind === "unpublish" && p.state === "published"),
+  );
+  const newest = events.reduce<PublicationEvent | null>(
+    (best, event) =>
+      best === null || event.createdAt.getTime() > best.createdAt.getTime() ? event : best,
+    null,
+  );
+  return newest?.kind === "publish";
+};

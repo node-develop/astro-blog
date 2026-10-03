@@ -34,8 +34,13 @@ const document = {
   sources: [{ url: "https://example.com/source", title: "Original source" }],
   provenance: { agent: "integration" },
 };
-const admin = (id: string) => ({
-  user: { id, email: `${id}@test.local`, role: "admin" },
+// Real users rows: content_article_versions.actor_user_id references users.id (a uuid).
+const USER_IDS = {
+  a1: "a1a1a1a1-0000-4000-8000-000000000001",
+  a2: "a2a2a2a2-0000-4000-8000-000000000002",
+} as const;
+const admin = (label: keyof typeof USER_IDS) => ({
+  user: { id: USER_IDS[label], email: `${label}@test.local`, role: "admin" },
   session: null,
 });
 const reader = { user: { id: "r1", email: "r1@test.local", role: "reader" }, session: null };
@@ -106,6 +111,11 @@ describe("content API session access with PostgreSQL", () => {
   });
   beforeEach(async () => {
     await client`truncate content_api_requests, content_publications, content_articles, content_assets, content_api_keys, post_revisions, posts_meta, users cascade`;
+    await state
+      .db!.insert(schema.users)
+      .values(
+        Object.entries(USER_IDS).map(([label, id]) => ({ id, email: `${label}@test.local` })),
+      );
     await seedAdminSession();
     await state.db!.insert(schema.contentApiKeys).values({
       name: "test",
@@ -121,6 +131,32 @@ describe("content API session access with PostgreSQL", () => {
     expect(article?.id).toBe(result.body.id);
     const [stored] = await state.db!.select().from(schema.contentApiRequests);
     expect(stored?.keyId).toBe((await adminSessionRow())?.id);
+  });
+
+  it("records the admin session key and the person on every version, restore included", async () => {
+    const created = await create({ locals: admin("a1") });
+    const options = { locals: admin("a2"), origin: "https://artka.dev" };
+    await call("PUT", `articles/${created.body.id}`, {
+      ...options,
+      key: "put",
+      body: { article: { ...document, title: "Second title" }, expectedVersion: 1 },
+    });
+    const restored = await call("POST", `articles/${created.body.id}/versions/1/restore`, {
+      ...options,
+      key: "restore",
+      body: { expectedVersion: 2 },
+    });
+    expect(restored.status).toBe(200);
+    const sessionKey = (await adminSessionRow())!.id;
+    const rows = await state
+      .db!.select()
+      .from(schema.contentArticleVersions)
+      .orderBy(schema.contentArticleVersions.version);
+    expect(rows.map((r) => [r.version, r.actorKeyId, r.actorUserId])).toEqual([
+      [1, sessionKey, USER_IDS.a1],
+      [2, sessionKey, USER_IDS.a2],
+      [3, sessionKey, USER_IDS.a2],
+    ]);
   });
 
   it("rejects a non-admin role, an anonymous caller and a foreign or missing Origin on writes", async () => {
@@ -181,7 +217,9 @@ describe("content API session access with PostgreSQL", () => {
     expect([first.status, second.status]).toEqual([201, 201]);
     expect(first.body.id).not.toBe(second.body.id);
     const stored = await state.db!.select().from(schema.contentApiRequests);
-    expect(stored.map((row) => row.idempotencyKey).sort()).toEqual(["a1:same", "a2:same"]);
+    expect(stored.map((row) => row.idempotencyKey).sort()).toEqual(
+      [`${USER_IDS.a1}:same`, `${USER_IDS.a2}:same`].sort(),
+    );
     // The same admin retrying still replays.
     const replay = await create({ locals: admin("a1"), key: "same" });
     expect(replay.body.id).toBe(first.body.id);
