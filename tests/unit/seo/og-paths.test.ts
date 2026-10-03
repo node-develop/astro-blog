@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { postOgPath, postOgSlug } from "~/lib/og/post-pages";
+import { imageTypeOf, postOgPath, postOgSlug, postShareImage } from "~/lib/og/post-pages";
 import { lessonOgEyebrow, lessonOgPath, lessonOgSlug } from "~/lib/og/lesson-pages";
 import {
   bareProjectSlug,
@@ -99,5 +99,40 @@ describe("project OG image paths", () => {
     // Uppercase is baked in: Satori is not asked to honour text-transform.
     const eyebrow = projectOgEyebrow({ locale: "en", year: 2026 });
     expect(eyebrow).toBe(eyebrow.toUpperCase());
+  });
+});
+
+describe("the image that represents a post in feeds, JSON-LD and social drafts", () => {
+  const ORIGIN = "https://artka.dev";
+
+  it.each([
+    ["no cover", undefined],
+    ["the generic PNG placeholder", "/og-default.png"],
+    ["the generic SVG placeholder", "/og-default.svg"],
+  ])("%s falls back to the post's own card, per locale, as an absolute URL", (_label, cover) => {
+    expect(postShareImage(cover, "my-post", "ru", ORIGIN)).toBe(
+      "https://artka.dev/og/my-post-ru.png",
+    );
+    expect(postShareImage(cover, "my-post", "en", ORIGIN)).toBe(
+      "https://artka.dev/og/my-post-en.png",
+    );
+  });
+
+  it("a real cover wins, whichever way it is stored", () => {
+    expect(postShareImage("2026/04/file.png", "p", "ru", ORIGIN)).toBe(
+      "https://artka.dev/uploads/2026/04/file.png",
+    );
+    expect(postShareImage("/covers/a.webp", "p", "ru", ORIGIN)).toBe(
+      "https://artka.dev/covers/a.webp",
+    );
+    expect(postShareImage("https://media.example.com/a.jpg", "p", "ru", ORIGIN)).toBe(
+      "https://media.example.com/a.jpg",
+    );
+  });
+
+  it("media type follows the extension and is unknown without one", () => {
+    expect(imageTypeOf("https://artka.dev/og/p-ru.png")).toBe("image/png");
+    expect(imageTypeOf("https://media.example.com/a.JPG?v=2")).toBe("image/jpeg");
+    expect(imageTypeOf("https://media.example.com/articles/3f9a")).toBeNull();
   });
 });

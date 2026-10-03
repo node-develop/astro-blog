@@ -3,7 +3,8 @@ import type { Locale } from "~/i18n";
 import { getOrderedPosts } from "~/lib/content/loader";
 import { groupPostsByTag } from "~/lib/content/tags";
 import { isTagArchiveIndexable } from "~/lib/seo/indexability";
-import { canonicalUrl } from "~/lib/seo/url-policy";
+import { resolvePostCover } from "~/lib/og/post-pages";
+import { CANONICAL_ORIGIN, canonicalUrl } from "~/lib/seo/url-policy";
 
 interface DatedData {
   readonly pubDate: Date;
@@ -16,7 +17,7 @@ interface ContentEntry {
 }
 
 interface OrderedPost {
-  readonly entry: ContentEntry;
+  readonly entry: ContentEntry & { readonly data: DatedData & { readonly cover?: string } };
 }
 
 export interface SitemapInput {
@@ -40,6 +41,8 @@ export interface UrlEntry {
   readonly priority?: number;
   /** hreflang cluster (ru, en, x-default) — only when both locale pages exist. */
   readonly alternates?: ReadonlyArray<UrlAlternate>;
+  /** Absolute URLs of images shown on the page (Google image sitemap extension). */
+  readonly images?: ReadonlyArray<string>;
 }
 
 const localePrefix = (locale: Locale): string => (locale === "en" ? "/en" : "");
@@ -96,12 +99,19 @@ export const buildLocaleSitemapEntries = (input: SitemapInput): readonly UrlEntr
         changefreq: "weekly",
         priority: 0.5,
       })),
-    ...input.posts.map(({ entry }) => ({
-      loc: canonicalUrl(`${prefix}/blog/${bareSlug(entry.id)}/`),
-      lastmod: dateOnly(entry.data.updatedDate ?? entry.data.pubDate),
-      changefreq: "monthly",
-      priority: 0.8,
-    })),
+    ...input.posts.map(({ entry }) => {
+      // Only a real cover is on the page; the /og card is not rendered there.
+      const cover = resolvePostCover(entry.data.cover);
+      return {
+        loc: canonicalUrl(`${prefix}/blog/${bareSlug(entry.id)}/`),
+        lastmod: dateOnly(entry.data.updatedDate ?? entry.data.pubDate),
+        changefreq: "monthly",
+        priority: 0.8,
+        ...(cover.isReal && cover.url !== null
+          ? { images: [new URL(cover.url, CANONICAL_ORIGIN).toString()] }
+          : {}),
+      };
+    }),
     ...input.courseEntries
       .filter((entry) => isLocaleCourse(entry.id, input.locale))
       .map((entry) => ({
@@ -191,6 +201,11 @@ export const renderUrlSet = (entries: readonly UrlEntry[]): string => {
           `    <xhtml:link rel="alternate" hreflang="${alternate.hreflang}" href="${xmlEscape(alternate.href)}" />`,
         );
       }
+      for (const image of entry.images ?? []) {
+        parts.push(
+          `    <image:image>\n      <image:loc>${xmlEscape(image)}</image:loc>\n    </image:image>`,
+        );
+      }
       if (entry.lastmod) parts.push(`    <lastmod>${entry.lastmod}</lastmod>`);
       if (entry.changefreq) parts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
       if (typeof entry.priority === "number") {
@@ -201,7 +216,7 @@ export const renderUrlSet = (entries: readonly UrlEntry[]): string => {
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${items}
 </urlset>`;
 };

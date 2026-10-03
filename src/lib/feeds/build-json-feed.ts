@@ -3,6 +3,7 @@ import { getOrderedPosts } from "~/lib/content/loader";
 import { person } from "~/lib/seo/person";
 import { t, type Locale } from "~/i18n";
 import { canonicalInternalHref } from "~/lib/rehype/canonical-internal-links";
+import { postShareImage } from "~/lib/og/post-pages";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 
 const parser = new MarkdownIt({ html: true, linkify: true, typographer: true });
@@ -24,6 +25,7 @@ interface JsonFeedItem {
   readonly title: string;
   readonly summary: string;
   readonly content_html?: string;
+  readonly image: string;
   readonly date_published: string;
   readonly tags: ReadonlyArray<string>;
   readonly authors: ReadonlyArray<JsonFeedAuthor>;
@@ -84,6 +86,7 @@ export const buildJsonFeed = async ({ site, locale }: BuildJsonFeedParams): Prom
           url,
           title: p.entry.data.title,
           summary: p.entry.data.description,
+          image: postShareImage(p.entry.data.cover, slug, locale, site),
           date_published: p.entry.data.pubDate.toISOString(),
           tags: p.entry.data.tags ?? [],
           authors: [author],

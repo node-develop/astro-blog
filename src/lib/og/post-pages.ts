@@ -29,3 +29,56 @@ export const postOgSlug = (slug: string, locale: Locale): string => `${slug}-${l
 /** Public path of a post card. Use as `<BaseLayout ogImage={...}>`. */
 export const postOgPath = (slug: string, locale: Locale): string =>
   `/og/${postOgSlug(slug, locale)}.png`;
+
+export interface PostCover {
+  /** Site path or absolute URL of the cover as stored; null when the post has none. */
+  readonly url: string | null;
+  /** False for no cover and for the site-wide /og-default.* placeholder. */
+  readonly isReal: boolean;
+}
+
+/**
+ * Normalises frontmatter `cover`. It is stored as a path relative to
+ * /uploads/ (e.g. "2026/04/file.png"); site paths and absolute URLs are
+ * accepted as they are. The /og-default.* placeholder is not a real cover.
+ */
+export const resolvePostCover = (cover: string | null | undefined): PostCover => {
+  const url = cover
+    ? cover.startsWith("/") || /^https?:\/\//.test(cover)
+      ? cover
+      : `/uploads/${cover}`
+    : null;
+  return { url, isReal: url !== null && !/^\/og-default\.(svg|png)$/.test(url) };
+};
+
+/**
+ * Absolute URL of the image that represents a post outside its own page:
+ * BlogPosting.image, feeds, social drafts. A real cover wins; otherwise the
+ * per-post /og card, never the generic placeholder (an SVG, and the same
+ * picture for every post).
+ */
+export const postShareImage = (
+  cover: string | null | undefined,
+  slug: string,
+  locale: Locale,
+  base: string | URL,
+): string => {
+  const { url, isReal } = resolvePostCover(cover);
+  return new URL(isReal && url !== null ? url : postOgPath(slug, locale), base).toString();
+};
+
+const IMAGE_TYPES: Readonly<Record<string, string>> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  avif: "image/avif",
+  gif: "image/gif",
+  svg: "image/svg+xml",
+};
+
+/** Media type by file extension; null when the URL does not say. */
+export const imageTypeOf = (url: string): string | null => {
+  const ext = /\.([a-z0-9]+)$/i.exec(new URL(url, "https://artka.dev").pathname)?.[1];
+  return ext ? (IMAGE_TYPES[ext.toLowerCase()] ?? null) : null;
+};
