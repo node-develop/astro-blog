@@ -676,7 +676,9 @@ slug, на фикстуру tests/fixtures/content-snapshot.json или сид �
    из снапшота (или только из batch, если передан): 200, data-content-revision,
    canonical на боевом хосте, парный hreflang, JSON-LD парсится, og:image и
    картинки тела отвечают 200, URL в sitemap, нет noindex. Отчёт в stdout и
-   ненулевой код при любом расхождении.
+   ненулевой код при любом расхождении. /api/version читать по телу, а не по
+   response.ok: с этапа 0 он отвечает 503 при молчащем воркере, и это не
+   значит «выкладки не было».
 2. docker-publish.yml: job post-deploy после шага Dokploy: smoke, затем
    IndexNow (src/lib/seo/indexnow.ts как CLI) только для URL batch, затем
    Search Console sitemaps.submit через googleapis с сервисным аккаунтом
