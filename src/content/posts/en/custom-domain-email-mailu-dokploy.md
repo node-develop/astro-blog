@@ -8,6 +8,7 @@ summary: >-
   Dokploy configuration, the network and TLS fixes, and the separate Google identity I added while keeping mail on my
   server.
 pubDate: "2026-09-12T12:36:26.137Z"
+updatedDate: "2026-10-03T16:54:44.439Z"
 lang: en
 draft: false
 tags:
@@ -55,7 +56,7 @@ faq:
       port 993 with SSL/TLS, and outgoing SMTP uses port 465 with SSL/TLS or 587 with STARTTLS. Outgoing authentication
       is required. The Google password and Resend API key do not belong in these client settings.
     question: Which password and servers should I use in Apple Mail?
-apiRevision: ea4955cc-f5d6-435c-8bda-c0a22c800fd4
+apiRevision: 03495c3d-1e4a-474d-b3a3-2333b605cc2c
 seoTitle: Self-Hosted Email with Mailu, Dokploy, and Google Sign-In
 seoDescription: >-
   My Mailu setup on Dokploy: Cloudflare DNS, Resend SMTP, Google Cloud Identity Free, and Apple Mail, including the
@@ -114,7 +115,9 @@ Resend processes outgoing messages, so this setup uses an external mail provider
 
 ```mermaid
 flowchart LR
-    Sender["External sender"] -->|"SMTP 25"| Mailu["Mailu on my VPS"]
+    accTitle: The path of a message through Mailu and Resend
+    accDescr: An external sender delivers mail over SMTP on port 25 to Mailu on the VPS, it lands in mailbox storage and is read in Apple Mail over IMAP on port 993. For outgoing mail the client hands the message to Mailu over SMTP on port 465 or 587, Mailu sends it through the Resend SMTP relay on port 587, and Resend delivers it to the recipient mail server.
+Sender["External sender"] -->|"SMTP 25"| Mailu["Mailu on my VPS"]
     Mailu --> Store["Mailbox storage"]
     Store -->|"IMAP 993"| Client["Apple Mail"]
     Client -->|"SMTP 465 or 587"| Mailu
@@ -367,7 +370,9 @@ I returned to Google and clicked Verify. The domain was confirmed, and Google Ad
 
 ```mermaid
 flowchart TB
-    Address["tim@example.com"] --> Mailbox["Mailu account"]
+    accTitle: One address, two accounts
+    accDescr: The address tim@example.com is tied to a Mailu account and to a Google Cloud Identity account. The Mailu account provides webmail and Apple Mail, and Google Cloud Identity provides Google sign-in on supported services.
+Address["tim@example.com"] --> Mailbox["Mailu account"]
     Address --> Identity["Google Cloud Identity account"]
     Mailbox --> Mail["Webmail and Apple Mail"]
     Identity --> Google["Google sign-in on supported services"]

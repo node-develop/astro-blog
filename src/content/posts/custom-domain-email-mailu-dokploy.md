@@ -7,6 +7,7 @@ summary: >-
   Я собрал доменную почту на существующем VPS, используя Resend из Lenny’s Product Pass. Рассказываю про Mailu в
   Dokploy, исправление сети и сертификатов, отдельный Google-аккаунт и подключение к Почте на Mac.
 pubDate: "2026-09-12T12:36:48.815Z"
+updatedDate: "2026-10-03T16:54:39.561Z"
 lang: ru
 draft: false
 tags:
@@ -54,7 +55,7 @@ faq:
       993 с SSL/TLS, исходящий SMTP — на 465 с SSL/TLS или 587 с STARTTLS. Для исходящих нужна авторизация. Пароль
       Google и ключ Resend в эти поля не вводятся.
     question: Какой пароль и серверы указывать в Почте на Mac?
-apiRevision: 577cfcc8-1ceb-4108-8bc9-7696c22506b1
+apiRevision: a299c5ff-72e9-4d60-b50e-24146375b52c
 seoTitle: "Почта на своём домене: Mailu, Dokploy, Resend и Google-вход"
 seoDescription: >-
   Пошаговая настройка Mailu на VPS через Dokploy: Cloudflare DNS, Resend SMTP, сертификаты, Google Cloud Identity Free и
@@ -113,7 +114,9 @@ Resend уже был доступен через Product Pass. Я подключ
 
 ```mermaid
 flowchart LR
-    Sender["Внешний отправитель"] -->|"SMTP 25"| Mailu["Mailu на VPS"]
+    accTitle: Путь письма через Mailu и Resend
+    accDescr: Внешний отправитель доставляет письмо по SMTP на порт 25 в Mailu на VPS, оно попадает в хранилище и читается в Apple Mail по IMAP на порту 993. Исходящее письмо клиент передаёт Mailu по SMTP на порт 465 или 587, Mailu отправляет его через SMTP-реле Resend на порт 587, а Resend доставляет серверу получателя.
+Sender["Внешний отправитель"] -->|"SMTP 25"| Mailu["Mailu на VPS"]
     Mailu --> Store["Хранилище писем"]
     Store -->|"IMAP 993"| Client["Apple Mail"]
     Client -->|"SMTP 465 или 587"| Mailu
@@ -362,7 +365,9 @@ Content: google-site-verification=YOUR_GOOGLE_VERIFICATION_VALUE
 
 ```mermaid
 flowchart TB
-    Address["tim@example.com"] --> Mailbox["Учётная запись Mailu"]
+    accTitle: Один адрес, две учётные записи
+    accDescr: Адрес tim@example.com связан с учётной записью Mailu и с Google Cloud Identity. Учётная запись Mailu даёт веб-почту и Apple Mail, а Google Cloud Identity даёт вход через Google в совместимых сервисах.
+Address["tim@example.com"] --> Mailbox["Учётная запись Mailu"]
     Address --> Identity["Google Cloud Identity"]
     Mailbox --> Mail["Веб-почта и Apple Mail"]
     Identity --> Google["Вход через Google в совместимых сервисах"]
