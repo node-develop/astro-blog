@@ -57,4 +57,15 @@ describe("decideAction", () => {
       }),
     ).toEqual({ action: "translate", reason: "force" });
   });
+
+  it("never regenerates a post the content API owns, even with force", () => {
+    expect(
+      decideAction({
+        ruHash: "new",
+        existingEn: { sourceHash: null, manuallyEdited: false },
+        force: true,
+        apiManaged: true,
+      }),
+    ).toEqual({ action: "skip", reason: "api-managed" });
+  });
 });

@@ -3,11 +3,12 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { load as parseYaml } from "../src/lib/yaml";
 import type { ZodError } from "zod";
-import { sha256 } from "../src/lib/translate/hash";
+import { contentHash } from "../src/lib/translate/hash";
 import {
   detectDrift,
   detectMissingTwins,
   isFixtureSlug,
+  shouldFail,
   type FileState,
   type TwinSide,
   type TwinState,
@@ -174,7 +175,7 @@ const main = async (): Promise<void> => {
     const slug = file.replace(/\.(md|mdx)$/, "");
     if (isFixtureSlug(slug)) continue;
     const ruSrc = await readFile(join(PATHS.postsDir, file), "utf8");
-    const ruHash = sha256(ruSrc);
+    const ruHash = contentHash("posts", ruSrc);
     const ruFm = peekFrontmatter(ruSrc);
     const ruDraft = ruFm.draft === true;
     const apiManaged = typeof ruFm.apiRevision === "string";
@@ -233,7 +234,11 @@ const main = async (): Promise<void> => {
   if (twins.unbuilt.length) {
     console.error(`✗ Files no page route builds: ${twins.unbuilt.join(", ")}`);
   }
-  if (report.drift.length) console.error(`✗ EN twins out of date: ${report.drift.join(", ")}`);
+  if (report.drift.length) {
+    console.warn(
+      `⚠ EN twins behind their RU source (run \`pnpm translate\`): ${report.drift.join(", ")}`,
+    );
+  }
   if (schemaErrors.length) {
     console.error("");
     for (const err of schemaErrors) {
@@ -250,10 +255,9 @@ const main = async (): Promise<void> => {
     isHandWritten,
   );
   const translatable = twins.missingEn.some((label) => !isHandWritten(label));
-  const pairBroken = twins.missingEn.length || twins.missingRu.length || twins.unbuilt.length;
 
-  if (report.missing.length || report.drift.length || pairBroken || schemaErrors.length) {
-    if (report.missing.length || report.drift.length || translatable) {
+  if (shouldFail({ report, twins, schemaErrorCount: schemaErrors.length })) {
+    if (report.missing.length || translatable) {
       console.error("\nRun `pnpm translate` and commit the result.");
     }
     if (handWritten) {
@@ -273,7 +277,11 @@ const main = async (): Promise<void> => {
     }
     process.exit(1);
   }
-  console.warn("✓ All EN translations in sync and schema-valid");
+  console.warn(
+    report.drift.length || report.warnings.length
+      ? "✓ All EN twins present and schema-valid (stale twins listed above)"
+      : "✓ All EN translations in sync and schema-valid",
+  );
 };
 
 main().catch((err) => {

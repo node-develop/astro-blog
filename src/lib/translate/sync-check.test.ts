@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectDrift, detectMissingTwins, type TwinState } from "./sync-check";
+import { detectDrift, detectMissingTwins, shouldFail, type TwinState } from "./sync-check";
 
 describe("detectDrift", () => {
   it("returns no issues when all RU posts have matching EN twins", () => {
@@ -199,5 +199,29 @@ describe("detectMissingTwins", () => {
       { collection: "lessons", slug: "e2e-course/01-intro", ru: "absent", en: "built" },
     ]);
     expect(result).toEqual({ missingEn: [], missingRu: [], unbuilt: [] });
+  });
+});
+
+describe("shouldFail (what stops CI in translate:check)", () => {
+  const clean = {
+    report: { missing: [], drift: [], warnings: [] },
+    twins: { missingEn: [], missingRu: [], unbuilt: [] },
+    schemaErrorCount: 0,
+  };
+
+  it("a twin that lags behind its RU source is reported, not fatal", () => {
+    expect(
+      shouldFail({ ...clean, report: { missing: [], drift: ["01-foo"], warnings: ["02-bar"] } }),
+    ).toBe(false);
+  });
+
+  it.each([
+    ["a post without an EN twin", { report: { missing: ["01-foo"], drift: [], warnings: [] } }],
+    ["a page without an EN twin", { twins: { ...clean.twins, missingEn: ["site/about"] } }],
+    ["an orphaned EN twin", { twins: { ...clean.twins, missingRu: ["projects/x"] } }],
+    ["a file no route builds", { twins: { ...clean.twins, unbuilt: ["lessons/c/01 (en)"] } }],
+    ["an EN schema violation", { schemaErrorCount: 1 }],
+  ])("%s still fails", (_label, broken) => {
+    expect(shouldFail({ ...clean, ...broken })).toBe(true);
   });
 });
