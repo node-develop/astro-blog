@@ -30,15 +30,16 @@ export interface NodeSearchHit {
  *
  * `locale` controls which post collection is searched and how the result URL
  * is prefixed: RU posts live at `/blog/<slug>`, EN posts at `/en/blog/<slug>`.
- * The raw `hit.slug` from the DB may carry an `en/` prefix for EN posts; we
- * strip it before building the URL so the path is always bare.
+ * `hit.slug` from the DB is always the bare slug (posts_meta is keyed by it,
+ * for both languages); the EN collection entry is looked up as `en/<slug>`.
+ * For `en` the EN vector is searched, so an English query matches English text.
  */
 export const searchNode = async (
   query: string,
   locale: Locale = "ru",
 ): Promise<readonly NodeSearchHit[]> => {
   if (query.trim().length === 0) return [];
-  const hits = await searchPostsMeta(query, 20);
+  const hits = await searchPostsMeta(query, 20, locale);
   if (hits.length === 0) return [];
   const posts: readonly CollectionEntry<"posts">[] = await getCollection(
     "posts",
@@ -46,15 +47,14 @@ export const searchNode = async (
   );
   const bySlug = new Map<string, CollectionEntry<"posts">>(posts.map((p) => [p.id, p]));
   const blogPrefix = locale === "en" ? "/en/blog" : "/blog";
+  const idPrefix = locale === "en" ? "en/" : "";
   const enriched: NodeSearchHit[] = [];
   for (const hit of hits) {
-    const post = bySlug.get(hit.slug);
+    // posts_meta is keyed by the bare slug; the EN collection entry is `en/<slug>`.
+    const post = bySlug.get(`${idPrefix}${hit.slug}`);
     if (!post) continue;
-    // Strip locale prefix from slug (e.g. "en/my-post" → "my-post") so the
-    // URL is always /<locale>/blog/<bare-slug> with no double segment.
-    const bareSlug = hit.slug.replace(/^en\//, "");
     enriched.push({
-      url: canonicalPath(`${blogPrefix}/${bareSlug}`),
+      url: canonicalPath(`${blogPrefix}/${hit.slug}`),
       title: post.data.title,
       excerpt: post.data.description ?? "",
     });

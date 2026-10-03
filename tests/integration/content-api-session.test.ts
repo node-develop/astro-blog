@@ -17,8 +17,7 @@ vi.mock("~/lib/db", () => ({
 }));
 
 import { ALL } from "../../src/pages/api/v1/[...path]";
-import { createDispatcher, type Route } from "../../src/lib/content-api/routes";
-import { jsonResponse } from "../../src/lib/content-api/http";
+import { createdKeySchema, keyListSchema } from "../../src/lib/content-api/contract";
 
 const token = `artka_${"a".repeat(43)}`;
 const document = {
@@ -257,32 +256,105 @@ describe("content API session access with PostgreSQL", () => {
     expect(publish.status).toBe(403);
   });
 
-  it("keeps /keys-style routes for sessions only: a Bearer key gets 403 key_cannot_manage_keys", async () => {
-    let ran = false;
-    const dispatch = createDispatcher([
-      {
-        method: "GET",
-        pattern: "session-only",
-        scope: "any",
-        sessionOnly: true,
-        idempotent: false,
-        handler: async () => {
-          ran = true;
-          return jsonResponse({ ok: true });
-        },
-      } satisfies Route,
-    ]);
-    const send = (options: Options) =>
-      dispatch({
-        params: { path: "session-only" },
-        request: request("GET", "session-only", options),
-        locals: options.locals as never,
-      });
-    const bearer = await send({ bearer: token });
-    expect(bearer.status).toBe(403);
-    expect((await bearer.json()).error.code).toBe("key_cannot_manage_keys");
-    expect(ran).toBe(false);
-    expect((await send({ locals: admin("a1") })).status).toBe(200);
-    expect(ran).toBe(true);
+  it("names the admin as provenance agent when a session omits it, and keeps the externalId default", async () => {
+    const { externalId: _e, provenance: _p, ...bare } = document;
+    const result = await call("POST", "articles", {
+      locals: admin("a1"),
+      origin: "https://artka.dev",
+      key: "bare",
+      body: { article: bare },
+    });
+    expect(result.status).toBe(201);
+    expect(result.body.article).toMatchObject({
+      externalId: document.slug,
+      provenance: { agent: "admin" },
+    });
+  });
+
+  describe("/keys", () => {
+    const session = (method: string, path: string, body?: unknown, who: "a1" | "a2" = "a1") =>
+      call(method, path, { locals: admin(who), origin: "https://artka.dev", body });
+    const issue = async (scopes: string[], name = "agent-key") => {
+      const result = await session("POST", "keys", { name, scopes });
+      expect(result.status).toBe(201);
+      return createdKeySchema.parse(result.body);
+    };
+
+    it("answers a Bearer key 403 key_cannot_manage_keys on every /keys route and changes nothing", async () => {
+      const before = await state.db!.select().from(schema.contentApiKeys);
+      const [target] = before;
+      const attempts = [
+        call("GET", "keys", { bearer: token }),
+        call("POST", "keys", {
+          bearer: token,
+          body: { name: "sneaky", scopes: ["articles:read"] },
+        }),
+        call("DELETE", `keys/${target!.id}`, { bearer: token }),
+      ];
+      for (const result of await Promise.all(attempts)) {
+        expect(result.status).toBe(403);
+        expect(result.body.error.code).toBe("key_cannot_manage_keys");
+      }
+      const after = await state.db!.select().from(schema.contentApiKeys);
+      expect(after.map((row) => [row.id, row.revokedAt])).toEqual(
+        before.map((row) => [row.id, row.revokedAt]),
+      );
+    });
+
+    it("returns the token once; the issued token works and the list never shows it or any hash", async () => {
+      const created = await issue(["articles:read"]);
+      expect(created.token).toMatch(/^artka_[A-Za-z0-9_-]{43}$/);
+      const whoami = await call("GET", "whoami", { bearer: created.token });
+      expect(whoami.body).toMatchObject({ kind: "key", keyName: "agent-key" });
+      const list = await session("GET", "keys");
+      const parsed = keyListSchema.parse(list.body);
+      expect(parsed.items.map((item) => item.name).sort()).toEqual(["agent-key", "test"]);
+      const text = JSON.stringify(list.body);
+      expect(text).not.toContain(created.token);
+      expect(text).not.toContain("tokenHash");
+      expect(text).not.toContain(schema.ADMIN_SESSION_TOKEN_HASH);
+      expect(text).not.toContain(schema.ADMIN_SESSION_KEY_NAME);
+    });
+
+    it("refuses scopes the session does not hold, reserved names and unknown scopes", async () => {
+      await state
+        .db!.update(schema.contentApiKeys)
+        .set({ scopes: ["articles:read", "articles:write"] })
+        .where(eq(schema.contentApiKeys.tokenHash, schema.ADMIN_SESSION_TOKEN_HASH));
+      const beyond = await session("POST", "keys", { name: "k", scopes: ["articles:publish"] });
+      expect([beyond.status, beyond.body.error.code]).toEqual([403, "forbidden"]);
+      expect(
+        (await session("POST", "keys", { name: "Admin", scopes: ["articles:read"] })).status,
+      ).toBe(422);
+      expect((await session("POST", "keys", { name: "k", scopes: ["keys:manage"] })).status).toBe(
+        422,
+      );
+      expect(await state.db!.select().from(schema.contentApiKeys)).toHaveLength(2);
+    });
+
+    it("revokes without deleting: the token stops working, the row stays, a repeat is unchanged", async () => {
+      const created = await issue(["articles:read"]);
+      const revoked = await session("DELETE", `keys/${created.id}`);
+      expect([revoked.status, revoked.body.unchanged, typeof revoked.body.revokedAt]).toEqual([
+        200,
+        false,
+        "string",
+      ]);
+      expect((await call("GET", "whoami", { bearer: created.token })).status).toBe(401);
+      const again = await session("DELETE", `keys/${created.id}`);
+      expect([again.status, again.body.unchanged]).toEqual([200, true]);
+      const listed = keyListSchema.parse((await session("GET", "keys")).body);
+      expect(listed.items.find((item) => item.id === created.id)?.revokedAt).not.toBeNull();
+      const missing = await session("DELETE", "keys/5d1a0c52-3a0f-4a53-a0e0-8a2e4d6b7f10");
+      expect([missing.status, missing.body.error.code]).toEqual([404, "not_found"]);
+    });
+
+    it("cannot revoke the admin-session key: 403 system_key_protected and sessions keep working", async () => {
+      const row = await adminSessionRow();
+      const result = await session("DELETE", `keys/${row!.id}`);
+      expect([result.status, result.body.error.code]).toEqual([403, "system_key_protected"]);
+      expect((await adminSessionRow())?.revokedAt).toBeNull();
+      expect((await session("GET", "whoami")).status).toBe(200);
+    });
   });
 });

@@ -64,6 +64,13 @@
       "when": 1791046544725,
       "tag": "0008_article_versions_build_pointer",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791054356832,
+      "tag": "0009_search_vector_per_lang",
+      "breakpoints": true
     }
   ]
 }

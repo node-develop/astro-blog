@@ -6,6 +6,8 @@ import { articlePath, articleUrl, commitArticle, deleteArticle } from "./github"
 import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
 import { ownsCommittedFile } from "./status";
 import { buildSearchVectorSql } from "../search/vector";
+import { logger } from "../logger";
+import { coverUrlOf, probeImageUrl } from "./cover";
 
 export const verifyPublication = async (url: string, revision: string): Promise<boolean> => {
   const response = await fetch(url, {
@@ -107,6 +109,26 @@ export const processPublication = async () =>
           ownedRevisions: own.filter((p) => p.kind === "publish").map((p) => p.id),
         };
         const path = articlePath(article.slug, article.lang);
+        // An https cover must answer as an image before the page goes live: afterwards a dead
+        // cover would already be public. A `/uploads/` cover was checked when the job was queued.
+        const coverUrl = coverUrlOf(article.document.cover);
+        if (
+          job.kind === "publish" &&
+          coverUrl?.startsWith("https://") &&
+          !(await probeImageUrl(coverUrl).catch((error: unknown) => {
+            logger.warn(
+              { url: coverUrl, errorType: error instanceof Error ? error.name : "unknown" },
+              "cover probe failed",
+            );
+            return false;
+          }))
+        )
+          throw apiError(
+            503,
+            "cover_unreachable",
+            "The cover URL does not answer as an image; fix it or retry publication later.",
+            { url: coverUrl },
+          );
         const sha =
           job.kind === "unpublish"
             ? await deleteArticle(path, ownership)
@@ -213,15 +235,15 @@ export const processPublication = async () =>
               firstPublishedAt: article.firstPublishedAt ?? job.createdAt,
             })
             .where(eq(contentArticles.id, article.id));
+          // One vector per language: the other language's column is left alone.
+          const vector = buildSearchVectorSql({
+            title: article.document.title,
+            tags: article.document.tags,
+            body: article.document.body,
+          }) as unknown as string;
           await tx
             .update(postsMeta)
-            .set({
-              searchVector: buildSearchVectorSql({
-                title: article.document.title,
-                tags: article.document.tags,
-                body: article.document.body,
-              }) as unknown as string,
-            })
+            .set(article.lang === "en" ? { searchVectorEn: vector } : { searchVector: vector })
             .where(eq(postsMeta.slug, article.slug));
           await tx
             .update(contentPublications)

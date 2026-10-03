@@ -2,11 +2,17 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   articleDocumentSchema,
+  articleInputSchema,
+  completeArticle,
   createArticleSchema,
+  createKeySchema,
   cursorSchema,
   encodeCursor,
+  postMetaOrderSchema,
+  postMetaPatchSchema,
   publishBatchSchema,
 } from "../../../src/lib/content-api/contract";
+import { readFileSync } from "node:fs";
 import { inspectMarkdown, serializeArticle } from "../../../src/lib/content-api/markdown";
 import { inspectImage } from "../../../src/lib/content-api/media";
 import { readBytes, readJson } from "../../../src/lib/content-api/http";
@@ -80,6 +86,21 @@ describe("content API contract and rendering", () => {
     expect(raw).toContain("https://cdn.example/image.png");
     expect(raw).not.toContain("asset:");
     expect(raw).toContain("\\<script>");
+  });
+  it("writes a plain-url cover without inventing social image dimensions", async () => {
+    const raw = await serializeArticle(
+      { ...document, cover: { url: "/uploads/cover.png", alt: "Cover", caption: "A caption" } },
+      [],
+      "349ad05b-41ae-4b63-93ab-d7679c82c886",
+      new Date("2026-09-07T10:00:00Z"),
+    );
+    const fm = yaml.load(raw.split("---\n")[1]!) as Record<string, unknown>;
+    const parsed = postSchema.parse(fm);
+    expect(parsed.cover).toBe("/uploads/cover.png");
+    expect(parsed.coverAlt).toBe("Cover");
+    expect(fm).not.toHaveProperty("socialImage");
+    expect(fm).not.toHaveProperty("socialImageWidth");
+    expect(fm).not.toHaveProperty("socialImageHeight");
   });
   it("formats generated RU and EN documents exactly as the repository CI expects", async () => {
     for (const lang of ["ru", "en"] as const) {
@@ -170,5 +191,88 @@ describe("publishBatchSchema", () => {
   it("rejects a repeated id but accepts two distinct ones", () => {
     expect(publishBatchSchema.safeParse({ items: [item(a), item(a)] }).success).toBe(false);
     expect(publishBatchSchema.safeParse({ items: [item(a), item(b)] }).success).toBe(true);
+  });
+});
+
+describe("cover as an asset or a plain url", () => {
+  const withCover = (cover: unknown) => articleDocumentSchema.safeParse({ ...document, cover });
+  it.each(["/uploads/cover.png", "/uploads/2026/10/a-b_c.WEBP", "https://cdn.example/c.png?v=1"])(
+    "accepts the url %s",
+    (url) => {
+      expect(withCover({ url, alt: "Cover" }).success).toBe(true);
+    },
+  );
+  it.each([
+    "/uploads/../secret.png",
+    "/uploads/.hidden/x.png",
+    "/uploads/a/..%2Fb.png",
+    "/uploads/notes.txt",
+    "http://cdn.example/c.png",
+    "/og-default.png",
+    "//cdn.example/c.png",
+    "https://127.0.0.1/c.png",
+    "https://[::1]/c.png",
+    "https://localhost/c.png",
+    "https://postgres/c.png",
+    "https://db.internal/c.png",
+  ])("rejects the url %s", (url) => {
+    expect(withCover({ url, alt: "Cover" }).success).toBe(false);
+  });
+  it("rejects a cover that names both an asset and a url", () => {
+    expect(
+      withCover({
+        assetId: "349ad05b-41ae-4b63-93ab-d7679c82c886",
+        url: "/uploads/a.png",
+        alt: "Cover",
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("completeArticle", () => {
+  const { externalId: _externalId, provenance: _provenance, ...bare } = document;
+  const input = articleInputSchema.parse(bare);
+  it("fills externalId and agent when the client omitted them", () => {
+    const completed = completeArticle(input, { externalId: "the-slug", agent: "key-name" });
+    expect(completed.externalId).toBe("the-slug");
+    expect(completed.provenance).toEqual({ agent: "key-name" });
+  });
+  it("keeps what the client sent", () => {
+    const completed = completeArticle(
+      { ...input, externalId: "mine", provenance: { agent: "own", model: "m1" } },
+      { externalId: "the-slug", agent: "key-name" },
+    );
+    expect(completed.externalId).toBe("mine");
+    expect(completed.provenance).toEqual({ agent: "own", model: "m1" });
+  });
+  it("reports a too-long default agent under article.provenance.agent", () => {
+    const attempt = () => completeArticle(input, { externalId: "x", agent: "k".repeat(101) });
+    expect(attempt).toThrow(z.ZodError);
+    try {
+      attempt();
+    } catch (error) {
+      expect((error as z.ZodError).issues[0]?.path.join(".")).toBe("article.provenance.agent");
+    }
+  });
+  it("documents a request that validates: docs/api/article.example.json", () => {
+    const example = JSON.parse(readFileSync("docs/api/article.example.json", "utf8"));
+    expect(createArticleSchema.safeParse(example).success).toBe(true);
+  });
+});
+
+describe("keys and posts-meta request schemas", () => {
+  it("refuses the reserved key names in any case, and repeated scopes", () => {
+    const scopes = ["articles:read"];
+    expect(createKeySchema.safeParse({ name: "agent-1", scopes }).success).toBe(true);
+    expect(createKeySchema.safeParse({ name: "admin-session", scopes }).success).toBe(false);
+    expect(createKeySchema.safeParse({ name: " Admin ", scopes }).success).toBe(false);
+    expect(
+      createKeySchema.safeParse({ name: "a", scopes: ["articles:read", "articles:read"] }).success,
+    ).toBe(false);
+  });
+  it("refuses a repeated slug in an order", () => {
+    expect(postMetaPatchSchema.safeParse({ pinned: false }).success).toBe(true);
+    expect(postMetaOrderSchema.safeParse({ slugs: ["a", "a"] }).success).toBe(false);
+    expect(postMetaOrderSchema.safeParse({ slugs: ["a", "b"] }).success).toBe(true);
   });
 });

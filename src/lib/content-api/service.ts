@@ -14,8 +14,10 @@ import {
 } from "../db/schema";
 import {
   articleDocumentSchema,
+  completeArticle,
   encodeCursor,
   type ArticleDocument,
+  type ArticleInput,
   type Cursor,
   type ListArticlesQuery,
   type ListMediaQuery,
@@ -32,6 +34,7 @@ import { articleStatus, ownsCommittedFile } from "./status";
 import { hash, type Actor } from "./auth";
 import { apiError } from "./errors";
 import { articlePath, articleUrl } from "./github";
+import { coverUrlOf, uploadsFileExists } from "./cover";
 import { inspectMarkdown, serializeArticle } from "./markdown";
 
 export const CONTENT_LOCK = 71423091;
@@ -116,7 +119,7 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
   const ids = [
     ...new Set([
       ...inspectMarkdown(document.body).assetIds,
-      ...(document.cover ? [document.cover.assetId] : []),
+      ...(document.cover && "assetId" in document.cover ? [document.cover.assetId] : []),
       ...(document.socialImage ? [document.socialImage.assetId] : []),
     ]),
   ];
@@ -128,6 +131,13 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
   if (missing.length)
     throw apiError(422, "missing_assets", "Upload referenced images before saving the article.", {
       assetIds: missing,
+    });
+  // A site cover is checked here, before the Markdown is committed: a mistyped path must not go
+  // live as a broken image. An https cover is probed by the worker just before the commit.
+  const coverUrl = coverUrlOf(document.cover);
+  if (coverUrl?.startsWith("/uploads/") && !uploadsFileExists(coverUrl))
+    throw apiError(422, "missing_cover_file", "The cover file does not exist under /uploads/.", {
+      url: coverUrl,
     });
   for (const slug of document.relatedSlugs) {
     const [related] = await tx
@@ -316,10 +326,17 @@ export const writeVersion = async (
 
 export const createArticle = async (
   tx: Tx,
-  document: ArticleDocument,
+  input: ArticleInput,
   mode: "draft" | "publish",
   actor: Actor,
+  agent: string,
 ): Promise<MutationResult> => {
+  // Under the lock, so the default cannot race with the twin's creation: the other language of
+  // this slug decides the externalId, otherwise the slug does. Translations share both.
+  const twin = (
+    await tx.select().from(contentArticles).where(eq(contentArticles.slug, input.slug))
+  ).filter((a) => a.lang !== input.lang)[0];
+  const document = completeArticle(input, { externalId: twin?.externalId ?? input.slug, agent });
   const candidates = await tx
     .select()
     .from(contentArticles)
@@ -372,11 +389,12 @@ export const updateArticle = async (
   tx: Tx,
   id: string,
   input: {
-    article: ArticleDocument;
+    article: ArticleInput;
     mode: "draft" | "publish";
     expectedVersion: number;
   },
   actor: Actor,
+  agent: string,
 ): Promise<MutationResult> => {
   const current = await requireArticle(tx, id);
   if (current.version !== input.expectedVersion)
@@ -384,14 +402,21 @@ export const updateArticle = async (
       version: current.version,
     });
   const latest = await requireIdle(tx, id);
+  // The identity is immutable, so an omitted externalId means "the stored one" (not the slug: an
+  // article whose externalId differs from its slug would otherwise fail every such update). An
+  // omitted agent keeps the one on record: the saving key is already in the version history.
+  const document = completeArticle(input.article, {
+    externalId: current.externalId,
+    agent: current.document.provenance.agent || agent,
+  });
   if (
-    input.article.externalId !== current.externalId ||
-    input.article.slug !== current.slug ||
-    input.article.lang !== current.lang
+    document.externalId !== current.externalId ||
+    document.slug !== current.slug ||
+    document.lang !== current.lang
   )
     throw apiError(409, "immutable_identity", "externalId, slug and lang cannot change.");
-  const { warnings } = await validateDocument(input.article, tx);
-  const article = await writeVersion(tx, current, input.article, actor);
+  const { warnings } = await validateDocument(document, tx);
+  const article = await writeVersion(tx, current, document, actor);
   const job =
     input.mode === "publish" ? await enqueuePublication(tx, article, actor, { idle: true }) : null;
   return {

@@ -24,6 +24,7 @@ const fakeMeta = (slug: string, order: number, pinned = false): PostMeta => ({
   pinned,
   hiddenFromList: false,
   searchVector: null,
+  searchVectorEn: null,
   updatedAt: new Date(),
 });
 

@@ -4,7 +4,7 @@ import { db } from "../db";
 import { ADMIN_SESSION_TOKEN_HASH, contentApiKeys } from "../db/schema";
 import { hasAuthorizationHeader } from "../http/authorization";
 import { logger } from "../logger";
-import type { ApiScope } from "./contract";
+import { SESSION_AGENT, type ApiScope } from "./contract";
 import { apiError } from "./errors";
 import { isAllowedOrigin } from "./origin";
 
@@ -29,6 +29,10 @@ export const actorOf = (principal: Principal): Actor => ({
   keyId: principal.keyId,
   userId: principal.kind === "session" ? principal.userId : null,
 });
+
+/** `provenance.agent` of a document that does not name one: the key name, `admin` for a session. */
+export const defaultAgent = (principal: Principal): string =>
+  principal.kind === "session" ? SESSION_AGENT : principal.keyName;
 
 /** `"any"` means: authenticated is enough, no particular scope. */
 export const authenticate = async (request: Request, scope: ApiScope | "any") => {

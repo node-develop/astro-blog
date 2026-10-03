@@ -16,6 +16,44 @@ export const assetRefSchema = z.strictObject({
   alt: shortText(1, 500),
   caption: shortText(1, 500).optional(),
 });
+/** Provenance agent recorded for an admin session; the key name is used for a Bearer key. */
+export const SESSION_AGENT = "admin";
+/** Name of the key row that stands for an admin session. Re-exported by db/schema. */
+export const ADMIN_SESSION_KEY_NAME = "admin-session";
+/**
+ * A site image under /uploads/ (no `..`: a segment cannot start with a dot) or an absolute https
+ * URL. The file under /uploads/ is checked to exist when the article is validated; an https
+ * image is probed before the page is committed (see ./cover.ts).
+ */
+const UPLOADS_PATH =
+  /^\/uploads\/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*\/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*\.(?:png|jpe?g|webp|avif|gif)$/i;
+/**
+ * The server probes an https cover, so hosts that only make sense inside a network are refused
+ * here (422 at create time): IP literals, localhost, names without a dot, .local/.internal.
+ * Resolved-IP filtering (DNS pointing at a private address) is not done; see the spec, risks.
+ */
+const isPublicHost = (hostname: string): boolean => {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  if (host.startsWith("[") || /^\d+(?:\.\d+){0,3}$/.test(host)) return false;
+  if (!host.includes(".")) return false;
+  return !/\.(?:local|internal|localhost)$/.test(host);
+};
+const publicHttpsUrl = z
+  .url({ protocol: /^https$/ })
+  .max(2048)
+  .refine((value) => !URL.canParse(value) || isPublicHost(new URL(value).hostname), {
+    message: "the host must be a public domain name, not an IP address or an internal name",
+  });
+export const coverUrlSchema = z.union([z.string().max(300).regex(UPLOADS_PATH), publicHttpsUrl]);
+/** A cover is an uploaded asset or a plain URL; only the asset form can carry a social image. */
+export const coverRefSchema = z.union([
+  assetRefSchema,
+  z.strictObject({
+    url: coverUrlSchema,
+    alt: shortText(1, 500),
+    caption: shortText(1, 500).optional(),
+  }),
+]);
 export const articleDocumentSchema = z.strictObject({
   externalId: shortText(1, 200),
   lang: z.enum(["ru", "en"]),
@@ -27,7 +65,7 @@ export const articleDocumentSchema = z.strictObject({
   tags: z.array(slugSchema).min(1).max(20),
   keywords: z.array(shortText(1, 80)).max(40).default([]),
   sources: z.array(sourceSchema).min(1).max(30),
-  cover: assetRefSchema.optional(),
+  cover: coverRefSchema.optional(),
   socialImage: assetRefSchema.optional(),
   seo: z
     .strictObject({
@@ -50,8 +88,44 @@ export const articleDocumentSchema = z.strictObject({
     model: shortText(1, 100).optional(),
   }),
 });
+/**
+ * What a client may send. The stored document (`articleDocumentSchema`) is always complete:
+ * `externalId` and `provenance.agent` depend on the caller or on the stored article, so they are
+ * filled in by `completeArticle` before anything is saved, never by this static schema.
+ */
+export const articleInputSchema = articleDocumentSchema.extend({
+  externalId: shortText(1, 200)
+    .optional()
+    .describe(
+      "Defaults to slug, or to the externalId of the other language's article of that slug.",
+    ),
+  provenance: z
+    .strictObject({
+      agent: shortText(1, 100)
+        .optional()
+        .describe("Defaults to the key name ('admin' for a session)."),
+      model: shortText(1, 100).optional(),
+    })
+    .optional(),
+});
+export type ArticleInput = z.infer<typeof articleInputSchema>;
+/** Completes an input into a stored document. Issue paths read `article.…`, like every other 422 here. */
+export const completeArticle = (
+  input: ArticleInput,
+  defaults: Readonly<{ externalId: string; agent: string }>,
+): ArticleDocument =>
+  z.strictObject({ article: articleDocumentSchema }).parse({
+    article: {
+      ...input,
+      externalId: input.externalId ?? defaults.externalId,
+      provenance: {
+        agent: input.provenance?.agent ?? defaults.agent,
+        ...(input.provenance?.model ? { model: input.provenance.model } : {}),
+      },
+    },
+  }).article;
 export const createArticleSchema = z.strictObject({
-  article: articleDocumentSchema,
+  article: articleInputSchema,
   mode: z.enum(["draft", "publish"]).default("draft"),
 });
 export const updateArticleSchema = createArticleSchema.extend({
@@ -247,3 +321,50 @@ export const postMetaSchema = z.strictObject({
   hiddenFromList: z.boolean(),
   updatedAt: instant,
 });
+export const postMetaListSchema = z.strictObject({ items: z.array(postMetaSchema) });
+/** hiddenFromList also needs articles:publish: hiding removes the post from /blog, sitemap and llms.txt. */
+export const postMetaPatchSchema = z
+  .strictObject({ pinned: z.boolean().optional(), hiddenFromList: z.boolean().optional() })
+  .refine((value) => value.pinned !== undefined || value.hiddenFromList !== undefined, {
+    message: "send pinned, hiddenFromList or both",
+  });
+/** The complete order: every posts_meta slug exactly once. */
+export const postMetaOrderSchema = z.strictObject({
+  slugs: z
+    .array(slugSchema)
+    .min(1)
+    .max(1000)
+    .refine((slugs) => new Set(slugs).size === slugs.length, { message: "slugs must not repeat" }),
+});
+
+// ── Keys (admin session only) ──────────────────────────────────────────────
+
+const RESERVED_KEY_NAMES: readonly string[] = [ADMIN_SESSION_KEY_NAME, SESSION_AGENT];
+export const createKeySchema = z.strictObject({
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .refine((name) => !RESERVED_KEY_NAMES.includes(name.toLowerCase()), {
+      message: "this name is reserved",
+    }),
+  scopes: z
+    .array(scopeSchema)
+    .min(1)
+    .refine((scopes) => new Set(scopes).size === scopes.length, {
+      message: "scopes must not repeat",
+    }),
+});
+export type CreateKeyInput = z.infer<typeof createKeySchema>;
+/** Never carries a token hash. */
+export const keyViewSchema = z.strictObject({
+  id: z.uuid(),
+  name: z.string(),
+  scopes: z.array(scopeSchema),
+  createdAt: instant,
+  revokedAt: instant.nullable(),
+});
+export const keyListSchema = z.strictObject({ items: z.array(keyViewSchema) });
+/** The only response that ever contains the token. */
+export const createdKeySchema = keyViewSchema.extend({ token: z.string() });

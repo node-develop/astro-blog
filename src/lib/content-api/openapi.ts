@@ -2,11 +2,19 @@ import { z } from "zod";
 import {
   articleBySlugSchema,
   articleDocumentSchema,
+  articleInputSchema,
   articleListSchema,
   articleStatusSchema,
   articleVersionSchema,
   createArticleSchema,
+  createKeySchema,
+  createdKeySchema,
+  keyListSchema,
+  keyViewSchema,
   mediaListSchema,
+  postMetaListSchema,
+  postMetaOrderSchema,
+  postMetaPatchSchema,
   postMetaSchema,
   publicationListSchema,
   publicationSchema,
@@ -115,6 +123,12 @@ const operation = (
     "429": response("Rate limited; Retry-After: 60"),
     "503": response("Service unavailable"),
   },
+});
+/** Keys are managed from the admin session only: Bearer keys get 403 key_cannot_manage_keys. */
+const sessionOperation = (...args: Parameters<typeof operation>) => ({
+  ...operation(...args),
+  description: `Admin session cookie only (Bearer keys get 403 key_cannot_manage_keys). Required scope: ${args[1]}.`,
+  security: [{ sessionCookie: [] }],
 });
 export const openApiDocument = {
   openapi: "3.1.0",
@@ -270,6 +284,25 @@ export const openApiDocument = {
         "PublicationList",
       ),
     },
+    "/posts-meta/": {
+      get: operation(
+        "List every posts_meta row by order: the complete set that PUT /posts-meta/order/ needs",
+        "articles:read",
+        undefined,
+        [],
+        "PostMetaList",
+      ),
+    },
+    "/posts-meta/order/": {
+      put: operation(
+        "Set the manual order: every posts_meta slug exactly once (422 unknown_slugs, incomplete_order)",
+        "articles:write",
+        "PostMetaOrder",
+        [],
+        "PostMetaList",
+        { success: [200] },
+      ),
+    },
     "/posts-meta/{slug}/": {
       get: operation(
         "Read order, pinned and hidden flags of a post",
@@ -277,6 +310,40 @@ export const openApiDocument = {
         undefined,
         [slugParam],
         "PostMeta",
+      ),
+      patch: operation(
+        "Set pinned and/or hiddenFromList; hiding is public (removes the post from /blog, sitemap and llms.txt). 404 when the post has no row",
+        "articles:write (+ articles:publish when hiddenFromList is sent)",
+        "PostMetaPatch",
+        [slugParam],
+        "PostMeta",
+        { success: [200] },
+      ),
+    },
+    "/keys/": {
+      get: sessionOperation(
+        "List API keys, newest first, revoked ones included; no token hashes, no system key",
+        "admin session",
+        undefined,
+        [],
+        "KeyList",
+      ),
+      post: sessionOperation(
+        "Create a key; the token is in this response only. Not idempotent: a repeat creates a second key. Scopes must be a subset of the session's own",
+        "admin session",
+        "CreateKey",
+        [],
+        "CreatedKey",
+        { success: [201] },
+      ),
+    },
+    "/keys/{id}/": {
+      delete: sessionOperation(
+        "Revoke a key (it stays in the list; its queued publications fail with key_revoked). 403 system_key_protected for the admin-session key",
+        "admin session",
+        undefined,
+        [id],
+        "RevokedKey",
       ),
     },
     "/publications/{id}/": {
@@ -337,7 +404,9 @@ export const openApiDocument = {
       },
     },
     schemas: {
+      // The stored form, which every response carries; what a client sends is ArticleInput.
       ArticleDocument: schema(articleDocumentSchema),
+      ArticleInput: schema(articleInputSchema),
       CreateArticle: schema(createArticleSchema),
       UpdateArticle: schema(updateArticleSchema),
       PublishArticle: schema(publishArticleSchema),
@@ -404,6 +473,13 @@ export const openApiDocument = {
       PublicationList: schema(publicationListSchema),
       MediaList: schema(mediaListSchema),
       PostMeta: schema(postMetaSchema),
+      PostMetaList: schema(postMetaListSchema),
+      PostMetaPatch: schema(postMetaPatchSchema),
+      PostMetaOrder: schema(postMetaOrderSchema),
+      KeyList: schema(keyListSchema),
+      CreateKey: schema(createKeySchema),
+      CreatedKey: schema(createdKeySchema),
+      RevokedKey: schema(keyViewSchema.extend({ unchanged: z.boolean() })),
       PublicationStatus: {
         allOf: [
           { $ref: "#/components/schemas/Publication" },

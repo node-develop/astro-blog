@@ -1,15 +1,37 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { APIContext } from "astro";
 import type { Database } from "../../src/lib/db";
 import * as schema from "../../src/lib/db/schema";
 
 const state = vi.hoisted(() => ({ db: undefined as Database | undefined }));
+// ~/lib/fs/paths reads UPLOADS_DIR once, so it is set before any import below runs.
+const uploadsDir = await vi.hoisted(async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = mkdtempSync(join(tmpdir(), "content-api-uploads-"));
+  process.env.UPLOADS_DIR = dir;
+  return dir;
+});
+// getOrderedPosts reads Astro's collection: a fixed list of fake entries stands in for it.
+const collection = vi.hoisted(() => ({ ids: [] as string[] }));
+vi.mock("astro:content", () => ({
+  getCollection: async (_name: string, filter: (entry: unknown) => boolean) =>
+    collection.ids
+      .map((id, index) => ({
+        id,
+        data: { draft: false, pubDate: new Date(Date.UTC(2026, 0, 10 - index)) },
+      }))
+      .filter(filter),
+}));
 vi.mock("~/lib/db", () => ({
   get db() {
     return state.db;
@@ -68,6 +90,8 @@ import { articleDocumentSchema } from "../../src/lib/content-api/contract";
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
 import { commitArticle } from "../../src/lib/content-api/github";
+import { searchPostsMeta } from "../../src/lib/db/repo/posts-meta";
+import { getOrderedPosts } from "../../src/lib/content/loader";
 
 const token = `artka_${"a".repeat(43)}`;
 const document = {
@@ -127,6 +151,7 @@ describe("content API with PostgreSQL", () => {
   afterAll(async () => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+    rmSync(uploadsDir, { recursive: true, force: true });
     await client?.end();
     await container?.stop();
   });
@@ -1029,5 +1054,227 @@ describe("content API with PostgreSQL", () => {
     const none = await call("POST", "publish", { items }, "none");
     expect([none.status, none.body.batchId]).toEqual([200, null]);
     expect(await publicationRows()).toHaveLength(0);
+  });
+
+  // ── Prompt 1.5, second part: contract defaults, covers, posts-meta, search vector ─────────────
+  const bare = (({ externalId: _e, provenance: _p, ...rest }) => rest)(document);
+
+  it("stores externalId = slug and the key name as agent when omitted, and a retry replays", async () => {
+    const first = await call("POST", "articles", { article: bare }, "bare-1");
+    expect(first.status).toBe(201);
+    const retry = await call("POST", "articles", { article: bare }, "bare-1");
+    expect([retry.status, retry.body.id]).toEqual([201, first.body.id]);
+    const rows = await state.db!.select().from(schema.contentArticles);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.externalId).toBe(document.slug);
+    expect(rows[0]!.document).toMatchObject({
+      externalId: document.slug,
+      provenance: { agent: "test" },
+    });
+    // The stored document is always complete: it satisfies the strict storage schema.
+    expect(articleDocumentSchema.safeParse(rows[0]!.document).success).toBe(true);
+  });
+
+  it("completes an update and the English twin from the stored externalId, not from the slug", async () => {
+    const created = await make(); // externalId "integration-source" differs from the slug
+    const put = await call(
+      "PUT",
+      `articles/${created.id}`,
+      { article: { ...bare, title: "Retitled" }, expectedVersion: 1 },
+      "bare-put",
+    );
+    expect(put.status).toBe(200);
+    // An omitted agent keeps the one on record.
+    expect(put.body.article).toMatchObject({
+      externalId: "integration-source",
+      title: "Retitled",
+      provenance: { agent: "integration" },
+    });
+    const twin = await call("POST", "articles", { article: { ...bare, lang: "en" } }, "bare-en");
+    expect(twin.status).toBe(201);
+    expect(twin.body.article.externalId).toBe("integration-source");
+  });
+
+  it("checks a /uploads/ cover file before saving", async () => {
+    mkdirSync(join(uploadsDir, "2026"), { recursive: true });
+    writeFileSync(join(uploadsDir, "2026", "cover.png"), "x");
+    const validate = (url: string) =>
+      call("POST", "articles/validate", { article: { ...document, cover: { url, alt: "Cover" } } });
+    expect((await validate("/uploads/2026/cover.png")).status).toBe(200);
+    const missing = await validate("/uploads/2026/typo.png");
+    expect([missing.status, missing.body.error.code]).toEqual([422, "missing_cover_file"]);
+  });
+
+  it("probes an https cover before the commit: a page that is not an image never goes live", async () => {
+    const coverUrl = "https://cdn.example/cover.webp";
+    let coverAnswer = () => new Response("<html>", { headers: { "content-type": "text/html" } });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) =>
+        String(url) === coverUrl
+          ? coverAnswer()
+          : String(url).includes("sitemap-")
+            ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
+            : new Response(remote.live ?? "", { headers: { "content-type": "text/html" } }),
+      ),
+    );
+    const created = await call(
+      "POST",
+      "articles",
+      {
+        article: { ...document, cover: { url: coverUrl, alt: "Cover" } },
+        mode: "publish",
+      },
+      "https-cover",
+    );
+    expect(created.status).toBe(202);
+    await processPublication();
+    expect(remote.commits).toBe(0);
+    expect((await call("GET", `publications/${created.body.publication.id}`)).body).toMatchObject({
+      state: "queued",
+      error: { code: "cover_unreachable" },
+    });
+    coverAnswer = () => new Response(null, { headers: { "content-type": "image/webp" } });
+    await due();
+    await goLive(created.body.url, created.body.publication.id);
+    expect(remote.commits).toBe(1);
+    expect(remote.content).toContain(`cover: ${coverUrl}`);
+    expect(remote.content).not.toContain("socialImage");
+    expect((await call("GET", `publications/${created.body.publication.id}`)).body.state).toBe(
+      "published",
+    );
+  });
+
+  describe("posts-meta", () => {
+    const SLUGS = ["post-a", "post-b", "post-c"];
+    const writeToken = `artka_${"b".repeat(43)}`;
+    beforeEach(async () => {
+      collection.ids = SLUGS;
+      vi.stubEnv("DATABASE_URL", "postgres://unused-the-db-module-is-mocked");
+      await state
+        .db!.insert(schema.postsMeta)
+        .values(SLUGS.map((slug, index) => ({ slug, order: index + 1 })));
+      await state.db!.insert(schema.contentApiKeys).values({
+        name: "writer",
+        tokenHash: createHash("sha256").update(writeToken).digest("hex"),
+        scopes: ["articles:read", "articles:write"],
+      });
+    });
+    afterEach(() => vi.unstubAllEnvs());
+    const listed = async () =>
+      (await getOrderedPosts({ locale: "ru" })).map((post) => post.entry.id);
+
+    it("hides a post from the SSR list at once, and shows it again", async () => {
+      expect(await listed()).toEqual(SLUGS);
+      const hidden = await call("PATCH", "posts-meta/post-b", { hiddenFromList: true }, "p1");
+      expect(hidden.body).toMatchObject({ slug: "post-b", hiddenFromList: true, pinned: false });
+      expect(await listed()).toEqual(["post-a", "post-c"]);
+      await call("PATCH", "posts-meta/post-b", { hiddenFromList: false }, "p2");
+      expect(await listed()).toEqual(SLUGS);
+    });
+
+    it("lets a write-only key pin but not hide, and never creates a row", async () => {
+      const hide = await call(
+        "PATCH",
+        "posts-meta/post-a",
+        { hiddenFromList: true },
+        "p3",
+        writeToken,
+      );
+      expect([hide.status, hide.body.error.code]).toEqual([403, "forbidden"]);
+      const both = await call(
+        "PATCH",
+        "posts-meta/post-a",
+        { pinned: true, hiddenFromList: true },
+        "p4",
+        writeToken,
+      );
+      expect(both.status).toBe(403);
+      const pin = await call("PATCH", "posts-meta/post-a", { pinned: true }, "p5", writeToken);
+      expect([pin.status, pin.body.pinned, pin.body.hiddenFromList]).toEqual([200, true, false]);
+      expect(await listed()).toContain("post-a");
+      const none = await call("PATCH", "posts-meta/no-such-post", { pinned: true }, "p6");
+      expect(none.status).toBe(404);
+      expect(await state.db!.select().from(schema.postsMeta)).toHaveLength(3);
+      expect((await call("PATCH", "posts-meta/post-a", {}, "p7")).status).toBe(422);
+    });
+
+    it("lists every row by order, and that list is accepted back by PUT order", async () => {
+      const listing = await call("GET", "posts-meta");
+      const slugs = listing.body.items.map((i: { slug: string }) => i.slug);
+      expect(slugs).toEqual(SLUGS);
+      expect((await call("PUT", "posts-meta/order", { slugs }, "o0")).status).toBe(200);
+    });
+
+    it("reorders only with the complete list and answers in the requested order", async () => {
+      const unknown = await call("PUT", "posts-meta/order", { slugs: [...SLUGS, "ghost"] }, "o1");
+      expect([unknown.status, unknown.body.error.code, unknown.body.error.details]).toEqual([
+        422,
+        "unknown_slugs",
+        { slugs: ["ghost"] },
+      ]);
+      const partial = await call("PUT", "posts-meta/order", { slugs: ["post-c", "post-a"] }, "o2");
+      expect([partial.status, partial.body.error.code, partial.body.error.details]).toEqual([
+        422,
+        "incomplete_order",
+        { missing: ["post-b"] },
+      ]);
+      const ok = await call(
+        "PUT",
+        "posts-meta/order",
+        { slugs: ["post-c", "post-a", "post-b"] },
+        "o3",
+      );
+      expect(ok.status).toBe(200);
+      expect(ok.body.items.map((i: { slug: string; order: number }) => [i.slug, i.order])).toEqual([
+        ["post-c", 1],
+        ["post-a", 2],
+        ["post-b", 3],
+      ]);
+      const stored = await state.db!.select().from(schema.postsMeta);
+      expect(stored.map((row) => row.order).sort()).toEqual([1, 2, 3]);
+    });
+  });
+
+  it("keeps one search vector per language: publishing English leaves the Russian one intact", async () => {
+    const ru = await call(
+      "POST",
+      "articles",
+      {
+        article: { ...document, body: "## Рецепт\n\nСварите борщ с говядиной.", tags: ["food"] },
+        mode: "publish",
+      },
+      "vec-ru",
+    );
+    await goLive(ru.body.url, ru.body.publication.id);
+    expect((await searchPostsMeta("борщ")).map((hit) => hit.slug)).toEqual([document.slug]);
+    // The mock remote keeps a single file: the English twin lives at another path.
+    remote.content = null;
+    const en = await call(
+      "POST",
+      "articles",
+      {
+        article: {
+          ...document,
+          lang: "en",
+          title: "Integration API article in English",
+          body: "## Recipe\n\nBoil the dumplings until golden.",
+        },
+        mode: "publish",
+      },
+      "vec-en",
+    );
+    expect(en.status).toBe(202);
+    await goLive(en.body.url, en.body.publication.id);
+    expect((await call("GET", `publications/${en.body.publication.id}`)).body.state).toBe(
+      "published",
+    );
+    const slugs = async (query: string, lang?: "ru" | "en") =>
+      (await searchPostsMeta(query, 20, lang)).map((hit) => hit.slug);
+    expect(await slugs("борщ")).toEqual([document.slug]);
+    expect(await slugs("dumplings", "en")).toEqual([document.slug]);
+    // Neither vector holds the other language's text.
+    expect(await slugs("dumplings", "ru")).toEqual([]);
+    expect(await slugs("борщ", "en")).toEqual([]);
   });
 });

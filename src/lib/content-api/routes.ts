@@ -1,14 +1,32 @@
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
-import { getMetaBySlug } from "../db/repo/posts-meta";
+import {
+  getMetaBySlug,
+  listAllMeta,
+  listMetaBySlugs,
+  reorderMeta,
+  setMetaFlags,
+} from "../db/repo/posts-meta";
+import type { PostMeta } from "../db/schema";
 import { db } from "../db";
 import { contentPublications } from "../db/schema";
-import { actorOf, authorize, equalSecret, requireScope, type Principal } from "./auth";
 import {
+  actorOf,
+  authorize,
+  defaultAgent,
+  equalSecret,
+  requireScope,
+  type Principal,
+} from "./auth";
+import {
+  completeArticle,
   createArticleSchema,
+  createKeySchema,
   listArticlesQuerySchema,
   listMediaQuerySchema,
   listPublicationsQuerySchema,
+  postMetaOrderSchema,
+  postMetaPatchSchema,
   publishArticleSchema,
   publishBatchSchema,
   slugSchema,
@@ -26,6 +44,7 @@ import {
   readBytes,
   readJson,
 } from "./http";
+import { createKey, listKeys, revokeKey } from "./keys";
 import { MAX_IMAGE_BYTES, uploadImage } from "./media";
 import { openApiDocument } from "./openapi";
 import {
@@ -147,6 +166,13 @@ export const createDispatcher =
       return route.handler({ ...ctx, once });
     });
 
+const postMetaView = (meta: PostMeta) => ({
+  slug: meta.slug,
+  order: meta.order,
+  pinned: meta.pinned,
+  hiddenFromList: meta.hiddenFromList,
+  updatedAt: meta.updatedAt.toISOString(),
+});
 const articleId = (params: Readonly<Record<string, string>>): string => z.uuid().parse(params.id);
 const queryOf = (request: Request): Record<string, string> =>
   Object.fromEntries(new URL(request.url).searchParams);
@@ -222,9 +248,14 @@ export const routes: readonly Route[] = [
     pattern: "articles/validate",
     scope: "articles:write",
     idempotent: false,
-    handler: async ({ request }) => {
+    handler: async ({ request, principal }) => {
       const input = createArticleSchema.parse(await readJson(request));
-      const { warnings } = await validateDocument(input.article);
+      // No lock and no lookup here: a twin's externalId is only known to a real create.
+      const document = completeArticle(input.article, {
+        externalId: input.article.slug,
+        agent: defaultAgent(principal),
+      });
+      const { warnings } = await validateDocument(document);
       return jsonResponse({ valid: true, warnings });
     },
   },
@@ -237,7 +268,7 @@ export const routes: readonly Route[] = [
       const input = createArticleSchema.parse(await readJson(request));
       if (input.mode === "publish") requireScope(principal, "articles:publish");
       const result = await once(input, (tx) =>
-        createArticle(tx, input.article, input.mode, actorOf(principal)),
+        createArticle(tx, input.article, input.mode, actorOf(principal), defaultAgent(principal)),
       );
       return jsonResponse(result.data, result.status, {
         location: `/api/v1/articles/${result.data.id}/`,
@@ -311,7 +342,9 @@ export const routes: readonly Route[] = [
       const id = articleId(params);
       const input = updateArticleSchema.parse(await readJson(request));
       if (input.mode === "publish") requireScope(principal, "articles:publish");
-      const result = await once(input, (tx) => updateArticle(tx, id, input, actorOf(principal)));
+      const result = await once(input, (tx) =>
+        updateArticle(tx, id, input, actorOf(principal), defaultAgent(principal)),
+      );
       return jsonResponse(result.data, result.status);
     },
   },
@@ -421,6 +454,15 @@ export const routes: readonly Route[] = [
       jsonResponse(await listMedia(db, listMediaQuerySchema.parse(queryOf(request)))),
   },
   {
+    // The source of the complete list that PUT posts-meta/order demands.
+    method: "GET",
+    pattern: "posts-meta",
+    scope: "articles:read",
+    idempotent: false,
+    handler: async () =>
+      jsonResponse({ items: (await listAllMeta()).map((row) => postMetaView(row)) }),
+  },
+  {
     method: "GET",
     pattern: "posts-meta/:slug",
     scope: "articles:read",
@@ -428,14 +470,83 @@ export const routes: readonly Route[] = [
     handler: async ({ params }) => {
       const meta = await getMetaBySlug(slugSchema.parse(params.slug));
       if (!meta) throw apiError(404, "not_found", "Post metadata not found.");
-      return jsonResponse({
-        slug: meta.slug,
-        order: meta.order,
-        pinned: meta.pinned,
-        hiddenFromList: meta.hiddenFromList,
-        updatedAt: meta.updatedAt.toISOString(),
-      });
+      return jsonResponse(postMetaView(meta));
     },
+  },
+  {
+    // A literal segment. It cannot be captured by posts-meta/:slug: that route is GET/PATCH only.
+    // Not idempotent: renumbering is naturally repeatable. The list must be complete, otherwise
+    // the numbers of the omitted posts would collide with the new ones.
+    method: "PUT",
+    pattern: "posts-meta/order",
+    scope: "articles:write",
+    idempotent: false,
+    handler: async ({ request }) => {
+      const { slugs } = postMetaOrderSchema.parse(await readJson(request));
+      const known = new Set((await listAllMeta()).map((row) => row.slug));
+      const requested = new Set(slugs);
+      const unknown = slugs.filter((slug) => !known.has(slug));
+      if (unknown.length)
+        throw apiError(422, "unknown_slugs", "Some slugs have no posts_meta row.", {
+          slugs: unknown,
+        });
+      const missing = [...known].filter((slug) => !requested.has(slug)).sort();
+      if (missing.length)
+        throw apiError(422, "incomplete_order", "Send every posts_meta slug exactly once.", {
+          missing,
+        });
+      await reorderMeta(slugs);
+      const rows = new Map((await listMetaBySlugs(slugs)).map((row) => [row.slug, row]));
+      return jsonResponse({ items: slugs.map((slug) => postMetaView(rows.get(slug)!)) });
+    },
+  },
+  {
+    method: "PATCH",
+    pattern: "posts-meta/:slug",
+    scope: "articles:write",
+    idempotent: false,
+    handler: async ({ request, params, principal }) => {
+      const slug = slugSchema.parse(params.slug);
+      const patch = postMetaPatchSchema.parse(await readJson(request));
+      // Hiding drops the post from /blog, the sitemap and llms.txt: a public effect, like mode=publish.
+      if (patch.hiddenFromList !== undefined) requireScope(principal, "articles:publish");
+      const meta = await setMetaFlags(slug, patch);
+      if (!meta) throw apiError(404, "not_found", "Post metadata not found.");
+      return jsonResponse(postMetaView(meta));
+    },
+  },
+  {
+    method: "GET",
+    pattern: "keys",
+    scope: "any",
+    sessionOnly: true,
+    idempotent: false,
+    handler: async () => jsonResponse({ items: await listKeys(db) }),
+  },
+  {
+    // Not idempotent: a stored response would keep the token in content_api_requests. A repeat
+    // creates a second key.
+    method: "POST",
+    pattern: "keys",
+    scope: "any",
+    sessionOnly: true,
+    idempotent: false,
+    handler: async ({ request, principal }) => {
+      const input = createKeySchema.parse(await readJson(request));
+      // A session may issue only what it holds itself.
+      const beyond = input.scopes.filter((scope) => !principal.scopes.includes(scope));
+      if (beyond.length)
+        throw apiError(403, "forbidden", "Requested scopes exceed your own.", { scopes: beyond });
+      return jsonResponse(await createKey(db, input), 201);
+    },
+  },
+  {
+    method: "DELETE",
+    pattern: "keys/:id",
+    scope: "any",
+    sessionOnly: true,
+    idempotent: false,
+    handler: async ({ params }) => jsonResponse(await revokeKey(db, articleId(params))),
   },
   {
     method: "GET",

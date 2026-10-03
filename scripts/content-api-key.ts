@@ -1,7 +1,8 @@
 import "../src/lib/env";
-import { randomBytes, createHash } from "node:crypto";
-import postgres from "postgres";
-import { scopeSchema } from "../src/lib/content-api/contract";
+import { z } from "zod";
+import { createDb } from "../src/lib/db";
+import { createKeySchema } from "../src/lib/content-api/contract";
+import { createKey, revokeKey } from "../src/lib/content-api/keys";
 
 const [command, nameOrId, ...requestedScopes] = process.argv.slice(2);
 if (!process.env.DATABASE_URL || !nameOrId || !["create", "revoke"].includes(command ?? "")) {
@@ -10,22 +11,17 @@ if (!process.env.DATABASE_URL || !nameOrId || !["create", "revoke"].includes(com
   );
   process.exit(1);
 }
-const client = postgres(process.env.DATABASE_URL, { max: 1 });
+const database = createDb(process.env.DATABASE_URL);
 try {
   if (command === "revoke") {
-    const rows =
-      await client`update content_api_keys set revoked_at = now() where id = ${nameOrId} returning id`;
-    process.stdout.write(`${rows.length ? "Revoked" : "Not found"}\n`);
+    const result = await revokeKey(database, z.uuid().parse(nameOrId));
+    process.stdout.write(`${result.unchanged ? "Already revoked" : "Revoked"}\n`);
   } else {
-    const scopes = requestedScopes.map((scope) => scopeSchema.parse(scope));
-    if (!scopes.length) throw new Error("Provide at least one scope");
-    const token = `artka_${randomBytes(32).toString("base64url")}`;
-    const digest = createHash("sha256").update(token).digest("hex");
-    const [key] = await client`insert into content_api_keys (name, token_hash, scopes)
-      values (${nameOrId}, ${digest}, ${client.json(scopes)}) returning id`;
+    const input = createKeySchema.parse({ name: nameOrId, scopes: requestedScopes });
+    const { id, token, scopes } = await createKey(database, input);
     // Deliberately print the newly created credential once; only its hash is stored.
-    process.stdout.write(JSON.stringify({ id: key!.id, token, scopes }) + "\n");
+    process.stdout.write(JSON.stringify({ id, token, scopes }) + "\n");
   }
 } finally {
-  await client.end();
+  await database.$client.end();
 }

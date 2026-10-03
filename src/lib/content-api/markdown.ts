@@ -64,8 +64,17 @@ export const serializeArticle = async (
   updatedAt?: Date,
 ): Promise<string> => {
   const byId = new Map(assets.map((asset) => [asset.id, asset]));
-  const cover = document.cover && byId.get(document.cover.assetId);
-  const social = document.socialImage ? byId.get(document.socialImage.assetId) : cover;
+  // An asset cover supplies its own dimensions and, without a socialImage, the social image. A
+  // plain-URL cover has unknown dimensions, so it writes no socialImage* fields: the layout then
+  // keeps the generated /og card and does not invent a size.
+  const coverAsset =
+    document.cover && "assetId" in document.cover ? byId.get(document.cover.assetId) : undefined;
+  const coverUrl = document.cover
+    ? "url" in document.cover
+      ? document.cover.url
+      : coverAsset?.url
+    : undefined;
+  const social = document.socialImage ? byId.get(document.socialImage.assetId) : coverAsset;
   const { body } = inspectMarkdown(document.body, new Map(assets.map((a) => [a.id, a.url])));
   const frontmatter = {
     title: document.title,
@@ -81,8 +90,8 @@ export const serializeArticle = async (
     apiRevision: revision,
     ...(document.seo?.title ? { seoTitle: document.seo.title } : {}),
     ...(document.seo?.description ? { seoDescription: document.seo.description } : {}),
-    ...(cover
-      ? { cover: cover.url, coverAlt: document.cover!.alt, coverCaption: document.cover!.caption }
+    ...(coverUrl
+      ? { cover: coverUrl, coverAlt: document.cover!.alt, coverCaption: document.cover!.caption }
       : {}),
     ...(social
       ? {

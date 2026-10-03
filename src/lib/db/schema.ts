@@ -117,7 +117,10 @@ export const postsMeta = pgTable(
     order: integer("order").notNull(),
     pinned: boolean("pinned").notNull().default(false),
     hiddenFromList: boolean("hidden_from_list").notNull().default(false),
+    // One vector per language: `search_vector` is RU (and every file post), `search_vector_en`
+    // is the English API article. The GIN indexes are in migrations 0003 and 0009.
     searchVector: tsvector("search_vector"),
+    searchVectorEn: tsvector("search_vector_en"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
@@ -421,5 +424,5 @@ export type ContentArticleVersion = typeof contentArticleVersions.$inferSelect;
  * session cookie". It keeps key_id NOT NULL on everything an admin writes.
  * Its token_hash is not a sha256 hex digest, so no bearer token can match it.
  */
-export const ADMIN_SESSION_KEY_NAME = "admin-session";
+export { ADMIN_SESSION_KEY_NAME } from "../content-api/contract";
 export const ADMIN_SESSION_TOKEN_HASH = `session:${"0".repeat(64)}`;

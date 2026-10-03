@@ -3,6 +3,7 @@
   "type": "object",
   "properties": {
     "externalId": {
+      "description": "Defaults to slug, or to the externalId of the other language's article of that slug.",
       "type": "string",
       "minLength": 1,
       "maxLength": 200
@@ -87,29 +88,67 @@
       }
     },
     "cover": {
-      "type": "object",
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "assetId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "alt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "assetId",
+            "alt"
+          ],
+          "additionalProperties": false
         },
-        "alt": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 500
-        },
-        "caption": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 500
+        {
+          "type": "object",
+          "properties": {
+            "url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 300,
+                  "pattern": "^\\/uploads\\/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*\\/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*\\.(?:png|jpe?g|webp|avif|gif)$"
+                },
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "format": "uri"
+                }
+              ]
+            },
+            "alt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "url",
+            "alt"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "assetId",
-        "alt"
-      ],
-      "additionalProperties": false
+      ]
     },
     "socialImage": {
       "type": "object",
@@ -192,6 +231,7 @@
       "type": "object",
       "properties": {
         "agent": {
+          "description": "Defaults to the key name ('admin' for a session).",
           "type": "string",
           "minLength": 1,
           "maxLength": 100
@@ -202,14 +242,10 @@
           "maxLength": 100
         }
       },
-      "required": [
-        "agent"
-      ],
       "additionalProperties": false
     }
   },
   "required": [
-    "externalId",
     "lang",
     "slug",
     "title",
@@ -217,8 +253,7 @@
     "summary",
     "body",
     "tags",
-    "sources",
-    "provenance"
+    "sources"
   ],
   "additionalProperties": false
 }
