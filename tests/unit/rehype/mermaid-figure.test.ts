@@ -55,7 +55,7 @@ it("replaces the OS-driven <picture> with a light and a dark image the site them
   expect(canvas.properties.tabIndex).toBe(0);
   // A Tab stop has to announce something: the canvas is named by its caption.
   expect(canvas.properties.role).toBe("group");
-  expect(canvas.properties.ariaLabelledBy).toBe(parts(figure!).caption.properties.id);
+  expect(canvas.properties.ariaLabelledBy).toEqual([parts(figure!).caption.properties.id]);
   expect(parts(figure!).caption.properties.id).toBeTruthy();
   expect(
     images.map((image) => [image.tagName, image.properties.className, image.properties.src]),

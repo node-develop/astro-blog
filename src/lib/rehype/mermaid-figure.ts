@@ -90,7 +90,7 @@ const mermaidFigure = (): Transformer<Root> => (tree, file) => {
             className: ["diagram__canvas"],
             tabIndex: 0,
             role: "group",
-            ariaLabelledBy: captionId,
+            ariaLabelledBy: [captionId],
           },
           children: images,
         },
