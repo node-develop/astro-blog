@@ -134,6 +134,8 @@ draft: false
 
 ```mermaid
 flowchart TB
+  accTitle: Связи узлов JSON-LD на странице статьи
+  accDescr: BlogPosting ссылается на Person как на автора, на WebPage как на основную страницу и на Blog как на раздел. WebPage входит в WebSite и имеет BreadcrumbList. Ссылка на Blog висячая: такого узла на странице нет.
   BP[BlogPosting] -->|author| P[Person]
   BP -->|mainEntityOfPage| WP[WebPage]
   BP -->|isPartOf| B[Blog #blog-ru]

@@ -22,7 +22,7 @@ keywords:
 - multi-step ai workflows
 - behavioral contract llm
 lang: en
-sourceHash: 0da80175771183157dbc8493ebc09e9a76e976752bea76215fca96297c4bacdb
+sourceHash: 28cf6c88dead34ef952189dc0cae90ec815fdc7198e7a41c01fae87accfc63f1
 manuallyEdited: true
 updatedDate: 2026-09-07
 ---
@@ -93,6 +93,8 @@ One successful run does not establish an improvement. When results vary, describ
 
 ```mermaid
 flowchart TB
+  accTitle: The rule loop in CLAUDE.md
+  accDescr: An observed failure becomes a specific rule, the rule is applied to a repeatable task, the result is verified through the diff and the checks, and new failures start the loop again.
   E[Observed failure] --> R[Specific rule]
   R --> T[Repeatable task]
   T --> D[Diff and checks]

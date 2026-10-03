@@ -94,6 +94,8 @@ CLAUDE.md полезен, когда устраняет конкретную п�
 
 ```mermaid
 flowchart TB
+  accTitle: Цикл правила в CLAUDE.md
+  accDescr: Замеченный сбой превращается в конкретное правило, правило применяется в повторяемой задаче, результат проверяется по диффу и проверкам, а новые сбои возвращают цикл в начало.
   E[Observed failure] --> R[Specific rule]
   R --> T[Repeatable task]
   T --> D[Diff and checks]

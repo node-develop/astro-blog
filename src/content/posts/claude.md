@@ -52,6 +52,8 @@ draft: true
 
 ```mermaid
 flowchart TB
+  accTitle: Устройство Claude Code
+  accDescr: Агентный цикл в локальном harness собирает контекстное окно из статических инструкций (системный промпт, CLAUDE.md, скиллы, субагенты), сообщений и вызовов инструментов. Инструменты запускают хуки и обращаются к MCP-серверам, плагины устанавливают инструкции, хуки и MCP, а субсессии возвращают результат в контекст.
   subgraph harness["Claude Code (harness, локально на машине)"]
     cli["CLI / IDE plugin"]
     loop["Agent loop<br/>(model ↔ tools)"]

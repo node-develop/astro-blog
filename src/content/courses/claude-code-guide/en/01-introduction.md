@@ -17,6 +17,8 @@ An agent fixing trip-date validation might misunderstand the requirement, read t
 
 ```mermaid
 flowchart LR
+  accTitle: The agent work loop
+  accDescr: A requirement goes to the model, the model decides the next step, a tool call runs and returns its result to the model. The loop repeats until the model moves on to verification.
   R[Requirement] --> M[Model decision]
   M --> T[Tool call]
   T --> E[Execution result]

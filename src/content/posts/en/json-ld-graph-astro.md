@@ -53,7 +53,7 @@ cover: /og-default.png
 coverAlt: artka.dev — technical blog
 draft: false
 lang: en
-sourceHash: a327ba43de30036163470f5c23be8478047663daa1b96b4c77ef4e667e9390e2
+sourceHash: 93f89beda3a00070a1b96bc38a0519b7cdf62b43ec6af2751154df06ed8c3b62
 manuallyEdited: false
 updatedDate: 2026-09-19
 ---
@@ -137,6 +137,8 @@ On every article page, the `BlogPosting` node referenced a blog node through `is
 
 ```mermaid
 flowchart TB
+  accTitle: JSON-LD node links on an article page
+  accDescr: BlogPosting points to Person as the author, to WebPage as its main page and to Blog as its section. WebPage is part of WebSite and has a BreadcrumbList. The reference to Blog is dangling: the page has no such node.
   BP[BlogPosting] -->|author| P[Person]
   BP -->|mainEntityOfPage| WP[WebPage]
   BP -->|isPartOf| B[Blog #blog-ru]

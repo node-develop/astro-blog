@@ -54,7 +54,7 @@ cover: /og-default.png
 coverAlt: artka.dev — technical blog
 draft: false
 lang: en
-sourceHash: c2a68a0f844a4f2792c986311f82585a3d365bbced908203d54a28f946695740
+sourceHash: 569d16bf539792dc4841604750a2be973f7db996f773a991e342ba28c823c32d
 manuallyEdited: false
 ---
 
@@ -194,6 +194,8 @@ Permission in robots.txt is one point on a long path. It can be refused at any o
 
 ```mermaid
 flowchart TB
+  accTitle: A crawler request from DNS to results
+  accDescr: A crawler request passes in turn through DNS and routing, network and CDN protection, geographic restrictions, robots.txt, the page status code, response headers, HTML and meta tags, rendering and index selection. After that the page can appear in regular search or in a generative answer.
   A[Bot request] --> B[DNS and routing]
   B --> C[Network and CDN protection]
   C --> D[Geographic restrictions]
