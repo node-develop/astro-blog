@@ -1,17 +1,19 @@
 /**
- * IndexNow (https://www.indexnow.org/documentation) — pure helpers.
+ * IndexNow (https://www.indexnow.org/documentation) — pure helpers plus the
+ * one effectful entry point, `pingIndexNow`.
  *
  * Protocol recap: the site proves ownership by serving the key at
  * `https://<host>/<key>.txt` (route: src/pages/[indexnowKey].txt.ts), then
  * POSTs `{host, key, keyLocation, urlList}` to api.indexnow.org. One ping is
  * fanned out to every participating engine (Bing, Yandex, Naver, Seznam…).
  *
- * Wiring: the publish action (src/actions — owned elsewhere) should call
- * `submitIndexNow(fetch, buildIndexNowPayload(urls, key, host))` after a
- * successful publish, with the canonical URLs of the RU post, its EN twin and
- * the two blog indexes. Failures must be logged (pino) and never block publish.
+ * Wiring: the publish action (src/actions/publish.ts) calls `pingIndexNow`
+ * after a successful publish. Failures are logged (pino) and never block
+ * publish.
  */
-import { CANONICAL_ORIGIN, canonicalUrl } from "./url-policy";
+import { logger } from "../logger";
+import type { TranslateCollection } from "../translate/site-config";
+import { CANONICAL_ORIGIN, canonicalPath, canonicalUrl } from "./url-policy";
 
 export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 export const INDEXNOW_MAX_URLS = 10_000;
@@ -84,4 +86,61 @@ export const submitIndexNow = async (
     status: response.status,
     submitted: payload.urlList.length,
   };
+};
+
+/**
+ * Public URLs affected by publishing `slug` in `collection` — the page itself
+ * (RU + EN twin when present) plus the listing pages that embed it. Pure, so
+ * the IndexNow ping can be unit-tested without git or network.
+ */
+export const publishedUrlsFor = (
+  collection: TranslateCollection,
+  slug: string,
+  hasEnTwin: boolean,
+): ReadonlyArray<string> => {
+  const pair = (ru: string, en: string): string[] => (hasEnTwin ? [ru, en] : [ru]);
+  const paths = ((): string[] => {
+    switch (collection) {
+      case "posts":
+        return [...pair(`/blog/${slug}`, `/en/blog/${slug}`), "/blog", "/en/blog"];
+      case "site":
+        return slug === "home" ? ["/", "/en"] : pair(`/${slug}`, `/en/${slug}`);
+      case "projects":
+        return [...pair(`/projects/${slug}`, `/en/projects/${slug}`), "/projects", "/en/projects"];
+      case "courses":
+        return pair(`/courses/${slug}`, `/en/courses/${slug}`);
+      case "lessons": {
+        const [course, lesson] = slug.split("/");
+        return [
+          ...pair(`/courses/${course}/${lesson}`, `/en/courses/${course}/${lesson}`),
+          `/courses/${course}`,
+        ];
+      }
+    }
+  })();
+  return paths.map(canonicalPath);
+};
+
+/**
+ * Best-effort IndexNow ping. The content goes live only after the CI build +
+ * Dokploy deploy (~2-3 min); IndexNow is a hint that schedules a crawl, so an
+ * early ping is fine. Never throws — a failed ping must not fail a publish.
+ */
+export const pingIndexNow = async (
+  collection: TranslateCollection,
+  slug: string,
+  hasEnTwin: boolean,
+): Promise<void> => {
+  const key = indexNowKeyFromEnv();
+  if (!key) {
+    logger.info({ slug, collection }, "indexnow skipped: INDEXNOW_KEY not set");
+    return;
+  }
+  try {
+    const payload = buildIndexNowPayload(publishedUrlsFor(collection, slug, hasEnTwin), key);
+    const result = await submitIndexNow(fetch, payload);
+    logger[result.ok ? "info" : "warn"]({ slug, collection, ...result }, "indexnow ping");
+  } catch (err) {
+    logger.warn({ slug, collection, err }, "indexnow ping failed");
+  }
 };
