@@ -41,6 +41,30 @@ describe("requiresAuthContext", () => {
     },
   );
 
+  it("skips the session lookup for a Bearer call to the content API", () => {
+    const pathname = "/api/v1/articles/";
+    const headers = { authorization: "Bearer artka_x" };
+    expect(requiresAuthContext(request(pathname, { method: "POST", headers }), pathname)).toBe(
+      false,
+    );
+  });
+
+  it("still resolves the session for a content API call without Authorization", () => {
+    const pathname = "/api/v1/articles/";
+    const cookie = "better-auth.session_token=abc";
+    expect(
+      requiresAuthContext(request(pathname, { method: "POST", headers: { cookie } }), pathname),
+    ).toBe(true);
+    expect(requiresAuthContext(request(pathname, { method: "POST" }), pathname)).toBe(true);
+  });
+
+  it("does not let an Authorization header skip the session lookup outside the content API", () => {
+    const headers = { authorization: "Bearer x" };
+    expect(
+      requiresAuthContext(request("/contact/", { method: "POST", headers }), "/contact/"),
+    ).toBe(true);
+  });
+
   it("requires auth for an Astro action request", () => {
     const pathname = "/_actions/save";
     expect(requiresAuthContext(request(pathname), pathname)).toBe(true);

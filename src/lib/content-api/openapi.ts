@@ -3,6 +3,7 @@ import {
   articleDocumentSchema,
   createArticleSchema,
   publishArticleSchema,
+  scopeSchema,
   updateArticleSchema,
 } from "./contract";
 
@@ -27,8 +28,8 @@ const operation = (
   model = "ArticleResult",
 ) => ({
   summary,
-  description: `Required scope: ${scope}. 60 requests/minute/key.`,
-  security: [{ bearerAuth: [] }],
+  description: `Required scope: ${scope}. 60 requests/minute/key (Bearer only).`,
+  security: [{ bearerAuth: [] }, { sessionCookie: [] }],
   parameters,
   ...(input
     ? {
@@ -58,8 +59,8 @@ const operation = (
       ]),
     ),
     "400": response("Malformed JSON or missing Idempotency-Key"),
-    "401": response("Missing, invalid or revoked key"),
-    "403": response("Insufficient scope"),
+    "401": response("Missing, invalid or revoked key, or no admin session"),
+    "403": response("Insufficient scope or origin mismatch"),
     "404": response("Not found"),
     "409": response("Identity, idempotency, version or edit conflict"),
     "413": response("Request too large"),
@@ -127,6 +128,15 @@ export const openApiDocument = {
         "PublicationStatus",
       ),
     },
+    "/whoami/": {
+      get: operation(
+        "Show who the caller is: key or admin session",
+        "any authenticated principal",
+        undefined,
+        [],
+        "Whoami",
+      ),
+    },
     "/media/": {
       post: {
         ...operation(
@@ -151,6 +161,13 @@ export const openApiDocument = {
   components: {
     securitySchemes: {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "artka_<random token>" },
+      sessionCookie: {
+        type: "apiKey",
+        in: "cookie",
+        name: "better-auth.session_token",
+        description:
+          "Admin session cookie (administrators only; named __Secure-better-auth.session_token in production). Used only when no Authorization header is sent. Non-GET requests must carry an Origin header equal to the site origin. No rate limit.",
+      },
     },
     schemas: {
       ArticleDocument: schema(articleDocumentSchema),
@@ -165,6 +182,13 @@ export const openApiDocument = {
             requestId: z.uuid(),
             details: z.unknown().optional(),
           }),
+        }),
+      ),
+      Whoami: schema(
+        z.object({
+          kind: z.enum(["key", "session"]),
+          keyName: z.string(),
+          scopes: z.array(scopeSchema),
         }),
       ),
       ValidationResult: schema(z.object({ valid: z.literal(true), warnings: z.array(z.string()) })),

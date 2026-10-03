@@ -14,10 +14,13 @@
     "/articles/": {
       "post": {
         "summary": "Create an article",
-        "description": "Required scope: articles:write (+ articles:publish for mode=publish). 60 requests/minute/key.",
+        "description": "Required scope: articles:write (+ articles:publish for mode=publish). 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [
@@ -73,7 +76,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -83,7 +86,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -168,10 +171,13 @@
     "/articles/validate/": {
       "post": {
         "summary": "Validate without saving",
-        "description": "Required scope: articles:write. 60 requests/minute/key.",
+        "description": "Required scope: articles:write. 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [],
@@ -207,7 +213,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -217,7 +223,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -302,10 +308,13 @@
     "/articles/{id}/": {
       "get": {
         "summary": "Read document, latest manual revision and remote content",
-        "description": "Required scope: articles:read. 60 requests/minute/key.",
+        "description": "Required scope: articles:read. 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [
@@ -341,7 +350,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -351,7 +360,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -434,10 +443,13 @@
       },
       "put": {
         "summary": "Replace an article using expectedVersion",
-        "description": "Required scope: articles:write (+ articles:publish for mode=publish). 60 requests/minute/key.",
+        "description": "Required scope: articles:write (+ articles:publish for mode=publish). 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [
@@ -502,7 +514,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -512,7 +524,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -597,10 +609,13 @@
     "/articles/{id}/publish/": {
       "post": {
         "summary": "Publish current version or retry a failed publication",
-        "description": "Required scope: articles:publish. 60 requests/minute/key.",
+        "description": "Required scope: articles:publish. 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [
@@ -665,7 +680,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -675,7 +690,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -760,10 +775,13 @@
     "/publications/{id}/": {
       "get": {
         "summary": "Read publication status",
-        "description": "Required scope: articles:read. 60 requests/minute/key.",
+        "description": "Required scope: articles:read. 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [
@@ -799,7 +817,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -809,7 +827,134 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Identity, idempotency, version or edit conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; Retry-After: 60",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whoami/": {
+      "get": {
+        "summary": "Show who the caller is: key or admin session",
+        "description": "Required scope: any authenticated principal. 60 requests/minute/key (Bearer only).",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Whoami"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON or missing Idempotency-Key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked key, or no admin session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -894,10 +1039,13 @@
     "/media/": {
       "post": {
         "summary": "Upload image bytes; repeated bytes return the same asset",
-        "description": "Required scope: media:write. 60 requests/minute/key.",
+        "description": "Required scope: media:write. 60 requests/minute/key (Bearer only).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
           }
         ],
         "parameters": [],
@@ -923,7 +1071,7 @@
             }
           },
           "401": {
-            "description": "Missing, invalid or revoked key",
+            "description": "Missing, invalid or revoked key, or no admin session",
             "content": {
               "application/json": {
                 "schema": {
@@ -933,7 +1081,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope",
+            "description": "Insufficient scope or origin mismatch",
             "content": {
               "application/json": {
                 "schema": {
@@ -1057,6 +1205,12 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "artka_<random token>"
+      },
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "Admin session cookie (administrators only; named __Secure-better-auth.session_token in production). Used only when no Authorization header is sent. Non-GET requests must carry an Origin header equal to the site origin. No rate limit."
       }
     },
     "schemas": {
@@ -1833,6 +1987,39 @@
         },
         "required": [
           "error"
+        ]
+      },
+      "Whoami": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "key",
+              "session"
+            ]
+          },
+          "keyName": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "articles:read",
+                "articles:write",
+                "articles:publish",
+                "media:write"
+              ]
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "keyName",
+          "scopes"
         ]
       },
       "ValidationResult": {

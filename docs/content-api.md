@@ -55,6 +55,18 @@ curl --fail-with-body "$CONTENT_API_BASE/articles/" \
 
 Пример ответа сокращён; полный контракт полей описан в OpenAPI. У черновика `publication: null`. Поле `state` статьи относится к текущей сохранённой версии; отдельный процесс находится в `publication.state`. Во время публикации обновления старая версия страницы продолжает работать.
 
+## Доступ по сессии администратора
+
+Кроме Bearer-ключа API принимает cookie сессии администратора (Better-Auth). Это путь для админки; агентам нужен ключ.
+
+- Только роль `admin`. Без сессии `401`, с другой ролью `403`.
+- Любой непустой заголовок `Authorization` проверяется как Bearer-ключ и никогда не заменяется cookie: неверный токен даёт `401`, даже если рядом есть сессия.
+- Запросы, кроме GET/HEAD, обязаны нести `Origin`, равный `https://artka.dev` (в разработке ещё и origin из `BETTER_AUTH_URL`/`SITE_URL`). Иначе `403 origin_mismatch`. Заголовок не проверяется на чтении.
+- Лимит 60 запросов в минуту к сессии не применяется.
+- Сессия действует как служебный ключ `admin-session` со скоупами из его строки в `content_api_keys`. Пока строка отсутствует или отозвана, сессионные запросы получают `503 admin_session_key_missing`: воркер так же отклоняет публикации отозванного ключа.
+- `Idempotency-Key` у сессии привязан к пользователю: два администратора с одинаковым ключом не видят ответов друг друга.
+- `GET /whoami/` возвращает `{kind: "key" | "session", keyName, scopes}`; запрос по ключу считается в лимите.
+
 ## Поля статьи
 
 Обязательные: `externalId`, `lang` (`ru`/`en`), `slug`, `title`, `description`, `summary`, `body`, `tags`, `sources`, `provenance.agent`.
@@ -159,7 +171,7 @@ CLI использует DATABASE_URL текущей среды; полный т
 | HTTP | Значение |
 | --- | --- |
 | 400 | Невалидный JSON или отсутствующий Idempotency-Key |
-| 401/403 | Неверный ключ / недостаточные права |
+| 401/403 | Неверный ключ или нет сессии / недостаточные права, роль или Origin (`origin_mismatch`) |
 | 404 | Статья, публикация или маршрут не найдены |
 | 409 | Конфликт ID, версии, ручных правок, slug или повторного запроса |
 | 413/415 | Слишком большой запрос / неправильный Content-Type |
@@ -172,7 +184,7 @@ CLI использует DATABASE_URL текущей среды; полный т
 ```bash
 pnpm exec tsx scripts/content-contract.ts
 pnpm exec vitest run tests/unit/content-api
-pnpm exec vitest run --project db tests/integration/content-api.test.ts tests/integration/content-media.test.ts
+pnpm exec vitest run --project db tests/integration/content-api.test.ts tests/integration/content-api-session.test.ts tests/integration/content-media.test.ts
 pnpm content:smoke
 pnpm typecheck
 pnpm build
