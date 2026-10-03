@@ -1,12 +1,11 @@
 ---
-title: "8 pages out of 185: why Google wasn't indexing my blog"
+title: "8 pages out of 185: an Astro blog indexing audit"
 description: >-
-  A Search Console-driven breakdown of what was blocking indexing on an Astro blog, what fixes helped, and why
-  the real cause wasn't crawler access.
+  A Search Console audit of an Astro blog: the bugs it found and why
+  "Crawled — currently not indexed" does not explain the cause of exclusion.
 summary: >-
-  Out of 185 known Google addresses, 8 were indexed. Not a single page was blocked from crawling. I broke the
-  site down piece by piece, found three real bugs — one of them living inside a link-canonicalization plugin —
-  and found out what this kind of audit doesn't fix.
+  Out of 185 known Google addresses, 8 were indexed. This audit separates code defects from hypotheses:
+  the exclusion status does not reveal its cause, and word count alone does not establish one.
 keywords:
   - crawled currently not indexed
   - Search Console indexing
@@ -18,20 +17,20 @@ keywords:
 faq:
   - question: What does "Crawled – currently not indexed" mean?
     answer: >-
-      The robot fetched the page, read it, and decided not to add it to the index. It isn't an access error or
-      a markup bug: the URL inspection tool for this status shows that crawling is allowed, the fetch
-      succeeded, and indexing is allowed. The cause is the page's evaluation, not its reachability.
+      Google crawled the page but has not included it in the index. It may be indexed later or remain
+      outside the index. The status does not reveal the precise cause: it does not establish that word
+      count, content quality, or markup is responsible. Check access and canonical separately, taking
+      the last crawl date into account.
   - question: Can robots.txt be the cause if a page was already crawled?
     answer: >-
-      No. If a page was crawled, crawling was allowed. A robots.txt block has its own separate status in the
-      report. Allowing or disallowing GPTBot, ClaudeBot, and other AI agents has no bearing on getting into
-      Google Search at all — those are different tasks with different rule groups.
+      The "crawled" status confirms that a crawl took place, but not the current robots.txt settings.
+      Check those separately. A robots.txt block has its own status in the report. Rules for GPTBot,
+      ClaudeBot, and other AI agents do not control Googlebot access: they are separate rule groups.
   - question: Does requesting indexing via URL inspection help?
     answer: >-
-      It puts the address into a priority crawl queue, which speeds up the robot's next visit. The decision on
-      whether to include it in the index is made fresh, against the same material. Google states directly in
-      the confirmation that repeated requests don't change the queue position. There's a daily quota, around a
-      dozen addresses.
+      You can request another crawl, but this does not guarantee indexing. For the status
+      "Crawled — currently not indexed," Google says there is no need to resubmit the URL for crawling.
+      The request itself does not fix the defects found or explain the cause of exclusion.
   - question: Do I need llms.txt for Google indexing?
     answer: >-
       No. Google has clarified that this file isn't required for Google Search and doesn't affect visibility or
@@ -44,6 +43,7 @@ faq:
       nonexistent nested path. The form ./09-subagents is handled by link-canonicalization plugins, while the
       bare form can slip past the checks.
 pubDate: 2026-09-19
+updatedDate: 2026-10-03
 tags:
   - seo
   - astro
@@ -53,11 +53,12 @@ tags:
 cover: /og-default.png
 coverAlt: artka.dev, technical blog
 lang: en
-sourceHash: a6464e6463bab09eac9284e4bc27aa089bcb6736a48b646ef71bf6eb4a7533f3
-manuallyEdited: false
+sourceHash: 544da4c1fb4d2312da124f9a08ac7a4470c8422918155cd5a829f60e3b6a8281
+manuallyEdited: true
+draft: false
 ---
 
-> Search Console reported 8 indexed pages and 177 non-indexed pages for artka.dev. Of those, 112 were in the "crawled, currently not indexed" state. Sitemaps were processed successfully, all 70 addresses return 200, every checked page has crawling allowed, and the canonical address matches Google's selected one. I took the site apart piece by piece and found three real bugs, one of them living inside a link-processing plugin. Along the way I also found out what this kind of audit doesn't fix.
+> On September 19, 2026, Search Console reported 8 indexed pages and 177 non-indexed pages for artka.dev. Of those, 112 were in the "crawled, currently not indexed" state. Sitemaps had been processed successfully, all 70 addresses in them returned 200, every checked page had crawling allowed, and the canonical address matched Google's selected one. I took the site apart piece by piece and found three real bugs, one of them living inside a link-processing plugin. These findings did not establish the precise cause of the 112 pages' exclusion from the index.
 
 ---
 
@@ -78,7 +79,7 @@ Numbers as of September 19, 2026, for the resource `sc-domain:artka.dev`.
 
 Over 90 days: 8 clicks, 35 impressions, average position 9.9, two queries in the report, both for the brand name.
 
-A hundred and twelve pages in the "crawled, currently not indexed" state mean exactly one thing: the robot came, read the page, and passed. URL inspection on each of them showed the same picture: crawling allowed, fetch successful, indexing allowed, the user's canonical matches Google's selected one. No obstacles anywhere.
+A hundred and twelve pages in the "crawled, currently not indexed" state mean that Google crawled those addresses but had not included them in the index at the time of the report. [Google's Page indexing report documentation](https://support.google.com/webmasters/answer/7440203) does not reveal the precise cause: pages may be indexed later or remain outside the index. URL inspection on each of them showed the same picture: crawling allowed, fetch successful, indexing allowed, the user's canonical matches Google's selected one. These checks found no access barriers; they did not establish the causes of exclusion.
 
 One detail turned out to matter more than all the rest. The `/blog/` page — the article list — was last crawled on May 25. I ran this audit on September 19: the robot hadn't visited it for almost four months.
 
@@ -134,7 +135,7 @@ In the headers, look at the status and the absence of an unwanted `X-Robots-Tag:
 
 The short answer on `llms.txt`: [Google has clarified](https://developers.google.com/search/updates) that it isn't required for Google Search and has no effect on visibility. On artka.dev, [this file](/llms.txt) lives as a directory of material for clients that know how to read it, and nothing more. The actual access policy lives in [robots.txt](/robots.txt): the named groups in it repeat the restrictions on closed routes, because restrictions in the catch-all group don't add to a more specific group.
 
-In my case, this section closed out quickly: no blocks were found at all, which the "crawled" status itself confirms. The robot got everything.
+In my case, no access blocks were found on the checked pages. The "crawled" status confirmed that a crawl had taken place; current access was checked separately.
 
 ---
 
@@ -296,29 +297,31 @@ The choice between it and rehype depends on how content is organized: a diagram 
 
 ## 6. What none of this fixes
 
-This is the honest part, the reason this audit was worth writing up.
+The defects found and the cause of exclusion from the index are separate questions. The fixes above corrected links, archive output, and markup. This audit did not establish their effect on the indexing of the 112 pages.
 
-Every fix above removed friction. None of it answers the question of why 112 pages are crawled and not indexed. The answer comes from a different number: out of 35 addresses in the Russian sitemap, exactly one contains text longer than a thousand words. The rest are articles under five hundred words and lessons from the [Claude Code course](/en/courses/claude-code-guide/) running 250 to 400 words, which account for 30 of the 35 addresses.
+On September 19, 2026, exactly one of the 35 addresses in the Russian sitemap contained text longer than a thousand words. The rest were articles under five hundred words and lessons from the [Claude Code course](/en/courses/claude-code-guide/) running 250–400 words, which accounted for 30 of the 35 addresses. This describes the length of the material; it does not prove the cause of exclusion. [Google states that it has no preferred word count](https://developers.google.com/search/docs/fundamentals/creating-helpful-content). A short lesson can answer a question fully; a long article can leave it unanswered.
 
-The robot got everything, read it, and decided it wasn't worth a spot in the index. Requesting indexing through URL inspection puts the address into a priority crawl queue, which just makes the robot come back sooner. It will make the same decision against the same material.
+The practical value of the material is a hypothesis to check, not an established diagnosis for this site. Look for a specific gap: does the reader have the explanation, example, and way to verify the result they need? These data do not support adding words to reach a thousand-word threshold.
 
-From here, a working sequence, not a "10 ways to fix it" list:
+For the status "Crawled — currently not indexed," Google also says there is no need to resubmit the URL for crawling. A recrawl request does not explain the cause of exclusion and does not guarantee inclusion in the index.
 
-1. Confirm access exists. A "crawled" status is already proof.
+The working sequence remains:
+
+1. Check current access, the last crawl date, and canonical. The status describes a crawl that took place; the site's settings may have changed since then.
 2. Confirm internal links lead to pages, and that the robot can see them without scripts.
-3. Remove duplicates: copies of the text at other addresses, competing pages on the same topic.
-4. Fix the markup so it describes what's actually visible on the page.
-5. Only then look at volume and value of the material, because steps one through four without step five give you a well-functioning site with nothing to show.
+3. Check copies of the text at other addresses and their canonical URLs.
+4. Fix the markup so it describes what is actually visible on the page.
+5. Check how fully each page answers its question. If you find a specific gap, add the explanation, example, or verification step the reader needs.
 
-That order matters because steps one through four can be checked in a day and give an unambiguous answer, while the fifth takes weeks and doesn't guarantee one.
+Technical checks produce a reproducible result: a link reaches the intended URL, the server serves the page, and the markup matches the content. This confirms that a specific defect was fixed. It does not prove that this defect prevented indexing or promise a change in status.
 
 ---
 
 ## Summary
 
-Out of 185 known Google addresses, eight were indexed. The audit showed that none of them was blocked, none returned an error, sitemaps were processed, and canonical addresses matched. Three real bugs turned up — not in access settings, but in code: the article list hid two-thirds of the archive from the robot, around forty addresses duplicated text in Markdown, and a link-canonicalization plugin skipped one of two equivalent forms of a relative link, producing thirty nonexistent addresses.
+Out of 185 known Google addresses, eight were indexed. At the time of the audit, the checked pages were accessible, addresses in the sitemap returned 200, sitemaps had been processed, and canonical addresses matched. Three real bugs turned up in code. The article list hid part of the archive from a robot that did not execute scripts. Around forty addresses duplicated text in Markdown. A link-canonicalization plugin skipped one of two equivalent forms of a relative link, producing thirty nonexistent addresses.
 
-All three are fixed, and that was the right work to do. But it doesn't answer the original question. A site where one piece of material out of thirty-five is longer than a thousand words gets exactly the response from Google that it got. The technical part removes reasons to say no; the reason to say yes only shows up along with the text. It's worth starting an indexing audit with access and links — but you'll have to finish it with content.
+All three are fixed. That is the result of a technical audit, not a proven cause of the 112 pages' exclusion. The precise cause of their exclusion remains unknown. Word count does not establish it, and adding more text does not guarantee indexing. The next step is to check specific pages and fill gaps where the reader lacks an answer or a working example.
 
 ---
 
@@ -332,3 +335,6 @@ All three are fixed, and that was the right work to do. But it doesn't answer th
 - [Anthropic: crawling the web](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) — ClaudeBot, Claude-SearchBot, Claude-User
 - [Astro: v7 upgrade guide](https://docs.astro.build/en/guides/upgrade-to/v7/) — the default Markdown processor change
 - [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) — compiling Markdown diagrams to SVG files
+
+- [Google: Page indexing report](https://support.google.com/webmasters/answer/7440203) — the meaning of "Crawled — currently not indexed"
+- [Google Search Central: helpful content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) — complete answers and no preferred word count
