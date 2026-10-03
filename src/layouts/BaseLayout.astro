@@ -229,7 +229,8 @@ const socialLabel = (url: string): string => {
     </script>
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex,follow" />}
+    {/* Indexable pages opt in to large image previews (Google Discover, image search). */}
+    <meta name="robots" content={noindex ? "noindex,follow" : "max-image-preview:large"} />
     <link rel="canonical" href={canonical} />
     {
       showAlternates && (
