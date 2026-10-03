@@ -1,5 +1,6 @@
 import { ok, err, transportError, contentError, httpFailure, isAuthFailure } from "../errors.js";
 import type { Result } from "../errors.js";
+import { logger } from "../../logger";
 
 const apiBase = (): string => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN ?? ""}`;
 
@@ -15,6 +16,15 @@ const buildPostUrl = (messageId: string): string => {
   if (id.startsWith("-100")) return `https://t.me/c/${id.slice(4)}/${messageId}`;
   return "";
 };
+
+/**
+ * sendPhoto rejections that are about the picture, not the post: Telegram could
+ * not fetch the URL (an /og card of a post that is not deployed yet), the file
+ * is not an image, or the text does not fit a photo caption (1024 characters
+ * against 4096 for a message). The text is still worth sending.
+ */
+const PHOTO_REJECTED =
+  /failed to get http url content|wrong (file identifier|type of the web page content)|caption is too long|photo_invalid/i;
 
 type TgResp =
   | { ok: true; result: { message_id: number } }
@@ -59,6 +69,13 @@ export const sendMessage = async (opts: {
 
   if (!json.ok) {
     const desc = (json as { description?: string }).description ?? "unknown error";
+    if (useSendPhoto && PHOTO_REJECTED.test(desc)) {
+      logger.warn(
+        { mod: "social", channel: "tg_ru", mediaUrl: opts.mediaUrl, reason: desc },
+        "telegram rejected the photo; sending the post as text",
+      );
+      return sendMessage({ text: opts.text });
+    }
     return err(contentError("tg_ru", desc));
   }
 

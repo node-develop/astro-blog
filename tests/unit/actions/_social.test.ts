@@ -46,6 +46,16 @@ describe("loadArticle", () => {
     expect(article.hasEnTwin).toBe(false);
   });
 
+  it("hands social networks an absolute image URL, not the site-relative placeholder", async () => {
+    // local-coding-agent has `cover: /og-default.png`: the draft must carry the
+    // post's own card instead.
+    const article = await loadArticle("local-coding-agent");
+    expect(article.cover).toEqual({
+      src: "https://artka.dev/og/local-coding-agent-ru.png",
+      alt: article.title,
+    });
+  });
+
   it("throws article not found for a non-existent slug", async () => {
     await expect(loadArticle("this-slug-does-not-exist-xyz")).rejects.toThrow(
       "article not found: posts/this-slug-does-not-exist-xyz",
