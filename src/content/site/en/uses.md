@@ -4,7 +4,7 @@ description: "My development tools: editors, Claude Code and Codex, TypeScript, 
 metaTitle: "Dev toolkit: editor, Claude Code and the stack"
 metaDescription: "The tools I use every day: editor and terminal, Claude Code and other AI assistants, the backend stack, infrastructure and observability setup."
 lang: en
-sourceHash: 590e293a063e48665ecef3ccb07642f755821be1d6611107317bb23fc54a63a5
+sourceHash: 411619005a2f01b66106d89068433f5cfb34130b9ed39a0bdd2e624e314d3d00
 manuallyEdited: false
 ---
 

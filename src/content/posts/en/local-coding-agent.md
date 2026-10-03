@@ -26,7 +26,7 @@ keywords:
   - Claude Code local backend
   - vertical inference engine
 lang: en
-sourceHash: af8be2575c236f4d4259efd469b208e82718ee954fcbf3bbfe0be12eda3e8a63
+sourceHash: c27b9661f2d538d8a45c35bad74c7d89311dd2ed87d7641402056b6c2d30ffd5
 manuallyEdited: false
 updatedDate: 2026-09-07
 ---

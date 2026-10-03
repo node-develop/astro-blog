@@ -4,7 +4,7 @@ description: "Artyom Kashuta is a full-stack and AI engineer. My background, app
 metaTitle: "Artyom Kashuta: full-stack and AI engineer"
 metaDescription: "Artyom Kashuta — full-stack and AI engineer: TypeScript, Python, AI agents and distributed systems. Background at TaxDome and 9RED, and how I work."
 lang: en
-sourceHash: 5208e215855cb5ceb456a703ec178626b791f887a88cd7555945b8c5ed06a51c
+sourceHash: d64ebd02064ab3ecc16b5110626bb5bc400a2ae83ab093f050a75d19c76e7946
 manuallyEdited: false
 ---
 
