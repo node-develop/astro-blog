@@ -16,14 +16,17 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # ---------- builder ----------
 FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json pnpm-lock.yaml .npmrc ./
+# Playwright (для rehype-mermaid) тянет headless chromium на этапе билда.
+# Слой стоит до `COPY . .` и до build-args: его ключ кэша зависит только от
+# lockfile, а не от каждого коммита (GIT_SHA/BUILT_AT меняются всегда).
+RUN pnpm exec playwright install --with-deps chromium-headless-shell
 ARG SITE_URL=https://artka.dev
 ARG GIT_SHA=unknown
 ARG BUILT_AT=unknown
 ENV SITE_URL=$SITE_URL
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Playwright (для rehype-mermaid) тянет headless chromium на этапе билда
-RUN pnpm exec playwright install --with-deps chromium-headless-shell
 ENV NODE_ENV=production
 RUN pnpm build
 # Отделяем прод-зависимости

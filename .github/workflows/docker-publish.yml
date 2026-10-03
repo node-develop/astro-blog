@@ -5,10 +5,17 @@ name: Build & publish Docker image
     branches: [main]
     tags: ["v*.*.*"]
   workflow_dispatch:
+  # Sent by the content worker after a publication (stage 2 of the API-only
+  # migration). The trigger exists ahead of the sender so the release path is
+  # already in place. Runs on the default branch, so it shares the release
+  # queue with pushes to main.
+  repository_dispatch:
+    types: [content-publish]
 
-# Releases queue instead of cancelling each other: every push to main must reach
-# Dokploy in order. The prefix differs from ci.yml's so the called workflow can
-# never wait on its own caller.
+# Releases queue instead of cancelling a running one. GitHub keeps a single
+# pending run per group, so a burst collapses to the newest run, which still
+# builds the newest main. The prefix differs from ci.yml's so the called
+# workflow can never wait on its own caller.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -55,6 +62,14 @@ jobs:
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # A content publication rebuilds the same commit, so there is no
+      # head_commit and BUILT_AT is the only thing that tells two images apart.
+      - name: Resolve build timestamp
+        id: built
+        env:
+          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+        run: echo "at=${COMMIT_TIMESTAMP:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         id: push
         uses: docker/build-push-action@v6
@@ -69,10 +84,12 @@ jobs:
           build-args: |
             SITE_URL=https://artka.dev
             GIT_SHA=${{ github.sha }}
-            BUILT_AT=${{ github.event.head_commit.timestamp || github.run_started_at }}
+            BUILT_AT=${{ steps.built.outputs.at }}
 
       - name: Trigger Dokploy deploy
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: >-
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          github.event_name == 'repository_dispatch'
         env:
           DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
         run: |
