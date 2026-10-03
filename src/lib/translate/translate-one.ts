@@ -6,7 +6,7 @@
  * console; everything bubbles back through the result.
  *
  * Strategy mirrors `scripts/translate.ts`:
- *   1. Read RU file → sha256 source.
+ *   1. Read RU file → hash of its translatable content (./hash.ts).
  *   2. Read existing EN file's `sourceHash` + `manuallyEdited` flag.
  *   3. `decideAction` decides translate / skip / warn.
  *   4. Translate frontmatter strings + body prose via Claude Haiku.
@@ -21,7 +21,14 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import * as yaml from "~/lib/yaml";
-import { sha256 } from "./hash";
+import { contentHash } from "./hash";
+import {
+  FENCE,
+  SCHEMAS,
+  collectStringFields,
+  splitFrontmatter,
+  type CollectionSchema,
+} from "./fields";
 import { extractProse, reassemble } from "./extract-prose";
 import { translateProse, translateStrings } from "./claude";
 import { decideAction } from "./decide-action";
@@ -51,19 +58,9 @@ interface FrontmatterPeek {
   readonly manuallyEdited?: boolean;
 }
 
-const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
-
-const splitFrontmatter = (source: string): { rawData: Record<string, unknown>; body: string } => {
-  const m = FENCE.exec(source);
-  if (!m || m[1] === undefined) throw new Error("No frontmatter block found");
-  const rawData = (yaml.load(m[1]) ?? {}) as Record<string, unknown>;
-  const body = source.slice(m[0].length).replace(/^\s*\n/, "");
-  return { rawData, body };
-};
-
 const readExistingEnState = async (
   outputPath: string,
-): Promise<{ sourceHash: string | null; manuallyEdited: boolean } | null> => {
+): Promise<{ sourceHash: string | null; manuallyEdited: boolean; apiManaged: boolean } | null> => {
   if (!existsSync(outputPath)) return null;
   const existing = await readFile(outputPath, "utf8");
   const m = FENCE.exec(existing);
@@ -71,105 +68,8 @@ const readExistingEnState = async (
   return {
     sourceHash: typeof rawData["sourceHash"] === "string" ? rawData["sourceHash"] : null,
     manuallyEdited: rawData["manuallyEdited"] === true,
+    apiManaged: typeof rawData["apiRevision"] === "string",
   };
-};
-
-/**
- * Per-collection mapping: which frontmatter fields are translatable strings,
- * which are translatable arrays of strings, and which are translatable arrays
- * of objects (`faq[].question/answer`, `links[].label`).
- */
-interface CollectionSchema {
-  readonly stringFields: ReadonlyArray<string>;
-  readonly arrayFields: ReadonlyArray<string>;
-  readonly faq?: boolean;
-  readonly linkLabels?: boolean;
-  readonly skipDrafts: boolean;
-}
-
-const SCHEMAS: Record<TranslateCollection, CollectionSchema> = {
-  posts: {
-    stringFields: ["title", "description", "coverAlt", "summary"],
-    arrayFields: [],
-    faq: true,
-    skipDrafts: true,
-  },
-  site: {
-    stringFields: [
-      "title",
-      "description",
-      // Home page fields — the typeof v === "string" guard in collectStringFields
-      // means these are silently skipped for about/now/uses where they are absent.
-      "heroEyebrow",
-      "heroTitle",
-      "heroLede",
-      "heroCta",
-      "courseEyebrow",
-      "courseTitle",
-      "courseLede",
-      "courseCta",
-      "latestLabel",
-      "authorLabel",
-      "authorBio",
-      "authorLinksAria",
-      "metaTitle",
-      "metaDescription",
-    ],
-    arrayFields: [],
-    skipDrafts: false,
-  },
-  projects: {
-    stringFields: ["title", "description", "role", "coverAlt"],
-    arrayFields: ["outcomes"],
-    linkLabels: true,
-    skipDrafts: false,
-  },
-  courses: {
-    // Course landing _index.md typically has title + blurb.
-    stringFields: ["title", "blurb", "description"],
-    arrayFields: [],
-    skipDrafts: false,
-  },
-  lessons: {
-    stringFields: ["title", "blurb", "description"],
-    arrayFields: [],
-    skipDrafts: false,
-  },
-};
-
-const collectStringFields = (
-  rawData: Record<string, unknown>,
-  schema: CollectionSchema,
-): Record<string, string> => {
-  const out: Record<string, string> = {};
-  for (const k of schema.stringFields) {
-    const v = rawData[k];
-    if (typeof v === "string") out[k] = v;
-  }
-  for (const arrField of schema.arrayFields) {
-    const arr = Array.isArray(rawData[arrField]) ? (rawData[arrField] as unknown[]) : [];
-    arr.forEach((item, i) => {
-      if (typeof item === "string") out[`${arrField}_${i}`] = item;
-    });
-  }
-  if (schema.faq && Array.isArray(rawData["faq"])) {
-    (rawData["faq"] as unknown[]).forEach((it, i) => {
-      if (it && typeof it === "object" && "question" in it && "answer" in it) {
-        const item = it as { question: unknown; answer: unknown };
-        if (typeof item.question === "string") out[`faq_q${i}`] = item.question;
-        if (typeof item.answer === "string") out[`faq_a${i}`] = item.answer;
-      }
-    });
-  }
-  if (schema.linkLabels && Array.isArray(rawData["links"])) {
-    (rawData["links"] as unknown[]).forEach((l, i) => {
-      if (l && typeof l === "object" && "label" in l) {
-        const label = (l as { label: unknown }).label;
-        if (typeof label === "string") out[`link_label_${i}`] = label;
-      }
-    });
-  }
-  return out;
 };
 
 const applyTranslations = (
@@ -278,10 +178,13 @@ export const translateOne = async (input: TranslateOneInput): Promise<TranslateO
   }
 
   const source = await readFile(ruPath, "utf8");
-  const ruHash = sha256(source);
+  const ruHash = contentHash(collection, source);
 
   const existingEn = await readExistingEnState(enPath);
-  const decision = decideAction({ ruHash, existingEn, force });
+  const apiManaged =
+    existingEn?.apiManaged === true ||
+    (FENCE.test(source) && typeof splitFrontmatter(source).rawData["apiRevision"] === "string");
+  const decision = decideAction({ ruHash, existingEn, force, apiManaged });
 
   if (decision.action === "skip") {
     return {

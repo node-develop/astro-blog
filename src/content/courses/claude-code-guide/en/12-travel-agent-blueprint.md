@@ -17,6 +17,8 @@ A user supplies cities, dates and a budget. The service returns suitable itinera
 
 ```mermaid
 flowchart LR
+  accTitle: Request flow in the tutorial app
+  accDescr: The request form sends data to API validation, then a fixture search runs, and the structured result returns to the form.
   U[Request form] --> A[API validation]
   A --> F[Fixture search]
   F --> R[Structured result]

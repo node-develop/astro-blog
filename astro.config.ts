@@ -11,6 +11,7 @@ import remarkStripMdSuffix from "./src/lib/remark/strip-md-suffix";
 import canonicalInternalLinks from "./src/lib/rehype/canonical-internal-links";
 import lazyContentImages from "./src/lib/rehype/lazy-content-images";
 import focusableTables from "./src/lib/rehype/focusable-tables";
+import mermaidFigure from "./src/lib/rehype/mermaid-figure";
 import rehypeExternalLinks, { type Options as ExternalLinksOptions } from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeMermaid from "rehype-mermaid";
@@ -119,6 +120,9 @@ export default defineConfig({
         rehypeCodeTitles,
         rehypeKatex,
         [rehypeMermaid, { strategy: "img-svg", dark: true }],
+        // Diagram as an illustration: <figure>, caption from accTitle, and a
+        // light/dark pair switched by the site theme. Must follow rehypeMermaid.
+        mermaidFigure,
         lazyContentImages,
         // a11y: scrollable tables must be keyboard-reachable (WCAG 2.1.1).
         focusableTables,

@@ -28,7 +28,7 @@ links:
     url: https://github.com/node-develop/astro-blog
   - label: Live
     url: https://artka.dev/
-sourceHash: 58a9abca6e9d453eedd58d71219f7a32dbdafca56fd2389efd5cb63d9e2d7dc5
+sourceHash: c8466a7cd805714c362dc6e7b0c0aa388e44d97f9e0b726746b6a0f0ce76c9cd
 manuallyEdited: false
 ---
 

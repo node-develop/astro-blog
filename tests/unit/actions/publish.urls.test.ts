@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { publishedUrlsFor } from "~/actions/publish";
+import { publishedUrlsFor } from "~/lib/seo/indexnow";
 
 describe("publishedUrlsFor (IndexNow url set)", () => {
   it("post with EN twin: both locales plus both blog indexes, canonical trailing slash", () => {

@@ -99,6 +99,8 @@ draft: false
 
 ```mermaid
 flowchart TB
+  accTitle: Три группы роботов для одной страницы
+  accDescr: Одну публичную страницу запрашивают три группы роботов. Поисковые: Googlebot, OAI-SearchBot, Claude-SearchBot. Обучающие модели: GPTBot, ClaudeBot, Google-Extended. Приходящие по запросу пользователя: ChatGPT-User, Claude-User.
   P[Публичная страница]
   subgraph search["Поиск"]
     GB[Googlebot]
@@ -179,6 +181,8 @@ if (!href.startsWith("/") && !href.startsWith("./") && !href.startsWith("../")) 
 
 ```mermaid
 flowchart LR
+  accTitle: Как ссылка без ведущего слеша превращается в 404
+  accDescr: Плагин канонизации не распознаёт ссылку без ведущего слеша, и она уходит как есть. Адрес урока ведёт себя как каталог, получается вложенный несуществующий путь, и в Search Console появляется 404.
   A[Ссылка без ведущего слеша] --> B[Плагин канонизации]
   B -->|Форма не распознана| C[Ссылка уходит как есть]
   C --> D[Адрес урока ведёт себя как каталог]

@@ -9,6 +9,15 @@ set -e
 # "Деплой"). Both steps are deliberately fail-loud: a failure aborts startup
 # instead of serving traffic against a half-migrated schema.
 
+# A secret that is set but too short used to make the worker exit quietly in
+# the background while the container kept serving without one. Unset means the
+# worker is deliberately disabled. ${#VAR} counts bytes in dash; the server and
+# the worker script measure bytes too (src/lib/content-api/heartbeat.ts).
+if [ -n "$CONTENT_WORKER_SECRET" ] && [ "${#CONTENT_WORKER_SECRET}" -lt 32 ]; then
+  echo "[entrypoint] CONTENT_WORKER_SECRET must be at least 32 bytes (unset it to disable the publication worker)" >&2
+  exit 1
+fi
+
 if [ -n "$DATABASE_URL" ]; then
   echo "[entrypoint] applying migrations..."
   node ./scripts/migrate-prod.mjs

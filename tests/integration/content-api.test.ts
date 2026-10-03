@@ -330,6 +330,32 @@ describe("content API with PostgreSQL", () => {
     await processPublication();
     expect(remote.commits).toBe(2);
   });
+  it("a publication waiting for its next attempt does not block the one queued behind it", async () => {
+    const first = await make("publish");
+    const second = await call(
+      "POST",
+      "articles",
+      {
+        article: { ...document, externalId: "integration-second", slug: "integration-second" },
+        mode: "publish",
+      },
+      "second",
+    );
+    expect(second.status).toBe(202);
+    await state
+      .db!.update(schema.contentPublications)
+      .set({ nextAttemptAt: new Date(Date.now() + 60 * 60_000) })
+      .where(eq(schema.contentPublications.id, first.publication.id));
+    expect(await processPublication()).toMatchObject({
+      worked: true,
+      publicationId: second.body.publication.id,
+    });
+    expect((await call("GET", `publications/${second.body.publication.id}`)).body.state).toBe(
+      "publishing",
+    );
+    expect((await call("GET", `publications/${first.publication.id}`)).body.state).toBe("queued");
+    expect(remote.commits).toBe(1);
+  });
   it("does not execute pending publications after revocation", async () => {
     await make("publish");
     await state

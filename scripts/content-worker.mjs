@@ -3,8 +3,9 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
 const secret = process.env.CONTENT_WORKER_SECRET;
-if (!secret || secret.length < 32) {
-  console.error("CONTENT_WORKER_SECRET (at least 32 characters) is required");
+// Bytes, like docker-entrypoint.sh and src/lib/content-api/heartbeat.ts.
+if (!secret || Buffer.byteLength(secret, "utf8") < 32) {
+  console.error("CONTENT_WORKER_SECRET (at least 32 bytes) is required");
   process.exit(1);
 }
 const url = `http://127.0.0.1:${process.env.PORT ?? 4321}/api/v1/_worker/`;

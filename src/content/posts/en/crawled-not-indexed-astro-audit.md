@@ -53,7 +53,7 @@ tags:
 cover: /og-default.png
 coverAlt: artka.dev, technical blog
 lang: en
-sourceHash: 544da4c1fb4d2312da124f9a08ac7a4470c8422918155cd5a829f60e3b6a8281
+sourceHash: 151597c6aa2a096f4d62de3ab17c1750d1e0dca72fbc1a6d6af31466f5acdfa7
 manuallyEdited: true
 draft: false
 ---
@@ -99,6 +99,8 @@ The first thing you check when indexing is complained about is robots.txt. And t
 
 ```mermaid
 flowchart TB
+  accTitle: Three groups of crawlers for one page
+  accDescr: A single public page is requested by three groups of crawlers. Search: Googlebot, OAI-SearchBot, Claude-SearchBot. Model training: GPTBot, ClaudeBot, Google-Extended. User-triggered fetches: ChatGPT-User, Claude-User.
   P[Public page]
   subgraph search["Search"]
     GB[Googlebot]
@@ -179,6 +181,8 @@ The link `./09-subagents` got processed and turned into `../09-subagents/`. The 
 
 ```mermaid
 flowchart LR
+  accTitle: How a link without a leading slash becomes a 404
+  accDescr: The canonicalisation plugin does not recognise a link without a leading slash, so it is emitted unchanged. The lesson address behaves like a directory, the result is a nested path that does not exist, and Search Console reports a 404.
   A[Link without a leading slash] --> B[Canonicalization plugin]
   B -->|Form not recognized| C[Link passes through unchanged]
   C --> D[Lesson address behaves like a directory]

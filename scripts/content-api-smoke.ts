@@ -130,6 +130,13 @@ try {
   });
   assert.equal(workerResponse.status, 200, await workerResponse.clone().text());
   assert.deepEqual(await workerResponse.json(), { worked: false });
+  // The healthcheck route must see the tick recorded by the worker route: both
+  // have to share one heartbeat module instance in the built bundle.
+  const version = (await (await fetch(`${base}/api/version`)).json()) as {
+    worker: { status: string; lastTickAt: string | null };
+  };
+  assert.equal(version.worker.status, "ok");
+  assert.notEqual(version.worker.lastTickAt, null, "worker tick did not reach /api/version");
   const request = {
     method: "POST",
     headers: {

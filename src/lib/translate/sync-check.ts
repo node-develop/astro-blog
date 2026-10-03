@@ -87,3 +87,19 @@ export const detectMissingTwins = (pairs: readonly TwinState[]): TwinReport => {
   }
   return { missingEn, missingRu, unbuilt };
 };
+
+/**
+ * What makes `pnpm translate:check` (and CI) fail. A twin that lags behind its
+ * RU source is deliberately not on the list: it is still a valid page, and the
+ * check only reports it. A broken pair or an invalid EN file is not shippable.
+ */
+export const shouldFail = (input: {
+  readonly report: DriftReport;
+  readonly twins: TwinReport;
+  readonly schemaErrorCount: number;
+}): boolean =>
+  input.report.missing.length > 0 ||
+  input.twins.missingEn.length > 0 ||
+  input.twins.missingRu.length > 0 ||
+  input.twins.unbuilt.length > 0 ||
+  input.schemaErrorCount > 0;

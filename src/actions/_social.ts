@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseFrontmatter } from "~/lib/content/frontmatter";
 import { POSTS_DIR } from "~/lib/fs/paths";
+import { postShareImage, resolvePostCover } from "~/lib/og/post-pages";
+import { CANONICAL_ORIGIN } from "~/lib/seo/url-policy";
 import type { Article, SocialChannel } from "~/lib/social/types";
 
 export const computeSourceHash = (input: {
@@ -50,7 +52,12 @@ export const loadArticle = async (
     body,
     tags: fm.tags as readonly string[],
     pubDate: fm.pubDate,
-    cover: typeof fm.cover === "string" ? { src: fm.cover, alt: fm.coverAlt ?? "" } : null,
+    // Always an absolute URL a social network can fetch: the real cover, or
+    // the post's own /og card when the cover is missing or the placeholder.
+    cover: {
+      src: postShareImage(fm.cover, slug, "ru", CANONICAL_ORIGIN),
+      alt: resolvePostCover(fm.cover).isReal ? (fm.coverAlt ?? "") : fm.title,
+    },
     lang: "ru",
     sourceUrl: `https://artka.dev/blog/${slug}`,
     hasEnTwin: existsSync(enPath) || existsSync(enPathMdx),

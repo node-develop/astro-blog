@@ -160,6 +160,18 @@ describe("URL-set XML", () => {
   });
 });
 
+describe("image sitemap extension", () => {
+  it("lists a post's real cover and declares the image namespace; pages without one stay bare", () => {
+    const xml = renderUrlSet([
+      { loc: "https://artka.dev/blog/a/", images: ["https://media.example.com/a.png?x=1&y=2"] },
+      { loc: "https://artka.dev/blog/b/" },
+    ]);
+    expect(xml).toContain('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"');
+    expect(xml.match(/<image:image>/g)).toHaveLength(1);
+    expect(xml).toContain("<image:loc>https://media.example.com/a.png?x=1&amp;y=2</image:loc>");
+  });
+});
+
 describe("hreflang alternates", () => {
   it("cross-links only pages present in both locale inventories, x-default → RU", () => {
     const ru = buildLocaleSitemapEntries(localeInput("ru"));

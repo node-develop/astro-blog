@@ -31,6 +31,6 @@ metaDescription: >-
   artka.dev — the personal technical blog of Artyom Kashuta. Notes on Claude Code, LLM agents, RAG pipelines, and production backend.
   Claude Code Guide course — 14 lessons.
 lang: en
-sourceHash: fda78b9c804d13f9601319c713124b005076998ae5ade9a98fad5e5762f2ee69
+sourceHash: c743a0b3a75eb535b35a56cdf72a59560e81f3949cfd3b08200fb1c0567d83ad
 manuallyEdited: false
 ---

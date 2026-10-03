@@ -22,7 +22,7 @@ cover: /og-default.png
 coverAlt: artka.dev — technical blog
 lang: en
 draft: false
-sourceHash: 1e7b9ad300c4a32c5adbdb628cbfb0ac22275e7d1e72d44d9c885c3706f8cef6
+sourceHash: 1f05720229afb47cedbaa1e5e502e4da84f695d48a42a61f7eb6d1fa4bb23c11
 manuallyEdited: true
 ---
 

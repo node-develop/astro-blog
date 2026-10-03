@@ -31,6 +31,7 @@ import {
   validateDocument,
 } from "~/lib/content-api/service";
 import { processPublication } from "~/lib/content-api/worker";
+import { workerHeartbeat, workerSecretFromEnv } from "~/lib/content-api/heartbeat";
 import { openApiDocument } from "~/lib/content-api/openapi";
 
 export const prerender = false;
@@ -40,11 +41,12 @@ export const ALL: APIRoute = ({ request, params }) =>
     const method = request.method;
     if (path === "openapi.json" && method === "GET") return jsonResponse(openApiDocument);
     if (path === "_worker" && method === "POST") {
-      const secret = process.env.CONTENT_WORKER_SECRET;
-      if (!secret || secret.length < 32)
-        throw apiError(503, "worker_not_configured", "Publication worker is disabled.");
+      const secret = workerSecretFromEnv();
+      if (!secret) throw apiError(503, "worker_not_configured", "Publication worker is disabled.");
       if (!equalSecret(request.headers.get("authorization") ?? "", `Bearer ${secret}`))
         throw apiError(401, "unauthorized", "Worker credentials required.");
+      // Tick before the step: a slow or failing publication is still a live worker.
+      workerHeartbeat.beat();
       return jsonResponse(await processPublication());
     }
     if (path === "media" && method === "POST") {

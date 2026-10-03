@@ -232,6 +232,96 @@
   }
 }
 
+/* ── Figures, content images, diagrams ──
+   Plain images get the 2px ink frame of code blocks. A Mermaid diagram
+   (src/lib/rehype/mermaid-figure.ts) is a slab: 4px border, hard shadow, the
+   caption outside the frame on the page background. */
+.prose figure {
+  margin: var(--space-6) 0;
+}
+
+.prose figcaption {
+  margin-top: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--color-fg-muted);
+  text-align: left;
+  text-wrap: pretty;
+}
+
+/* Content images only: the /about avatar brings its own frame. */
+.prose img:not(.avatar__img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: var(--stroke-bold) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.prose figure > img {
+  margin: 0;
+}
+
+.prose figure.diagram {
+  margin: var(--space-7) 0;
+}
+
+.prose .diagram__canvas {
+  background: var(--color-bg-elevated);
+  border: var(--stroke-slab) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-4);
+  /* A wide flowchart scrolls inside the frame instead of widening the page. */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.prose .diagram__canvas:focus-visible {
+  outline: var(--stroke-bold) solid var(--color-focus-ring);
+  outline-offset: var(--space-1);
+}
+
+.prose .diagram__canvas img {
+  margin: 0 auto;
+  border: 0;
+  height: auto;
+  /* Shrink to fit, but not below 3/4 of the column: past that the labels are
+     unreadable, so the frame scrolls. */
+  max-width: max(100%, calc(var(--col-content) * 0.75));
+}
+
+/* The pair follows the site theme (data-theme), not the OS: the toggle can
+   disagree with prefers-color-scheme. */
+.prose .diagram__img--dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .prose .diagram__img--light {
+  display: none;
+}
+
+:root[data-theme="dark"] .prose .diagram__img--dark {
+  display: block;
+}
+
+.prose .diagram__num {
+  margin-right: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-fg);
+}
+
+@media (max-width: 600px) {
+  .prose .diagram__canvas {
+    padding: var(--space-3);
+  }
+}
+
 /* Mermaid / KaTeX rendered elements inherit token-backed colors */
 .prose svg[role="img"] {
   max-width: 100%;

@@ -8,7 +8,8 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { config as dotenv } from "dotenv";
 import * as yaml from "../src/lib/yaml";
-import { sha256 } from "../src/lib/translate/hash";
+import { contentHash, sha256 } from "../src/lib/translate/hash";
+import { SCHEMAS } from "../src/lib/translate/fields";
 import { extractProse, reassemble } from "../src/lib/translate/extract-prose";
 import { translateProse, translateStrings } from "../src/lib/translate/claude";
 import { decideAction } from "../src/lib/translate/decide-action";
@@ -31,6 +32,11 @@ const args = process.argv.slice(2);
 const FORCE_FLAG_INDEX = args.indexOf("--force");
 const FORCE_SLUG = FORCE_FLAG_INDEX >= 0 ? (args[FORCE_FLAG_INDEX + 1] ?? null) : null;
 const FORCE_ALL = args.includes("--force-all");
+// `--rebase <slug>`: the EN twin was brought up to date by hand; record the
+// current RU content hash in it without calling the API. The supported way to
+// clear a "stale source" warning on a `manuallyEdited` twin.
+const REBASE_FLAG_INDEX = args.indexOf("--rebase");
+const REBASE_SLUG = REBASE_FLAG_INDEX >= 0 ? (args[REBASE_FLAG_INDEX + 1] ?? null) : null;
 
 interface FileResult {
   readonly slug: string;
@@ -78,7 +84,7 @@ const buildLinkRewriter =
 
 const readExistingEnState = async (
   outputPath: string,
-): Promise<{ sourceHash: string | null; manuallyEdited: boolean } | null> => {
+): Promise<{ sourceHash: string | null; manuallyEdited: boolean; apiManaged: boolean } | null> => {
   if (!existsSync(outputPath)) return null;
   const existing = await readFile(outputPath, "utf8");
   // parseFrontmatter's Frontmatter type doesn't include sourceHash/manuallyEdited,
@@ -89,7 +95,30 @@ const readExistingEnState = async (
   return {
     sourceHash: typeof rawData["sourceHash"] === "string" ? rawData["sourceHash"] : null,
     manuallyEdited: rawData["manuallyEdited"] === true,
+    apiManaged: typeof rawData["apiRevision"] === "string",
   };
+};
+
+const SOURCE_HASH_LINE = /^sourceHash: .*$/m;
+
+/** `--rebase`: write `ruHash` into the existing twin, nothing else. Null when not asked for. */
+const rebaseTwin = async (
+  slug: string,
+  outputPath: string,
+  ruHash: string,
+): Promise<FileResult | null> => {
+  if (REBASE_SLUG === null) return null;
+  // A rebase run touches one twin and translates nothing.
+  if (REBASE_SLUG !== slug) return { slug, status: "skipped", note: "not the --rebase target" };
+  if (!existsSync(outputPath)) {
+    return { slug, status: "failed", note: `--rebase: no EN twin at ${outputPath}` };
+  }
+  const en = await readFile(outputPath, "utf8");
+  const next = SOURCE_HASH_LINE.test(en)
+    ? en.replace(SOURCE_HASH_LINE, `sourceHash: ${ruHash}`)
+    : en.replace(/^---\r?\n/, (fence) => `${fence}sourceHash: ${ruHash}\n`);
+  await writeFile(outputPath, next, "utf8");
+  return { slug, status: "skipped", note: "rebased sourceHash, EN text untouched" };
 };
 
 const translateFile = async (
@@ -99,11 +128,17 @@ const translateFile = async (
   knownEnSlugs: Set<string>,
 ): Promise<FileResult> => {
   const source = await readFile(inputPath, "utf8");
-  const ruHash = sha256(source);
+  const ruHash = contentHash("posts", source);
   const existingEn = await readExistingEnState(outputPath);
   const force = FORCE_ALL || (FORCE_SLUG !== null && FORCE_SLUG === slug);
+  // Posts written by the content API carry `apiRevision`; each locale is its own.
+  const apiManaged = existingEn?.apiManaged === true || /^apiRevision: /m.test(source);
+  if (!apiManaged) {
+    const rebased = await rebaseTwin(slug, outputPath, ruHash);
+    if (rebased) return rebased;
+  }
 
-  const decision = decideAction({ ruHash, existingEn, force });
+  const decision = decideAction({ ruHash, existingEn, force, apiManaged });
 
   if (decision.action === "skip")
     return {
@@ -267,9 +302,11 @@ const translateSiteFile = async (
   slug: string,
 ): Promise<FileResult> => {
   const source = await readFile(inputPath, "utf8");
-  const ruHash = sha256(source);
+  const ruHash = contentHash("site", source);
   const existingEn = await readExistingEnState(outputPath);
   const force = FORCE_ALL || (FORCE_SLUG !== null && FORCE_SLUG === slug);
+  const rebased = await rebaseTwin(slug, outputPath, ruHash);
+  if (rebased) return rebased;
 
   const decision = decideAction({ ruHash, existingEn, force });
   if (decision.action === "skip")
@@ -294,24 +331,7 @@ const translateSiteFile = async (
 
   // Translate all string-typed frontmatter fields (typeof guard handles
   // about/now/uses transparently — they simply lack the home-only keys).
-  const SITE_STRING_FIELDS = [
-    "title",
-    "description",
-    "heroEyebrow",
-    "heroTitle",
-    "heroLede",
-    "heroCta",
-    "courseEyebrow",
-    "courseTitle",
-    "courseLede",
-    "courseCta",
-    "latestLabel",
-    "authorLabel",
-    "authorBio",
-    "authorLinksAria",
-    "metaTitle",
-    "metaDescription",
-  ] as const;
+  const SITE_STRING_FIELDS = SCHEMAS.site.stringFields;
   const fmStrings: Record<string, string> = {};
   for (const field of SITE_STRING_FIELDS) {
     if (typeof rawData[field] === "string") fmStrings[field] = rawData[field] as string;
@@ -384,9 +404,11 @@ const translateProjectFile = async (
   slug: string,
 ): Promise<FileResult> => {
   const source = await readFile(inputPath, "utf8");
-  const ruHash = sha256(source);
+  const ruHash = contentHash("projects", source);
   const existingEn = await readExistingEnState(outputPath);
   const force = FORCE_ALL || (FORCE_SLUG !== null && FORCE_SLUG === slug);
+  const rebased = await rebaseTwin(slug, outputPath, ruHash);
+  if (rebased) return rebased;
 
   const decision = decideAction({ ruHash, existingEn, force });
   if (decision.action === "skip")
@@ -587,10 +609,19 @@ const main = async (): Promise<void> => {
   const site = await translateAllSite();
   console.warn("==> Translating projects");
   const projects = await translateAllProjects();
-  console.warn("==> Translating string catalog");
-  await translateStringCatalog();
-  console.warn("==> Translating tag catalog");
-  await translateTagCatalog();
+  if (REBASE_SLUG === null) {
+    console.warn("==> Translating string catalog");
+    await translateStringCatalog();
+    console.warn("==> Translating tag catalog");
+    await translateTagCatalog();
+  } else {
+    const rebased = [...posts, ...site, ...projects].filter((r) => r.note?.startsWith("rebased"));
+    if (rebased.length === 0) {
+      console.error(`--rebase: no post, site page or project with slug "${REBASE_SLUG}"`);
+      process.exit(1);
+    }
+    for (const r of rebased) console.warn(`[rebase] ${r.slug}: ${r.note}`);
+  }
 
   const all = [...posts, ...site, ...projects];
   const failed = all.filter((r) => r.status === "failed");

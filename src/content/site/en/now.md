@@ -4,7 +4,7 @@ description: "What I am working on in September 2026: my personal site, practica
 metaTitle: "Now: the projects I am working on in 2026"
 metaDescription: "What I am working on right now: growing artka.dev, writing the Claude Code course and testing AI tools for development. Updated every month."
 lang: en
-sourceHash: 146712eee2a8fef7c77b961191545e8dafd64a8a65f795855fdd016e17330853
+sourceHash: ac4a602de87c658a5a9bf20626658b65a652dda3d53dd3e46b4dd51ba9165908
 manuallyEdited: false
 ---
 

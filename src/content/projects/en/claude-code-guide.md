@@ -20,7 +20,7 @@ links:
     url: https://artka.dev/courses/claude-code-guide/
   - label: Course (EN)
     url: https://artka.dev/en/courses/claude-code-guide/
-sourceHash: 2a4adfa3c459218a19a6721d843c9bf59acafc500fe51219bd592331919c1ef6
+sourceHash: a03d7fdc5af111407729d3adcc2471584448d4e7e01fcdfd8725e870f273ea66
 manuallyEdited: false
 ---
 

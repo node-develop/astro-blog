@@ -17,7 +17,7 @@ keywords:
 lang: en
 draft: false
 manuallyEdited: true
-sourceHash: 90792d88113e75b5df42720eb60e1561c42ea0280ea9bcf197a64b163b16874b
+sourceHash: 6f412ea43d3de2a0514d27fcb26481cf0f3eae6f04e7cf0dad885c40caa5aadb
 ---
 
 Claude Code can help turn a script into a working video project: write scenes, set up export and revise a transition. In this guide, Canvas draws the frames, Playwright captures them as PNGs and FFmpeg encodes the MP4. Repeatable output depends on fixed inputs and a frame function driven by explicit time. Start with a short scene, check the complete path to a playable file, then develop the motion and sound.
