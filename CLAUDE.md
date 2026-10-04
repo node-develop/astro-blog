@@ -107,11 +107,13 @@ Behavioural rules layered on top of `Стандарты кода` and `Запр�
 
 Use the model only for decisions that code cannot make: classification, extraction, drafting, summarization, translation. Do NOT use it for routing, retries, or deterministic transformations. If a status code or a Zod schema already answers the question — code answers it.
 
-Concretely, LLM calls (`@anthropic-ai/sdk`) are allowed in exactly three places, all judgment tasks:
+Concretely, LLM calls (`@anthropic-ai/sdk`) are allowed in exactly five places, all judgment tasks:
 
 - `src/pages/api/check.ts` — grading answers in course challenges (`claude-haiku-4-5`).
-- `src/lib/social/**` — writers → editors → critic pipeline for social drafts (via Astro Actions, behind `SOCIAL_DRAFTS_ENABLED`).
+- `src/lib/social/**` — writers → editors → critic pipeline for social drafts (entered from Astro Actions, the `/api/v1/social/*` routes and the worker's post-publish hook `src/lib/content-api/hooks.ts`; all behind `SOCIAL_DRAFTS_ENABLED`).
 - `src/lib/translate/**` — RU→EN translation (`translate.one` action and `pnpm translate`).
+- `src/lib/content-api/translate-article.ts` — RU→EN translation of a Content API article (`POST /articles/{id}/translate/`); model and prompts come from `src/lib/translate/claude.ts`.
+- `src/lib/content-api/article-critic.ts` — read-only critic of a Content API article (`POST /articles/{id}/review/`, notes `block|warn`); model constant and prompt in `src/lib/content-api/article-critic.config.ts`.
 
 Every new call site needs an explicit decision recorded in this list before it is merged. No LLM calls in routing, retries, validation, or anything a deterministic function can do. Models and prompts live next to the call site (e.g. `src/lib/social/config.ts`), never inline in handlers.
 
@@ -184,7 +186,7 @@ Plan: `docs/superpowers/plans/2026-05-09-home-page-admin-editor.md`
 - `console.log` в prod-коде — используем pino logger (`src/lib/logger.ts`).
 - `import ... from "js-yaml"` напрямую — только через `src/lib/yaml.ts`.
 - `import { z } from "astro:schema"` — deprecated, используем `astro/zod`.
-- Новые вызовы LLM вне трёх мест из «Judgment-only» без записи решения в этот файл.
+- Новые вызовы LLM вне мест, перечисленных в «Judgment-only», без записи решения в этот файл.
 - `node:*-alpine` в Dockerfile — используем `bookworm-slim` для совместимости native-модулей.
 - Не коммитим `.env`, `*.local`, `dist/`, `node_modules/`.
 

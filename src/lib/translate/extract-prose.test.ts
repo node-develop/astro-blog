@@ -98,6 +98,18 @@ describe("extractProse with GFM tables", () => {
 });
 
 describe("reassemble", () => {
+  it("does not read $ sequences of the text as replacement patterns", () => {
+    const source = "Формула $$a+b$$ тут и цена `$'x`.\n\nПосле списка.\n";
+    const { placeholders, skeleton } = extractProse(source);
+    const result = reassemble(
+      skeleton,
+      placeholders.map((p) => ({ id: p.id, text: p.text })),
+    );
+    expect(result).toContain("$$a+b$$");
+    expect(result).toContain("`$'x`");
+    expect(result.match(/После списка\./g)).toHaveLength(1);
+  });
+
   it("round-trips identity when placeholders are unchanged", () => {
     const { placeholders, skeleton } = extractProse(fixture);
     const same = placeholders.map((p) => ({ id: p.id, text: p.text }));

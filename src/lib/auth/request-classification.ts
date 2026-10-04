@@ -1,9 +1,13 @@
+import { hasAuthorizationHeader } from "~/lib/http/authorization";
 import { hasSessionCookie } from "~/lib/http/session-cookie";
 
 const isPathWithin = (pathname: string, root: string): boolean =>
   pathname === root || pathname.startsWith(`${root}/`);
 
 export const requiresAuthContext = (request: Request, pathname: string): boolean => {
+  // A credentialed content API call is judged by its Authorization header alone
+  // (content-api/auth.ts), so it never needs a session lookup.
+  if (isPathWithin(pathname, "/api/v1") && hasAuthorizationHeader(request.headers)) return false;
   if (request.method !== "GET" && request.method !== "HEAD") return true;
   if (
     isPathWithin(pathname, "/admin") ||

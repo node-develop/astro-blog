@@ -1,15 +1,40 @@
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "~/lib/db";
 import { postsMeta, type PostMeta, type NewPostMeta } from "~/lib/db/schema";
 import { buildSearchVectorSql, type SearchVectorParts } from "~/lib/search/vector";
 
 export async function listAllMeta(): Promise<readonly PostMeta[]> {
-  return db.select().from(postsMeta);
+  return db.select().from(postsMeta).orderBy(asc(postsMeta.order), asc(postsMeta.slug));
 }
 
 export async function getMetaBySlug(slug: string): Promise<PostMeta | null> {
   const rows = await db.select().from(postsMeta).where(eq(postsMeta.slug, slug));
   return rows[0] ?? null;
+}
+
+export async function listMetaBySlugs(slugs: readonly string[]): Promise<readonly PostMeta[]> {
+  if (slugs.length === 0) return [];
+  return db
+    .select()
+    .from(postsMeta)
+    .where(inArray(postsMeta.slug, [...slugs]));
+}
+
+/** Sets only the flags that are given. Null when there is no row: a row is never created here. */
+export async function setMetaFlags(
+  slug: string,
+  flags: Readonly<{ pinned?: boolean | undefined; hiddenFromList?: boolean | undefined }>,
+): Promise<PostMeta | null> {
+  const [row] = await db
+    .update(postsMeta)
+    .set({
+      ...(flags.pinned === undefined ? {} : { pinned: flags.pinned }),
+      ...(flags.hiddenFromList === undefined ? {} : { hiddenFromList: flags.hiddenFromList }),
+      updatedAt: new Date(),
+    })
+    .where(eq(postsMeta.slug, slug))
+    .returning();
+  return row ?? null;
 }
 
 export async function upsertMeta(row: NewPostMeta): Promise<void> {
@@ -60,8 +85,17 @@ export interface SearchHit {
   readonly rank: number;
 }
 
-export async function searchPostsMeta(query: string, limit = 20): Promise<readonly SearchHit[]> {
+export async function searchPostsMeta(
+  query: string,
+  limit = 20,
+  lang: "ru" | "en" = "ru",
+): Promise<readonly SearchHit[]> {
   if (query.trim().length === 0) return [];
+  // TODO(cutover): file posts have no English vector and nothing writes one, so /en falls back to
+  // the RU vector; hits without an EN twin are dropped by the caller's collection filter.
+  // Removed once EN posts are indexed from the database (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+  const vector =
+    lang === "en" ? sql`coalesce(search_vector_en, search_vector)` : sql`search_vector`;
   // Bilingual match: OR-combine `simple` (literal/EN) and `russian` (stemmed)
   // tsqueries so a search for "скилл" matches stems "скиллы"/"скиллов",
   // while "CLAUDE.md" still matches as a literal token.
@@ -72,9 +106,9 @@ export async function searchPostsMeta(query: string, limit = 20): Promise<readon
         websearch_to_tsquery('russian', unaccent(${query})) AS q_russian
     )
     SELECT slug,
-           ts_rank_cd(search_vector, q.q_simple || q.q_russian) AS rank
+           ts_rank_cd(${vector}, q.q_simple || q.q_russian) AS rank
     FROM posts_meta, q
-    WHERE search_vector @@ (q.q_simple || q.q_russian)
+    WHERE ${vector} @@ (q.q_simple || q.q_russian)
     ORDER BY rank DESC
     LIMIT ${limit}
   `);

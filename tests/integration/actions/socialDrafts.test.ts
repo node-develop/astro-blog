@@ -44,23 +44,26 @@ vi.mock("~/lib/social/critic", async () => {
   };
 });
 
-vi.mock("~/actions/_social", async () => {
-  const actual = await vi.importActual<typeof import("~/actions/_social")>("~/actions/_social");
+vi.mock("~/lib/social/article", async () => {
+  const article = {
+    collection: "posts",
+    slug: "test-social-drafts",
+    title: "T",
+    summary: "S",
+    body: "B",
+    tags: [],
+    pubDate: new Date("2026-01-01T00:00:00Z"),
+    cover: null,
+    lang: "ru",
+    sourceUrl: "https://artka.dev/blog/test-social-drafts",
+    hasEnTwin: true,
+  };
+  const actual =
+    await vi.importActual<typeof import("~/lib/social/article")>("~/lib/social/article");
   return {
     ...actual,
-    loadArticle: vi.fn().mockResolvedValue({
-      collection: "posts",
-      slug: "test-social-drafts",
-      title: "T",
-      summary: "S",
-      body: "B",
-      tags: [],
-      pubDate: new Date("2026-01-01T00:00:00Z"),
-      cover: null,
-      lang: "ru",
-      sourceUrl: "https://artka.dev/blog/test-social-drafts",
-      hasEnTwin: true,
-    }),
+    loadArticle: vi.fn().mockResolvedValue(article),
+    loadArticleOrFile: vi.fn().mockResolvedValue(article),
   };
 });
 

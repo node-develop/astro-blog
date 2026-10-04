@@ -46,8 +46,9 @@ describe("searchNode result URLs", () => {
     ]);
   });
 
-  it("returns a slash-canonical English article URL without duplicating the locale", async () => {
-    searchPostsMetaMock.mockResolvedValue([{ slug: "en/english-result", rank: 1 }]);
+  it("finds the English entry of a bare slug, searches the English vector and has no double locale", async () => {
+    // posts_meta is keyed by the bare slug for both languages.
+    searchPostsMetaMock.mockResolvedValue([{ slug: "english-result", rank: 1 }]);
 
     await expect(searchNode("result", "en")).resolves.toEqual([
       {
@@ -56,5 +57,13 @@ describe("searchNode result URLs", () => {
         excerpt: "English result description",
       },
     ]);
+    expect(searchPostsMetaMock).toHaveBeenCalledWith("result", 20, "en");
+  });
+
+  it("does not answer an English search with the Russian entry of the same slug", async () => {
+    getCollectionMock.mockResolvedValue([fakeEntry("only-russian", "Only Russian")]);
+    searchPostsMetaMock.mockResolvedValue([{ slug: "only-russian", rank: 1 }]);
+
+    await expect(searchNode("result", "en")).resolves.toEqual([]);
   });
 });

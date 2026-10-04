@@ -46,15 +46,38 @@ export const idempotencyKey = (request: Request): string => {
     );
   return key;
 };
+/**
+ * `If-Match: "<article version>"`: exactly one strong quoted positive integer. Missing is 428;
+ * `*`, weak (`W/"3"`), lists and anything else that is not that form is 400. Pairs with the
+ * `ETag` of GET /articles/{id}/.
+ */
+export const ifMatchVersion = (request: Request): number => {
+  const header = request.headers.get("if-match");
+  if (header === null)
+    throw apiError(428, "precondition_required", 'Send If-Match: "<article version>".');
+  const match = /^"([1-9]\d{0,8})"$/.exec(header);
+  if (!match?.[1])
+    throw apiError(
+      400,
+      "invalid_if_match",
+      'If-Match must be one strong quoted article version, for example "3".',
+    );
+  return Number(match[1]);
+};
+const apiHeaders = {
+  "cache-control": "no-store",
+  "x-robots-tag": "noindex",
+} as const;
 export const jsonResponse = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "x-robots-tag": "noindex",
-      ...headers,
-    },
+    headers: { "content-type": "application/json; charset=utf-8", ...apiHeaders, ...headers },
+  });
+/** A JSON body written as it is produced; the headers of `jsonResponse`, without buffering. */
+export const streamResponse = (body: ReadableStream<Uint8Array>, status = 200) =>
+  new Response(body, {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8", ...apiHeaders },
   });
 export const handleApi = async (operation: () => Promise<Response>): Promise<Response> => {
   const requestId = randomUUID();

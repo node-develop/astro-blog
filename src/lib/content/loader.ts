@@ -40,6 +40,7 @@ export const defaultMetaFor = (slug: string): PostMeta => ({
   pinned: false,
   hiddenFromList: false,
   searchVector: null,
+  searchVectorEn: null,
   updatedAt: new Date(0),
 });
 
@@ -61,6 +62,7 @@ const fallbackMetaForBuild = (slug: string): PostMeta => {
     pinned: false,
     hiddenFromList: false,
     searchVector: null,
+    searchVectorEn: null,
     updatedAt: new Date(0),
   };
 };

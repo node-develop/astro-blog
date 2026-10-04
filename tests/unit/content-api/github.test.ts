@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createHash } from "node:crypto";
 
 const mock = vi.hoisted(() => ({
   getRef: vi.fn(),
@@ -18,8 +17,9 @@ vi.mock("@octokit/rest", () => ({
     };
   },
 }));
-import { commitArticle } from "../../../src/lib/content-api/github";
-const digest = (s: string) => createHash("sha256").update(s).digest("hex");
+import { commitArticle, deleteArticle } from "../../../src/lib/content-api/github";
+const owned = { overwrite: true } as const;
+const fresh = { overwrite: false } as const;
 
 describe("atomic GitHub publication adapter", () => {
   beforeEach(() => {
@@ -36,7 +36,9 @@ describe("atomic GitHub publication adapter", () => {
     mock.updateRef.mockResolvedValue({});
   });
   it("checks content at the immutable parent and never force-pushes", async () => {
-    expect(await commitArticle("src/content/posts/new.md", "new content", null)).toBe("new-commit");
+    expect(await commitArticle("src/content/posts/new.md", "new content", fresh)).toBe(
+      "new-commit",
+    );
     expect(mock.getContent).toHaveBeenCalledWith(expect.objectContaining({ ref: "parent" }));
     expect(mock.createTree).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -51,43 +53,186 @@ describe("atomic GitHub publication adapter", () => {
       if (path.endsWith(".mdx")) throw { status: 404 };
       return { data: { content: Buffer.from("already saved").toString("base64") } };
     });
-    expect(await commitArticle("src/content/posts/new.md", "already saved", null)).toBe("parent");
+    expect(await commitArticle("src/content/posts/new.md", "already saved", fresh)).toBe("parent");
     expect(mock.createCommit).not.toHaveBeenCalled();
   });
-  it("protects content edited by another publisher", async () => {
+  it("overwrites a reformatted file of an article that was published before", async () => {
+    // Prettier rewrote the committed file after the API published it: the bytes differ.
     mock.getContent.mockImplementation(async ({ path }: { path: string }) => {
       if (path.endsWith(".mdx")) throw { status: 404 };
-      return { data: { content: Buffer.from("manual").toString("base64") } };
+      return { data: { content: Buffer.from('title: "reformatted"').toString("base64") } };
     });
-    await expect(
-      commitArticle("src/content/posts/new.md", "agent", digest("old")),
-    ).rejects.toMatchObject({ code: "remote_edit_conflict" });
-    expect(mock.createBlob).not.toHaveBeenCalled();
+    expect(await commitArticle("src/content/posts/new.md", "agent", owned)).toBe("new-commit");
+    expect(mock.createBlob).toHaveBeenCalledWith(expect.objectContaining({ content: "agent" }));
+    expect(mock.updateRef).toHaveBeenCalledWith(expect.objectContaining({ force: false }));
   });
-  it("rechecks after the branch advances instead of overwriting a concurrent edit", async () => {
+  it("overwrites a file that carries one of the article's own publication ids", async () => {
+    const id = "3f2b8c1e-6d4a-4e7b-9a10-1c2d3e4f5a6b";
+    mock.getContent.mockImplementation(async ({ path }: { path: string }) => {
+      if (path.endsWith(".mdx")) throw { status: 404 };
+      const file = `---\ntitle: "lost response"\napiRevision: ${id}\n---\nold`;
+      return { data: { content: Buffer.from(file).toString("base64") } };
+    });
+    expect(
+      await commitArticle("src/content/posts/new.md", "agent", {
+        overwrite: false,
+        ownedRevisions: [id],
+      }),
+    ).toBe("new-commit");
+    // The same marker owned by another article is not ours.
+    await expect(
+      commitArticle("src/content/posts/new.md", "agent", {
+        overwrite: false,
+        ownedRevisions: ["00000000-0000-4000-8000-000000000000"],
+      }),
+    ).rejects.toMatchObject({ code: "slug_conflict" });
+  });
+  it("refuses the first commit over a file the article never owned", async () => {
+    mock.getContent.mockImplementation(async ({ path }: { path: string }) => {
+      if (path.endsWith(".mdx")) throw { status: 404 };
+      return { data: { content: Buffer.from("legacy post").toString("base64") } };
+    });
+    await expect(commitArticle("src/content/posts/new.md", "agent", fresh)).rejects.toMatchObject({
+      code: "slug_conflict",
+    });
+    expect(mock.createBlob).not.toHaveBeenCalled();
+    expect(mock.updateRef).not.toHaveBeenCalled();
+  });
+  it("rebuilds the commit on the new parent after the branch advances", async () => {
     let moved = false;
+    mock.getRef.mockImplementation(async () => ({
+      data: { object: { sha: moved ? "parent-2" : "parent" } },
+    }));
     mock.updateRef.mockImplementationOnce(async () => {
       moved = true;
       throw { status: 422 };
     });
-    mock.getContent.mockImplementation(async ({ path }: { path: string }) => {
-      if (path.endsWith(".mdx") || !moved) throw { status: 404 };
-      return { data: { content: Buffer.from("concurrent edit").toString("base64") } };
+    expect(await commitArticle("src/content/posts/new.md", "agent", owned)).toBe("new-commit");
+    expect(mock.getContent).toHaveBeenLastCalledWith(expect.objectContaining({ ref: "parent-2" }));
+    expect(mock.createCommit).toHaveBeenCalledTimes(2);
+    expect(mock.createCommit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ parents: ["parent-2"] }),
+    );
+    expect(mock.updateRef).toHaveBeenCalledTimes(2);
+  });
+  it("gives up after three lost races and never forces the ref", async () => {
+    mock.updateRef.mockRejectedValue({ status: 422 });
+    await expect(commitArticle("src/content/posts/new.md", "agent", owned)).rejects.toMatchObject({
+      status: 422,
     });
-    await expect(commitArticle("src/content/posts/new.md", "agent", null)).rejects.toMatchObject({
-      code: "remote_edit_conflict",
-    });
-    expect(mock.updateRef).toHaveBeenCalledTimes(1);
-    expect(mock.getRef).toHaveBeenCalledTimes(2);
+    expect(mock.updateRef).toHaveBeenCalledTimes(3);
+    for (const [args] of mock.updateRef.mock.calls) expect(args).toMatchObject({ force: false });
   });
   it("rejects an existing MDX file at the same public slug", async () => {
     mock.getContent.mockImplementation(async ({ path }: { path: string }) => {
       if (path.endsWith(".md")) throw { status: 404 };
       return { data: { content: Buffer.from("existing MDX").toString("base64") } };
     });
-    await expect(commitArticle("src/content/posts/new.md", "agent", null)).rejects.toMatchObject({
+    await expect(commitArticle("src/content/posts/new.md", "agent", owned)).rejects.toMatchObject({
       code: "slug_conflict",
     });
     expect(mock.updateRef).not.toHaveBeenCalled();
+  });
+});
+
+describe("GitHub unpublish adapter", () => {
+  const path = "src/content/posts/old.md";
+  const file =
+    (content: string) =>
+    async ({ path: target }: { path: string }) => {
+      if (target.endsWith(".mdx")) throw { status: 404 };
+      return { data: { content: Buffer.from(content).toString("base64") } };
+    };
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.stubEnv("GITHUB_PAT", "fake-token");
+    vi.stubEnv("GITHUB_REPO_OWNER", "test-owner");
+    vi.stubEnv("GITHUB_REPO_NAME", "test-repo");
+    mock.getRef.mockResolvedValue({ data: { object: { sha: "parent" } } });
+    mock.getCommit.mockResolvedValue({ data: { tree: { sha: "tree" } } });
+    mock.getContent.mockImplementation(file("published article"));
+    mock.createTree.mockResolvedValue({ data: { sha: "new-tree" } });
+    mock.createCommit.mockResolvedValue({ data: { sha: "new-commit" } });
+    mock.updateRef.mockResolvedValue({});
+  });
+  it("removes the file with a null-sha tree entry and never force-pushes", async () => {
+    expect(await deleteArticle(path, { overwrite: true })).toBe("new-commit");
+    expect(mock.createTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        base_tree: "tree",
+        tree: [{ path, mode: "100644", type: "blob", sha: null }],
+      }),
+    );
+    expect(mock.createCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ message: `content: unpublish ${path}`, parents: ["parent"] }),
+    );
+    expect(mock.updateRef).toHaveBeenCalledWith(expect.objectContaining({ force: false }));
+    expect(mock.createBlob).not.toHaveBeenCalled();
+  });
+  it("treats a file that is already gone as a recovery and commits nothing", async () => {
+    mock.getContent.mockRejectedValue({ status: 404 });
+    expect(await deleteArticle(path, { overwrite: true })).toBe("parent");
+    expect(mock.createCommit).not.toHaveBeenCalled();
+  });
+  it("refuses to delete a file the article does not own", async () => {
+    await expect(deleteArticle(path, { overwrite: false })).rejects.toMatchObject({
+      code: "slug_conflict",
+    });
+    expect(mock.createCommit).not.toHaveBeenCalled();
+  });
+  it("deletes a file that carries one of the article's publication ids", async () => {
+    const id = "3f2b8c1e-6d4a-4e7b-9a10-1c2d3e4f5a6b";
+    mock.getContent.mockImplementation(file(`---\ntitle: "x"\napiRevision: ${id}\n---\nold`));
+    expect(await deleteArticle(path, { overwrite: false, ownedRevisions: [id] })).toBe(
+      "new-commit",
+    );
+  });
+  it("leaves an MDX article at the same address alone", async () => {
+    mock.getContent.mockImplementation(async ({ path: target }: { path: string }) => {
+      if (target.endsWith(".md")) throw { status: 404 };
+      return { data: { content: Buffer.from("mdx").toString("base64") } };
+    });
+    await expect(deleteArticle(path, { overwrite: true })).rejects.toMatchObject({
+      code: "slug_conflict",
+    });
+    expect(mock.createCommit).not.toHaveBeenCalled();
+  });
+  it("rebuilds on the new parent after the branch advances, giving up after three races", async () => {
+    mock.updateRef.mockRejectedValue({ status: 422 });
+    await expect(deleteArticle(path, { overwrite: true })).rejects.toMatchObject({ status: 422 });
+    expect(mock.updateRef).toHaveBeenCalledTimes(3);
+    for (const [args] of mock.updateRef.mock.calls) expect(args).toMatchObject({ force: false });
+  });
+});
+
+describe("GitHub request deadline", () => {
+  it("abandons a request that GitHub never answers instead of waiting for it", async () => {
+    const { fetchWithDeadline } = await vi.importActual<typeof import("~/lib/content-api/github")>(
+      "~/lib/content-api/github",
+    );
+    // A server that accepts the request and then stays silent until aborted.
+    const silent: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
+      });
+    await expect(fetchWithDeadline(20, silent)("https://api.github.com/x")).rejects.toMatchObject({
+      name: "TimeoutError",
+    });
+  });
+
+  it("still honours a signal the caller passed", async () => {
+    const { fetchWithDeadline } = await vi.importActual<typeof import("~/lib/content-api/github")>(
+      "~/lib/content-api/github",
+    );
+    const caller = new AbortController();
+    const silent: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted by caller")));
+      });
+    const pending = fetchWithDeadline(60_000, silent)("https://api.github.com/x", {
+      signal: caller.signal,
+    });
+    caller.abort();
+    await expect(pending).rejects.toThrow("aborted by caller");
   });
 });

@@ -27,7 +27,9 @@
 «Working rules» и «Запреты». Перед правкой любого символа с зависимостями
 запусти gitnexus_impact. Для задач на 3+ файла сначала architect, потом critic,
 потом реализация, в конце снова critic. Без --no-verify. В конце шага: pnpm
-typecheck, pnpm test, краткий отчёт «что сделано, что проверено, что осталось».
+typecheck, pnpm test, pnpm test:db (нужен Docker), после сборки pnpm test:built,
+краткий отчёт «что сделано, что проверено, что осталось». Вывод lint и
+typecheck читать без фильтров и по коду возврата: pre-push гоняет то же самое.
 Если упираешься в открытый вопрос из плана, остановись и спроси.
 ```
 
@@ -350,6 +352,11 @@ post_revisions живы; запиши в spec, что он уходит в ми�
    имя ключа (для сессии 'admin'), cover.url допускается для путей /uploads/*
    и абсолютных https. sources.min(1) остаётся для обычных ключей.
 9. Статус в articleView по правилам из промпта 1.3.
+10. searchVector в posts_meta считается по slug без языка (worker.ts, шаг
+    published), RU и EN перезаписывают друг друга: побеждает тот двойник,
+    который проверен последним. Хранить вектор на каждый язык (отдельная
+    колонка или строка на (slug, lang)), поиск /blog и /en/blog читает свой.
+    Найдено critic в этапе 0.
 Тесты на каждый пункт, в том числе: удаление черновика ок, опубликованной 409;
 restore даёт version+1; pin/hide сразу меняют SSR-список (/blog).
 ```
@@ -457,7 +464,7 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    - запрещённые фразы из src/lib/social/voice/banned-phrases.json и список
      §4.11 из .claude/skills/new-blog-post/SKILL.md (вынести в общий json);
    - спекулятивный голос: «я планирую», «возможно я» и т.п. из
-     docs/editorial-quality.md.
+     src/lib/content-api/editorial-rules.md.
 2. validateDocument возвращает это как warnings при mode=draft и errors при
    mode=publish и в POST /publish/.
 3. POST /articles/{id}/review/: критик статьи по образцу src/lib/social/critic.ts
@@ -481,7 +488,8 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    translate, publish batch, unpublish, social, export, редакционные гейты.
    Убери абзацы про manualRevision и remote_edit_conflict.
 3. pnpm content:smoke против собранного сервера.
-4. Полный прогон: pnpm lint, typecheck, test, verify:seo-build.
+4. Полный прогон: pnpm lint, typecheck, test, test:db, verify:seo-build,
+   test:built.
 5. Открой PR feat/content-api-single-writer -> main с описанием по разделам
    плана. Старый путь публикации должен работать без изменений: проверь
    publish.one из админки на тестовом посте.
@@ -506,8 +514,13 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
 2. src/lib/content/articles-loader.ts: объектный loader {name, load, schema}.
    load читает CONTENT_SNAPSHOT (путь), парсит, для каждой статьи:
    parseFrontmatter (из content), parseData по той же схеме, что в
-   content.config.ts, renderMarkdown(body, {frontmatter: fm}) (или pipeline.ts,
-   если спайк показал необходимость), store.set({id: lang === 'en' ?
+   content.config.ts, renderMarkdown(content): документ ЦЕЛИКОМ, с YAML-шапкой.
+   В Astro 7.3.1 у renderMarkdown нет опции frontmatter, он разбирает шапку из
+   самой строки; строка без шапки даёт пустой frontmatter, и
+   strip-frontmatter-duplicates молча перестаёт убирать H1 и лид (см.
+   docs/superpowers/specs/2026-10-03-render-markdown-spike.md). pipeline.ts не
+   нужен: спайк подтвердил, что renderMarkdown уважает markdown.processor.
+   store.set({id: lang === 'en' ?
    `en/${slug}` : slug, data, body, rendered, digest: contentSha256}).
    Предохранители: count === 0 или count < значения в content-manifest.json
    (новый файл в корне, {minArticles: N}) бросают ошибку с понятным текстом.
@@ -548,7 +561,10 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    snapshots/<id>.json через aws cli с теми же CONTENT_S3_* секретами.
 4. docker-publish.yml: build-and-push берёт артефакт и кладёт
    content-snapshot.json в build context; build-arg CONTENT_SNAPSHOT_ID;
-   второй тег образа content-<snapshotId>.
+   второй тег образа content-<snapshotId>. concurrency в workflow уже есть
+   (group: release-${{ github.ref }}, cancel-in-progress: false), и
+   repository_dispatch попадает в ту же очередь, что push в main: группу не
+   переименовывать.
 5. Dockerfile: COPY content-snapshot.json /app/.content/snapshot.json, ENV
    CONTENT_SNAPSHOT, ARG CONTENT_SNAPSHOT_ID -> ENV, после pnpm build запуск
    verify-content-build.ts. Удалить COPY src/content/posts (строка 55).
@@ -556,7 +572,9 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
 6. scripts/backfill-prod.mjs и его вызов в docker-entrypoint.sh удалить:
    без каталога постов он роняет старт контейнера. posts_meta создают воркер
    (уже) и импорт (этап 3). Проверь, что migrate-prod.mjs остаётся.
-7. tests/unit/ci-workflow.test.ts, deploy-gate.test.ts обновить.
+7. Тестов на текст workflow не писать: tests/unit/ci-workflow.test.ts и
+   deploy-gate.test.ts в main удалены, а .claude/hooks/test-guard.sh
+   запрещает тесты, читающие YAML. Порядок шагов проверяет сам CI.
 8. Открытые вопросы, на которых надо остановиться: Cloudflare перед сайтом
    (раннеры GitHub должны доходить до export), секрет CONTENT_EXPORT_TOKEN
    добавляет Артём руками.
@@ -584,7 +602,8 @@ slug, на фикстуру tests/fixtures/content-snapshot.json или сид �
   admin-create/edit/delete и admin-media проверяют файл на диске через
   helpers/admin.ts:100-112. Переписать на сид content_articles через API с
   сессией и проверку через GET /articles/by-slug/.
-Условие: pnpm test и pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
+Условие: pnpm test, pnpm test:db, pnpm test:built (после сборки) и
+pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
 пустом src/content/posts (временно переименуй каталог для проверки, верни).
 ```
 
@@ -611,7 +630,8 @@ slug, на фикстуру tests/fixtures/content-snapshot.json или сид �
    Для kind=unpublish обратная проверка: 404 и нет в sitemap.
 4. Таймаут 30 минут, при failed откат build_publication_id (из 1.8) и новый
    dispatch при повторе.
-5. Тесты: один dispatch на batch; падение после dispatch не ломает публикацию;
+5. Тесты (слой db, tests/integration; тестов на YAML workflow не писать, их
+   запрещает test-guard.sh): один dispatch на batch; падение после dispatch не ломает публикацию;
    таймаут ведёт в failed; unpublish проверяется по 404; отзыв ключа до
    dispatch останавливает публикацию.
 6. .env.example: убрать GITHUB_DEFAULT_BRANCH из обязательных для API, оставить
@@ -892,7 +912,8 @@ base_manual_revision_id, base_remote_hash, commit_sha. Dockerfile: убрать
 VOLUME uploads и UPLOADS_DIR, docker-entrypoint без backfill. Runbook
 docs/runbooks/dokploy-uploads-volume.md пометить устаревшим.
 
-Проверка: pnpm lint, typecheck, test, test:e2e, verify:seo-build на фикстуре и
+Проверка: pnpm lint, typecheck, test, test:db, test:built, test:e2e,
+verify:seo-build на фикстуре и
 на прод-снапшоте; pnpm translate:check зелёный без постов.
 ```
 

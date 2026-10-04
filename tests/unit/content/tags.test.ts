@@ -21,6 +21,7 @@ const fakePost = (id: string, tags: readonly string[], order = 1): PostWithMeta 
     pinned: false,
     hiddenFromList: false,
     searchVector: null,
+    searchVectorEn: null,
     updatedAt: new Date(0),
   },
 });

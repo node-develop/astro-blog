@@ -148,10 +148,8 @@ export const reassemble = (
   skeleton: string,
   translated: readonly { id: number; text: string }[],
 ): string => {
-  let result = skeleton;
-  for (const { id, text } of translated) {
-    const re = new RegExp(`<!--T${id}-->`, "g");
-    result = result.replace(re, text);
-  }
-  return result;
+  // One pass with a function replacer: a string replacement would read `$$`, `$'`, `$&` in the
+  // translated text (LaTeX, prices) as patterns, and a later id could match inside an earlier text.
+  const byId = new Map(translated.map(({ id, text }) => [id, text]));
+  return skeleton.replace(/<!--T(\d+)-->/g, (marker, id: string) => byId.get(Number(id)) ?? marker);
 };

@@ -12,10 +12,12 @@ import {
   serial,
   primaryKey,
   customType,
+  check,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CriticNote } from "~/lib/social/types";
-import type { ArticleDocument, ApiScope } from "../content-api/contract";
+import type { ArticleDocument, ApiScope, StoredReview } from "../content-api/contract";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -115,7 +117,10 @@ export const postsMeta = pgTable(
     order: integer("order").notNull(),
     pinned: boolean("pinned").notNull().default(false),
     hiddenFromList: boolean("hidden_from_list").notNull().default(false),
+    // One vector per language: `search_vector` is RU (and every file post), `search_vector_en`
+    // is the English API article. The GIN indexes are in migrations 0003 and 0009.
     searchVector: tsvector("search_vector"),
+    searchVectorEn: tsvector("search_vector_en"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
@@ -312,6 +317,20 @@ export const contentArticles = pgTable(
     publishedContent: text("published_content"),
     publishedVersion: integer("published_version"),
     firstPublishedAt: timestamp("first_published_at", { withTimezone: true }),
+    // Desired state for the next site build: the publication whose content the
+    // build must contain. Set when a publication is dispatched, i.e. before the
+    // live page is verified; `publishedContent` only follows after verification.
+    buildPublicationId: uuid("build_publication_id").references(
+      (): AnyPgColumn => contentPublications.id,
+      { onDelete: "set null" },
+    ),
+    // When the document last changed in a way a reader can see (dateModified).
+    lastModifiedAt: timestamp("last_modified_at", { withTimezone: true }).notNull().defaultNow(),
+    // EN only: the RU version this translation was made from.
+    sourceVersion: integer("source_version"),
+    unpublishedAt: timestamp("unpublished_at", { withTimezone: true }),
+    // A human edited this translation; automatic re-translation must not overwrite it.
+    manuallyEdited: boolean("manually_edited").notNull().default(false),
     keyId: uuid("key_id")
       .notNull()
       .references(() => contentApiKeys.id, { onDelete: "restrict" }),
@@ -322,6 +341,27 @@ export const contentArticles = pgTable(
     identity: uniqueIndex("content_articles_external_lang_idx").on(t.externalId, t.lang),
     address: uniqueIndex("content_articles_slug_lang_idx").on(t.slug, t.lang),
   }),
+);
+
+/** Every saved document of an article, append-only. Version 1 is the first save. */
+export const contentArticleVersions = pgTable(
+  "content_article_versions",
+  {
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    document: jsonb("document").$type<ArticleDocument>().notNull(),
+    // Who saved it: an API key, or an admin (then actorKeyId is the
+    // `admin-session` system key and actorUserId the person).
+    actorKeyId: uuid("actor_key_id").references(() => contentApiKeys.id, { onDelete: "set null" }),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    // The article critic's notes for this version (the latest review overwrites), with the hash
+    // of the document it read. Null: never reviewed.
+    review: jsonb("review").$type<StoredReview>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.articleId, t.version] }) }),
 );
 
 export const contentPublications = pgTable(
@@ -339,6 +379,12 @@ export const contentPublications = pgTable(
       .notNull()
       .default("queued"),
     commitSha: text("commit_sha"),
+    kind: text("kind").$type<"publish" | "unpublish">().notNull().default("publish"),
+    // Publications requested together (RU + EN) share one site rebuild.
+    batchId: uuid("batch_id"),
+    dispatchedAt: timestamp("dispatched_at", { withTimezone: true }),
+    // Post-publish hooks (IndexNow, social drafts) ran; null while they are pending.
+    hooksDoneAt: timestamp("hooks_done_at", { withTimezone: true }),
     attempts: integer("attempts").notNull().default(0),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
     error: jsonb("error").$type<{ code: string; message: string }>(),
@@ -354,6 +400,8 @@ export const contentPublications = pgTable(
     oneActive: uniqueIndex("content_publications_one_active_idx")
       .on(t.articleId)
       .where(sql`${t.state} in ('queued', 'publishing')`),
+    batch: index("content_publications_batch_idx").on(t.batchId),
+    kindCheck: check("content_publications_kind_check", sql`${t.kind} in ('publish', 'unpublish')`),
   }),
 );
 
@@ -371,3 +419,13 @@ export const contentApiRequests = pgTable(
   },
   (t) => ({ pk: primaryKey({ columns: [t.keyId, t.idempotencyKey] }) }),
 );
+
+export type ContentArticleVersion = typeof contentArticleVersions.$inferSelect;
+
+/**
+ * System row in content_api_keys that stands for "an admin signed in with a
+ * session cookie". It keeps key_id NOT NULL on everything an admin writes.
+ * Its token_hash is not a sha256 hex digest, so no bearer token can match it.
+ */
+export { ADMIN_SESSION_KEY_NAME } from "../content-api/contract";
+export const ADMIN_SESSION_TOKEN_HASH = `session:${"0".repeat(64)}`;

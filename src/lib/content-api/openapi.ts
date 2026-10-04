@@ -1,9 +1,42 @@
 import { z } from "zod";
 import {
+  articleBySlugSchema,
   articleDocumentSchema,
+  articleInputSchema,
+  articleListSchema,
+  articleStatusSchema,
+  articleVersionSchema,
   createArticleSchema,
+  createKeySchema,
+  createdKeySchema,
+  exportSchema,
+  articleReviewSchema,
+  keyListSchema,
+  keyViewSchema,
+  mediaListSchema,
+  postMetaListSchema,
+  postMetaOrderSchema,
+  postMetaPatchSchema,
+  postMetaSchema,
+  publicationListSchema,
+  publicationSchema,
+  publicationStateSchema,
   publishArticleSchema,
+  publishBatchSchema,
+  publishOneSchema,
+  reviewArticleSchema,
+  scopeSchema,
+  socialChannelSchema,
+  socialDraftListSchema,
+  socialDraftSchema,
+  socialDraftUpdateSchema,
+  socialGenerateSchema,
+  socialPublishSchema,
+  socialSkipSchema,
+  socialStatusSchema,
+  translateArticleSchema,
   updateArticleSchema,
+  versionListSchema,
 } from "./contract";
 
 const schema = (value: z.ZodType) =>
@@ -19,16 +52,52 @@ const once = {
   required: true,
   schema: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
 };
+const slugParam = {
+  name: "slug",
+  in: "path",
+  required: true,
+  schema: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$", maxLength: 100 },
+};
+const ifMatch = {
+  name: "If-Match",
+  in: "header",
+  required: true,
+  description:
+    'The article version as one strong quoted integer, e.g. "3" (the ETag of GET /articles/{id}/). Missing: 428; malformed (*, W/"3", a list): 400; not the current version: 412.',
+  schema: { type: "string", pattern: '^"[1-9][0-9]{0,8}"$' },
+};
+const query = (name: string, schema: object, description?: string) => ({
+  name,
+  in: "query",
+  required: false,
+  ...(description ? { description } : {}),
+  schema,
+});
+const pagination = [
+  query("limit", { type: "integer", minimum: 1, maximum: 100, default: 20 }),
+  query(
+    "cursor",
+    { type: "string" },
+    "Opaque: pass the nextCursor of the previous page unchanged. Malformed values give 422.",
+  ),
+];
+const EDITORIAL_ERRORS = {
+  "409":
+    "editorial_block: the critic marked this content with a block note, send force: true to publish anyway; also version, idempotency and in-progress conflicts",
+  "422":
+    "editorial_gates_failed: details lists every failed gate as {code, message, ...context} (and articleId in a batch); nothing was saved or published",
+} as const;
 const operation = (
   summary: string,
   scope: string,
   input?: string,
   parameters: unknown[] = [],
   model = "ArticleResult",
+  more: Readonly<{ success?: readonly number[]; errors?: Readonly<Record<string, string>> }> = {},
 ) => ({
   summary,
-  description: `Required scope: ${scope}. 60 requests/minute/key.`,
-  security: [{ bearerAuth: [] }],
+  description: `Required scope: ${scope}. 60 requests/minute/key (Bearer only).`,
+  security: [{ bearerAuth: [] }, { sessionCookie: [] }],
   parameters,
   ...(input
     ? {
@@ -40,15 +109,17 @@ const operation = (
     : {}),
   responses: {
     ...Object.fromEntries(
-      (model === "MediaResult"
-        ? [201]
-        : model === "ValidationResult"
-          ? [200]
-          : input === "CreateArticle"
-            ? [201, 202]
-            : input
-              ? [200, 202]
-              : [200]
+      (more.success
+        ? more.success
+        : model === "MediaResult"
+          ? [201]
+          : model === "ValidationResult"
+            ? [200]
+            : input === "CreateArticle"
+              ? [201, 202]
+              : input
+                ? [200, 202]
+                : [200]
       ).map((code) => [
         String(code),
         response(
@@ -57,17 +128,26 @@ const operation = (
         ),
       ]),
     ),
-    "400": response("Malformed JSON or missing Idempotency-Key"),
-    "401": response("Missing, invalid or revoked key"),
-    "403": response("Insufficient scope"),
+    "400": response("Malformed JSON, missing Idempotency-Key or malformed If-Match"),
+    "401": response("Missing, invalid or revoked key, or no admin session"),
+    "403": response("Insufficient scope or origin mismatch"),
     "404": response("Not found"),
     "409": response("Identity, idempotency, version or edit conflict"),
+    ...Object.fromEntries(
+      Object.entries(more.errors ?? {}).map(([code, text]) => [code, response(text)]),
+    ),
     "413": response("Request too large"),
     "415": response("Unsupported Content-Type"),
     "422": response("Validation failed"),
     "429": response("Rate limited; Retry-After: 60"),
     "503": response("Service unavailable"),
   },
+});
+/** Keys are managed from the admin session only: Bearer keys get 403 key_cannot_manage_keys. */
+const sessionOperation = (...args: Parameters<typeof operation>) => ({
+  ...operation(...args),
+  description: `Admin session cookie only (Bearer keys get 403 key_cannot_manage_keys). Required scope: ${args[1]}.`,
+  security: [{ sessionCookie: [] }],
 });
 export const openApiDocument = {
   openapi: "3.1.0",
@@ -80,6 +160,24 @@ export const openApiDocument = {
   servers: [{ url: "/api/v1" }],
   paths: {
     "/articles/": {
+      get: operation(
+        "List articles, newest update first, with a computed status",
+        "articles:read",
+        undefined,
+        [
+          query("lang", { type: "string", enum: ["ru", "en"] }),
+          query("status", { $ref: "#/components/schemas/ArticleStatus" }),
+          query("agent", { type: "string", minLength: 1, maxLength: 100 }, "provenance.agent"),
+          query("tag", { type: "string" }),
+          query(
+            "q",
+            { type: "string", minLength: 1, maxLength: 200 },
+            "Substring of slug or title",
+          ),
+          ...pagination,
+        ],
+        "ArticleList",
+      ),
       post: operation(
         "Create an article",
         "articles:write (+ articles:publish for mode=publish)",
@@ -96,26 +194,282 @@ export const openApiDocument = {
         "ValidationResult",
       ),
     },
-    "/articles/{id}/": {
+    "/articles/by-slug/{slug}/": {
       get: operation(
-        "Read document, latest manual revision and remote content",
+        "Read the ru and en versions of a slug (API-managed articles only)",
+        "articles:read",
+        undefined,
+        [slugParam],
+        "ArticleBySlug",
+      ),
+    },
+    "/articles/{id}/versions/": {
+      get: operation(
+        "List saved versions, newest first (history may have gaps)",
         "articles:read",
         undefined,
         [id],
+        "ArticleVersionList",
       ),
+    },
+    "/articles/{id}/versions/{n}/": {
+      get: operation(
+        "Read one saved version with its document",
+        "articles:read",
+        undefined,
+        [
+          id,
+          {
+            name: "n",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1, maximum: 999999999 },
+          },
+        ],
+        "ArticleVersion",
+      ),
+    },
+    "/articles/{id}/": {
+      get: operation("Read document and latest publication", "articles:read", undefined, [id]),
       put: operation(
         "Replace an article using expectedVersion",
         "articles:write (+ articles:publish for mode=publish)",
         "UpdateArticle",
         [id, once],
       ),
+      delete: operation(
+        "Delete a draft that never went live (409 unpublish_first, was_published, publication_in_progress otherwise)",
+        "articles:write",
+        undefined,
+        [id, ifMatch],
+        "DeleteResult",
+        { errors: { "412": "If-Match is not the current version", "428": "If-Match is missing" } },
+      ),
     },
-    "/articles/{id}/publish/": {
+    "/articles/{id}/versions/{n}/restore/": {
       post: operation(
-        "Publish current version or retry a failed publication",
+        "Save the document of version n as a new version",
+        "articles:write",
+        "PublishArticle",
+        [
+          id,
+          {
+            name: "n",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1, maximum: 999999999 },
+          },
+          once,
+        ],
+        "RestoreResult",
+        { success: [200] },
+      ),
+    },
+    "/articles/{id}/translate/": {
+      post: operation(
+        "Translate a Russian article into an English DRAFT with the same slug and externalId (calls the model, tens of seconds)",
+        "articles:write",
+        "TranslateArticle",
+        [id, once],
+        "TranslateResult",
+        {
+          success: [200, 201],
+          errors: {
+            "502": "translation_failed or translation_invalid: nothing was saved",
+            "504": "translation_timeout: nothing was saved",
+          },
+        },
+      ),
+    },
+    "/articles/{id}/unpublish/": {
+      post: operation(
+        "Remove this language's page: queues an unpublish publication",
         "articles:publish",
         "PublishArticle",
         [id, once],
+      ),
+    },
+    "/publish/": {
+      post: operation(
+        "Publish the ru and en twins of one slug together, all or nothing. Every item that would be published passes the editorial gates first",
+        "articles:publish",
+        "PublishBatch",
+        [once],
+        "BatchResult",
+        { errors: EDITORIAL_ERRORS },
+      ),
+    },
+    "/articles/{id}/publish/": {
+      post: operation(
+        "Publish current version or retry a failed publication. Passes the editorial gates unless this version is already live",
+        "articles:publish",
+        "PublishOne",
+        [id, once],
+        "ArticleResult",
+        { errors: EDITORIAL_ERRORS },
+      ),
+    },
+    "/articles/{id}/review/": {
+      post: operation(
+        "Ask the article critic (calls the model, tens of seconds) for notes on the current version and store them with it. Read-only for the article: nothing but the notes changes. A `block` note stops a later publication of the same content until `force: true`. Opt-in: an article that was never reviewed is not blocked",
+        "articles:write",
+        "ReviewArticle",
+        [id, once],
+        "ArticleReview",
+        {
+          errors: {
+            "409": "version_conflict: expectedVersion is not current (nothing was saved)",
+            "502": "review_failed: the critic failed or answered unusably; nothing was saved",
+            "503": "review_not_configured: ANTHROPIC_API_KEY is not set",
+            "504": "review_timeout: nothing was saved",
+          },
+        },
+      ),
+    },
+    "/publications/": {
+      get: operation(
+        "List publications, newest first",
+        "articles:read",
+        undefined,
+        [
+          query("articleId", { type: "string", format: "uuid" }),
+          query("state", { $ref: "#/components/schemas/PublicationState" }),
+          ...pagination,
+        ],
+        "PublicationList",
+      ),
+    },
+    "/posts-meta/": {
+      get: operation(
+        "List every posts_meta row by order: the complete set that PUT /posts-meta/order/ needs",
+        "articles:read",
+        undefined,
+        [],
+        "PostMetaList",
+      ),
+    },
+    "/posts-meta/order/": {
+      put: operation(
+        "Set the manual order: every posts_meta slug exactly once (422 unknown_slugs, incomplete_order)",
+        "articles:write",
+        "PostMetaOrder",
+        [],
+        "PostMetaList",
+        { success: [200] },
+      ),
+    },
+    "/posts-meta/{slug}/": {
+      get: operation(
+        "Read order, pinned and hidden flags of a post",
+        "articles:read",
+        undefined,
+        [slugParam],
+        "PostMeta",
+      ),
+      patch: operation(
+        "Set pinned and/or hiddenFromList; hiding is public (removes the post from /blog, sitemap and llms.txt). 404 when the post has no row",
+        "articles:write (+ articles:publish when hiddenFromList is sent)",
+        "PostMetaPatch",
+        [slugParam],
+        "PostMeta",
+        { success: [200] },
+      ),
+    },
+    "/keys/": {
+      get: sessionOperation(
+        "List API keys, newest first, revoked ones included; no token hashes, no system key",
+        "admin session",
+        undefined,
+        [],
+        "KeyList",
+      ),
+      post: sessionOperation(
+        "Create a key; the token is in this response only. Not idempotent: a repeat creates a second key. Scopes must be a subset of the session's own",
+        "admin session",
+        "CreateKey",
+        [],
+        "CreatedKey",
+        { success: [201] },
+      ),
+    },
+    "/keys/{id}/": {
+      delete: sessionOperation(
+        "Revoke a key (it stays in the list; its queued publications fail with key_revoked). 403 system_key_protected for the admin-session key",
+        "admin session",
+        undefined,
+        [id],
+        "RevokedKey",
+      ),
+    },
+    "/export/": {
+      get: operation(
+        "The desired state of the next site build, streamed as JSON: every article whose build pointer is set (waiting versions included, drafts and unpublished articles not), sorted by slug then lang. `snapshotId` is derived from the revisions and meta (same state, same id). Check `count === articles.length`; a broken stream is invalid JSON, treat it as an error",
+        "content:export",
+        undefined,
+        [],
+        "Export",
+      ),
+    },
+    "/social/": {
+      get: operation(
+        "List social drafts, newest first. Works with SOCIAL_DRAFTS_ENABLED off (history)",
+        "social:read",
+        undefined,
+        [
+          query("slug", { type: "string" }),
+          query("status", { $ref: "#/components/schemas/SocialStatus" }),
+          ...pagination,
+        ],
+        "SocialDraftList",
+      ),
+    },
+    "/social/generate/": {
+      post: operation(
+        "Create the drafts a slug is missing: tg_ru, plus x_en and li_en once an EN twin is live. Per channel: a channel with a live draft or a sent post is left alone, and without `channels` one that was skipped (or whose send failed) for the same text is not brought back. 202 with the created channels, 200 with [] when nothing was missing. 403 social_disabled, 503 social_not_configured, 409 article_not_published, 404 article_not_found. Drafts are generated asynchronously: list them to see them become pending",
+        "social:write",
+        "SocialGenerate",
+        [],
+        "SocialGenerated",
+        { success: [200, 202] },
+      ),
+    },
+    "/social/{id}/": {
+      put: operation(
+        "Replace body (and threadTail) of a pending draft. 409 draft_not_pending otherwise",
+        "social:write",
+        "SocialDraftUpdate",
+        [id],
+        "SocialDraft",
+        { success: [200] },
+      ),
+    },
+    "/social/{id}/publish/": {
+      post: operation(
+        "Send a pending draft to its network. Not idempotent: a repeat is 409 draft_not_pending, so nothing is posted twice. A draft the critic blocked (`blocked: true`) needs force: 409 critic_block without it. 502 social_send_failed when the network refuses (the draft becomes failed)",
+        "social:publish",
+        "SocialPublish",
+        [id],
+        "SocialPublished",
+        { success: [200], errors: { "502": "The network refused the post" } },
+      ),
+    },
+    "/social/{id}/skip/": {
+      post: operation(
+        "Mark a pending draft skipped; an implicit generate will not bring that channel back",
+        "social:write",
+        "SocialSkip",
+        [id],
+        "SocialDraft",
+        { success: [200] },
+      ),
+    },
+    "/social/{id}/recheck/": {
+      post: operation(
+        "Run the critic again on the stored draft (no request body) and return the draft with fresh criticNotes",
+        "social:write",
+        undefined,
+        [id],
+        "SocialDraft",
       ),
     },
     "/publications/{id}/": {
@@ -127,7 +481,23 @@ export const openApiDocument = {
         "PublicationStatus",
       ),
     },
+    "/whoami/": {
+      get: operation(
+        "Show who the caller is: key or admin session",
+        "any authenticated principal",
+        undefined,
+        [],
+        "Whoami",
+      ),
+    },
     "/media/": {
+      get: operation(
+        "List uploaded images, newest first; needs articles:read so that a read-only key can find assetIds",
+        "articles:read",
+        undefined,
+        pagination,
+        "MediaList",
+      ),
       post: {
         ...operation(
           "Upload image bytes; repeated bytes return the same asset",
@@ -151,12 +521,70 @@ export const openApiDocument = {
   components: {
     securitySchemes: {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "artka_<random token>" },
+      sessionCookie: {
+        type: "apiKey",
+        in: "cookie",
+        name: "better-auth.session_token",
+        description:
+          "Admin session cookie (administrators only; named __Secure-better-auth.session_token in production). Used only when no Authorization header is sent. Non-GET requests must carry an Origin header equal to the site origin. No rate limit.",
+      },
     },
     schemas: {
+      // The stored form, which every response carries; what a client sends is ArticleInput.
       ArticleDocument: schema(articleDocumentSchema),
+      ArticleInput: schema(articleInputSchema),
       CreateArticle: schema(createArticleSchema),
       UpdateArticle: schema(updateArticleSchema),
       PublishArticle: schema(publishArticleSchema),
+      PublishOne: schema(publishOneSchema),
+      ReviewArticle: schema(reviewArticleSchema),
+      ArticleReview: schema(articleReviewSchema),
+      PublishBatch: schema(publishBatchSchema),
+      TranslateArticle: schema(translateArticleSchema),
+      TranslateResult: {
+        allOf: [
+          { $ref: "#/components/schemas/ArticleResult" },
+          {
+            type: "object",
+            required: ["translation", "warnings"],
+            description:
+              "201 for a new EN draft, 200 for an updated one or `unchanged: true` (already translated from this RU version, no model call).",
+            properties: {
+              translation: {
+                type: "object",
+                required: ["sourceVersion", "stale"],
+                properties: {
+                  sourceVersion: { type: "integer", minimum: 1 },
+                  stale: { type: "boolean", const: false },
+                },
+              },
+              unchanged: { type: "boolean", const: true },
+              warnings: { type: "array", items: { type: "string" } },
+            },
+          },
+        ],
+      },
+      DeleteResult: schema(z.object({ id: z.uuid(), deleted: z.literal(true) })),
+      RestoreResult: {
+        allOf: [
+          { $ref: "#/components/schemas/ArticleResult" },
+          {
+            type: "object",
+            required: ["restoredFrom"],
+            properties: { restoredFrom: { type: "integer", minimum: 1 } },
+          },
+        ],
+      },
+      BatchResult: {
+        type: "object",
+        required: ["batchId", "items"],
+        description:
+          "202 when at least one item was queued, 200 (batchId null) when every item was unchanged.",
+        properties: {
+          batchId: { type: ["string", "null"], format: "uuid" },
+          items: { type: "array", items: { $ref: "#/components/schemas/ArticleResult" } },
+        },
+      },
       Error: schema(
         z.object({
           error: z.object({
@@ -165,6 +593,13 @@ export const openApiDocument = {
             requestId: z.uuid(),
             details: z.unknown().optional(),
           }),
+        }),
+      ),
+      Whoami: schema(
+        z.object({
+          kind: z.enum(["key", "session"]),
+          keyName: z.string(),
+          scopes: z.array(scopeSchema),
         }),
       ),
       ValidationResult: schema(z.object({ valid: z.literal(true), warnings: z.array(z.string()) })),
@@ -180,42 +615,35 @@ export const openApiDocument = {
           }),
         }),
       ),
-      Publication: {
-        type: "object",
-        required: [
-          "id",
-          "articleId",
-          "version",
-          "state",
-          "commitSha",
-          "attempts",
-          "error",
-          "createdAt",
-          "updatedAt",
-          "statusUrl",
-        ],
-        properties: {
-          id: { type: "string", format: "uuid" },
-          articleId: { type: "string", format: "uuid" },
-          version: { type: "integer", minimum: 1 },
-          state: { type: "string", enum: ["queued", "publishing", "published", "failed"] },
-          commitSha: { type: ["string", "null"] },
-          attempts: { type: "integer", minimum: 0 },
-          error: {
-            oneOf: [
-              { type: "null" },
-              {
-                type: "object",
-                required: ["code", "message"],
-                properties: { code: { type: "string" }, message: { type: "string" } },
-              },
-            ],
-          },
-          createdAt: { type: "string", format: "date-time" },
-          updatedAt: { type: "string", format: "date-time" },
-          statusUrl: { type: "string" },
-        },
-      },
+      // Not strict here: PublicationStatus extends it with `url` through allOf.
+      Publication: schema(z.object(publicationSchema.shape)),
+      PublicationState: schema(publicationStateSchema),
+      ArticleStatus: schema(articleStatusSchema),
+      ArticleList: schema(articleListSchema),
+      ArticleBySlug: schema(articleBySlugSchema),
+      ArticleVersionList: schema(versionListSchema),
+      ArticleVersion: schema(articleVersionSchema),
+      PublicationList: schema(publicationListSchema),
+      MediaList: schema(mediaListSchema),
+      PostMeta: schema(postMetaSchema),
+      PostMetaList: schema(postMetaListSchema),
+      PostMetaPatch: schema(postMetaPatchSchema),
+      PostMetaOrder: schema(postMetaOrderSchema),
+      SocialChannel: schema(socialChannelSchema),
+      SocialStatus: schema(socialStatusSchema),
+      SocialGenerate: schema(socialGenerateSchema),
+      SocialGenerated: schema(z.object({ channels: z.array(socialChannelSchema) })),
+      SocialDraftUpdate: schema(socialDraftUpdateSchema),
+      SocialPublish: schema(socialPublishSchema),
+      SocialSkip: schema(socialSkipSchema),
+      SocialDraft: schema(socialDraftSchema),
+      SocialDraftList: schema(socialDraftListSchema),
+      SocialPublished: schema(z.object({ draft: socialDraftSchema, url: z.string() })),
+      KeyList: schema(keyListSchema),
+      Export: schema(exportSchema),
+      CreateKey: schema(createKeySchema),
+      CreatedKey: schema(createdKeySchema),
+      RevokedKey: schema(keyViewSchema.extend({ unchanged: z.boolean() })),
       PublicationStatus: {
         allOf: [
           { $ref: "#/components/schemas/Publication" },
@@ -243,39 +671,19 @@ export const openApiDocument = {
           version: { type: "integer", minimum: 1 },
           article: { $ref: "#/components/schemas/ArticleDocument" },
           publishedVersion: { type: ["integer", "null"] },
-          state: { type: "string", enum: ["draft", "published"] },
+          state: {
+            type: "string",
+            enum: ["draft", "published"],
+            deprecated: true,
+            description: "Deprecated: use status.",
+          },
+          status: { $ref: "#/components/schemas/ArticleStatus" },
           url: { type: "string", format: "uri" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
           publication: { oneOf: [{ type: "null" }, { $ref: "#/components/schemas/Publication" }] },
           warnings: { type: "array", items: { type: "string" } },
           unchanged: { type: "boolean" },
-          manualEditsPending: { type: "boolean" },
-          manualRevision: {
-            oneOf: [
-              { type: "null" },
-              {
-                type: "object",
-                properties: {
-                  id: { type: "integer" },
-                  slug: { type: "string" },
-                  frontmatter: { type: "object" },
-                  body: { type: "string" },
-                  authorId: { type: "string", format: "uuid" },
-                  createdAt: { type: "string", format: "date-time" },
-                },
-              },
-            ],
-          },
-          remote: {
-            type: "object",
-            required: ["available"],
-            properties: {
-              available: { type: "boolean" },
-              content: { type: ["string", "null"] },
-              hash: { type: ["string", "null"] },
-            },
-          },
         },
       },
     },
