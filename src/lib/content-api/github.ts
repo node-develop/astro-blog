@@ -8,12 +8,31 @@ export const articleUrl = (slug: string, lang: string): string => {
   const site = new URL(process.env.SITE_URL ?? "https://artka.dev");
   return new URL(`${lang === "en" ? "/en" : ""}/blog/${slug}/`, site).href;
 };
+/**
+ * A fetch that gives up after `ms`. @octokit/request ignores `request.timeout`
+ * (it only forwards `request.signal`), and these calls run while the worker
+ * holds the content lock inside a transaction: without a deadline of their own
+ * a stalled GitHub response would hold that lock for minutes.
+ */
+export const fetchWithDeadline =
+  (ms: number, fetchImpl: typeof fetch = fetch): typeof fetch =>
+  (input, init) => {
+    const deadline = AbortSignal.timeout(ms);
+    return fetchImpl(input, {
+      ...init,
+      signal: init?.signal ? AbortSignal.any([init.signal, deadline]) : deadline,
+    });
+  };
+const GITHUB_REQUEST_DEADLINE_MS = 10_000;
 const github = () => {
   const { GITHUB_PAT: token, GITHUB_REPO_OWNER: owner, GITHUB_REPO_NAME: repo } = process.env;
   if (!token || !owner || !repo)
     throw apiError(503, "publisher_not_configured", "GitHub publishing is not configured.");
   return {
-    client: new Octokit({ auth: token, request: { timeout: 10_000 } }),
+    client: new Octokit({
+      auth: token,
+      request: { fetch: fetchWithDeadline(GITHUB_REQUEST_DEADLINE_MS) },
+    }),
     owner,
     repo,
     branch: process.env.GITHUB_DEFAULT_BRANCH ?? "main",

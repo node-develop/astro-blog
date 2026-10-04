@@ -204,3 +204,35 @@ describe("GitHub unpublish adapter", () => {
     for (const [args] of mock.updateRef.mock.calls) expect(args).toMatchObject({ force: false });
   });
 });
+
+describe("GitHub request deadline", () => {
+  it("abandons a request that GitHub never answers instead of waiting for it", async () => {
+    const { fetchWithDeadline } = await vi.importActual<typeof import("~/lib/content-api/github")>(
+      "~/lib/content-api/github",
+    );
+    // A server that accepts the request and then stays silent until aborted.
+    const silent: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
+      });
+    await expect(fetchWithDeadline(20, silent)("https://api.github.com/x")).rejects.toMatchObject({
+      name: "TimeoutError",
+    });
+  });
+
+  it("still honours a signal the caller passed", async () => {
+    const { fetchWithDeadline } = await vi.importActual<typeof import("~/lib/content-api/github")>(
+      "~/lib/content-api/github",
+    );
+    const caller = new AbortController();
+    const silent: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted by caller")));
+      });
+    const pending = fetchWithDeadline(60_000, silent)("https://api.github.com/x", {
+      signal: caller.signal,
+    });
+    caller.abort();
+    await expect(pending).rejects.toThrow("aborted by caller");
+  });
+});
