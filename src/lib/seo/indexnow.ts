@@ -7,8 +7,8 @@
  * POSTs `{host, key, keyLocation, urlList}` to api.indexnow.org. One ping is
  * fanned out to every participating engine (Bing, Yandex, Naver, Seznam…).
  *
- * Wiring: the publish action (src/actions/publish.ts) calls `pingIndexNow`
- * after a successful publish. Failures are logged (pino) and never block
+ * Wiring: the publish action (src/actions/publish.ts) and the content API worker
+ * (src/lib/content-api/hooks.ts) call `pingIndexNow` after a successful publish. Failures are logged (pino) and never block
  * publish.
  */
 import { logger } from "../logger";
@@ -80,6 +80,7 @@ export const submitIndexNow = async (
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10_000),
   });
   return {
     ok: response.status === 200 || response.status === 202,
@@ -125,22 +126,31 @@ export const publishedUrlsFor = (
  * Best-effort IndexNow ping. The content goes live only after the CI build +
  * Dokploy deploy (~2-3 min); IndexNow is a hint that schedules a crawl, so an
  * early ping is fine. Never throws — a failed ping must not fail a publish.
+ *
+ * The outcome is returned so that a caller that retries (the worker hooks) can tell a ping that
+ * went out (`sent`), one that was not attempted because no key is configured (`skipped`, retrying
+ * cannot help) and one that failed (`failed`: network error, timeout or a non-2xx answer).
+ * `publish.one` ignores it.
  */
+export type IndexNowOutcome = "sent" | "skipped" | "failed";
+
 export const pingIndexNow = async (
   collection: TranslateCollection,
   slug: string,
   hasEnTwin: boolean,
-): Promise<void> => {
+): Promise<IndexNowOutcome> => {
   const key = indexNowKeyFromEnv();
   if (!key) {
     logger.info({ slug, collection }, "indexnow skipped: INDEXNOW_KEY not set");
-    return;
+    return "skipped";
   }
   try {
     const payload = buildIndexNowPayload(publishedUrlsFor(collection, slug, hasEnTwin), key);
     const result = await submitIndexNow(fetch, payload);
     logger[result.ok ? "info" : "warn"]({ slug, collection, ...result }, "indexnow ping");
+    return result.ok ? "sent" : "failed";
   } catch (err) {
     logger.warn({ slug, collection, err }, "indexnow ping failed");
+    return "failed";
   }
 };

@@ -174,6 +174,9 @@ export const scopeSchema = z.enum([
   "articles:write",
   "articles:publish",
   "media:write",
+  "social:read",
+  "social:write",
+  "social:publish",
 ]);
 export type ApiScope = z.infer<typeof scopeSchema>;
 export type ArticleDocument = z.infer<typeof articleDocumentSchema>;
@@ -388,3 +391,73 @@ export const keyViewSchema = z.strictObject({
 export const keyListSchema = z.strictObject({ items: z.array(keyViewSchema) });
 /** The only response that ever contains the token. */
 export const createdKeySchema = keyViewSchema.extend({ token: z.string() });
+
+// ── Social drafts ──────────────────────────────────────────────────────────
+
+export const socialChannelSchema = z.enum(["x_en", "li_en", "tg_ru"]);
+export const socialStatusSchema = z.enum([
+  "generating",
+  "pending",
+  "sending",
+  "sent",
+  "failed",
+  "superseded",
+  "skipped",
+]);
+/** `channels` omitted: the channels that fit the article (tg_ru, plus x_en and li_en with a live EN twin). */
+export const socialGenerateSchema = z.strictObject({
+  slug: slugSchema,
+  channels: z
+    .array(socialChannelSchema)
+    .min(1)
+    .max(3)
+    .refine((channels) => new Set(channels).size === channels.length, {
+      message: "channels must not repeat",
+    })
+    .optional(),
+});
+export const socialDraftUpdateSchema = z.strictObject({
+  body: z.string().min(1).max(10_000),
+  threadTail: z.array(z.string().min(1).max(10_000)).max(25).optional(),
+});
+/** `force` publishes a draft the critic marked `block`. */
+export const socialPublishSchema = z.strictObject({ force: z.boolean().default(false) });
+export const socialSkipSchema = z.strictObject({ reason: z.string().max(500).optional() });
+export const listSocialQuerySchema = z.strictObject({
+  slug: slugSchema.optional(),
+  status: socialStatusSchema.optional(),
+  limit: limitSchema,
+  cursor: cursorSchema.optional(),
+});
+export type ListSocialQuery = z.infer<typeof listSocialQuerySchema>;
+
+const criticNoteSchema = z.union([
+  z.looseObject({
+    severity: z.literal("block"),
+    kind: z.enum(["fact", "policy"]),
+    message: z.string(),
+  }),
+  z.looseObject({
+    severity: z.literal("warn"),
+    kind: z.enum(["tone", "length"]),
+    message: z.string(),
+  }),
+]);
+export const socialDraftSchema = z.strictObject({
+  id: z.uuid(),
+  slug: z.string(),
+  channel: socialChannelSchema,
+  status: socialStatusSchema,
+  body: z.string(),
+  threadTail: z.array(z.string()).nullable(),
+  mediaUrl: z.string().nullable(),
+  criticNotes: z.array(criticNoteSchema),
+  /** True when a critic note has severity `block`: publishing then needs `force`. */
+  blocked: z.boolean(),
+  errorMessage: z.string().nullable(),
+  externalUrl: z.string().nullable(),
+  sentAt: instant.nullable(),
+  createdAt: instant,
+  updatedAt: instant,
+});
+export const socialDraftListSchema = pageSchema(socialDraftSchema);

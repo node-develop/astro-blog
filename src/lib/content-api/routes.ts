@@ -25,11 +25,16 @@ import {
   listArticlesQuerySchema,
   listMediaQuerySchema,
   listPublicationsQuerySchema,
+  listSocialQuerySchema,
   postMetaOrderSchema,
   postMetaPatchSchema,
   publishArticleSchema,
   publishBatchSchema,
   slugSchema,
+  socialDraftUpdateSchema,
+  socialGenerateSchema,
+  socialPublishSchema,
+  socialSkipSchema,
   translateArticleSchema,
   updateArticleSchema,
   type ApiScope,
@@ -47,6 +52,7 @@ import {
 } from "./http";
 import { createKey, listKeys, revokeKey } from "./keys";
 import { MAX_IMAGE_BYTES, uploadImage } from "./media";
+import { kickoffSocial, publishDraft, recheckDraft, saveDraft, skipDraft } from "../social/service";
 import { openApiDocument } from "./openapi";
 import {
   articleView,
@@ -60,6 +66,7 @@ import {
   listArticles,
   listMedia,
   listPublications,
+  listSocialDrafts,
   listVersions,
   mutateOnce,
   publicationView,
@@ -67,6 +74,7 @@ import {
   requireArticle,
   requireIdle,
   restoreVersion,
+  socialDraftView,
   updateArticle,
   validateDocument,
   withContentLock,
@@ -74,6 +82,8 @@ import {
   type Tx,
 } from "./service";
 import { TRANSLATION_DEADLINE_MS, runTranslation } from "./translate-article";
+import { runPublicationHooks } from "./hooks";
+import { logger } from "../logger";
 import { processPublication } from "./worker";
 
 /** Pure routing: `:name` captures one non-empty segment; the first match in array order wins. */
@@ -217,7 +227,15 @@ export const routes: readonly Route[] = [
         throw apiError(401, "unauthorized", "Worker credentials required.");
       // Tick before the step: a slow or failing publication is still a live worker.
       workerHeartbeat.beat();
-      return jsonResponse(await processPublication());
+      const step = await processPublication();
+      // Hooks run after the step has committed, so a publication that went live just now gets its
+      // hooks in this very call. `hooks` is absent when none was waiting (the smoke test and old
+      // clients see `{ worked: false }` unchanged). A hook failure never fails the call.
+      const hooks = await runPublicationHooks().catch((error: unknown) => {
+        logger.error({ mod: "hooks", err: error }, "worker hooks crashed");
+        return null;
+      });
+      return jsonResponse(hooks ? { ...step, hooks } : step);
     },
   },
   {
@@ -577,12 +595,9 @@ export const routes: readonly Route[] = [
     scope: "any",
     sessionOnly: true,
     idempotent: false,
-    handler: async ({ request, principal }) => {
+    handler: async ({ request }) => {
+      // The route is sessionOnly and a session holds every scope: nothing to subset-check.
       const input = createKeySchema.parse(await readJson(request));
-      // A session may issue only what it holds itself.
-      const beyond = input.scopes.filter((scope) => !principal.scopes.includes(scope));
-      if (beyond.length)
-        throw apiError(403, "forbidden", "Requested scopes exceed your own.", { scopes: beyond });
       return jsonResponse(await createKey(db, input), 201);
     },
   },
@@ -593,6 +608,86 @@ export const routes: readonly Route[] = [
     sessionOnly: true,
     idempotent: false,
     handler: async ({ params }) => jsonResponse(await revokeKey(db, articleId(params))),
+  },
+  {
+    // Reading works with the feature flag off: the rows are history.
+    method: "GET",
+    pattern: "social",
+    scope: "social:read",
+    idempotent: false,
+    handler: async ({ request }) =>
+      jsonResponse(await listSocialDrafts(db, listSocialQuerySchema.parse(queryOf(request)))),
+  },
+  {
+    // Not idempotent: a repeat finds the channels already covered and answers 200 with `[]`.
+    method: "POST",
+    pattern: "social/generate",
+    scope: "social:write",
+    idempotent: false,
+    handler: async ({ request, principal }) => {
+      const input = socialGenerateSchema.parse(await readJson(request));
+      const result = await kickoffSocial({
+        slug: input.slug,
+        channels: input.channels,
+        actor: { userId: actorOf(principal).userId },
+      });
+      if (!result.ok)
+        throw apiError(result.code === "social_disabled" ? 403 : 503, result.code, result.reason);
+      return jsonResponse({ channels: result.channels }, result.channels.length ? 202 : 200);
+    },
+  },
+  {
+    method: "PUT",
+    pattern: "social/:id",
+    scope: "social:write",
+    idempotent: false,
+    handler: async ({ request, params }) => {
+      const id = articleId(params);
+      const input = socialDraftUpdateSchema.parse(await readJson(request));
+      return jsonResponse(socialDraftView(await saveDraft({ id, ...input })));
+    },
+  },
+  {
+    // Not idempotent on purpose: a repeat finds the draft no longer pending (409), so a post is
+    // never sent twice. A draft the critic blocked needs `force: true` (409 critic_block).
+    method: "POST",
+    pattern: "social/:id/publish",
+    scope: "social:publish",
+    idempotent: false,
+    handler: async ({ request, params, principal }) => {
+      const id = articleId(params);
+      const input = socialPublishSchema.parse(await readJson(request));
+      const result = await publishDraft({
+        id,
+        force: input.force,
+        actor: { userId: actorOf(principal).userId },
+      });
+      if (!result.ok)
+        throw apiError(502, "social_send_failed", result.error, {
+          draft: socialDraftView(result.draft),
+        });
+      return jsonResponse({ draft: socialDraftView(result.draft), url: result.url });
+    },
+  },
+  {
+    method: "POST",
+    pattern: "social/:id/skip",
+    scope: "social:write",
+    idempotent: false,
+    handler: async ({ request, params }) => {
+      const id = articleId(params);
+      const input = socialSkipSchema.parse(await readJson(request));
+      return jsonResponse(socialDraftView(await skipDraft({ id, reason: input.reason })));
+    },
+  },
+  {
+    // No body: the critic reads the draft as stored.
+    method: "POST",
+    pattern: "social/:id/recheck",
+    scope: "social:write",
+    idempotent: false,
+    handler: async ({ params }) =>
+      jsonResponse(socialDraftView((await recheckDraft({ id: articleId(params) })).draft)),
   },
   {
     method: "GET",

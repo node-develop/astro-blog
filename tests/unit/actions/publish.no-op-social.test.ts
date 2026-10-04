@@ -96,7 +96,7 @@ describe("publish.one — no-op path", () => {
     expect(result.status).toBe("no-op");
   });
 
-  it("calls generateSocialDrafts on no-op when social is enabled and collection=posts", async () => {
+  it("calls generateSocialDrafts (reading the file) on no-op when social is enabled and collection=posts", async () => {
     const { publishOneHandler } = await import("~/actions/publish");
     await publishOneHandler(
       { slug: TEST_SLUG, collection: "posts", message: undefined },
@@ -104,7 +104,7 @@ describe("publish.one — no-op path", () => {
     );
     expect(mockGenerateSocialDrafts).toHaveBeenCalledOnce();
     expect(mockGenerateSocialDrafts).toHaveBeenCalledWith(
-      { slug: TEST_SLUG, collection: "posts" },
+      { slug: TEST_SLUG, collection: "posts", source: "file" },
       expect.anything(),
     );
   });

@@ -4,7 +4,7 @@ import { db } from "../db";
 import { ADMIN_SESSION_TOKEN_HASH, contentApiKeys } from "../db/schema";
 import { hasAuthorizationHeader } from "../http/authorization";
 import { logger } from "../logger";
-import { SESSION_AGENT, type ApiScope } from "./contract";
+import { SESSION_AGENT, scopeSchema, type ApiScope } from "./contract";
 import { apiError } from "./errors";
 import { isAllowedOrigin } from "./origin";
 
@@ -22,6 +22,18 @@ export type Principal =
       scopes: readonly ApiScope[];
       userId: string;
     }>;
+
+/**
+ * One rule for the scopes of a key row. The `admin-session` row stands for a signed-in admin: it
+ * is an identity (the FK) and a kill switch (`revoked_at`), and its stored scope list is ignored.
+ * An admin session holds every scope there is, so a scope added later needs no data migration.
+ * Every other key holds what its row says. The API (`authenticateSession`) and the worker's check
+ * of the key behind a publication both go through this function.
+ */
+export const effectiveScopes = (
+  key: Readonly<{ tokenHash: string; scopes: readonly ApiScope[] }>,
+): readonly ApiScope[] =>
+  key.tokenHash === ADMIN_SESSION_TOKEN_HASH ? scopeSchema.options : key.scopes;
 
 /** Who made a write: the key behind it and, for an admin session, the person. */
 export type Actor = Readonly<{ keyId: string; userId: string | null }>;
@@ -78,8 +90,8 @@ const authenticateSession = async (
     .select()
     .from(contentApiKeys)
     .where(eq(contentApiKeys.tokenHash, ADMIN_SESSION_TOKEN_HASH));
-  // The worker gates publication on this row (revoked or without articles:publish
-  // fails the job with key_revoked), so a revoked row must not accept work here.
+  // The worker gates publication on this row (a revoked row fails the job with key_revoked),
+  // so a revoked row must not accept work here.
   if (!row || row.revokedAt) {
     logger.error(
       { userId: user.id, revoked: Boolean(row?.revokedAt) },
@@ -95,7 +107,7 @@ const authenticateSession = async (
     kind: "session",
     keyId: row.id,
     keyName: row.name,
-    scopes: row.scopes,
+    scopes: effectiveScopes(row),
     userId: user.id,
   };
 };
@@ -104,7 +116,7 @@ const authenticateSession = async (
  * Who is calling, and may they use `scope`.
  * A non-empty Authorization header is judged as a Bearer key and never falls
  * back to the cookie. Without it, the signed-in admin of `locals` is the
- * principal: all scopes of the admin-session row, no rate limit, and an Origin
+ * principal: every scope (the row must exist and not be revoked), no rate limit, and an Origin
  * check on anything that writes.
  */
 export const authorize = async (

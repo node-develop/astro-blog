@@ -1,304 +1,107 @@
+/**
+ * Astro Actions for /admin/social: thin wrappers around src/lib/social/service.ts that keep the
+ * input and output shapes the admin UI (DraftCard) already uses. They go away in stage 3 with the
+ * move of the admin to the content API (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+ */
 import { ActionError, defineAction } from "astro:actions";
 import type { ActionAPIContext } from "astro:actions";
 import { z } from "astro/zod";
-import { and, eq, ne, notInArray } from "drizzle-orm";
 import { assertAdmin } from "./_auth.js";
-import { computeSourceHash, decideChannels, loadArticle } from "./_social.js";
-import { db } from "~/lib/db";
-import { socialPosts } from "~/lib/db/schema";
-import {
-  CRITIC_MODEL,
-  EDITOR_MODEL,
-  WRITER_MODEL,
-  isSocialEnabled,
-  validateSocialEnv,
-} from "~/lib/social/config.js";
-import { stringifyError } from "~/lib/social/errors.js";
-import { runPipeline } from "~/lib/social/pipeline.js";
-import { runCritic } from "~/lib/social/critic.js";
-import type { CriticNote, SocialChannel } from "~/lib/social/types.js";
+import { isApiError } from "~/lib/content-api/errors";
 import { logger as log } from "~/lib/logger";
-import { postTweet, postThread } from "~/lib/social/clients/x.js";
-import { postShare } from "~/lib/social/clients/linkedin.js";
-import { sendMessage as tgSend } from "~/lib/social/clients/telegram.js";
-import { withRetry } from "~/lib/social/retry.js";
+import type { ArticleSource } from "~/lib/social/article";
+import {
+  kickoffSocial,
+  publishDraft,
+  recheckDraft,
+  regenerate,
+  saveDraft,
+  skipDraft,
+  type Actor,
+} from "~/lib/social/service";
+import type { CriticNote, SocialChannel } from "~/lib/social/types.js";
 
-// ── Terminal statuses that must never be superseded or re-inserted ────────────
+type AdminContext = Pick<ActionAPIContext, "locals">;
 
-const TERMINAL_STATUSES = ["sent", "sending", "superseded", "skipped", "failed"] as const;
+const adminActor = (ctx: AdminContext): Actor => {
+  const user = ctx.locals.user as { id?: string; role?: string | null } | null;
+  assertAdmin(user);
+  return { userId: user?.id ?? null };
+};
 
-// ── Persist pipeline results back to rows that are still in "generating" ─────
+const ACTION_CODES: Readonly<Record<string, ConstructorParameters<typeof ActionError>[0]["code"]>> =
+  {
+    critic_block: "BAD_REQUEST",
+    draft_not_pending: "CONFLICT",
+    article_not_published: "CONFLICT",
+    social_disabled: "FORBIDDEN",
+    not_found: "NOT_FOUND",
+    article_not_found: "NOT_FOUND",
+  };
 
-const persistResults = async (
-  collection: "posts",
-  slug: string,
-  sourceHash: string,
-  output: Awaited<ReturnType<typeof runPipeline>>,
-): Promise<void> => {
-  const channels = Object.keys(output.drafts) as SocialChannel[];
-  for (const ch of channels) {
-    const r = output.drafts[ch];
-    if (!r) continue;
-    if (r.ok) {
-      await db
-        .update(socialPosts)
-        .set({
-          body: r.value.body,
-          threadTail: r.value.threadTail ?? null,
-          mediaUrl: r.value.mediaUrl,
-          criticAnnotations: output.annotations[ch] ?? [],
-          generationModel: WRITER_MODEL,
-          editorModel: EDITOR_MODEL,
-          criticModel: CRITIC_MODEL,
-          status: "pending",
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(socialPosts.postCollection, collection),
-            eq(socialPosts.postSlug, slug),
-            eq(socialPosts.channel, ch),
-            eq(socialPosts.sourceHash, sourceHash),
-            eq(socialPosts.status, "generating"),
-          ),
-        );
-    } else {
-      await db
-        .update(socialPosts)
-        .set({
-          status: "failed",
-          errorMessage: stringifyError(r.error),
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(socialPosts.postCollection, collection),
-            eq(socialPosts.postSlug, slug),
-            eq(socialPosts.channel, ch),
-            eq(socialPosts.sourceHash, sourceHash),
-            eq(socialPosts.status, "generating"),
-          ),
-        );
-    }
+/** Service errors keep their message; the code becomes the matching ActionError code. */
+const guarded = async <T>(run: () => Promise<T>): Promise<T> => {
+  try {
+    return await run();
+  } catch (error) {
+    if (!isApiError(error)) throw error;
+    throw new ActionError({
+      code: ACTION_CODES[error.code] ?? "INTERNAL_SERVER_ERROR",
+      message: error.message,
+    });
   }
 };
 
-// ── Handler (plain function — callable in tests without Astro runtime) ────────
+/** The form stays silent when the row is gone or no longer pending, as it always was. */
+const silentWhenStale = async (op: string, id: string, run: () => Promise<unknown>) => {
+  try {
+    await guarded(run);
+  } catch (error) {
+    if (
+      !(error instanceof ActionError) ||
+      (error.code !== "NOT_FOUND" && error.code !== "CONFLICT")
+    )
+      throw error;
+    log.warn({ mod: "social", id, op, reason: error.message }, "social draft not changed");
+  }
+  return { ok: true as const };
+};
+
+// ── Handlers (plain functions — callable in tests without the Astro runtime) ─
 
 export type GenerateInput = {
   slug: string;
   collection: "posts";
   channels?: SocialChannel[] | undefined;
+  /** publish.one passes `file`: it has just pushed that file and must draft from it. */
+  source?: ArticleSource | undefined;
 };
 
 export type GenerateResult =
   { ok: true; channels: SocialChannel[] } | { ok: false; reason: string };
 
+const kickoffResult = (result: Awaited<ReturnType<typeof kickoffSocial>>): GenerateResult =>
+  result.ok ? { ok: true, channels: result.channels } : { ok: false, reason: result.reason };
+
 export const generateHandler = async (
-  { slug, collection, channels }: GenerateInput,
+  { slug, channels, source }: GenerateInput,
   ctx: ActionAPIContext,
 ): Promise<GenerateResult> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-
-  if (!isSocialEnabled()) {
-    log.warn({ mod: "social", slug }, "generate skipped: feature flag off");
-    return { ok: false as const, reason: "feature flag off" };
-  }
-
-  const env = validateSocialEnv();
-  if (!env.ok) {
-    log.error({ mod: "social", slug, issues: env.issues }, "social env invalid");
-    return { ok: false as const, reason: `env invalid: ${env.issues.join("; ")}` };
-  }
-
-  const article = await loadArticle(slug, collection);
-  const sourceHash = computeSourceHash({
-    title: article.title,
-    body: article.body,
-    frontmatter: {
-      tags: article.tags,
-      lang: article.lang,
-      pubDate: article.pubDate.toISOString(),
-    },
-  });
-  const channelsToUse: SocialChannel[] = channels ?? decideChannels(article);
-
-  // ── Idempotency guard: skip if non-terminal rows already exist for this exact
-  //    source hash. Prevents wasted LLM tokens on repeat clicks of Publish/Force.
-  const existing = await db
-    .select({ id: socialPosts.id })
-    .from(socialPosts)
-    .where(
-      and(
-        eq(socialPosts.postCollection, collection),
-        eq(socialPosts.postSlug, slug),
-        eq(socialPosts.sourceHash, sourceHash),
-        notInArray(socialPosts.status, ["failed", "superseded", "skipped"]),
-      ),
-    );
-  if (existing.length > 0) {
-    log.info(
-      { mod: "social", slug, existing: existing.length },
-      "kickoff skipped: same sourceHash already in flight or sent",
-    );
-    return { ok: true, channels: [] };
-  }
-
-  // ── Transactional outbox: supersede stale rows + insert new generating rows
-
-  await db.transaction(async (tx) => {
-    // 1. Mark rows with a different hash that are not yet in a terminal
-    //    state as superseded — keeps history clean without data loss.
-    await tx
-      .update(socialPosts)
-      .set({ status: "superseded", updatedAt: new Date() })
-      .where(
-        and(
-          eq(socialPosts.postCollection, collection),
-          eq(socialPosts.postSlug, slug),
-          ne(socialPosts.sourceHash, sourceHash),
-          notInArray(socialPosts.status, [...TERMINAL_STATUSES]),
-        ),
-      );
-
-    // 2. Insert a "generating" placeholder for each channel.
-    //    onConflictDoNothing respects the partial unique index
-    //    ux_social_active_per_channel — if an active row already exists for
-    //    this (collection, slug, channel) combination we skip silently.
-    for (const channel of channelsToUse) {
-      await tx
-        .insert(socialPosts)
-        .values({
-          postCollection: collection,
-          postSlug: slug,
-          channel,
-          sourceHash,
-          status: "generating",
-          body: "",
-          createdById: (ctx.locals.user as { id?: string } | null)?.id ?? null,
-        })
-        .onConflictDoNothing();
-    }
-  });
-
-  // ── Fire-and-forget pipeline — crashes are logged; rows stay in
-  //    "generating" and a recovery cron will pick them up.
-
-  log.info({ mod: "social", slug, channels: channelsToUse }, "pipeline kickoff");
-  void runPipeline({ article, channels: channelsToUse })
-    .then((out) => {
-      log.info({ mod: "social", slug, channels: Object.keys(out.drafts) }, "pipeline done");
-      return persistResults(collection, slug, sourceHash, out);
-    })
-    .catch((err) =>
-      log.error({ mod: "social", slug, err }, "pipeline crashed — rows left in generating"),
-    );
-
-  return { ok: true, channels: channelsToUse };
+  const actor = adminActor(ctx);
+  return kickoffResult(await guarded(() => kickoffSocial({ slug, channels, actor, source })));
 };
-
-// ── Send a single row by channel — wrapped in withRetry for 5xx/429 ──────────
-
-type SendResult = ReturnType<typeof postTweet>;
-
-const sendByChannel = (row: typeof socialPosts.$inferSelect): SendResult => {
-  const fn = async () => {
-    if (row.channel === "x_en") {
-      if (row.threadTail && row.threadTail.length > 0) {
-        return postThread([row.body, ...row.threadTail]);
-      }
-      return postTweet({ text: row.body });
-    }
-    if (row.channel === "li_en") return postShare({ text: row.body });
-    return tgSend({ text: row.body, mediaUrl: row.mediaUrl });
-  };
-  return withRetry(fn, { maxAttempts: 3, baseDelayMs: 2000 });
-};
-
-// ── Publish handler ──────────────────────────────────────────────────────────
-
-const hasBlockNote = (notes: unknown): boolean =>
-  Array.isArray(notes) && notes.some((n) => (n as { severity?: string }).severity === "block");
 
 export type PublishInput = { id: string; force: boolean };
 export type PublishResult = { ok: true; url: string } | { ok: false; error: string };
-
-const requireSocialEnabled = (): void => {
-  if (!isSocialEnabled()) {
-    throw new ActionError({ code: "FORBIDDEN", message: "social autopost is disabled" });
-  }
-};
 
 export const publishHandler = async (
   { id, force }: PublishInput,
   ctx: ActionAPIContext,
 ): Promise<PublishResult> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-  requireSocialEnabled();
-  const env = validateSocialEnv();
-  if (!env.ok) {
-    throw new ActionError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `social env invalid: ${env.issues.join("; ")}`,
-    });
-  }
-
-  // Atomic pending → sending
-  const [row] = await db
-    .update(socialPosts)
-    .set({
-      status: "sending",
-      approvedById: (ctx.locals.user as { id?: string } | null)?.id ?? null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")))
-    .returning();
-
-  if (!row) {
-    throw new ActionError({ code: "CONFLICT", message: "Draft is not pending" });
-  }
-
-  if (!force && hasBlockNote(row.criticAnnotations)) {
-    // Roll back to pending
-    await db
-      .update(socialPosts)
-      .set({ status: "pending", updatedAt: new Date() })
-      .where(eq(socialPosts.id, id));
-    throw new ActionError({
-      code: "BAD_REQUEST",
-      message: "block-level critic notes; resubmit with force=true",
-    });
-  }
-
-  const result = await sendByChannel(row);
-
-  if (result.ok) {
-    await db
-      .update(socialPosts)
-      .set({
-        status: "sent",
-        externalId: result.value.id,
-        externalUrl: result.value.url,
-        sentAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(socialPosts.id, id));
-    return { ok: true, url: result.value.url };
-  }
-
-  await db
-    .update(socialPosts)
-    .set({
-      status: "failed",
-      errorMessage: stringifyError(result.error),
-      retryCount: row.retryCount + 1,
-      updatedAt: new Date(),
-    })
-    .where(eq(socialPosts.id, id));
-  return { ok: false, error: stringifyError(result.error) };
+  const actor = adminActor(ctx);
+  const result = await guarded(() => publishDraft({ id, force, actor }));
+  return result.ok ? { ok: true, url: result.url } : { ok: false, error: result.error };
 };
-
-// ── Save (update body / threadTail of pending row) ────────────────────────────
 
 export type SaveInput = { id: string; body: string; threadTail?: string[] | undefined };
 
@@ -306,20 +109,9 @@ export const saveHandler = async (
   { id, body, threadTail }: SaveInput,
   ctx: ActionAPIContext,
 ): Promise<{ ok: true }> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-  requireSocialEnabled();
-  await db
-    .update(socialPosts)
-    .set({
-      body,
-      threadTail: threadTail ?? null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")));
-  return { ok: true };
+  adminActor(ctx);
+  return silentWhenStale("save", id, () => saveDraft({ id, body, threadTail }));
 };
-
-// ── Skip (mark pending row as skipped) ────────────────────────────────────────
 
 export type SkipInput = { id: string; reason?: string | undefined };
 
@@ -327,20 +119,9 @@ export const skipHandler = async (
   { id, reason }: SkipInput,
   ctx: ActionAPIContext,
 ): Promise<{ ok: true }> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-  requireSocialEnabled();
-  await db
-    .update(socialPosts)
-    .set({
-      status: "skipped",
-      errorMessage: reason ?? null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(socialPosts.id, id), eq(socialPosts.status, "pending")));
-  return { ok: true };
+  adminActor(ctx);
+  return silentWhenStale("skip", id, () => skipDraft({ id, reason }));
 };
-
-// ── Recheck (re-run Critic, update annotations) ──────────────────────────────
 
 export type RecheckInput = { id: string };
 export type RecheckResult = { ok: true; annotations: CriticNote[] };
@@ -349,57 +130,19 @@ export const recheckHandler = async (
   { id }: RecheckInput,
   ctx: ActionAPIContext,
 ): Promise<RecheckResult> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-  requireSocialEnabled();
-  const [row] = await db.select().from(socialPosts).where(eq(socialPosts.id, id));
-  if (!row) throw new ActionError({ code: "NOT_FOUND", message: "draft not found" });
-
-  const article = await loadArticle(row.postSlug);
-  const annotations = await runCritic(article, [
-    {
-      channel: row.channel,
-      draft: {
-        body: row.body,
-        ...(row.threadTail != null ? { threadTail: row.threadTail } : {}),
-        mediaUrl: row.mediaUrl,
-      },
-    },
-  ]);
-  const channelNotes: CriticNote[] = (annotations[row.channel] ?? []) as CriticNote[];
-
-  await db
-    .update(socialPosts)
-    .set({
-      criticAnnotations: channelNotes,
-      criticModel: CRITIC_MODEL,
-      updatedAt: new Date(),
-    })
-    .where(eq(socialPosts.id, id));
-
-  return { ok: true, annotations: channelNotes };
+  adminActor(ctx);
+  const { annotations } = await guarded(() => recheckDraft({ id }));
+  return { ok: true, annotations };
 };
-
-// ── Regenerate (supersede + invoke generate) ─────────────────────────────────
 
 export type RegenerateInput = { slug: string; collection: "posts" };
 
 export const regenerateHandler = async (
-  { slug, collection }: RegenerateInput,
+  { slug }: RegenerateInput,
   ctx: ActionAPIContext,
 ): Promise<GenerateResult> => {
-  assertAdmin(ctx.locals.user as { role?: string | null } | null);
-  requireSocialEnabled();
-  await db
-    .update(socialPosts)
-    .set({ status: "superseded", updatedAt: new Date() })
-    .where(
-      and(
-        eq(socialPosts.postCollection, collection),
-        eq(socialPosts.postSlug, slug),
-        notInArray(socialPosts.status, [...TERMINAL_STATUSES]),
-      ),
-    );
-  return generateHandler({ slug, collection }, ctx);
+  const actor = adminActor(ctx);
+  return kickoffResult(await guarded(() => regenerate({ slug, actor })));
 };
 
 // ── Action ────────────────────────────────────────────────────────────────────

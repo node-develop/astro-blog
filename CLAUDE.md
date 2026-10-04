@@ -110,7 +110,7 @@ Use the model only for decisions that code cannot make: classification, extracti
 Concretely, LLM calls (`@anthropic-ai/sdk`) are allowed in exactly four places, all judgment tasks:
 
 - `src/pages/api/check.ts` — grading answers in course challenges (`claude-haiku-4-5`).
-- `src/lib/social/**` — writers → editors → critic pipeline for social drafts (via Astro Actions, behind `SOCIAL_DRAFTS_ENABLED`).
+- `src/lib/social/**` — writers → editors → critic pipeline for social drafts (entered from Astro Actions, the `/api/v1/social/*` routes and the worker's post-publish hook `src/lib/content-api/hooks.ts`; all behind `SOCIAL_DRAFTS_ENABLED`).
 - `src/lib/translate/**` — RU→EN translation (`translate.one` action and `pnpm translate`).
 - `src/lib/content-api/translate-article.ts` — RU→EN translation of a Content API article (`POST /articles/{id}/translate/`); model and prompts come from `src/lib/translate/claude.ts`.
 

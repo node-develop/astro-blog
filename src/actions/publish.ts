@@ -121,7 +121,10 @@ export const publishOneHandler = async (
     );
     if (isSocialEnabled() && input.collection === "posts") {
       try {
-        const r = await generateSocialDrafts({ slug: input.slug, collection: "posts" }, context);
+        const r = await generateSocialDrafts(
+          { slug: input.slug, collection: "posts", source: "file" },
+          context,
+        );
         log.info({ slug: input.slug, result: r }, "social kickoff (no-op git path)");
       } catch (err) {
         log.warn({ mod: "social", slug: input.slug, err }, "generate kickoff failed (no-op path)");
@@ -153,7 +156,10 @@ export const publishOneHandler = async (
     // publish if generation kickoff errors — admin can re-trigger from /admin/social.
     if (isSocialEnabled() && input.collection === "posts") {
       try {
-        await generateSocialDrafts({ slug: input.slug, collection: "posts" }, context);
+        await generateSocialDrafts(
+          { slug: input.slug, collection: "posts", source: "file" },
+          context,
+        );
       } catch (err) {
         log.warn({ mod: "social", slug: input.slug, err }, "generate kickoff failed");
       }

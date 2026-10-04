@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { contentApiKeys, contentArticles, contentPublications, postsMeta } from "../db/schema";
+import { effectiveScopes } from "./auth";
 import { apiError, isApiError } from "./errors";
 import { articlePath, articleUrl, commitArticle, deleteArticle } from "./github";
 import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
@@ -79,7 +80,7 @@ export const processPublication = async () =>
     const article = await requireArticle(tx, job.articleId);
     try {
       const [key] = await tx.select().from(contentApiKeys).where(eq(contentApiKeys.id, job.keyId));
-      if (!key || key.revokedAt || !key.scopes.includes("articles:publish"))
+      if (!key || key.revokedAt || !effectiveScopes(key).includes("articles:publish"))
         throw apiError(
           403,
           "key_revoked",
@@ -156,8 +157,9 @@ export const processPublication = async () =>
         if (await verifyUnpublished(url, article.lang)) {
           // Back to a draft: the published pointers go, `firstPublishedAt` stays so a later
           // publication keeps its pubDate. `posts_meta` is shared by both languages and keeps
-          // order and pinned for a republication. The jobs hooks (IndexNow, social) are for
-          // publications only, hence hooksDoneAt.
+          // order and pinned for a republication. Hooks stay pending: IndexNow pings the removed
+          // url (a gone page is worth telling the engines about); social drafts are not created
+          // for an unpublication (see hooks.ts).
           await tx
             .update(contentArticles)
             .set({
@@ -173,7 +175,6 @@ export const processPublication = async () =>
               state: "published",
               error: null,
               updatedAt: new Date(),
-              hooksDoneAt: new Date(),
             })
             .where(eq(contentPublications.id, job.id));
         } else if (Date.now() - job.updatedAt.getTime() > 30 * 60_000) {

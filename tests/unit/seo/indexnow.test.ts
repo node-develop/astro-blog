@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildIndexNowPayload,
   indexNowKeyFromEnv,
+  pingIndexNow,
   submitIndexNow,
   INDEXNOW_ENDPOINT,
 } from "~/lib/seo/indexnow";
@@ -47,6 +48,7 @@ describe("submitIndexNow", () => {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(payload),
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -87,6 +89,45 @@ describe("indexNowKeyFromEnv / key route", () => {
       const miss = await GET({ params: { indexnowKey: "anything" } } as never);
       expect(miss.status).toBe(404);
     } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+});
+
+describe("pingIndexNow outcome", () => {
+  const withFetch = async (impl: () => Promise<Response>) => {
+    vi.stubEnv("INDEXNOW_KEY", KEY);
+    vi.stubGlobal("fetch", vi.fn(impl));
+    try {
+      return await pingIndexNow("posts", "foo", true);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  };
+
+  it("is `sent` on 200/202", async () => {
+    expect(await withFetch(async () => new Response(null, { status: 202 }))).toBe("sent");
+  });
+
+  it("is `failed` on a non-2xx answer and on a network error, and never throws", async () => {
+    expect(await withFetch(async () => new Response("x", { status: 500 }))).toBe("failed");
+    expect(
+      await withFetch(async () => {
+        throw new Error("network down");
+      }),
+    ).toBe("failed");
+  });
+
+  it("is `skipped`, without any request, when no key is configured", async () => {
+    vi.stubEnv("INDEXNOW_KEY", "");
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    try {
+      expect(await pingIndexNow("posts", "foo", true)).toBe("skipped");
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
       vi.unstubAllEnvs();
     }
   });

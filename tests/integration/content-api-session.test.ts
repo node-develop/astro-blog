@@ -16,8 +16,15 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+// The worker's first step commits through GitHub: stand in for the adapter, nothing else.
+vi.mock("../../src/lib/content-api/github", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/github")>()),
+  commitArticle: vi.fn(async () => "commit-1"),
+}));
+
 import { ALL } from "../../src/pages/api/v1/[...path]";
-import { createdKeySchema, keyListSchema } from "../../src/lib/content-api/contract";
+import { processPublication } from "../../src/lib/content-api/worker";
+import { createdKeySchema, keyListSchema, scopeSchema } from "../../src/lib/content-api/contract";
 
 const token = `artka_${"a".repeat(43)}`;
 const document = {
@@ -197,7 +204,7 @@ describe("content API session access with PostgreSQL", () => {
     expect((await call("GET", "whoami", { locals: admin("a1") })).body).toEqual({
       kind: "session",
       keyName: "admin-session",
-      scopes: ["articles:read", "articles:write", "articles:publish", "media:write"],
+      scopes: scopeSchema.options,
     });
     expect((await call("GET", "whoami", { bearer: token })).body).toEqual({
       kind: "key",
@@ -240,20 +247,41 @@ describe("content API session access with PostgreSQL", () => {
     );
   });
 
-  it("takes the session scopes from the admin-session row", async () => {
+  it("ignores the scope list stored on the admin-session row: a session holds every scope, the worker agrees", async () => {
     await state
       .db!.update(schema.contentApiKeys)
-      .set({ scopes: ["articles:read", "articles:write"] })
+      .set({ scopes: ["articles:read"] })
       .where(eq(schema.contentApiKeys.tokenHash, schema.ADMIN_SESSION_TOKEN_HASH));
-    const result = await create({ locals: admin("a1"), key: "pub" }, {});
-    expect(result.status).toBe(201);
-    const publish = await call("POST", "articles", {
+    const whoami = await call("GET", "whoami", { locals: admin("a1") });
+    expect(whoami.body.scopes).toEqual(scopeSchema.options);
+    const queued = await call("POST", "articles", {
       locals: admin("a1"),
       origin: "https://artka.dev",
-      key: "pub2",
-      body: { article: { ...document, externalId: "x", slug: "x-article" }, mode: "publish" },
+      key: "pub",
+      body: { article: document, mode: "publish" },
     });
-    expect(publish.status).toBe(403);
+    expect(queued.status).toBe(202);
+    // The job's key is the same row, now with a reduced list: the worker must not call it revoked.
+    const step = await processPublication();
+    expect(step).toMatchObject({ worked: true });
+    expect(step).not.toHaveProperty("error");
+    const [job] = await state.db!.select().from(schema.contentPublications);
+    expect([job?.state, job?.error]).toEqual(["publishing", null]);
+  });
+
+  it("a revoked admin-session row still fails its queued job with key_revoked", async () => {
+    const queued = await call("POST", "articles", {
+      locals: admin("a1"),
+      origin: "https://artka.dev",
+      key: "pub3",
+      body: { article: document, mode: "publish" },
+    });
+    expect(queued.status).toBe(202);
+    await state
+      .db!.update(schema.contentApiKeys)
+      .set({ revokedAt: new Date() })
+      .where(eq(schema.contentApiKeys.tokenHash, schema.ADMIN_SESSION_TOKEN_HASH));
+    expect(await processPublication()).toMatchObject({ worked: true, error: "key_revoked" });
   });
 
   it("names the admin as provenance agent when a session omits it, and keeps the externalId default", async () => {
@@ -316,20 +344,16 @@ describe("content API session access with PostgreSQL", () => {
       expect(text).not.toContain(schema.ADMIN_SESSION_KEY_NAME);
     });
 
-    it("refuses scopes the session does not hold, reserved names and unknown scopes", async () => {
-      await state
-        .db!.update(schema.contentApiKeys)
-        .set({ scopes: ["articles:read", "articles:write"] })
-        .where(eq(schema.contentApiKeys.tokenHash, schema.ADMIN_SESSION_TOKEN_HASH));
-      const beyond = await session("POST", "keys", { name: "k", scopes: ["articles:publish"] });
-      expect([beyond.status, beyond.body.error.code]).toEqual([403, "forbidden"]);
+    it("issues any scope, including the social ones, and refuses reserved names and unknown scopes", async () => {
+      const social = await issue(["social:read", "social:write", "social:publish"], "social-key");
+      expect(social.scopes).toEqual(["social:read", "social:write", "social:publish"]);
       expect(
         (await session("POST", "keys", { name: "Admin", scopes: ["articles:read"] })).status,
       ).toBe(422);
       expect((await session("POST", "keys", { name: "k", scopes: ["keys:manage"] })).status).toBe(
         422,
       );
-      expect(await state.db!.select().from(schema.contentApiKeys)).toHaveLength(2);
+      expect(await state.db!.select().from(schema.contentApiKeys)).toHaveLength(3);
     });
 
     it("revokes without deleting: the token stops working, the row stays, a repeat is unchanged", async () => {

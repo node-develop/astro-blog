@@ -11,6 +11,8 @@ import {
   contentAssets,
   contentApiRequests,
   contentPublications,
+  socialPosts,
+  type SocialPost,
 } from "../db/schema";
 import {
   articleDocumentSchema,
@@ -22,12 +24,15 @@ import {
   type ListArticlesQuery,
   type ListMediaQuery,
   type ListPublicationsQuery,
+  type ListSocialQuery,
   type articleBySlugSchema,
   type articleListItemSchema,
   type articleListSchema,
   type articleVersionSchema,
   type mediaListSchema,
   type publicationListSchema,
+  type socialDraftListSchema,
+  type socialDraftSchema,
   type versionListSchema,
 } from "./contract";
 import { articleStatus, ownsCommittedFile } from "./status";
@@ -36,6 +41,7 @@ import { apiError } from "./errors";
 import { articlePath, articleUrl } from "./github";
 import { coverUrlOf, uploadsFileExists } from "./cover";
 import { inspectMarkdown, serializeArticle } from "./markdown";
+import { hasBlockNote } from "../social/critic-notes";
 
 export const CONTENT_LOCK = 71423091;
 export type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -979,4 +985,46 @@ export const listMedia = async (
     })),
     nextCursor,
   };
+};
+
+/** What a client sees of a social draft: never the models, hashes, retry count or user ids. */
+export const socialDraftView = (row: SocialPost): z.output<typeof socialDraftSchema> => ({
+  id: row.id,
+  slug: row.postSlug,
+  channel: row.channel,
+  status: row.status,
+  body: row.body,
+  threadTail: row.threadTail,
+  mediaUrl: row.mediaUrl,
+  criticNotes: row.criticAnnotations ?? [],
+  blocked: hasBlockNote(row.criticAnnotations),
+  errorMessage: row.errorMessage,
+  externalUrl: row.externalUrl,
+  sentAt: row.sentAt ? row.sentAt.toISOString() : null,
+  createdAt: row.createdAt.toISOString(),
+  updatedAt: row.updatedAt.toISOString(),
+});
+
+/** Newest first by creation; the feature flag does not matter for reading. */
+export const listSocialDrafts = async (
+  database: Database,
+  query: ListSocialQuery,
+): Promise<z.output<typeof socialDraftListSchema>> => {
+  const rows = await database
+    .select({ row: socialPosts, cursorAt: microseconds(socialPosts.createdAt) })
+    .from(socialPosts)
+    .where(
+      and(
+        query.slug ? eq(socialPosts.postSlug, query.slug) : undefined,
+        query.status ? eq(socialPosts.status, query.status) : undefined,
+        query.cursor ? before(socialPosts.createdAt, socialPosts.id, query.cursor) : undefined,
+      ),
+    )
+    .orderBy(desc(socialPosts.createdAt), desc(socialPosts.id))
+    .limit(query.limit + 1);
+  const { items, nextCursor } = page(rows, query.limit, ({ row, cursorAt }) => ({
+    at: cursorAt,
+    id: row.id,
+  }));
+  return { items: items.map(({ row }) => socialDraftView(row)), nextCursor };
 };

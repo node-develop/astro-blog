@@ -7,7 +7,7 @@ import { createKey, revokeKey } from "../src/lib/content-api/keys";
 const [command, nameOrId, ...requestedScopes] = process.argv.slice(2);
 if (!process.env.DATABASE_URL || !nameOrId || !["create", "revoke"].includes(command ?? "")) {
   console.error(
-    "Usage: pnpm content:key create <name> articles:read articles:write articles:publish media:write\n       pnpm content:key revoke <key-id>\nDATABASE_URL is required.",
+    "Usage: pnpm content:key create <name> articles:read articles:write articles:publish media:write social:read social:write social:publish\n       pnpm content:key revoke <key-id>\nDATABASE_URL is required.",
   );
   process.exit(1);
 }

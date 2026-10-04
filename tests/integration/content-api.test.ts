@@ -832,7 +832,8 @@ describe("content API with PostgreSQL", () => {
     expect(row.publishedContent).toBeNull();
     expect(row.firstPublishedAt).not.toBeNull();
     const [unpublishRow] = (await publicationRows()).filter((p) => p.id === unpublishId);
-    expect(unpublishRow!.hooksDoneAt).not.toBeNull();
+    // IndexNow still has to announce the removed url: the hooks wait for the next worker call.
+    expect(unpublishRow!.hooksDoneAt).toBeNull();
     // A second unpublish has nothing to do; a draft cannot be unpublished.
     const again = await call(
       "POST",
