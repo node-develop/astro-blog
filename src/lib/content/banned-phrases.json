@@ -1,0 +1,113 @@
+{
+  "en": {
+    "phrases": [
+      "delve",
+      "delving",
+      "leverage",
+      "in today's fast-paced",
+      "navigate the complexities",
+      "in conclusion",
+      "it's important to note",
+      "robust solution",
+      "transformative",
+      "game-changer",
+      "game changer",
+      "cutting-edge",
+      "best practices",
+      "elevate",
+      "embark on",
+      "harness the power",
+      "underscore",
+      "tapestry",
+      "intricate",
+      "meticulous",
+      "ever-evolving",
+      "stand the test of time",
+      "let's dive in",
+      "as we look ahead",
+      "synergy",
+      "groundbreaking",
+      "revolutionary",
+      "seamless integration",
+      "unlock the potential",
+      "in the realm of",
+      "shed light on",
+      "🚀 Excited to share",
+      "🚀 Thrilled to announce",
+      "I'm excited to announce"
+    ],
+    "patterns": [
+      ["It's not (?:just )?[\\p{L}\\p{N}_]+, it's [\\p{L}\\p{N}_]+", "AI 'not X, it's Y' parallel"],
+      ["not only [\\p{L}\\p{N}_]+ but also [\\p{L}\\p{N}_]+", "'not only ... but also' overuse"]
+    ]
+  },
+  "ru": {
+    "phrases": [
+      "погружаться",
+      "погрузиться",
+      "погружение",
+      "в стремительно меняющемся мире",
+      "в современном мире",
+      "в эпоху",
+      "ключевой аспект",
+      "стоит отметить",
+      "однако стоит отметить",
+      "стоит признать",
+      "более того",
+      "таким образом",
+      "в конечном итоге",
+      "стоит подчеркнуть",
+      "трансформирует",
+      "переосмысливает",
+      "революционный",
+      "революционирует",
+      "беспрецедентный",
+      "под ключ",
+      "в режиме реального времени",
+      "комплексное решение",
+      "синергия",
+      "🚀 Рад поделиться",
+      "💡 Делюсь мыслями",
+      "✨ С удовольствием"
+    ],
+    "patterns": [
+      [
+        "(?:не\\s+)просто\\s+[\\p{L}\\p{N}_]+,\\s*а\\s+[\\p{L}\\p{N}_]+",
+        "RU 'не просто X, а Y' штамп"
+      ],
+      ["Это\\s+(?:позволяет|даёт\\s+возможность)", "пассивно-канцелярский оборот"],
+      ["это\\s+(?:не\\s+)?про\\s", "штамп «это про X / это не про Y»"],
+      ["нельзя\\s+не\\s+обратит[\\p{L}]*", "штамп «нельзя не обратить внимание»"],
+      ["по\\s+сути", "пустой филлер «по сути»"],
+      ["по\\s+большому\\s+счёт[\\p{L}]*", "пустой филлер «по большому счёту»"],
+      ["на\\s+самом\\s+деле", "пустой филлер «на самом деле»"],
+      ["каждый\\s+(?:разработчик|инженер)\\s+знает", "штамп «каждый разработчик знает»"],
+      ["очевидно,\\s+что", "штамп «очевидно, что»"],
+      ["самое\\s+(?:главное|важное)", "штамп «самое главное / важное»"],
+      ["не\\s+секрет,\\s+что", "штамп «не секрет, что»"],
+      ["осуществл[\\p{L}]*", "канцелярит «осуществляется»"],
+      ["производится", "канцелярит «производится»"],
+      ["является", "канцелярит «является»"]
+    ]
+  },
+  "speculative": {
+    "ru": {
+      "phrases": [
+        "возможно я",
+        "у меня его пока нет",
+        "когда железо приедет",
+        "собираюсь развернуть",
+        "если получится",
+        "когда у меня"
+      ],
+      "patterns": [
+        ["я\\s+планиру[\\p{L}]*", "спекулятивный голос: «я планирую»"],
+        ["я\\s+разверну", "спекулятивный голос: «я разверну»"],
+        ["я\\s+попробую", "спекулятивный голос: «я попробую»"],
+        ["я\\s+перепровер[\\p{L}]*", "спекулятивный голос: «я перепроверю»"],
+        ["я\\s+обновлю\\s+пост", "спекулятивный голос: «я обновлю пост»"]
+      ]
+    }
+  },
+  "_comment": "Single source of banned phrases: read by src/lib/social/voice/loader.ts (en, ru) and src/lib/content-api/editorial.ts (en, ru, speculative.ru). phrases are matched as whole words (spaces match any whitespace); patterns are JS regex sources (flags iu, left word boundary added). Text and sources are normalised: NFKC, ё->е, typographic apostrophes -> '."
+}

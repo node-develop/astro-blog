@@ -17,7 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CriticNote } from "~/lib/social/types";
-import type { ArticleDocument, ApiScope } from "../content-api/contract";
+import type { ArticleDocument, ApiScope, StoredReview } from "../content-api/contract";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -356,6 +356,9 @@ export const contentArticleVersions = pgTable(
     // `admin-session` system key and actorUserId the person).
     actorKeyId: uuid("actor_key_id").references(() => contentApiKeys.id, { onDelete: "set null" }),
     actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    // The article critic's notes for this version (the latest review overwrites), with the hash
+    // of the document it read. Null: never reviewed.
+    review: jsonb("review").$type<StoredReview>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.articleId, t.version] }) }),

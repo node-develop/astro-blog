@@ -30,6 +30,8 @@ import {
   postMetaPatchSchema,
   publishArticleSchema,
   publishBatchSchema,
+  publishOneSchema,
+  reviewArticleSchema,
   slugSchema,
   socialDraftUpdateSchema,
   socialGenerateSchema,
@@ -57,6 +59,7 @@ import { MAX_IMAGE_BYTES, uploadImage } from "./media";
 import { kickoffSocial, publishDraft, recheckDraft, saveDraft, skipDraft } from "../social/service";
 import { openApiDocument } from "./openapi";
 import {
+  applyEditorial,
   articleView,
   articlesBySlug,
   createArticle,
@@ -75,6 +78,7 @@ import {
   publishBatch,
   requireArticle,
   requireIdle,
+  requirePublishRequest,
   restoreVersion,
   socialDraftView,
   updateArticle,
@@ -83,6 +87,7 @@ import {
   type MutationResult,
   type Tx,
 } from "./service";
+import { ARTICLE_CRITIC_DEADLINE_MS, runReview } from "./article-critic";
 import { TRANSLATION_DEADLINE_MS, runTranslation } from "./translate-article";
 import { runPublicationHooks } from "./hooks";
 import { logger } from "../logger";
@@ -288,7 +293,10 @@ export const routes: readonly Route[] = [
         agent: defaultAgent(principal),
       });
       const { warnings } = await validateDocument(document);
-      return jsonResponse({ valid: true, warnings });
+      // mode=publish answers the question "would a publication be accepted?": the editorial gates
+      // are errors (422) then, warnings for a draft.
+      const editorial = await applyEditorial(db, document, input.mode);
+      return jsonResponse({ valid: true, warnings: [...editorial, ...warnings] });
     },
   },
   {
@@ -415,13 +423,44 @@ export const routes: readonly Route[] = [
     },
   },
   {
+    // Same shape as translate: the model call runs under no lock; only the write is under `once`.
+    // Opt-in: a publication is blocked only by a review that exists and has a block note.
+    method: "POST",
+    pattern: "articles/:id/review",
+    scope: "articles:write",
+    idempotent: true,
+    handler: async ({ request, params, once, replay }) => {
+      const id = articleId(params);
+      const input = reviewArticleSchema.parse(await readJson(request));
+      const stored = await replay(input);
+      if (stored) return jsonResponse(stored.data, stored.status);
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey)
+        throw apiError(
+          503,
+          "review_not_configured",
+          "Review is disabled: ANTHROPIC_API_KEY is not set.",
+        );
+      const result = await runReview(
+        {
+          apiKey,
+          once: (operation) => once(input, operation),
+          signal: AbortSignal.timeout(ARTICLE_CRITIC_DEADLINE_MS),
+        },
+        id,
+        input,
+      );
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
     method: "POST",
     pattern: "articles/:id/publish",
     scope: "articles:publish",
     idempotent: true,
     handler: async ({ request, params, principal, once }) => {
       const id = articleId(params);
-      const input = publishArticleSchema.parse(await readJson(request));
+      const input = publishOneSchema.parse(await readJson(request));
       const result = await once(input, async (tx) => {
         const article = await requireArticle(tx, id);
         if (article.version !== input.expectedVersion)
@@ -431,12 +470,18 @@ export const routes: readonly Route[] = [
         // "already published": publishing again restores the page.
         if (article.publishedVersion === article.version && latest?.kind !== "unpublish")
           return { status: 200, data: { ...articleView(article, latest), unchanged: true } };
+        // After `unchanged`: re-requesting a live version is not a new publication.
+        const carried = await requirePublishRequest(tx, [article], input.force);
         const publication = await enqueuePublication(tx, article, actorOf(principal), {
           idle: true,
         });
         return {
           status: 202,
-          data: { ...articleView(article, publication), publication: publicationView(publication) },
+          data: {
+            ...articleView(article, publication),
+            publication: publicationView(publication),
+            warnings: carried.get(article.id) ?? [],
+          },
         };
       });
       return jsonResponse(result.data, result.status);
@@ -497,7 +542,9 @@ export const routes: readonly Route[] = [
     idempotent: true,
     handler: async ({ request, principal, once }) => {
       const input = publishBatchSchema.parse(await readJson(request));
-      const result = await once(input, (tx) => publishBatch(tx, input.items, actorOf(principal)));
+      const result = await once(input, (tx) =>
+        publishBatch(tx, input.items, actorOf(principal), input.force),
+      );
       return jsonResponse(result.data, result.status);
     },
   },

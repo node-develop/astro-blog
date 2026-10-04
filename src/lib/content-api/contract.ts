@@ -143,11 +143,50 @@ export const createArticleSchema = z.strictObject({
   article: articleInputSchema,
   mode: z.enum(["draft", "publish"]).default("draft"),
 });
+/**
+ * `force` publishes past a critic `block` note (409 `editorial_block`). Optional with no default on
+ * purpose: a default would change the canonical request that Idempotency-Key hashes cover, and
+ * clients that never send it must keep replaying.
+ */
+const forceField = z
+  .boolean()
+  .optional()
+  .describe("Publish although the latest review of this content has a block note.");
 export const updateArticleSchema = createArticleSchema.extend({
   expectedVersion: z.number().int().positive(),
+  force: forceField,
 });
 export const publishArticleSchema = z.strictObject({
   expectedVersion: z.number().int().positive(),
+});
+/** POST /articles/{id}/publish/: restore and unpublish share `publishArticleSchema`, without `force`. */
+export const publishOneSchema = publishArticleSchema.extend({ force: forceField });
+/** POST /articles/{id}/review/: the version the critic is asked to read. */
+export const reviewArticleSchema = z.strictObject({
+  expectedVersion: z.number().int().positive(),
+});
+/** A note of the article critic. `quote` is a passage of the article; `reason` says what is wrong. */
+export const articleReviewNoteSchema = z.strictObject({
+  severity: z.enum(["block", "warn"]),
+  quote: z.string().max(1000),
+  reason: z.string().min(1).max(2000),
+});
+export type ArticleReviewNote = z.infer<typeof articleReviewNoteSchema>;
+/** What is kept on the version row. `documentHash` ties the review to the content it read. */
+export type StoredReview = Readonly<{
+  model: string;
+  reviewedAt: string;
+  documentHash: string;
+  notes: readonly ArticleReviewNote[];
+}>;
+export const articleReviewSchema = z.strictObject({
+  articleId: z.uuid(),
+  version: z.number().int().positive(),
+  model: z.string(),
+  reviewedAt: z.string(),
+  notes: z.array(articleReviewNoteSchema),
+  /** True when a note has severity `block`: publishing then needs `force: true`. */
+  blocked: z.boolean(),
 });
 /** Only RU → EN exists; `force` overwrites an EN article that a person edited. */
 export const translateArticleSchema = z.strictObject({
@@ -169,6 +208,7 @@ export const publishBatchSchema = z.strictObject({
     .refine((items) => new Set(items.map((item) => item.id)).size === items.length, {
       message: "items must not repeat an id",
     }),
+  force: forceField,
 });
 export const scopeSchema = z.enum([
   "articles:read",

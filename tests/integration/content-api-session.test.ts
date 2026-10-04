@@ -24,21 +24,13 @@ vi.mock("../../src/lib/content-api/github", async (original) => ({
 
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
+import { compliantArticle, insertCoverAsset } from "../support/editorial-fixture";
 import { createdKeySchema, keyListSchema, scopeSchema } from "../../src/lib/content-api/contract";
 
 const token = `artka_${"a".repeat(43)}`;
 const document = {
+  ...compliantArticle({ slug: "session-content-api", title: "Session API article" }),
   externalId: "session-source",
-  lang: "ru",
-  slug: "session-content-api",
-  title: "Session API article",
-  description: "Description of the session access integration test article.",
-  summary:
-    "This article tests that a signed-in administrator can write through the content API with a cookie.",
-  body: "## An example\n\nAn original explanation with useful details.",
-  tags: ["ai"],
-  sources: [{ url: "https://example.com/source", title: "Original source" }],
-  provenance: { agent: "integration" },
 };
 // Real users rows: content_article_versions.actor_user_id references users.id (a uuid).
 const USER_IDS = {
@@ -123,11 +115,15 @@ describe("content API session access with PostgreSQL", () => {
         Object.entries(USER_IDS).map(([label, id]) => ({ id, email: `${label}@test.local` })),
       );
     await seedAdminSession();
-    await state.db!.insert(schema.contentApiKeys).values({
-      name: "test",
-      tokenHash: createHash("sha256").update(token).digest("hex"),
-      scopes: ["articles:read", "articles:write"],
-    });
+    const [key] = await state
+      .db!.insert(schema.contentApiKeys)
+      .values({
+        name: "test",
+        tokenHash: createHash("sha256").update(token).digest("hex"),
+        scopes: ["articles:read", "articles:write"],
+      })
+      .returning();
+    await insertCoverAsset(state.db!, key!.id);
   });
 
   it("lets a signed-in admin write, attributed to the admin-session key", async () => {

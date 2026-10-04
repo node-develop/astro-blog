@@ -33,7 +33,7 @@ git add src/lib/social/voice/profile.md
 git commit -m "feat(social): voice profile from corpus"
 ```
 
-Update `src/lib/social/voice/examples.json` and `banned-phrases.json` over time as you discover idiomatic patterns and AI tells.
+Update `src/lib/social/voice/examples.json` and `src/lib/content/banned-phrases.json` (shared with the article editorial gate) over time as you discover idiomatic patterns and AI tells.
 
 ## 3. OAuth — X and LinkedIn
 
@@ -80,7 +80,7 @@ With `ANTHROPIC_API_KEY` set, dry-run the pipeline against any RU post (no DB, n
 pnpm social:smoke <slug>
 ```
 
-Inspect the output — the drafts and critic notes go to stdout. Iterate on `voice/profile.md`, `examples.json`, `banned-phrases.json` until the output reads like you, not like a model.
+Inspect the output — the drafts and critic notes go to stdout. Iterate on `voice/profile.md`, `examples.json`, `src/lib/content/banned-phrases.json` until the output reads like you, not like a model.
 
 ## 6. Trial run on staging
 
@@ -128,7 +128,7 @@ SELECT channel,
   GROUP BY channel;
 ```
 
-If `failed` > 1 per channel, check `error_message` for OAuth refresh issues. If `avg_notes` exceeds 3, tighten Writer/Editor prompts or expand `banned-phrases.json`.
+If `failed` > 1 per channel, check `error_message` for OAuth refresh issues. If `avg_notes` exceeds 3, tighten Writer/Editor prompts or expand `src/lib/content/banned-phrases.json`.
 
 ## 10. Rollback
 

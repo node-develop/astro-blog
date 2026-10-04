@@ -5,7 +5,7 @@ import xPolicy from "./policy/x.md?raw";
 import liPolicy from "./policy/linkedin.md?raw";
 import tgPolicy from "./policy/telegram.md?raw";
 import examplesJson from "./examples.json" with { type: "json" };
-import bannedJson from "./banned-phrases.json" with { type: "json" };
+import bannedJson from "../../content/banned-phrases.json" with { type: "json" };
 
 export type VoiceCard = {
   profile: string;
@@ -31,7 +31,9 @@ export type BannedPhrases = {
 const card: VoiceCard = {
   profile,
   examples: examplesJson as VoiceExamples,
-  banned: bannedJson as BannedPhrases,
+  // Only en/ru: the shared file also holds the article-only `speculative` list, which the social
+  // prompts must not see.
+  banned: { en: bannedJson.en, ru: bannedJson.ru } as BannedPhrases,
   policy: { x_en: xPolicy, li_en: liPolicy, tg_ru: tgPolicy },
 };
 

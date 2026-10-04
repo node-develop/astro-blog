@@ -37,28 +37,26 @@ import {
 } from "./contract";
 import { articleStatus, ownsCommittedFile } from "./status";
 import { hash, type Actor } from "./auth";
+import { canonicalJson } from "./canonical";
 import { apiError } from "./errors";
 import { articlePath, articleUrl } from "./github";
 import { coverUrlOf, uploadsFileExists } from "./cover";
 import { inspectMarkdown, serializeArticle } from "./markdown";
 import { hasBlockNote } from "../social/critic-notes";
+import { formatWarning } from "./editorial";
+import {
+  editorialReport,
+  requireNotBlocked,
+  requirePublishable,
+  type EditorialReport,
+} from "./editorial-gates";
 
 export const CONTENT_LOCK = 71423091;
 export type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 export type Article = typeof contentArticles.$inferSelect;
 export type Publication = typeof contentPublications.$inferSelect;
 export type MutationResult = { status: number; data: Record<string, unknown> };
-export const canonicalJson = (value: unknown): string => {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value && typeof value === "object")
-    return `{${Object.keys(value)
-      .sort()
-      .map(
-        (key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`,
-      )
-      .join(",")}}`;
-  return JSON.stringify(value) ?? "null";
-};
+export { canonicalJson };
 export const publicationView = (
   job: Pick<
     Publication,
@@ -198,13 +196,32 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
   }
   return {
     assets,
+    // Editorial findings (cover, length, phrases, ...) are not here: they are a separate layer
+    // that only a REQUESTED publication turns into errors (see ./editorial-gates.ts). The worker
+    // calls this function while verifying a live page and must never fail on editorial grounds.
     warnings: [
-      ...(!document.cover ? ["cover_missing: a default social image will be used"] : []),
       ...(document.description.length < 70
         ? ["short_description: consider a more informative search description"]
         : []),
     ],
   };
+};
+
+/**
+ * Editorial gates for a save or a publication request. A draft gets every finding as a warning
+ * string (`<code>: <message>`); a publication gets the new ones as a 422 listing them all, and the
+ * ones the live version already had as warnings. Runs under the content lock, before any write, so
+ * a 422 saves nothing.
+ */
+export const applyEditorial = async (
+  tx: Tx | Database,
+  document: ArticleDocument,
+  mode: "draft" | "publish",
+): Promise<readonly string[]> => {
+  const report = await editorialReport(tx, document);
+  if (mode === "draft") return report.all.map(formatWarning);
+  requirePublishable([{ errors: report.errors }]);
+  return report.carried.map(formatWarning);
 };
 
 /** One writer at a time across replicas: the transaction holds the content advisory lock. */
@@ -439,7 +456,8 @@ export const createArticle = async (
     );
   if (fileOwnsSlug(document.slug, document.lang))
     throw apiError(409, "slug_conflict", "An existing site article owns this slug.");
-  const { warnings } = await validateDocument(document, tx);
+  const { warnings: structural } = await validateDocument(document, tx);
+  const warnings = [...(await applyEditorial(tx, document, mode)), ...structural];
   const [article] = await tx
     .insert(contentArticles)
     .values({
@@ -466,6 +484,8 @@ export const updateArticle = async (
     article: ArticleInput;
     mode: "draft" | "publish";
     expectedVersion: number;
+    /** Publish past a critic block note. */
+    force?: boolean | undefined;
   },
   actor: Actor,
   agent: string,
@@ -490,7 +510,11 @@ export const updateArticle = async (
     document.lang !== current.lang
   )
     throw apiError(409, "immutable_identity", "externalId, slug and lang cannot change.");
-  const { warnings } = await validateDocument(document, tx);
+  const { warnings: structural } = await validateDocument(document, tx);
+  const warnings = [...(await applyEditorial(tx, document, input.mode)), ...structural];
+  // A review follows the content: re-sending the reviewed text as a new version keeps its block.
+  if (input.mode === "publish")
+    await requireNotBlocked(tx, [{ articleId: current.id, document }], input.force);
   const article = await writeVersion(
     tx,
     current,
@@ -556,7 +580,9 @@ export const restoreVersion = async (
       "This version has a different externalId, slug or lang than the article.",
       { version: n },
     );
-  const { warnings } = await validateDocument(parsed.data, tx);
+  const { warnings: structural } = await validateDocument(parsed.data, tx);
+  // A restore only writes a draft version: editorial findings are warnings.
+  const warnings = [...(await applyEditorial(tx, parsed.data, "draft")), ...structural];
   // An older EN document is a manual state, and its RU base is unknown: protected, and stale.
   const article = await writeVersion(
     tx,
@@ -686,15 +712,48 @@ export const enqueueUnpublication = async (
 };
 
 /**
+ * The gates of a publication REQUEST for these articles, together: every failed editorial gate of
+ * every article in one 422, then the critic block (409 unless `force`). Returns the carried
+ * (already-live) findings as warning strings per article id.
+ */
+export const requirePublishRequest = async (
+  tx: Tx,
+  articles: readonly Article[],
+  force: boolean | undefined,
+): Promise<ReadonlyMap<string, readonly string[]>> => {
+  const reports = await articles.reduce<Promise<readonly (readonly [Article, EditorialReport])[]>>(
+    async (acc, article) => [
+      ...(await acc),
+      [article, await editorialReport(tx, article.document)],
+    ],
+    Promise.resolve([]),
+  );
+  requirePublishable(
+    reports.map(([article, report]) => ({ articleId: article.id, errors: report.errors })),
+  );
+  await requireNotBlocked(
+    tx,
+    articles.map((article) => ({ articleId: article.id, document: article.document })),
+    force,
+  );
+  return new Map(
+    reports.map(([article, report]) => [article.id, report.carried.map(formatWarning)]),
+  );
+};
+
+/**
  * Publishes the ru and en twins of one slug together, all or nothing (the caller's transaction).
  * An item whose published version is already current and whose newest publication is not an
- * unpublish is `unchanged` and gets no row. The jobs share a `batchId` and are created one
- * millisecond apart in the order ru, en, so the worker handles ru first.
+ * unpublish is `unchanged` and gets no row. The editorial gates of every item that would be
+ * published run before the first job is created (one 422 for the whole batch). The jobs share a
+ * `batchId` and are created one millisecond apart in the order ru, en, so the worker handles ru
+ * first.
  */
 export const publishBatch = async (
   tx: Tx,
   items: readonly Readonly<{ id: string; expectedVersion: number }>[],
   actor: Actor,
+  force?: boolean,
 ): Promise<MutationResult> => {
   const articles = await items.reduce<Promise<readonly Article[]>>(
     async (acc, item) => [...(await acc), await requireArticle(tx, item.id)],
@@ -717,15 +776,31 @@ export const publishBatch = async (
       });
   });
   const ordered = [...articles].sort((a, b) => (a.lang === b.lang ? 0 : a.lang === "ru" ? -1 : 1));
-  const batchId = randomUUID();
-  const start = Date.now();
-  // Sequential on purpose: one transaction connection, and `createdAt` follows the queue order.
-  const outcomes = await ordered.reduce<
-    Promise<readonly Readonly<{ queued: boolean; result: Record<string, unknown> }>[]>
+  // Pass 1: which items need a job. Sequential on purpose: one transaction connection.
+  const plan = await ordered.reduce<
+    Promise<
+      readonly Readonly<{ article: Article; latest: Publication | null; unchanged: boolean }>[]
+    >
   >(async (accPromise, article) => {
     const acc = await accPromise;
     const latest = await requireIdle(tx, article.id);
-    if (article.publishedVersion === article.version && latest?.kind !== "unpublish")
+    const unchanged = article.publishedVersion === article.version && latest?.kind !== "unpublish";
+    return [...acc, { article, latest, unchanged }];
+  }, Promise.resolve([]));
+  // Pass 2: the gates of everything that would be published, all failures at once.
+  const carried = await requirePublishRequest(
+    tx,
+    plan.filter((p) => !p.unchanged).map((p) => p.article),
+    force,
+  );
+  const batchId = randomUUID();
+  const start = Date.now();
+  // Pass 3: enqueue. `createdAt` follows the queue order.
+  const outcomes = await plan.reduce<
+    Promise<readonly Readonly<{ queued: boolean; result: Record<string, unknown> }>[]>
+  >(async (accPromise, { article, latest, unchanged }) => {
+    const acc = await accPromise;
+    if (unchanged)
       return [
         ...acc,
         { queued: false, result: { ...articleView(article, latest), unchanged: true } },
@@ -737,7 +812,14 @@ export const publishBatch = async (
     });
     return [
       ...acc,
-      { queued: true, result: { ...articleView(article, job), publication: publicationView(job) } },
+      {
+        queued: true,
+        result: {
+          ...articleView(article, job),
+          publication: publicationView(job),
+          warnings: carried.get(article.id) ?? [],
+        },
+      },
     ];
   }, Promise.resolve([]));
   const queued = outcomes.some((o) => o.queued);

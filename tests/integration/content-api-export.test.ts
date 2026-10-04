@@ -90,20 +90,17 @@ import { exportSchema } from "../../src/lib/content-api/contract";
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
 import { commitArticle } from "../../src/lib/content-api/github";
+import {
+  compliantArticle,
+  insertCoverAsset,
+  withFixtureAssets,
+} from "../support/editorial-fixture";
 
 const token = `artka_${"a".repeat(43)}`;
 const exportToken = `artka_${"e".repeat(43)}`;
 const document = {
+  ...compliantArticle({ slug: "export-article", title: "Export article" }),
   externalId: "export-source",
-  lang: "ru",
-  slug: "export-article",
-  title: "Export article",
-  description: "Description of the export integration test publication.",
-  summary: "This article tests that export hands the desired build state to the site build.",
-  body: "## An example\n\nAn original explanation with useful details.",
-  tags: ["ai"],
-  sources: [{ url: "https://example.com/source", title: "Original source" }],
-  provenance: { agent: "integration" },
 };
 const call = async (method: string, path: string, body?: unknown, key = "request-1") => {
   const response = await ALL({
@@ -149,14 +146,18 @@ describe("GET /export/ with PostgreSQL", () => {
   beforeEach(async () => {
     await client`truncate content_api_requests, content_publications, content_articles, content_assets, content_api_keys, post_revisions, posts_meta, users cascade`;
     const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-    await state.db!.insert(schema.contentApiKeys).values([
-      {
-        name: "test",
-        tokenHash: hash(token),
-        scopes: ["articles:read", "articles:write", "articles:publish", "media:write"],
-      },
-      { name: "exporter", tokenHash: hash(exportToken), scopes: ["content:export"] },
-    ]);
+    const keys = await state
+      .db!.insert(schema.contentApiKeys)
+      .values([
+        {
+          name: "test",
+          tokenHash: hash(token),
+          scopes: ["articles:read", "articles:write", "articles:publish", "media:write"],
+        },
+        { name: "exporter", tokenHash: hash(exportToken), scopes: ["content:export"] },
+      ])
+      .returning();
+    await insertCoverAsset(state.db!, keys[0]!.id);
     remote.content = null;
     remote.commits = 0;
     remote.deletes = 0;
@@ -165,12 +166,14 @@ describe("GET /export/ with PostgreSQL", () => {
     vi.clearAllMocks();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (url: string | URL) =>
-        String(url).includes("sitemap-")
-          ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
-          : remote.live === null
-            ? new Response("", { status: 404 })
-            : new Response(remote.live, { headers: { "content-type": "text/html" } }),
+      vi.fn(
+        withFixtureAssets(async (url: string | URL) =>
+          String(url).includes("sitemap-")
+            ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
+            : remote.live === null
+              ? new Response("", { status: 404 })
+              : new Response(remote.live, { headers: { "content-type": "text/html" } }),
+        ),
       ),
     );
   });
@@ -195,7 +198,17 @@ describe("GET /export/ with PostgreSQL", () => {
     mode = "draft",
     key = `make-${String(over.slug ?? "x")}-${String(over.lang ?? "ru")}-${mode}`,
   ) => {
-    const result = await call("POST", "articles", { article: { ...document, ...over }, mode }, key);
+    // Titles are unique among published articles: every slug gets its own compliant document.
+    const base = compliantArticle({
+      slug: String(over.slug ?? document.slug),
+      lang: over.lang === "en" ? "en" : "ru",
+    });
+    const result = await call(
+      "POST",
+      "articles",
+      { article: { ...base, externalId: document.externalId, ...over }, mode },
+      key,
+    );
     expect(result.status).toBe(mode === "draft" ? 201 : 202);
     return result.body;
   };
@@ -222,7 +235,10 @@ describe("GET /export/ with PostgreSQL", () => {
       "PUT",
       `articles/${first.id}`,
       {
-        article: { ...document, body: "## Waiting\n\nThe second version." },
+        article: {
+          ...document,
+          body: compliantArticle({ slug: document.slug, lead: "The second version." }).body,
+        },
         expectedVersion: 1,
         mode: "publish",
       },
@@ -257,7 +273,10 @@ describe("GET /export/ with PostgreSQL", () => {
       "PUT",
       `articles/${article.id}`,
       {
-        article: { ...document, body: "## Retry\n\nSecond." },
+        article: {
+          ...document,
+          body: compliantArticle({ slug: document.slug, lead: "Second." }).body,
+        },
         expectedVersion: 1,
         mode: "publish",
       },

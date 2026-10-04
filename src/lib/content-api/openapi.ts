@@ -10,6 +10,7 @@ import {
   createKeySchema,
   createdKeySchema,
   exportSchema,
+  articleReviewSchema,
   keyListSchema,
   keyViewSchema,
   mediaListSchema,
@@ -22,6 +23,8 @@ import {
   publicationStateSchema,
   publishArticleSchema,
   publishBatchSchema,
+  publishOneSchema,
+  reviewArticleSchema,
   scopeSchema,
   socialChannelSchema,
   socialDraftListSchema,
@@ -78,6 +81,12 @@ const pagination = [
     "Opaque: pass the nextCursor of the previous page unchanged. Malformed values give 422.",
   ),
 ];
+const EDITORIAL_ERRORS = {
+  "409":
+    "editorial_block: the critic marked this content with a block note, send force: true to publish anyway; also version, idempotency and in-progress conflicts",
+  "422":
+    "editorial_gates_failed: details lists every failed gate as {code, message, ...context} (and articleId in a batch); nothing was saved or published",
+} as const;
 const operation = (
   summary: string,
   scope: string,
@@ -282,19 +291,39 @@ export const openApiDocument = {
     },
     "/publish/": {
       post: operation(
-        "Publish the ru and en twins of one slug together, all or nothing",
+        "Publish the ru and en twins of one slug together, all or nothing. Every item that would be published passes the editorial gates first",
         "articles:publish",
         "PublishBatch",
         [once],
         "BatchResult",
+        { errors: EDITORIAL_ERRORS },
       ),
     },
     "/articles/{id}/publish/": {
       post: operation(
-        "Publish current version or retry a failed publication",
+        "Publish current version or retry a failed publication. Passes the editorial gates unless this version is already live",
         "articles:publish",
-        "PublishArticle",
+        "PublishOne",
         [id, once],
+        "ArticleResult",
+        { errors: EDITORIAL_ERRORS },
+      ),
+    },
+    "/articles/{id}/review/": {
+      post: operation(
+        "Ask the article critic (calls the model, tens of seconds) for notes on the current version and store them with it. Read-only for the article: nothing but the notes changes. A `block` note stops a later publication of the same content until `force: true`. Opt-in: an article that was never reviewed is not blocked",
+        "articles:write",
+        "ReviewArticle",
+        [id, once],
+        "ArticleReview",
+        {
+          errors: {
+            "409": "version_conflict: expectedVersion is not current (nothing was saved)",
+            "502": "review_failed: the critic failed or answered unusably; nothing was saved",
+            "503": "review_not_configured: ANTHROPIC_API_KEY is not set",
+            "504": "review_timeout: nothing was saved",
+          },
+        },
       ),
     },
     "/publications/": {
@@ -507,6 +536,9 @@ export const openApiDocument = {
       CreateArticle: schema(createArticleSchema),
       UpdateArticle: schema(updateArticleSchema),
       PublishArticle: schema(publishArticleSchema),
+      PublishOne: schema(publishOneSchema),
+      ReviewArticle: schema(reviewArticleSchema),
+      ArticleReview: schema(articleReviewSchema),
       PublishBatch: schema(publishBatchSchema),
       TranslateArticle: schema(translateArticleSchema),
       TranslateResult: {

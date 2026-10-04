@@ -464,7 +464,7 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    - запрещённые фразы из src/lib/social/voice/banned-phrases.json и список
      §4.11 из .claude/skills/new-blog-post/SKILL.md (вынести в общий json);
    - спекулятивный голос: «я планирую», «возможно я» и т.п. из
-     docs/editorial-quality.md.
+     src/lib/content-api/editorial-rules.md.
 2. validateDocument возвращает это как warnings при mode=draft и errors при
    mode=publish и в POST /publish/.
 3. POST /articles/{id}/review/: критик статьи по образцу src/lib/social/critic.ts

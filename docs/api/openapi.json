@@ -1909,7 +1909,7 @@
     },
     "/publish/": {
       "post": {
-        "summary": "Publish the ru and en twins of one slug together, all or nothing",
+        "summary": "Publish the ru and en twins of one slug together, all or nothing. Every item that would be published passes the editorial gates first",
         "description": "Required scope: articles:publish. 60 requests/minute/key (Bearer only).",
         "security": [
           {
@@ -2002,7 +2002,7 @@
             }
           },
           "409": {
-            "description": "Identity, idempotency, version or edit conflict",
+            "description": "editorial_block: the critic marked this content with a block note, send force: true to publish anyway; also version, idempotency and in-progress conflicts",
             "content": {
               "application/json": {
                 "schema": {
@@ -2066,7 +2066,7 @@
     },
     "/articles/{id}/publish/": {
       "post": {
-        "summary": "Publish current version or retry a failed publication",
+        "summary": "Publish current version or retry a failed publication. Passes the editorial gates unless this version is already live",
         "description": "Required scope: articles:publish. 60 requests/minute/key (Bearer only).",
         "security": [
           {
@@ -2101,7 +2101,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PublishArticle"
+                "$ref": "#/components/schemas/PublishOne"
               }
             }
           }
@@ -2168,7 +2168,7 @@
             }
           },
           "409": {
-            "description": "Identity, idempotency, version or edit conflict",
+            "description": "editorial_block: the critic marked this content with a block note, send force: true to publish anyway; also version, idempotency and in-progress conflicts",
             "content": {
               "application/json": {
                 "schema": {
@@ -2219,6 +2219,192 @@
           },
           "503": {
             "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{id}/review/": {
+      "post": {
+        "summary": "Ask the article critic (calls the model, tens of seconds) for notes on the current version and store them with it. Read-only for the article: nothing but the notes changes. A `block` note stops a later publication of the same content until `force: true`. Opt-in: an article that was never reviewed is not blocked",
+        "description": "Required scope: articles:write. 60 requests/minute/key (Bearer only).",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewArticle"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleReview"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Publication queued; poll publication.statusUrl",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleReview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, missing Idempotency-Key or malformed If-Match",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked key, or no admin session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope or origin mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "version_conflict: expectedVersion is not current (nothing was saved)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; Retry-After: 60",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "review_failed: the critic failed or answered unusably; nothing was saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "review_timeout: nothing was saved",
             "content": {
               "application/json": {
                 "schema": {
@@ -6018,6 +6204,10 @@
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
+          },
+          "force": {
+            "description": "Publish although the latest review of this content has a block note.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -6038,6 +6228,104 @@
         },
         "required": [
           "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "PublishOne": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "force": {
+            "description": "Publish although the latest review of this content has a block note.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "ReviewArticle": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "ArticleReview": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "articleId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "model": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "block",
+                    "warn"
+                  ]
+                },
+                "quote": {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "required": [
+                "severity",
+                "quote",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "blocked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "articleId",
+          "version",
+          "model",
+          "reviewedAt",
+          "notes",
+          "blocked"
         ],
         "additionalProperties": false
       },
@@ -6069,6 +6357,10 @@
               ],
               "additionalProperties": false
             }
+          },
+          "force": {
+            "description": "Publish although the latest review of this content has a block note.",
+            "type": "boolean"
           }
         },
         "required": [

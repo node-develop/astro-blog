@@ -87,6 +87,11 @@ vi.mock("../../src/lib/content-api/github", async (original) => {
 });
 
 import { articleDocumentSchema } from "../../src/lib/content-api/contract";
+import {
+  compliantArticle,
+  insertCoverAsset,
+  withFixtureAssets,
+} from "../support/editorial-fixture";
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
 import { commitArticle } from "../../src/lib/content-api/github";
@@ -95,17 +100,8 @@ import { getOrderedPosts } from "../../src/lib/content/loader";
 
 const token = `artka_${"a".repeat(43)}`;
 const document = {
+  ...compliantArticle({ slug: "integration-content-api", title: "Integration API article" }),
   externalId: "integration-source",
-  lang: "ru",
-  slug: "integration-content-api",
-  title: "Integration API article",
-  description: "Description of the API integration test publication.",
-  summary:
-    "This article tests durable publication, version conflicts and the complete API request lifecycle.",
-  body: "## An example\n\nAn original explanation with useful details and $x^2$.",
-  tags: ["ai"],
-  sources: [{ url: "https://example.com/source", title: "Original source" }],
-  provenance: { agent: "integration" },
 };
 const call = async (
   method: string,
@@ -166,6 +162,7 @@ describe("content API with PostgreSQL", () => {
       })
       .returning();
     keyId = key!.id;
+    await insertCoverAsset(state.db!, keyId);
     remote.content = null;
     remote.commits = 0;
     remote.deletes = 0;
@@ -174,12 +171,14 @@ describe("content API with PostgreSQL", () => {
     vi.clearAllMocks();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (url: string | URL) =>
-        String(url).includes("sitemap-")
-          ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
-          : remote.live === null
-            ? new Response("", { status: 404 })
-            : new Response(remote.live, { headers: { "content-type": "text/html" } }),
+      vi.fn(
+        withFixtureAssets(async (url: string | URL) =>
+          String(url).includes("sitemap-")
+            ? new Response(remote.sitemap, { headers: { "content-type": "application/xml" } })
+            : remote.live === null
+              ? new Response("", { status: 404 })
+              : new Response(remote.live, { headers: { "content-type": "text/html" } }),
+        ),
       ),
     );
   });
@@ -1108,6 +1107,17 @@ describe("content API with PostgreSQL", () => {
 
   it("probes an https cover before the commit: a page that is not an image never goes live", async () => {
     const coverUrl = "https://cdn.example/cover.webp";
+    // The width of an https cover is only known when it is one of our assets.
+    await state.db!.insert(schema.contentAssets).values({
+      hash: "https-cover-asset",
+      url: coverUrl,
+      objectKey: "cover.webp",
+      mimeType: "image/webp",
+      width: 1600,
+      height: 900,
+      byteSize: 1000,
+      keyId,
+    });
     let coverAnswer = () => new Response("<html>", { headers: { "content-type": "text/html" } });
     vi.stubGlobal(
       "fetch",
@@ -1242,7 +1252,11 @@ describe("content API with PostgreSQL", () => {
       "POST",
       "articles",
       {
-        article: { ...document, body: "## Рецепт\n\nСварите борщ с говядиной.", tags: ["food"] },
+        article: {
+          ...document,
+          body: compliantArticle({ slug: document.slug, lead: "Сварите борщ с говядиной." }).body,
+          tags: ["food"],
+        },
         mode: "publish",
       },
       "vec-ru",
@@ -1259,7 +1273,11 @@ describe("content API with PostgreSQL", () => {
           ...document,
           lang: "en",
           title: "Integration API article in English",
-          body: "## Recipe\n\nBoil the dumplings until golden.",
+          body: compliantArticle({
+            lang: "en",
+            slug: document.slug,
+            lead: "Boil the dumplings until golden.",
+          }).body,
         },
         mode: "publish",
       },

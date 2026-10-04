@@ -1,0 +1,1 @@
+ALTER TABLE "content_article_versions" ADD COLUMN "review" jsonb;

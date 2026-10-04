@@ -65,6 +65,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
 
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { articleBySlugSchema, articleDocumentSchema } from "../../src/lib/content-api/contract";
+import { compliantArticle, insertCoverAsset } from "../support/editorial-fixture";
 
 const token = `artka_${"t".repeat(43)}`;
 const ASSET_ID = "6f1c7a52-98f0-4c3e-8f5e-3f3d6a1b2c4d";
@@ -151,7 +152,7 @@ describe("article translation with PostgreSQL", () => {
       .values({
         name: "translator-test",
         tokenHash: createHash("sha256").update(token).digest("hex"),
-        scopes: ["articles:read", "articles:write"],
+        scopes: ["articles:read", "articles:write", "articles:publish"],
       })
       .returning();
     keyId = key!.id;
@@ -193,6 +194,23 @@ describe("article translation with PostgreSQL", () => {
     );
   const englishRows = () =>
     state.db!.select().from(schema.contentArticles).where(eq(schema.contentArticles.lang, "en"));
+
+  it("lets the EN draft of a compliant RU article through the editorial gates", async () => {
+    // The translation keeps the RU body links (/blog/...) and the sources, and the cover asset.
+    await insertCoverAsset(state.db!, keyId);
+    const source = await call("POST", "articles", {
+      article: compliantArticle({ slug: "translate-compliant" }),
+    });
+    expect(source.status, JSON.stringify(source.body)).toBe(201);
+    const translated = await call("POST", `articles/${source.body.id}/translate`, {
+      targetLang: "en",
+    });
+    expect(translated.status, JSON.stringify(translated.body)).toBe(201);
+    const published = await call("POST", `articles/${translated.body.id}/publish`, {
+      expectedVersion: 1,
+    });
+    expect(published.status, JSON.stringify(published.body)).toBe(202);
+  });
 
   it("keeps code, math, mermaid and assets, drops unpublished related slugs, records the author", async () => {
     const result = await translate();

@@ -11,6 +11,8 @@ import type { ArticleDocument } from "./contract";
 import { apiError } from "./errors";
 
 const processor = unified().use(remarkParse).use(remarkGfm).use(remarkMath).use(remarkStringify);
+/** The article parser (GFM + math) for read-only analysis: editorial gates walk this tree. */
+export const parseArticleMarkdown = (body: string) => processor.parse(body);
 export const safeLink = (url: string): boolean =>
   /^https:\/\//i.test(url) || /^\/(?!\/)[a-z0-9/_.#?=&%-]*$/i.test(url) || /^#[\w-]+$/.test(url);
 

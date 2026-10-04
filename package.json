@@ -12,6 +12,7 @@
     "content:key": "tsx scripts/content-api-key.ts",
     "content:worker": "node --env-file=.env scripts/content-worker.mjs",
     "content:smoke": "tsx scripts/content-api-smoke.ts",
+    "editorial:phrases": "tsx scripts/check-phrases.ts",
     "start": "astro dev",
     "prebuild": "rm -f public/pagefind",
     "build": "astro build --force && pnpm pagefind:rebuild",
