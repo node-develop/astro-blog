@@ -62,9 +62,10 @@ export const coverRefSchema = z.union([
     caption: shortText(TEXT_LIMITS.imageText.min, TEXT_LIMITS.imageText.max).optional(),
   }),
 ]);
+export const langSchema = z.enum(["ru", "en"]);
 export const articleDocumentSchema = z.strictObject({
   externalId: shortText(1, 200),
-  lang: z.enum(["ru", "en"]),
+  lang: langSchema,
   slug: slugSchema,
   title: shortText(POST_LIMITS.title.min, POST_LIMITS.title.max),
   description: shortText(POST_LIMITS.description.min, POST_LIMITS.description.max),
@@ -177,6 +178,7 @@ export const scopeSchema = z.enum([
   "social:read",
   "social:write",
   "social:publish",
+  "content:export",
 ]);
 export type ApiScope = z.infer<typeof scopeSchema>;
 export type ArticleDocument = z.infer<typeof articleDocumentSchema>;
@@ -243,7 +245,7 @@ const limitSchema = z
   .pipe(z.number().max(100))
   .default(20);
 export const listArticlesQuerySchema = z.strictObject({
-  lang: z.enum(["ru", "en"]).optional(),
+  lang: langSchema.optional(),
   status: articleStatusSchema.optional(),
   agent: z.string().min(1).max(100).optional(),
   tag: slugSchema.optional(),
@@ -275,7 +277,7 @@ export const pageSchema = <T extends z.ZodType>(item: T) =>
 export const articleListItemSchema = z.strictObject({
   id: z.uuid(),
   slug: slugSchema,
-  lang: z.enum(["ru", "en"]),
+  lang: langSchema,
   title: z.string(),
   tags: z.array(z.string()),
   url: z.string(),
@@ -461,3 +463,35 @@ export const socialDraftSchema = z.strictObject({
   updatedAt: instant,
 });
 export const socialDraftListSchema = pageSchema(socialDraftSchema);
+
+/** One article of the desired build state; `revision` is the publication whose content this is. */
+export const exportArticleSchema = z.strictObject({
+  slug: slugSchema,
+  lang: langSchema,
+  revision: z.uuid(),
+  content: z.string(),
+  contentSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  meta: z.strictObject({
+    order: z.number().int(),
+    pinned: z.boolean(),
+    hiddenFromList: z.boolean(),
+  }),
+});
+/**
+ * GET /export/: the desired state of the next site build. `snapshotId` is derived from the
+ * revisions and meta (same content, same id); `generatedAt` is not part of it. Consumers must
+ * check `count === articles.length`: a stream that broke midway is not valid JSON, but a
+ * client that tolerates it must still not trust a short list.
+ */
+export const exportSchema = z
+  .strictObject({
+    snapshotId: z.uuid(),
+    generatedAt: instant,
+    count: z.number().int().nonnegative(),
+    articles: z.array(exportArticleSchema),
+  })
+  .refine((snapshot) => snapshot.count === snapshot.articles.length, {
+    message: "count must equal the number of articles",
+  });
+export type ExportArticle = z.infer<typeof exportArticleSchema>;
+export type ExportSnapshot = z.infer<typeof exportSchema>;

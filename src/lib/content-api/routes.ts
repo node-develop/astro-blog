@@ -40,6 +40,7 @@ import {
   type ApiScope,
 } from "./contract";
 import { apiError } from "./errors";
+import { exportManifest, exportStream, snapshotIdOf } from "./export";
 import { articleUrl } from "./github";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
 import {
@@ -49,6 +50,7 @@ import {
   jsonResponse,
   readBytes,
   readJson,
+  streamResponse,
 } from "./http";
 import { createKey, listKeys, revokeKey } from "./keys";
 import { MAX_IMAGE_BYTES, uploadImage } from "./media";
@@ -688,6 +690,23 @@ export const routes: readonly Route[] = [
     idempotent: false,
     handler: async ({ params }) =>
       jsonResponse(socialDraftView((await recheckDraft({ id: articleId(params) })).draft)),
+  },
+  {
+    // The desired state of the next site build, streamed. The manifest is one statement (one
+    // snapshot) read before the stream exists, so a database error is still a 503 JSON.
+    method: "GET",
+    pattern: "export",
+    scope: "content:export",
+    idempotent: false,
+    handler: async () => {
+      const manifest = await exportManifest(db);
+      return streamResponse(
+        exportStream(db, manifest, {
+          snapshotId: snapshotIdOf(manifest),
+          generatedAt: new Date().toISOString(),
+        }),
+      );
+    },
   },
   {
     method: "GET",

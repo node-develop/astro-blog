@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   articleStatus,
+  buildPointerAfterFailure,
   ownsCommittedFile,
   type PublicationEvent,
   type StatusInput,
@@ -94,5 +95,57 @@ describe("ownsCommittedFile", () => {
     ],
   ])("%s -> %s", (_name, events, expected) => {
     expect(ownsCommittedFile(events)).toBe(expected);
+  });
+});
+
+describe("buildPointerAfterFailure", () => {
+  const ev = (
+    id: string,
+    kind: "publish" | "unpublish",
+    state: PublicationEvent["state"],
+    day: number,
+  ) => ({
+    id,
+    kind,
+    state,
+    createdAt: new Date(Date.UTC(2026, 9, day)),
+  });
+  it("returns the newest other published publication", () => {
+    expect(
+      buildPointerAfterFailure(
+        [
+          ev("p1", "publish", "published", 1),
+          ev("p2", "publish", "published", 2),
+          ev("p3", "publish", "publishing", 3),
+        ],
+        "p3",
+      ),
+    ).toBe("p2");
+  });
+  it("returns null when an unpublish was the last to finish: a removed article stays out", () => {
+    expect(
+      buildPointerAfterFailure(
+        [
+          ev("p1", "publish", "published", 1),
+          ev("u1", "unpublish", "published", 2),
+          ev("p2", "publish", "queued", 3),
+        ],
+        "p2",
+      ),
+    ).toBeNull();
+  });
+  it("ignores queued and failed rows and the failed job itself; null when nothing was published", () => {
+    expect(
+      buildPointerAfterFailure(
+        [
+          ev("p1", "publish", "failed", 1),
+          ev("p2", "publish", "published", 2),
+          ev("u1", "unpublish", "failed", 3),
+          ev("p3", "publish", "failed", 4),
+        ],
+        "p3",
+      ),
+    ).toBe("p2");
+    expect(buildPointerAfterFailure([ev("p1", "publish", "failed", 1)], "p1")).toBeNull();
   });
 });

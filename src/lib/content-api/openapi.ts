@@ -9,6 +9,7 @@ import {
   createArticleSchema,
   createKeySchema,
   createdKeySchema,
+  exportSchema,
   keyListSchema,
   keyViewSchema,
   mediaListSchema,
@@ -371,6 +372,15 @@ export const openApiDocument = {
         "RevokedKey",
       ),
     },
+    "/export/": {
+      get: operation(
+        "The desired state of the next site build, streamed as JSON: every article whose build pointer is set (waiting versions included, drafts and unpublished articles not), sorted by slug then lang. `snapshotId` is derived from the revisions and meta (same state, same id). Check `count === articles.length`; a broken stream is invalid JSON, treat it as an error",
+        "content:export",
+        undefined,
+        [],
+        "Export",
+      ),
+    },
     "/social/": {
       get: operation(
         "List social drafts, newest first. Works with SOCIAL_DRAFTS_ENABLED off (history)",
@@ -598,6 +608,7 @@ export const openApiDocument = {
       SocialDraftList: schema(socialDraftListSchema),
       SocialPublished: schema(z.object({ draft: socialDraftSchema, url: z.string() })),
       KeyList: schema(keyListSchema),
+      Export: schema(exportSchema),
       CreateKey: schema(createKeySchema),
       CreatedKey: schema(createdKeySchema),
       RevokedKey: schema(keyViewSchema.extend({ unchanged: z.boolean() })),

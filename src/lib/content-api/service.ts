@@ -134,7 +134,24 @@ export const relatedIsPublished = async (
     .select()
     .from(contentArticles)
     .where(and(eq(contentArticles.slug, slug), eq(contentArticles.lang, lang)));
-  return related ? related.publishedVersion !== null : isPublishedPostFile(slug, lang);
+  if (!related) return isPublishedPostFile(slug, lang);
+  if (related.publishedVersion === null) return false;
+  // TODO(cutover): also false when build_publication_id is null (the article is leaving the
+  // build); see the spec, section "Export", "Ссылки relatedSlugs", and
+  // docs/superpowers/plans/2026-10-03-api-only-migration.md.
+  // An unpublication that is dispatched (or about to be) takes the page out of the next build:
+  // a link to it would dangle.
+  const [leaving] = await tx
+    .select({ id: contentPublications.id })
+    .from(contentPublications)
+    .where(
+      and(
+        eq(contentPublications.articleId, related.id),
+        eq(contentPublications.kind, "unpublish"),
+        inArray(contentPublications.state, ["queued", "publishing"]),
+      ),
+    );
+  return !leaving;
 };
 
 // TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
@@ -591,8 +608,9 @@ export const deleteDraft = async (tx: Tx, id: string, ifMatch: number): Promise<
  * Queues the removal of the article's file (this language only). An article that is not
  * published and has no file in git has nothing to remove: `unchanged` when it already was
  * unpublished, else 409 `not_published`. Refused while a published article of the same language
- * links to it (409 `referenced_by_related`). The check reads that article's `publishedContent`
- * (the committed Markdown), not its draft document: only the live link would die. Nothing is validated against the document: it is not being published.
+ * links to it (409 `referenced_by_related`). The check reads the Markdown that is live
+ * (`publishedContent`), the content the build pointer selects and any queued or dispatched publish
+ * of that language, not draft documents: only a link that can reach a page counts. Nothing is validated against the document: it is not being published.
  */
 export const enqueueUnpublication = async (
   tx: Tx,
@@ -613,16 +631,33 @@ export const enqueueUnpublication = async (
       return { status: 200, data: { ...articleView(article, latest), unchanged: true } };
     throw apiError(409, "not_published", "The article is not published.");
   }
+  const link = `(${article.lang === "en" ? "/en" : ""}/blog/${article.slug}/)`;
+  // The link counts where it can reach a page: the live Markdown, the content the next build is
+  // pointed at (`build_publication_id`) and a publish that is queued or dispatched. Export hands
+  // the pointer's content to the build, so reading only `publishedContent` would let an
+  // article leave the build while another one still links to it.
   const referencing = await tx
-    .select({ id: contentArticles.id })
+    .selectDistinct({ id: contentArticles.id })
     .from(contentArticles)
+    .leftJoin(contentPublications, eq(contentPublications.articleId, contentArticles.id))
     .where(
       and(
         eq(contentArticles.lang, article.lang),
         ne(contentArticles.id, article.id),
-        isNotNull(contentArticles.publishedVersion),
-        // What is live, not the draft: the hard link sits in the committed Markdown.
-        sql`strpos(${contentArticles.publishedContent}, ${`(${article.lang === "en" ? "/en" : ""}/blog/${article.slug}/)`}) > 0`,
+        or(
+          and(
+            isNotNull(contentArticles.publishedVersion),
+            sql`strpos(${contentArticles.publishedContent}, ${link}) > 0`,
+          ),
+          and(
+            eq(contentPublications.kind, "publish"),
+            or(
+              eq(contentPublications.id, contentArticles.buildPublicationId),
+              inArray(contentPublications.state, ["queued", "publishing"]),
+            ),
+            sql`strpos(${contentPublications.content}, ${link}) > 0`,
+          ),
+        ),
       ),
     );
   if (referencing.length)

@@ -3333,6 +3333,133 @@
         }
       }
     },
+    "/export/": {
+      "get": {
+        "summary": "The desired state of the next site build, streamed as JSON: every article whose build pointer is set (waiting versions included, drafts and unpublished articles not), sorted by slug then lang. `snapshotId` is derived from the revisions and meta (same state, same id). Check `count === articles.length`; a broken stream is invalid JSON, treat it as an error",
+        "description": "Required scope: content:export. 60 requests/minute/key (Bearer only).",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Export"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, missing Idempotency-Key or malformed If-Match",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked key, or no admin session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope or origin mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Identity, idempotency, version or edit conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; Retry-After: 60",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/social/": {
       "get": {
         "summary": "List social drafts, newest first. Works with SOCIAL_DRAFTS_ENABLED off (history)",
@@ -6128,7 +6255,8 @@
                 "media:write",
                 "social:read",
                 "social:write",
-                "social:publish"
+                "social:publish",
+                "content:export"
               ]
             }
           }
@@ -7790,7 +7918,8 @@
                       "media:write",
                       "social:read",
                       "social:write",
-                      "social:publish"
+                      "social:publish",
+                      "content:export"
                     ]
                   }
                 },
@@ -7828,6 +7957,98 @@
         ],
         "additionalProperties": false
       },
+      "Export": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "snapshotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "articles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "lang": {
+                  "type": "string",
+                  "enum": [
+                    "ru",
+                    "en"
+                  ]
+                },
+                "revision": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "contentSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "pinned": {
+                      "type": "boolean"
+                    },
+                    "hiddenFromList": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "order",
+                    "pinned",
+                    "hiddenFromList"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "slug",
+                "lang",
+                "revision",
+                "content",
+                "contentSha256",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "snapshotId",
+          "generatedAt",
+          "count",
+          "articles"
+        ],
+        "additionalProperties": false
+      },
       "CreateKey": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -7849,7 +8070,8 @@
                 "media:write",
                 "social:read",
                 "social:write",
-                "social:publish"
+                "social:publish",
+                "content:export"
               ]
             }
           }
@@ -7883,7 +8105,8 @@
                 "media:write",
                 "social:read",
                 "social:write",
-                "social:publish"
+                "social:publish",
+                "content:export"
               ]
             }
           },
@@ -7941,7 +8164,8 @@
                 "media:write",
                 "social:read",
                 "social:write",
-                "social:publish"
+                "social:publish",
+                "content:export"
               ]
             }
           },

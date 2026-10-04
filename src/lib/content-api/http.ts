@@ -64,15 +64,20 @@ export const ifMatchVersion = (request: Request): number => {
     );
   return Number(match[1]);
 };
+const apiHeaders = {
+  "cache-control": "no-store",
+  "x-robots-tag": "noindex",
+} as const;
 export const jsonResponse = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "x-robots-tag": "noindex",
-      ...headers,
-    },
+    headers: { "content-type": "application/json; charset=utf-8", ...apiHeaders, ...headers },
+  });
+/** A JSON body written as it is produced; the headers of `jsonResponse`, without buffering. */
+export const streamResponse = (body: ReadableStream<Uint8Array>, status = 200) =>
+  new Response(body, {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8", ...apiHeaders },
   });
 export const handleApi = async (operation: () => Promise<Response>): Promise<Response> => {
   const requestId = randomUUID();

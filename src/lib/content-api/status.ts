@@ -45,3 +45,35 @@ export const ownsCommittedFile = (publications: readonly PublicationEvent[]): bo
   );
   return newest?.kind === "publish";
 };
+
+export type PointerEvent = Readonly<{
+  id: string;
+  kind: "publish" | "unpublish";
+  state: Publication["state"];
+  createdAt: Date;
+}>;
+
+/**
+ * Where `content_articles.build_publication_id` goes when publication `failedId` fails: the newest
+ * other publication that reached `published` decides. A `publish` is the desired state again; an
+ * `unpublish` means the article was taken down, so the pointer is null (an older publish must not
+ * bring a removed article back into the build). Queued, publishing and failed ones prove nothing.
+ * Pure: no database.
+ */
+export const buildPointerAfterFailure = (
+  events: readonly PointerEvent[],
+  failedId: string,
+): string | null => {
+  const newest = events
+    .filter((e) => e.id !== failedId && e.state === "published")
+    .reduce<PointerEvent | null>(
+      (best, e) =>
+        best === null ||
+        e.createdAt.getTime() > best.createdAt.getTime() ||
+        (e.createdAt.getTime() === best.createdAt.getTime() && e.id > best.id)
+          ? e
+          : best,
+      null,
+    );
+  return newest?.kind === "publish" ? newest.id : null;
+};

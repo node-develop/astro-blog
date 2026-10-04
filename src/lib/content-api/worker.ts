@@ -5,7 +5,7 @@ import { effectiveScopes } from "./auth";
 import { apiError, isApiError } from "./errors";
 import { articlePath, articleUrl, commitArticle, deleteArticle } from "./github";
 import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
-import { ownsCommittedFile } from "./status";
+import { buildPointerAfterFailure, ownsCommittedFile } from "./status";
 import { buildSearchVectorSql } from "../search/vector";
 import { logger } from "../logger";
 import { coverUrlOf, probeImageUrl } from "./cover";
@@ -152,6 +152,13 @@ export const processPublication = async () =>
             nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS),
           })
           .where(eq(contentPublications.id, job.id));
+        // Dispatch moves the desired build state (docs: spec "Export (промпт 1.8)"): a publish
+        // points the article at its content, an unpublish takes it out of the export. Same
+        // transaction as the state change, so export never sees one without the other.
+        await tx
+          .update(contentArticles)
+          .set({ buildPublicationId: job.kind === "unpublish" ? null : job.id })
+          .where(eq(contentArticles.id, article.id));
       } else if (job.kind === "unpublish") {
         const url = articleUrl(article.slug, article.lang);
         if (await verifyUnpublished(url, article.lang)) {
@@ -234,6 +241,9 @@ export const processPublication = async () =>
               publishedVersion: job.version,
               unpublishedAt: null,
               firstPublishedAt: article.firstPublishedAt ?? job.createdAt,
+              // Already set at dispatch; repeated so a job that was in flight before the pointer
+              // existed still ends up pointing at what it published.
+              buildPublicationId: job.id,
             })
             .where(eq(contentArticles.id, article.id));
           // One vector per language: the other language's column is left alone.
@@ -271,6 +281,22 @@ export const processPublication = async () =>
         : "GitHub or the public site is unavailable. Retry publication after checking service health.";
       const permanent = isApiError(error) && [403, 409, 504].includes(error.status);
       const exhausted = job.attempts >= 4;
+      if (permanent || exhausted) {
+        // Every road to `failed` rolls the desired build state back to what is really published.
+        const events = await tx
+          .select({
+            id: contentPublications.id,
+            kind: contentPublications.kind,
+            state: contentPublications.state,
+            createdAt: contentPublications.createdAt,
+          })
+          .from(contentPublications)
+          .where(eq(contentPublications.articleId, job.articleId));
+        await tx
+          .update(contentArticles)
+          .set({ buildPublicationId: buildPointerAfterFailure(events, job.id) })
+          .where(eq(contentArticles.id, job.articleId));
+      }
       await tx
         .update(contentPublications)
         .set({

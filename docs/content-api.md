@@ -164,6 +164,25 @@ curl --fail-with-body "$CONTENT_API_BASE/media/" \
 - **`GET /keys/`, `POST /keys/`, `DELETE /keys/{id}/`**: только сессия администратора; Bearer получает `403 key_cannot_manage_keys`. Список (новые первыми, отозванные включены) не содержит хешей токенов и служебного ключа `admin-session`. `POST {name, scopes}`: имя 1–100 символов, кроме зарезервированных `admin-session` и `admin` (без учёта регистра), скоупы без повторов (любые из `scopeSchema`: сессия держит их все). Ответ `201` с `token` (`artka_…`) **один раз**; хранится только хеш. `POST` не идемпотентен намеренно: сохранённый ответ держал бы токен в `content_api_requests`, повтор создаёт второй ключ. `DELETE` отзывает (`revoked_at`), строка остаётся (на ключ ссылаются статьи, `ON DELETE RESTRICT`); повтор даёт `200 unchanged: true`, неизвестный id `404`, `admin-session` `403 system_key_protected`. Отзыв ключа проваливает его активные задания публикации (`key_revoked`). CLI `pnpm content:key create|revoke` использует ту же реализацию (`src/lib/content-api/keys.ts`); `admin-session` через CLI тоже не отзывается.
 - **Вектор поиска по языкам.** `posts_meta.search_vector` это RU (и все файловые посты), `search_vector_en` английская статья API; воркер на шаге `published` пишет колонку своего языка, второй не касается. `/en/search` читает `coalesce(search_vector_en, search_vector)` (файловые EN-посты вектора не имеют, RU-попадания без EN-двойника отсеивает фильтр по коллекции). Миграция 0009 пересчитывает обе колонки у опубликованных статей API по документу опубликованной версии, а русский вектор у slug, у которого опубликован только EN-двойник из API, обнуляет: после выкладки один раз выполнить `pnpm db:backfill-search` (перестраивает RU-вектор из файлов). В контейнере это не запустить (там нет `tsx` и скрипта): выполнять из локального checkout на задеплоенном коммите, с `DATABASE_URL`, указывающим на прод через туннель. Пока не выполнено, у такого поста RU-вектор пуст и он не находится в `/search` и админском поиске.
 
+## Export
+
+`GET /export/` (скоуп `content:export`, без `Idempotency-Key`, лимит 60 запросов/минуту на ключ) отдаёт **желаемое состояние сборки сайта**: все статьи, у которых задан `build_publication_id`, потоком JSON. Это версия, которую сборка обязана содержать, а не `publishedContent`: версия, ждущая выкладки, уже в экспорте, а после `failed` указатель возвращается к последней реально опубликованной. Черновики, статьи с первой публикацией в очереди и снятые статьи (unpublish в работе или завершён) не входят.
+
+```json
+{ "snapshotId": "uuid", "generatedAt": "ISO", "count": 2,
+  "articles": [{ "slug": "…", "lang": "ru", "revision": "<id публикации>", "content": "<Markdown>",
+                 "contentSha256": "<hex>", "meta": { "order": 1, "pinned": false, "hiddenFromList": false } }] }
+```
+
+- `revision` это id публикации, `content` равно `content_publications.content` этой публикации, `contentSha256` это sha256 от `content` (UTF-8). Схема: `exportSchema` в `src/lib/content-api/contract.ts` (её же берёт OpenAPI).
+- `meta` берётся из `posts_meta` по slug (общая для обоих языков). Нет строки: значения по умолчанию сайта (`order` = `Number.MAX_SAFE_INTEGER`, видима) и предупреждение в логе.
+- Порядок: по `slug`, затем по `lang` (сравнение по кодовым единицам). Два экспорта одного состояния совпадают побайтно, кроме `generatedAt`.
+- `snapshotId` детерминированный (UUIDv8 от отсортированных `slug, lang, revision, order, pinned, hiddenFromList`): то же состояние даёт тот же id, откат A→B→A возвращает прежний. `generatedAt` в него не входит.
+- Манифест читается одним оператором (один снимок БД), `content` подгружается пачками по 20 по мере чтения клиентом: два полных экземпляра в памяти не держатся. `content` публикации неизменяем, поэтому состав согласован.
+- **Оборванный JSON это ошибка.** Если после начала потока что-то ломается (например, пропала строка публикации), поток обрывается, а не отдаёт короткий список. Потребитель обязан разобрать ответ целиком и проверить `count === articles.length` (это делает `exportSchema`).
+- Указатель на публикацию `unpublish` нарушает инвариант: `500 export_inconsistent` с `details.articleIds` до начала потока.
+- Ключ только для сборки: `pnpm content:key create ci-build content:export`.
+
 ## Перевод RU → EN
 
 `POST /articles/{id}/translate/` `{targetLang: "en", force?: false}` (скоуп `articles:write`, `Idempotency-Key`). Вызывает модель (`claude-sonnet-5`, тот же конвейер, что `translate.one`: глоссарий, пачки по ~3000 токенов исходника, повторы по маркерам и длинам) и сохраняет **черновик** EN с тем же `slug` и `externalId`, `source_version` = версия RU. Запись идёт обычным путём создания/обновления: строка истории с автором, `provenance = {agent: <агент RU>, model}`. Нужна переменная `ANTHROPIC_API_KEY`; без неё `503 translation_not_configured`.
@@ -239,6 +258,7 @@ curl --fail-with-body "$CONTENT_API_BASE/publications/$PUBLICATION_ID/" \
 ```bash
 pnpm content:key create research-writer articles:read articles:write articles:publish media:write
 # соцчерновики: social:read social:write social:publish
+# сборка: content:export
 pnpm content:key revoke <key-uuid>
 ```
 

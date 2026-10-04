@@ -155,3 +155,45 @@ Backfill версий и `hooks_done_at` выполняется один раз,
 - **CLAUDE.md (решение за владельцем).** В «Judgment-only» путь соцконвейера через `/api/v1/social` и хук воркера стоит дописать: это не новое место вызова LLM (`src/lib/social/**`), но запись в списке за вами; агент CLAUDE.md не правил.
 - **Допущения.** «До 3 раз» = 3 попытки всего; `generate` для несуществующего slug даёт 404 вместо 500; `socialImage` для соцкартинки не учитывается; эндпоинта regenerate нет (остаётся Astro Action до этапа 3).
 - **Тесты.** Юнит: `articleFromParsed`, `loadFileArticle` (включая выход из каталога), результат `pingIndexNow`. БД: `content-api-social.test.ts` (поканальный kickoff RU→EN, skipped, источник из `published_content`, абсолютная обложка, 409/404, критик `block` с `force`, повтор publish, 502, скоупы), `content-api-hooks.test.ts` (гонка двух вызовов при припаркованном пинге, аренда, повторы 3/3, 4xx без повтора, флаг выкл., unpublish RU и EN, пакет, форма ответа воркера), `content-api-session.test.ts` (сессия держит все скоупы, воркер с урезанной строкой публикует, отозванная строка даёт `key_revoked`). Мутации (снятие аренды и `SKIP LOCKED`, фильтр `skipped`, снятие проверки `block`) роняют тесты.
+
+## Export (промпт 1.8)
+
+`GET /api/v1/export/` (скоуп `content:export`; сессия получает его через `effectiveScopes`) отдаёт желаемое состояние сборки по `content_articles.build_publication_id` (инвариант 6 плана: не `publishedContent`, иначе ждущая версия никогда не попала бы в сборку). Контракт: `exportSchema` в `contract.ts`; `entry.content` равен `content_publications.content`.
+
+### Решения
+
+- **Снимок.** Вариант C: манифест (без `content`) одним оператором, то есть один MVCC-снимок, из него `count` и `snapshotId`; затем `pull` читает `content` пачками по 20. Долгой транзакции нет, есть backpressure. Согласованность держится на том, что `content_publications.content` только вставляется (в БД это не закреплено); пропавшая строка рвёт поток (`controller.error` + `logger.error`).
+- **`snapshotId`** детерминированный: UUIDv8 от sha256 канонического JSON `["export-v1", ...[slug, lang, revision, order, pinned, hiddenFromList]]` по отсортированному манифесту; `generatedAt` не входит. Тег образа `content-<id>` идентифицирует **контент, а не образ**: пересборка того же контента с новым кодом перекладывает тег, а `snapshots/<id>.json` перезаписывается с новым `generatedAt`. Откат на конкретный образ закреплять по `sha-<git>`.
+- **Порядок:** сортировка в JS по `slug`, затем `lang` (кодовые единицы, не collation БД).
+- **Нет строки `posts_meta`:** значения `defaultMetaFor` и `logger.warn`; так сайт ведёт себя уже сегодня, ошибка остановила бы сборку из-за дефекта метаданных.
+- **Указатель на `unpublish`:** `500 export_inconsistent` до начала потока, плюс `logger.error` (`handleApi` не логирует `ApiError`).
+- **Только GET, без `Idempotency-Key`.** Ответ потоковый (`streamResponse` в `http.ts`, те же заголовки, что у `jsonResponse`); `x-request-id` ставит `handleApi`.
+
+### Таблица состояний `build_publication_id`
+
+| Событие | Указатель |
+|---|---|
+| publish или unpublish поставлен в очередь | не меняется |
+| publish: queued → publishing (тот же шаг, что ставит `publishing`) | `job.id` |
+| publish → published | `job.id` (ставится и здесь: задания, бывшие в работе до появления указателя) |
+| unpublish: queued → publishing | `null` (статья уходит из export на dispatch) |
+| unpublish → published | `null` |
+| любой переход в `failed` (одна ветка `catch`: `key_revoked`, `version_conflict`, `slug_conflict`, `deployment_timeout`, исчерпанные попытки; из `queued` и из `publishing`) | `buildPointerAfterFailure`: самая новая **другая** публикация в `published`; если это `publish`, её id, если `unpublish` или такой нет, `null` |
+| временная ошибка без `failed` | не меняется |
+| unpublish, у которого указатель уже `null` (например, первая публикация закоммитилась и упала по 504, `ownsCommittedFile` истинно) | `null` → `null`: **export не меняется** |
+
+Правило отличается от формулировки в ранбуке («последняя `published` с `kind='publish'`»): после цепочки publish → unpublish → publish(failed) она вернула бы снятую статью в сборку. Отзыв ключа (`revokeKey`) указатель не пишет: задание переводит в `failed` воркер, это та же ветка.
+
+### Для этапа 2 (2.4)
+
+- Пакет обязан выставить оба указателя (`build_publication_id` обеих статей) до dispatch.
+- Сигнал «`contentSnapshotId` изменился после `dispatched_at`» верен, только если dispatch сдвинул указатель. Unpublish с указателем `null` (строка таблицы выше) его не сдвигает, а если между откатом и dispatch прошла другая сборка, живой id уже равен желаемому и проверка никогда не пройдёт (504). Поэтому 2.4 должен сравнивать живой id с `snapshotIdOf(текущий манифест)`, а не проверять, что он изменился; unpublish с неподвинутым указателем подтверждать только проверкой 404/sitemap (или не диспатчить).
+- Расхождение до этапа 2: пока воркер ещё коммитит в git, после `failed` с уже прошедшим коммитом git показывает новое, а export старое. На то, что отдаёт сайт, это не влияет.
+
+### Ссылки relatedSlugs
+
+Обе проверки теперь учитывают желаемое состояние (иначе в экспорте возможна статья со ссылкой на отсутствующую):
+
+- `enqueueUnpublication` (`referenced_by_related`) ищет ссылку в `publishedContent`, в content публикации по указателю и в content queued/publishing-публикации `publish` того же языка.
+- `relatedIsPublished` возвращает `false` для статьи с queued/publishing-публикацией `unpublish`.
+- Не сделано: «или указатель `null`» для `relatedIsPublished`. Статья с `publishedVersion` и `null` указателем возможна только до backfill; условие ломало бы существующие данные и тесты, которые выставляют `publishedVersion` напрямую. Остаётся `TODO(cutover)`: при переходе на этап 2 проверять по указателю целиком.
