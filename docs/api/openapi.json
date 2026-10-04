@@ -1555,6 +1555,192 @@
         }
       }
     },
+    "/articles/{id}/translate/": {
+      "post": {
+        "summary": "Translate a Russian article into an English DRAFT with the same slug and externalId (calls the model, tens of seconds)",
+        "description": "Required scope: articles:write. 60 requests/minute/key (Bearer only).",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateArticle"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslateResult"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, missing Idempotency-Key or malformed If-Match",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked key, or no admin session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope or origin mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Identity, idempotency, version or edit conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; Retry-After: 60",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "translation_failed or translation_invalid: nothing was saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "translation_timeout: nothing was saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/articles/{id}/unpublish/": {
       "post": {
         "summary": "Remove this language's page: queues an unpublish publication",
@@ -4863,6 +5049,68 @@
           "items"
         ],
         "additionalProperties": false
+      },
+      "TranslateArticle": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "targetLang": {
+            "type": "string",
+            "const": "en"
+          },
+          "force": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "targetLang"
+        ],
+        "additionalProperties": false
+      },
+      "TranslateResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ArticleResult"
+          },
+          {
+            "type": "object",
+            "required": [
+              "translation",
+              "warnings"
+            ],
+            "description": "201 for a new EN draft, 200 for an updated one or `unchanged: true` (already translated from this RU version, no model call).",
+            "properties": {
+              "translation": {
+                "type": "object",
+                "required": [
+                  "sourceVersion",
+                  "stale"
+                ],
+                "properties": {
+                  "sourceVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "stale": {
+                    "type": "boolean",
+                    "const": false
+                  }
+                }
+              },
+              "unchanged": {
+                "type": "boolean",
+                "const": true
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
       },
       "DeleteResult": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

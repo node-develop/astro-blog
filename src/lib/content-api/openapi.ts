@@ -22,6 +22,7 @@ import {
   publishArticleSchema,
   publishBatchSchema,
   scopeSchema,
+  translateArticleSchema,
   updateArticleSchema,
   versionListSchema,
 } from "./contract";
@@ -246,6 +247,22 @@ export const openApiDocument = {
         { success: [200] },
       ),
     },
+    "/articles/{id}/translate/": {
+      post: operation(
+        "Translate a Russian article into an English DRAFT with the same slug and externalId (calls the model, tens of seconds)",
+        "articles:write",
+        "TranslateArticle",
+        [id, once],
+        "TranslateResult",
+        {
+          success: [200, 201],
+          errors: {
+            "502": "translation_failed or translation_invalid: nothing was saved",
+            "504": "translation_timeout: nothing was saved",
+          },
+        },
+      ),
+    },
     "/articles/{id}/unpublish/": {
       post: operation(
         "Remove this language's page: queues an unpublish publication",
@@ -411,6 +428,30 @@ export const openApiDocument = {
       UpdateArticle: schema(updateArticleSchema),
       PublishArticle: schema(publishArticleSchema),
       PublishBatch: schema(publishBatchSchema),
+      TranslateArticle: schema(translateArticleSchema),
+      TranslateResult: {
+        allOf: [
+          { $ref: "#/components/schemas/ArticleResult" },
+          {
+            type: "object",
+            required: ["translation", "warnings"],
+            description:
+              "201 for a new EN draft, 200 for an updated one or `unchanged: true` (already translated from this RU version, no model call).",
+            properties: {
+              translation: {
+                type: "object",
+                required: ["sourceVersion", "stale"],
+                properties: {
+                  sourceVersion: { type: "integer", minimum: 1 },
+                  stale: { type: "boolean", const: false },
+                },
+              },
+              unchanged: { type: "boolean", const: true },
+              warnings: { type: "array", items: { type: "string" } },
+            },
+          },
+        ],
+      },
       DeleteResult: schema(z.object({ id: z.uuid(), deleted: z.literal(true) })),
       RestoreResult: {
         allOf: [

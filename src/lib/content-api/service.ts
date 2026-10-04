@@ -115,6 +115,30 @@ const isPublishedPostFile = (slug: string, lang: string): boolean => {
   return false;
 };
 
+/**
+ * Is `slug` a published article in `lang`? A database row wins over a file: the file is consulted
+ * only when there is no row.
+ */
+export const relatedIsPublished = async (
+  tx: Tx | Database,
+  slug: string,
+  lang: string,
+): Promise<boolean> => {
+  const [related] = await tx
+    .select()
+    .from(contentArticles)
+    .where(and(eq(contentArticles.slug, slug), eq(contentArticles.lang, lang)));
+  return related ? related.publishedVersion !== null : isPublishedPostFile(slug, lang);
+};
+
+// TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
+// overwrite the file. Slug occupancy becomes database-only in prompt 3.6
+// (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+export const fileOwnsSlug = (slug: string, lang: "ru" | "en"): boolean => {
+  const path = articlePath(slug, lang);
+  return existsSync(resolve(path)) || existsSync(resolve(`${path}x`));
+};
+
 export const validateDocument = async (document: ArticleDocument, tx: Tx | Database = db) => {
   const ids = [
     ...new Set([
@@ -140,14 +164,7 @@ export const validateDocument = async (document: ArticleDocument, tx: Tx | Datab
       url: coverUrl,
     });
   for (const slug of document.relatedSlugs) {
-    const [related] = await tx
-      .select()
-      .from(contentArticles)
-      .where(and(eq(contentArticles.slug, slug), eq(contentArticles.lang, document.lang)));
-    // A database row wins over a file: the file is consulted only when there is no row.
-    const published = related
-      ? related.publishedVersion !== null
-      : isPublishedPostFile(slug, document.lang);
+    const published = await relatedIsPublished(tx, slug, document.lang);
     if (slug === document.slug || !published)
       throw apiError(
         422,
@@ -174,6 +191,35 @@ export const withContentLock = <T>(operation: (tx: Tx) => Promise<T>): Promise<T
     return operation(tx);
   });
 
+/**
+ * The stored response of an earlier request with this key, or null. The same key with a different
+ * request is 409 `idempotency_conflict`.
+ */
+export const findReplay = async (
+  database: Tx | Database,
+  keyId: string,
+  idempotencyKey: string,
+  request: unknown,
+): Promise<MutationResult | null> => {
+  const [previous] = await database
+    .select()
+    .from(contentApiRequests)
+    .where(
+      and(
+        eq(contentApiRequests.keyId, keyId),
+        eq(contentApiRequests.idempotencyKey, idempotencyKey),
+      ),
+    );
+  if (!previous) return null;
+  if (previous.requestHash !== hash(canonicalJson(request)))
+    throw apiError(
+      409,
+      "idempotency_conflict",
+      "This Idempotency-Key was used for a different request.",
+    );
+  return { status: previous.status, data: previous.response };
+};
+
 export const mutateOnce = async (
   keyId: string,
   idempotencyKey: string,
@@ -181,25 +227,9 @@ export const mutateOnce = async (
   operation: (tx: Tx) => Promise<MutationResult>,
 ): Promise<MutationResult> =>
   withContentLock(async (tx) => {
+    const replay = await findReplay(tx, keyId, idempotencyKey, request);
+    if (replay) return replay;
     const digest = hash(canonicalJson(request));
-    const [previous] = await tx
-      .select()
-      .from(contentApiRequests)
-      .where(
-        and(
-          eq(contentApiRequests.keyId, keyId),
-          eq(contentApiRequests.idempotencyKey, idempotencyKey),
-        ),
-      );
-    if (previous) {
-      if (previous.requestHash !== digest)
-        throw apiError(
-          409,
-          "idempotency_conflict",
-          "This Idempotency-Key was used for a different request.",
-        );
-      return { status: previous.status, data: previous.response };
-    }
     const result = await operation(tx);
     await tx.insert(contentApiRequests).values({
       keyId,
@@ -305,19 +335,42 @@ const recordVersion = async (tx: Tx, article: Article, actor: Actor) => {
   });
 };
 
+/** EN bookkeeping that travels with a write; see `translationFlags`. */
+export type VersionFlags = Readonly<{ sourceVersion?: number | null; manuallyEdited?: boolean }>;
+/** A translation: the RU version it was made from. Passed by the translate path only. */
+export type TranslationMark = Readonly<{ sourceVersion: number }>;
+
+/**
+ * Who wrote an EN article decides its protection. The translate path records the RU version and
+ * clears `manually_edited`; any other write (create, PUT) sets it. RU articles carry neither.
+ */
+const translationFlags = (lang: string, translation?: TranslationMark): VersionFlags =>
+  lang !== "en"
+    ? {}
+    : translation
+      ? { sourceVersion: translation.sourceVersion, manuallyEdited: false }
+      : { manuallyEdited: true };
+
 /**
  * The one write path of a new document version: bumps the version and keeps the history row in
- * the same transaction. Used by update, restore and (prompt 1.6) translate.
+ * the same transaction. Used by update, restore and translate.
  */
 export const writeVersion = async (
   tx: Tx,
   current: Article,
   document: ArticleDocument,
   actor: Actor,
+  flags: VersionFlags = {},
 ): Promise<Article> => {
   const [article] = await tx
     .update(contentArticles)
-    .set({ document, version: current.version + 1, updatedAt: new Date() })
+    .set({
+      document,
+      version: current.version + 1,
+      updatedAt: new Date(),
+      ...(flags.sourceVersion !== undefined ? { sourceVersion: flags.sourceVersion } : {}),
+      ...(flags.manuallyEdited !== undefined ? { manuallyEdited: flags.manuallyEdited } : {}),
+    })
     .where(eq(contentArticles.id, current.id))
     .returning();
   await recordVersion(tx, article!, actor);
@@ -330,6 +383,7 @@ export const createArticle = async (
   mode: "draft" | "publish",
   actor: Actor,
   agent: string,
+  translation?: TranslationMark,
 ): Promise<MutationResult> => {
   // Under the lock, so the default cannot race with the twin's creation: the other language of
   // this slug decides the externalId, otherwise the slug does. Translations share both.
@@ -360,11 +414,7 @@ export const createArticle = async (
       "External ID or slug is already in use. Translations must share externalId and slug.",
       { articleIds: candidates.map((a) => a.id) },
     );
-  const path = articlePath(document.slug, document.lang);
-  // TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
-  // overwrite the file. Slug occupancy becomes database-only in prompt 3.6
-  // (docs/superpowers/plans/2026-10-03-api-only-migration.md).
-  if (existsSync(resolve(path)) || existsSync(resolve(`${path}x`)))
+  if (fileOwnsSlug(document.slug, document.lang))
     throw apiError(409, "slug_conflict", "An existing site article owns this slug.");
   const { warnings } = await validateDocument(document, tx);
   const [article] = await tx
@@ -375,6 +425,7 @@ export const createArticle = async (
       slug: document.slug,
       lang: document.lang,
       keyId: actor.keyId,
+      ...translationFlags(document.lang, translation),
     })
     .returning();
   await recordVersion(tx, article!, actor);
@@ -395,6 +446,7 @@ export const updateArticle = async (
   },
   actor: Actor,
   agent: string,
+  translation?: TranslationMark,
 ): Promise<MutationResult> => {
   const current = await requireArticle(tx, id);
   if (current.version !== input.expectedVersion)
@@ -416,7 +468,13 @@ export const updateArticle = async (
   )
     throw apiError(409, "immutable_identity", "externalId, slug and lang cannot change.");
   const { warnings } = await validateDocument(document, tx);
-  const article = await writeVersion(tx, current, document, actor);
+  const article = await writeVersion(
+    tx,
+    current,
+    document,
+    actor,
+    translationFlags(current.lang, translation),
+  );
   const job =
     input.mode === "publish" ? await enqueuePublication(tx, article, actor, { idle: true }) : null;
   return {
@@ -476,7 +534,14 @@ export const restoreVersion = async (
       { version: n },
     );
   const { warnings } = await validateDocument(parsed.data, tx);
-  const article = await writeVersion(tx, current, parsed.data, actor);
+  // An older EN document is a manual state, and its RU base is unknown: protected, and stale.
+  const article = await writeVersion(
+    tx,
+    current,
+    parsed.data,
+    actor,
+    current.lang === "en" ? { manuallyEdited: true, sourceVersion: null } : {},
+  );
   return {
     status: 200,
     data: { ...articleView(article, latest), restoredFrom: n, warnings },

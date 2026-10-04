@@ -7,14 +7,22 @@ export const slugSchema = z
   .max(100)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const shortText = (min: number, max: number) => z.string().trim().min(min).max(max);
+/** Limits of the text fields that POST_LIMITS does not cover; the translation checks the same numbers. */
+export const TEXT_LIMITS = {
+  keyword: { min: 1, max: 80 },
+  seoTitle: { min: 3, max: 120 },
+  seoDescription: { min: 10, max: 200 },
+  /** Alt text and caption of an image. */
+  imageText: { min: 1, max: 500 },
+} as const;
 export const sourceSchema = z.strictObject({
   url: z.url({ protocol: /^https$/ }).max(2048),
   title: shortText(1, 200),
 });
 export const assetRefSchema = z.strictObject({
   assetId: z.uuid(),
-  alt: shortText(1, 500),
-  caption: shortText(1, 500).optional(),
+  alt: shortText(TEXT_LIMITS.imageText.min, TEXT_LIMITS.imageText.max),
+  caption: shortText(TEXT_LIMITS.imageText.min, TEXT_LIMITS.imageText.max).optional(),
 });
 /** Provenance agent recorded for an admin session; the key name is used for a Bearer key. */
 export const SESSION_AGENT = "admin";
@@ -50,8 +58,8 @@ export const coverRefSchema = z.union([
   assetRefSchema,
   z.strictObject({
     url: coverUrlSchema,
-    alt: shortText(1, 500),
-    caption: shortText(1, 500).optional(),
+    alt: shortText(TEXT_LIMITS.imageText.min, TEXT_LIMITS.imageText.max),
+    caption: shortText(TEXT_LIMITS.imageText.min, TEXT_LIMITS.imageText.max).optional(),
   }),
 ]);
 export const articleDocumentSchema = z.strictObject({
@@ -63,14 +71,20 @@ export const articleDocumentSchema = z.strictObject({
   summary: shortText(POST_LIMITS.summary.min, POST_LIMITS.summary.max),
   body: z.string().trim().min(1).max(200_000),
   tags: z.array(slugSchema).min(1).max(20),
-  keywords: z.array(shortText(1, 80)).max(40).default([]),
+  keywords: z
+    .array(shortText(TEXT_LIMITS.keyword.min, TEXT_LIMITS.keyword.max))
+    .max(40)
+    .default([]),
   sources: z.array(sourceSchema).min(1).max(30),
   cover: coverRefSchema.optional(),
   socialImage: assetRefSchema.optional(),
   seo: z
     .strictObject({
-      title: shortText(3, 120).optional(),
-      description: shortText(10, 200).optional(),
+      title: shortText(TEXT_LIMITS.seoTitle.min, TEXT_LIMITS.seoTitle.max).optional(),
+      description: shortText(
+        TEXT_LIMITS.seoDescription.min,
+        TEXT_LIMITS.seoDescription.max,
+      ).optional(),
     })
     .optional(),
   faq: z
@@ -134,6 +148,12 @@ export const updateArticleSchema = createArticleSchema.extend({
 export const publishArticleSchema = z.strictObject({
   expectedVersion: z.number().int().positive(),
 });
+/** Only RU → EN exists; `force` overwrites an EN article that a person edited. */
+export const translateArticleSchema = z.strictObject({
+  targetLang: z.literal("en"),
+  force: z.boolean().default(false),
+});
+export type TranslateArticleInput = z.infer<typeof translateArticleSchema>;
 /** One publication per item, all of one slug pair (ru + en); 1..2 items, no repeated ids. */
 export const publishBatchSchema = z.strictObject({
   items: z

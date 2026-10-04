@@ -30,6 +30,7 @@ import {
   publishArticleSchema,
   publishBatchSchema,
   slugSchema,
+  translateArticleSchema,
   updateArticleSchema,
   type ApiScope,
 } from "./contract";
@@ -54,6 +55,7 @@ import {
   deleteDraft,
   enqueuePublication,
   enqueueUnpublication,
+  findReplay,
   getVersion,
   listArticles,
   listMedia,
@@ -71,6 +73,7 @@ import {
   type MutationResult,
   type Tx,
 } from "./service";
+import { TRANSLATION_DEADLINE_MS, runTranslation } from "./translate-article";
 import { processPublication } from "./worker";
 
 /** Pure routing: `:name` captures one non-empty segment; the first match in array order wins. */
@@ -110,6 +113,9 @@ type Once = (
   operation: (tx: Tx) => Promise<MutationResult>,
 ) => Promise<MutationResult>;
 
+/** The stored response for this Idempotency-Key and request, or null; read without the lock. */
+type Replay = (input: unknown) => Promise<MutationResult | null>;
+
 type Common = Readonly<{ method: string; pattern: string; sessionOnly?: true }>;
 export type Route = Common &
   (
@@ -122,7 +128,7 @@ export type Route = Common &
     | Readonly<{
         scope: ApiScope | "any";
         idempotent: true;
-        handler: (ctx: Ctx & Readonly<{ once: Once }>) => Promise<Response>;
+        handler: (ctx: Ctx & Readonly<{ once: Once; replay: Replay }>) => Promise<Response>;
       }>
   );
 
@@ -163,7 +169,13 @@ export const createDispatcher =
           { method: request.method, path, input },
           operation,
         );
-      return route.handler({ ...ctx, once });
+      const replay: Replay = (input) =>
+        findReplay(db, principal.keyId, namespaced(principal, idempotencyKey(request)), {
+          method: request.method,
+          path,
+          input,
+        });
+      return route.handler({ ...ctx, once, replay });
     });
 
 const postMetaView = (meta: PostMeta) => ({
@@ -344,6 +356,40 @@ export const routes: readonly Route[] = [
       if (input.mode === "publish") requireScope(principal, "articles:publish");
       const result = await once(input, (tx) =>
         updateArticle(tx, id, input, actorOf(principal), defaultAgent(principal)),
+      );
+      return jsonResponse(result.data, result.status);
+    },
+  },
+  {
+    // Not a plain `once`: the model call takes tens of seconds and must not run under the content
+    // lock. A stored response is replayed first; the write is the only part under `once`. Two
+    // concurrent retries with one key may both pay; only one is written, the other replays.
+    method: "POST",
+    pattern: "articles/:id/translate",
+    scope: "articles:write",
+    idempotent: true,
+    handler: async ({ request, params, principal, once, replay }) => {
+      const id = articleId(params);
+      const input = translateArticleSchema.parse(await readJson(request));
+      const stored = await replay(input);
+      if (stored) return jsonResponse(stored.data, stored.status);
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey)
+        throw apiError(
+          503,
+          "translation_not_configured",
+          "Translation is disabled: ANTHROPIC_API_KEY is not set.",
+        );
+      const result = await runTranslation(
+        {
+          apiKey,
+          actor: actorOf(principal),
+          agent: defaultAgent(principal),
+          once: (operation) => once(input, operation),
+          signal: AbortSignal.timeout(TRANSLATION_DEADLINE_MS),
+        },
+        id,
+        input,
       );
       return jsonResponse(result.data, result.status);
     },
