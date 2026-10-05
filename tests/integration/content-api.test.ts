@@ -28,7 +28,11 @@ vi.mock("astro:content", () => ({
     collection.ids
       .map((id, index) => ({
         id,
-        data: { draft: false, pubDate: new Date(Date.UTC(2026, 0, 10 - index)) },
+        data: {
+          draft: false,
+          pubDate: new Date(Date.UTC(2026, 0, 10 - index)),
+          _meta: { order: index, pinned: false, hiddenFromList: false },
+        },
       }))
       .filter(filter),
 }));

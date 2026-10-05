@@ -1,12 +1,13 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
+import { articlesLoader } from "~/lib/content/articles-loader";
 import { courses as course, lessons as lesson } from "~/lib/courses/schema";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "~/lib/content/limits";
 import { person } from "~/lib/seo/person";
 
 const posts = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/posts" }),
+  loader: articlesLoader(),
   schema: z.object({
     // Optional metadata supplied by the versioned content API.
     seoTitle: z.string().max(120).optional(),
@@ -39,7 +40,13 @@ const posts = defineCollection({
     manuallyEdited: z.boolean().default(false),
     // Keep in sync with src/lib/content/schemas.ts (canonical author name).
     author: z.string().default(person.name),
-    lang: z.enum(["ru", "en"]).optional(),
+    lang: z.enum(["ru", "en"]),
+    // Editorial state of the snapshot article; the loader reads it when posts_meta has no row.
+    _meta: z.object({
+      order: z.number().int(),
+      pinned: z.boolean(),
+      hiddenFromList: z.boolean(),
+    }),
   }),
 });
 

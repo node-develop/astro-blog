@@ -24,3 +24,4 @@ src/content/posts/en/claude-md-12-rules.md
 
 # Vendored editorial standard: preserve supplied upstream bytes.
 .claude/skills/statejnik/references/editorial-standard-upstream.md
+.content

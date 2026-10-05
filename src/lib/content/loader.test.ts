@@ -9,13 +9,21 @@ import { defaultMetaFor, sortWithMeta, type PostWithMeta } from "./loader";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const fakeEntry = (id: string, draft = false): CollectionEntry<"posts"> =>
+const fakeEntry = (id: string, draft = false, hiddenFromList = false): CollectionEntry<"posts"> =>
   ({
     id,
     slug: id,
     body: "",
     collection: "posts",
-    data: { title: id, description: "x", pubDate: new Date("2026-01-01"), tags: [], draft },
+    data: {
+      title: id,
+      description: "x",
+      pubDate: new Date("2026-01-01"),
+      tags: [],
+      draft,
+      lang: id.startsWith("en/") ? "en" : "ru",
+      _meta: { order: 5, pinned: false, hiddenFromList },
+    },
   }) as unknown as CollectionEntry<"posts">;
 
 const fakeMeta = (slug: string, order: number, pinned = false): PostMeta => ({
@@ -65,8 +73,10 @@ const FIXTURE_META: PostMeta[] = [fakeMeta("01-intro", 1), fakeMeta("02-context"
 // `whereRows.current` is what the single-row lookup of getPostWithMeta resolves
 // to. Each test sets it, so the fake can model a missing row as well as a
 // present one; `whereSpy` records the predicate the loader looked the row up by.
-const { warnSpy, whereSpy, whereRows } = vi.hoisted(() => ({
+const { warnSpy, errorSpy, whereSpy, whereRows, dbFailure } = vi.hoisted(() => ({
   warnSpy: vi.fn(),
+  errorSpy: vi.fn(),
+  dbFailure: { current: false },
   whereSpy: vi.fn(),
   whereRows: { current: [] as PostMeta[] },
 }));
@@ -74,7 +84,7 @@ const { warnSpy, whereSpy, whereRows } = vi.hoisted(() => ({
 // pino would otherwise spin up a real pino-pretty transport worker for every
 // warning this suite provokes on purpose.
 vi.mock("~/lib/logger", () => ({
-  logger: { warn: warnSpy, info: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  logger: { warn: warnSpy, info: vi.fn(), error: errorSpy, debug: vi.fn() },
 }));
 
 vi.mock("astro:content", () => ({
@@ -89,8 +99,16 @@ vi.mock("~/lib/db", () => ({
   db: {
     select: vi.fn(() => ({
       from: vi.fn(() =>
-        Object.assign(Promise.resolve([...FIXTURE_META]), {
-          where: whereSpy.mockImplementation(async () => [...whereRows.current]),
+        // A thenable, so a rejection exists only when the list call is really awaited.
+        ({
+          then: (resolve: (rows: PostMeta[]) => void, reject: (err: Error) => void) =>
+            dbFailure.current
+              ? reject(new Error("connection refused"))
+              : resolve([...FIXTURE_META]),
+          where: whereSpy.mockImplementation(async () => {
+            if (dbFailure.current) throw new Error("connection refused");
+            return [...whereRows.current];
+          }),
         }),
       ),
     })),
@@ -264,6 +282,8 @@ describe("getPostWithMeta(slug, locale)", () => {
     const result = await getPostWithMeta("no-meta-row", { locale: "en" });
     expect(result?.entry.id).toBe("en/no-meta-row");
     expect(result?.meta.hiddenFromList).toBe(false);
+    // order 5 comes from the entry's _meta; defaultMetaFor would give MAX_SAFE_INTEGER
+    expect(result?.meta.order).toBe(5);
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({ slug: "no-meta-row", locale: "en" });
   });
@@ -290,5 +310,71 @@ describe("getPostWithMeta(slug, locale)", () => {
     expect(await getPostWithMeta("does-not-exist", { locale: "ru" })).toBeNull();
     // An RU-only slug has no EN variant either.
     expect(await getPostWithMeta("draft-ru-only", { locale: "en" })).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Snapshot `_meta`: what the loader uses when the DB gives no row.
+// ---------------------------------------------------------------------------
+
+describe("snapshot _meta fallback", () => {
+  // A post the snapshot marks hidden and that has no posts_meta row.
+  const hidden = fakeEntry("snap-hidden", false, true);
+  beforeEach(() => {
+    FIXTURE_ENTRIES.push(hidden);
+    warnSpy.mockClear();
+    errorSpy.mockClear();
+    whereRows.current = [];
+  });
+  afterEach(() => {
+    FIXTURE_ENTRIES.splice(FIXTURE_ENTRIES.indexOf(hidden), 1);
+    dbFailure.current = false;
+    vi.unstubAllEnvs();
+  });
+
+  it("without DATABASE_URL a post hidden in _meta is not listed, and nothing is logged", async () => {
+    vi.stubEnv("DATABASE_URL", "");
+    const { getOrderedPosts } = await import("./loader");
+    const ids = (await getOrderedPosts({ locale: "ru" })).map((p) => p.entry.id);
+    expect(ids).not.toContain("snap-hidden");
+    expect(ids).toContain("01-intro");
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("with a reachable DB but no row, _meta still hides the post and the gap is warned about", async () => {
+    vi.stubEnv("DATABASE_URL", "postgres://test:test@localhost:5432/test");
+    const { getOrderedPosts } = await import("./loader");
+    const ids = (await getOrderedPosts({ locale: "ru" })).map((p) => p.entry.id);
+    expect(ids).not.toContain("snap-hidden");
+    expect(warnSpy.mock.calls[0]?.[0]).toMatchObject({
+      slugs: expect.arrayContaining(["snap-hidden"]),
+    });
+  });
+
+  it("on a DB error logs through pino and falls back to _meta", async () => {
+    vi.stubEnv("DATABASE_URL", "postgres://test:test@localhost:5432/test");
+    dbFailure.current = true;
+    const { getOrderedPosts } = await import("./loader");
+    const ids = (await getOrderedPosts({ locale: "ru" })).map((p) => p.entry.id);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(ids).not.toContain("snap-hidden");
+    expect(ids).toContain("01-intro");
+  });
+
+  it("getPostWithMeta without a DB returns the entry's _meta", async () => {
+    vi.stubEnv("DATABASE_URL", "");
+    const { getPostWithMeta } = await import("./loader");
+    const result = await getPostWithMeta("snap-hidden", { locale: "ru" });
+    expect(result?.meta).toMatchObject({ slug: "snap-hidden", order: 5, hiddenFromList: true });
+  });
+
+  it("getPostWithMeta on a DB error logs and returns _meta", async () => {
+    vi.stubEnv("DATABASE_URL", "postgres://test:test@localhost:5432/test");
+    dbFailure.current = true;
+    const { getPostWithMeta } = await import("./loader");
+    const result = await getPostWithMeta("snap-hidden", { locale: "ru" });
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(result?.meta.hiddenFromList).toBe(true);
   });
 });

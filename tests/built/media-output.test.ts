@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Element, Properties, Root } from "hast";
+import { parseFrontmatter } from "@astrojs/markdown-remark";
 import { describe, expect, it } from "vitest";
+import { checkSnapshot, readJson, readManifest, resolveSnapshotPath } from "~/lib/content/snapshot";
 import lazyContentImages from "~/lib/rehype/lazy-content-images";
 import { VFile } from "vfile";
 
@@ -19,7 +21,7 @@ const image = (src: string, properties: Properties = {}): Element => ({
 // and it comes from a third-party media origin. Both the intrinsic-size and
 // the preconnect rules below are about exactly this shape of post.
 const REAL_COVER_POST = {
-  source: "src/content/posts/custom-domain-email-mailu-dokploy.md",
+  slug: "custom-domain-email-mailu-dokploy",
   built: "dist/client/blog/custom-domain-email-mailu-dokploy/index.html",
 } as const;
 
@@ -43,20 +45,27 @@ describe("built post media", () => {
   // The rule, not the numbers: a cover's intrinsic size is whatever the post's
   // frontmatter recorded for it. Hardcoded 1200×630 reserved an OG-card box for
   // an image of another shape, so the page shifted when the cover landed.
-  it("sizes a real cover from the post's own frontmatter", () => {
-    const source = readFileSync(join(process.cwd(), REAL_COVER_POST.source), "utf8");
+  it("sizes a real cover from the post's own frontmatter", async () => {
+    // The page is built from the snapshot, so the declared size is read from there.
+    const path = resolveSnapshotPath(process.env, process.cwd());
+    const { minArticles } = await readManifest(process.cwd());
+    const snapshot = checkSnapshot(await readJson(path), minArticles, path);
+    const article = snapshot.articles.find(
+      (a) => a.slug === REAL_COVER_POST.slug && a.lang === "ru",
+    );
+    expect(article, `${REAL_COVER_POST.slug} (ru) is not in ${path}`).toBeDefined();
+    const frontmatter = parseFrontmatter(article!.content).frontmatter;
     const declared = {
-      width: source.match(/^socialImageWidth:\s*(\d+)\s*$/m)?.[1],
-      height: source.match(/^socialImageHeight:\s*(\d+)\s*$/m)?.[1],
+      width: String(frontmatter.socialImageWidth),
+      height: String(frontmatter.socialImageHeight),
     };
 
-    expect(declared.width).toBeDefined();
-    expect(declared.height).toBeDefined();
+    expect(frontmatter.socialImageWidth).toBeTypeOf("number");
+    expect(frontmatter.socialImageHeight).toBeTypeOf("number");
     // The recorded size is the social image's. It is the cover's size only
     // while both fields name the same file, which is what this fixture proves.
-    const coverFile = source.match(/^cover:\s*(\S+)\s*$/m)?.[1];
-    expect(coverFile).toBeDefined();
-    expect(source.match(/^socialImage:\s*(\S+)\s*$/m)?.[1]).toBe(coverFile);
+    expect(frontmatter.cover).toBeDefined();
+    expect(frontmatter.socialImage).toBe(frontmatter.cover);
 
     const html = readFileSync(join(process.cwd(), REAL_COVER_POST.built), "utf8");
     const cover = html.match(/<figure\b[^>]*class="post__cover"[^>]*>[\s\S]*?<img\b[^>]*>/)?.[0];

@@ -63,6 +63,9 @@ astro-blog/
 - `pnpm test:db` — Postgres-сьюты `tests/integration/` через testcontainers (нужен Docker); `pnpm test:all` — все три слоя
 - `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверка вывода билда на известные SEO-регрессии (`scripts/verify-seo-build.ts`)
 - `pnpm test:e2e` — Playwright
+- `pnpm content:pull` — скачать снапшот контента из `/api/v1/export/` в `.content/snapshot.json` (нужен `CONTENT_EXPORT_TOKEN`; источник — `SITE_URL`, из `.env.example` это localhost, для прода `SITE_URL=https://artka.dev pnpm content:pull`); сборка читает его через `CONTENT_SNAPSHOT=… pnpm build`, по умолчанию — фикстура `tests/fixtures/content-snapshot.json`
+- `pnpm content:fixture` — пересобрать фикстуру снапшота из `scripts/dev/fixture-articles.ts`
+- `pnpm typecheck` и `pnpm build` требуют Playwright chromium-headless-shell: коллекция `posts` рендерит mermaid при `astro sync`
 - `pnpm translate` — сгенерировать EN-двойники контента (см. «i18n»)
 - `pnpm translate:check` — проверить, что EN-двойники актуальны (только файловая система, без API; гоняется в CI)
 - `pnpm db:generate` — сгенерировать миграцию из schema.ts
