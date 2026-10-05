@@ -30,6 +30,7 @@
     "test:db": "vitest run --project db",
     "test:all": "vitest run",
     "verify:seo-build": "tsx scripts/verify-seo-build.ts",
+    "verify:content-build": "tsx scripts/verify-content-build.ts",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node src/lib/db/migrate.ts",

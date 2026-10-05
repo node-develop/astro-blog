@@ -67,4 +67,21 @@ describe("verifyContentBuild", () => {
     expect(issues[0]).toContain("stale (ru): page does not carry data-content-revision");
     expect(issues[1]).toContain("hidden (ru): hiddenFromList but present in sitemap-ru.xml");
   });
+
+  it("reports a missing page, a listed article absent from the sitemap and a missing sitemap file", async () => {
+    await page("stale", REVISIONS.stale);
+    await page("hidden", REVISIONS.hidden);
+    // no sitemap-ru.xml at all, no page for "fresh"
+    const issues = await verifyContentBuild(snapshot, dist);
+    expect(issues).toEqual([
+      "sitemap-ru.xml is missing",
+      "fresh (ru): /blog/fresh/index.html is missing",
+    ]);
+
+    await writeFile(join(dist, "sitemap-ru.xml"), sitemap("stale"));
+    expect(await verifyContentBuild(snapshot, dist)).toEqual([
+      "fresh (ru): /blog/fresh/index.html is missing",
+      "fresh (ru): missing from sitemap-ru.xml",
+    ]);
+  });
 });

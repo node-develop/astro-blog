@@ -57,6 +57,10 @@ allowed-tools: ["Read", "Bash(pnpm:*)", "Bash(docker:*)", "Bash(git:*)"]
 
 7. **Docker build локально**:
 
+   Нужен `content-snapshot.json` в корне репозитория (в git не попадает): либо
+   `SITE_URL=https://artka.dev CONTENT_EXPORT_TOKEN=... pnpm content:pull content-snapshot.json`,
+   либо для одноразового образа `cp tests/fixtures/content-snapshot.json content-snapshot.json`.
+
    ```bash
    docker build -t astro-blog:local .
    docker run --rm -p 4321:4321 --env-file .env.local astro-blog:local

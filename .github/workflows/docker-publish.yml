@@ -29,15 +29,45 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
+    # Explicit, not `inherit`: CI jobs have no business seeing DOKPLOY_WEBHOOK_URL.
+    secrets:
+      CONTENT_EXPORT_TOKEN: ${{ secrets.CONTENT_EXPORT_TOKEN }}
 
   build-and-push:
     needs: validate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v5
+
+      # The artifact `snapshot` (ci.yml) uploaded in this run. The tag and build-arg read the id
+      # from the file that goes into the image, not from a workflow output.
+      - name: Download the content snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: content-snapshot
+          path: .
+
+      - name: Read the snapshot id
+        id: snapshot
+        run: |
+          if ! id=$(jq -er .snapshotId content-snapshot.json); then
+            echo "::error::content-snapshot.json has no snapshotId"
+            exit 1
+          fi
+          if ! [[ $id =~ ^[0-9a-f-]{36}$ ]]; then
+            echo "::error::content-snapshot.json has no valid snapshotId: $id"
+            exit 1
+          fi
+          fixture=$(jq -er .snapshotId tests/fixtures/content-snapshot.json)
+          if [ "$id" = "$fixture" ]; then
+            echo "::error::release image would be built from the fixture"
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
 
       # No QEMU: the image is built for linux/amd64 only (see `platforms` below).
       - name: Set up Docker Buildx
@@ -61,6 +91,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=content-${{ steps.snapshot.outputs.id }},enable={{is_default_branch}}
 
       # A content publication rebuilds the same commit, so there is no
       # head_commit and BUILT_AT is the only thing that tells two images apart.
@@ -85,6 +116,7 @@ jobs:
             SITE_URL=https://artka.dev
             GIT_SHA=${{ github.sha }}
             BUILT_AT=${{ steps.built.outputs.at }}
+            CONTENT_SNAPSHOT_ID=${{ steps.snapshot.outputs.id }}
 
       - name: Trigger Dokploy deploy
         if: >-

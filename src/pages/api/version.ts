@@ -18,6 +18,7 @@ export const GET: APIRoute = () => {
     JSON.stringify({
       commit: process.env.GIT_SHA ?? "unknown",
       builtAt: process.env.BUILT_AT ?? "unknown",
+      contentSnapshotId: process.env.CONTENT_SNAPSHOT_ID ?? "unknown",
       node: process.version,
       worker: {
         status,

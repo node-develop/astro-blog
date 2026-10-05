@@ -54,3 +54,4 @@ Claude outputs/
 
 # Снапшот контента (pnpm content:pull)
 .content/
+/content-snapshot.json
