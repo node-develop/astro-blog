@@ -17,7 +17,7 @@ Content API `/api/v1` становится единственным путём �
 ## Инварианты, которые закрепляются тестами
 
 1. `entry.id` поста равен `slug` для RU и `en/slug` для EN. От этого зависят URL, OG, hreflang (`checkCounterpartExists`), `posts_meta`, seed в `card-art`.
-2. Frontmatter передаётся в `renderMarkdown`. Без него `remark/flag-math.ts` бросает ошибку, а `strip-frontmatter-duplicates.ts` молча перестаёт убирать дублирующий H1 и лид.
+2. В `renderMarkdown` уходит документ целиком, с YAML-шапкой: опции `frontmatter` у него нет, шапку он разбирает из самой строки (спайк `docs/specs/2026-10-03-render-markdown-spike.md`). Строка без шапки даёт пустой frontmatter, и `strip-frontmatter-duplicates.ts` молча перестаёт убирать дублирующий H1 и лид.
 3. `entry.body` равен `content_publications.content` (с «Источниками» и «Читайте также»), иначе расходятся время чтения, `articleBody` в JSON-LD, RSS и `llms-full.txt`.
 4. Пустой или урезанный снапшот останавливает сборку: `count === 0` или меньше `content-manifest.json`.
 5. Каждая страница в dist несёт `data-content-revision`, равный id публикации из снапшота, и присутствует в sitemap своего языка.
@@ -26,7 +26,7 @@ Content API `/api/v1` становится единственным путём �
 ## Контракт сборки
 
 - `GET /api/v1/export/`, скоуп `content:export`, отдельный read-only ключ для CI. Формат: `{snapshotId, generatedAt, count, articles:[{slug, lang, revision, content, contentSha256, meta:{order, pinned, hiddenFromList}}]}`. Черновики не попадают.
-- Loader `src/lib/content/articles-loader.ts` читает `CONTENT_SNAPSHOT` (путь к JSON). Для каждой статьи: `parseFrontmatter`, `parseData` по той же Zod-схеме, `renderMarkdown(body, {frontmatter})`, `store.set({id, data, body, rendered, digest})`.
+- Loader `src/lib/content/articles-loader.ts` читает `CONTENT_SNAPSHOT` (путь к JSON). Для каждой статьи: `parseFrontmatter`, `parseData` по той же Zod-схеме, `renderMarkdown(content)` по документу целиком (с YAML-шапкой), `store.set({id, data, body, rendered, digest})`.
 - CI: job `snapshot` скачивает JSON с ретраями и проверкой схемы, артефакт идёт в `validate` и в Docker build context. Токен не попадает в образ. Снапшот архивируется в S3 `snapshots/<id>.json`.
 - Dockerfile: `COPY content-snapshot.json`, `ENV CONTENT_SNAPSHOT`, build-arg `CONTENT_SNAPSHOT_ID` в `/api/version`, `playwright install` до `COPY . .`, `verify-content-build.ts` сразу после `pnpm build`. Убрать `COPY src/content/posts`.
 - Теги образа: `sha-<git>` и `content-<snapshotId>`. `concurrency: {group: deploy-main, cancel-in-progress: false}`.
@@ -102,7 +102,7 @@ Content API `/api/v1` становится единственным путём �
 | `content-worker.mjs` без супервизии | `docker-entrypoint.sh:22-24` | Встроить в сервер или healthcheck |
 | Импорт: `sources.min(1)`, `keyId` NOT NULL, `cover: /og-default.png`, Mailu уже в API, `claude.md` с raw HTML | скрипт импорта | `provenance.agent = import`, системный ключ `legacy-import`, cover не задавать, Mailu проверить и пропустить, `claude.md` вне БД |
 | `serializeArticle` меняет экранирование через remark-stringify и prettier | `content-api/markdown.ts` | Сравнить HTML 14 страниц до и после без `data-content-revision` |
-| Тесты на файлах и реальных slug: `mobile-toc.spec.ts` дописывает в реальный пост, `global-setup.ts`, `admin-*`, `admin-media`, `landing-content.test.ts:78-96`, `deploy-gate.test.ts:26-27`, `ci-workflow.test.ts:42`, posts-h1, content/schema, seo/media-output, content-api/github, actions/_social, publish.no-op-social | около 15 файлов | На фикстуру и сид БД |
+| Тесты на файлах и реальных slug: `mobile-toc.spec.ts` дописывает в реальный пост, `global-setup.ts`, `admin-*`, `admin-media`, `landing-content.test.ts:78-96`, posts-h1, content/schema, seo/media-output, content-api/github, actions/_social, publish.no-op-social | около 15 файлов | На фикстуру и сид БД |
 | Снятия с публикации нет | API | `kind = unpublish` |
 
 Выкладка в два шага: сначала export и импорт при живых файлах, затем переключение loader, и только потом удаление файлов и старого кода.
@@ -121,7 +121,7 @@ Content API `/api/v1` становится единственным путём �
 
 ## Открытые вопросы до старта
 
-- [ ] `renderMarkdown` в Astro 7.3 использует `markdown.processor` из конфига? Спайк первым делом. Запасной путь: `src/lib/markdown/pipeline.ts` с `createMarkdownProcessor`.
+- [x] `renderMarkdown` в Astro 7.3 использует `markdown.processor` из конфига? Да (спайк `docs/specs/2026-10-03-render-markdown-spike.md`); `pipeline.ts` не нужен.
 - [ ] Сайт за Cloudflare? Разрешить раннеры GitHub для `GET /api/v1/export/`.
 - [ ] `GITHUB_PAT` имеет Contents: write (нужно для `repository_dispatch`)?
 - [ ] Статья про Mailu в `content_articles` на проде: `publishedContent` совпадает с файлом в git?

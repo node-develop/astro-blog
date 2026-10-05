@@ -97,9 +97,9 @@ Astro 7.3 (package.json: astro ^7.3.1) настройку markdown.processor: un
    Добавь триггер repository_dispatch с types: [content-publish] (сам dispatch
    появится в этапе 2, триггер нужен уже сейчас, чтобы тесты workflow его
    знали). Условие шага Dokploy: push || repository_dispatch.
-3. Обнови tests/unit/ci-workflow.test.ts и tests/unit/deploy-gate.test.ts под
-   новую структуру, не ослабляя их смысл (needs: validate и шаг webhook
-   остаются закреплёнными).
+3. (Выполнено и устарело: tests/unit/ci-workflow.test.ts и deploy-gate.test.ts
+   потом удалены из main, а .claude/hooks/test-guard.sh запрещает тесты,
+   читающие YAML. Порядок шагов workflow проверяет сам CI.)
 4. Локальная проверка образа по скиллу deploy-check: собери образ дважды подряд
    и покажи, что второй раз слой Chromium взят из кэша.
 5. Коммит: `build(docker): cache the Chromium layer and gate deploys with concurrency`.
