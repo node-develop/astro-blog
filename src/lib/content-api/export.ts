@@ -7,25 +7,11 @@ import { logger } from "../logger";
 import type { ExportArticle } from "./contract";
 import { langSchema } from "./contract";
 import { apiError } from "./errors";
-
-export type ManifestEntry = Readonly<{
-  slug: string;
-  lang: "ru" | "en";
-  /** The publication whose content the build must contain. */
-  revision: string;
-  order: number;
-  pinned: boolean;
-  hiddenFromList: boolean;
-}>;
+import { sortedManifest, type ManifestEntry } from "./snapshot-id";
 
 export type ExportHeader = Readonly<{ snapshotId: string; generatedAt: string }>;
 
 const BATCH = 20;
-// Code units, not a database collation: the order must not depend on how PostgreSQL sorts a hyphen.
-const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-const sorted = (manifest: readonly ManifestEntry[]): readonly ManifestEntry[] =>
-  [...manifest].sort((a, b) => compare(a.slug, b.slug) || compare(a.lang, b.lang));
-
 /**
  * One statement, so one MVCC snapshot: every article that has a build pointer, with the metadata
  * of its slug. No `content` here; it is immutable per publication and read later in batches.
@@ -61,7 +47,7 @@ export const exportManifest = async (database: Database): Promise<readonly Manif
   const noMeta = rows.filter((row) => row.metaSlug === null).map((row) => row.slug);
   if (noMeta.length)
     logger.warn({ slugs: noMeta }, "export: posts_meta row missing, using defaults");
-  return sorted(
+  return sortedManifest(
     rows.map((row) => {
       const meta = defaultMetaFor(row.slug);
       return {
@@ -74,30 +60,6 @@ export const exportManifest = async (database: Database): Promise<readonly Manif
       };
     }),
   );
-};
-
-/**
- * UUIDv8 over the sorted revisions and meta: the same desired state always has the same id,
- * whatever order the rows came in. A revision is immutable, so the id fixes `articles`.
- * `generatedAt` is deliberately outside it.
- */
-export const snapshotIdOf = (manifest: readonly ManifestEntry[]): string => {
-  const canonical = JSON.stringify([
-    "export-v1",
-    ...sorted(manifest).map((e) => [
-      e.slug,
-      e.lang,
-      e.revision,
-      e.order,
-      e.pinned,
-      e.hiddenFromList,
-    ]),
-  ]);
-  const bytes = createHash("sha256").update(canonical).digest().subarray(0, 16);
-  bytes[6] = (bytes[6]! & 0x0f) | 0x80;
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-  const hex = bytes.toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 };
 
 const articleOf = (entry: ManifestEntry, content: string): ExportArticle => ({

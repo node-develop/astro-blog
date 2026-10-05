@@ -42,7 +42,8 @@ import {
   type ApiScope,
 } from "./contract";
 import { apiError } from "./errors";
-import { exportManifest, exportStream, snapshotIdOf } from "./export";
+import { exportManifest, exportStream } from "./export";
+import { snapshotIdOf } from "./snapshot-id";
 import { articleUrl } from "./github";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
 import {
