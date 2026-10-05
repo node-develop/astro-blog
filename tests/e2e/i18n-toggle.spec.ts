@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { gotoOk } from "./helpers/goto-ok";
 
 test.describe("language toggle", () => {
   test("toggle on RU article navigates to EN article", async ({ page }) => {
-    await page.goto("/blog/local-coding-agent/");
+    await gotoOk(page, "/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
     // LangToggle renders <a data-set-pref data-lang="en"> when the counterpart exists.
@@ -16,7 +17,7 @@ test.describe("language toggle", () => {
   });
 
   test("toggle on EN article navigates back to RU", async ({ page }) => {
-    await page.goto("/en/blog/local-coding-agent/");
+    await gotoOk(page, "/en/blog/local-coding-agent/");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
     const toggle = page.locator('a[data-set-pref][data-lang="ru"]:visible');
@@ -28,7 +29,7 @@ test.describe("language toggle", () => {
   });
 
   test("toggle sets lang-pref cookie when clicked", async ({ page, context }) => {
-    await page.goto("/blog/local-coding-agent/");
+    await gotoOk(page, "/blog/local-coding-agent/");
 
     const toggle = page.locator('a[data-set-pref][data-lang="en"]:visible');
     await toggle.click();
@@ -54,9 +55,9 @@ test.describe("language toggle", () => {
     // is served with lang="ru" as expected.
     await context.clearCookies();
 
-    // e2e-ru-only.md is a test fixture with no EN counterpart, so the toggle
+    // e2e-ru-only is a fixture-snapshot article with no EN counterpart, so the toggle
     // degrades to a <button disabled> instead of an <a>.
-    await page.goto("/blog/e2e-ru-only/");
+    await gotoOk(page, "/blog/e2e-ru-only/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 
     const disabled = page.locator("button.lang-toggle[disabled]:visible");

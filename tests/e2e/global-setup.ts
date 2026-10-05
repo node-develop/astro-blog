@@ -1,25 +1,24 @@
 import { execSync } from "node:child_process";
 import { existsSync, lstatSync, symlinkSync, unlinkSync } from "node:fs";
-import { copyFile, readdir, rm } from "node:fs/promises";
+import { readdir, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { chromium, type FullConfig } from "@playwright/test";
 import { ensureAdminUser } from "../../src/lib/auth/ensure-admin";
-
-const FIXTURE_SRC = join(process.cwd(), "tests/e2e/fixtures/e2e-ru-only.md");
-const FIXTURE_DEST = join(process.cwd(), "src/content/posts/e2e-ru-only.md");
-
-export const installFixtures = async (): Promise<void> => {
-  if (existsSync(FIXTURE_SRC) && !existsSync(FIXTURE_DEST)) {
-    await copyFile(FIXTURE_SRC, FIXTURE_DEST);
-  }
-};
+import {
+  checkSnapshot,
+  FIXTURE_SNAPSHOT,
+  readJson,
+  readManifest,
+} from "../../src/lib/content/snapshot";
+import { verifyContentBuild } from "../../src/lib/content/verify-build";
 
 const POSTS_DIR = join(process.cwd(), "src/content/posts");
 
 /**
- * Deletes every `e2e-*` post (RU + EN): the fixture above plus the scratch
- * posts the admin specs create. Runs at setup too, so an aborted run cannot
- * leave files behind that the content audits in `pnpm test` would flag.
+ * Deletes every `e2e-*` post (RU + EN): the scratch files the admin specs create (the admin still
+ * writes files until prompt 3.5). Runs at setup too, so an aborted run cannot leave files behind
+ * that the content audits in `pnpm test` would flag. The posts the specs read come from the
+ * fixture snapshot (tests/fixtures/content-snapshot.json), not from files.
  */
 export const removeScratchPosts = async (): Promise<void> => {
   for (const dir of [POSTS_DIR, join(POSTS_DIR, "en")]) {
@@ -38,10 +37,20 @@ const PUBLIC_PAGEFIND = resolve(process.cwd(), "public", "pagefind");
  * palette test) and is reachable at `/pagefind/...` from the Astro dev server
  * via a symlink in `public/`. Idempotent.
  */
-function ensurePagefindArtifacts(): void {
-  if (!existsSync(resolve(DIST_PAGEFIND, "pagefind.js"))) {
-    // Build the site so Pagefind has something to index. ~30-60s on first run.
-    execSync("pnpm build", { stdio: "inherit", cwd: process.cwd() });
+async function ensurePagefindArtifacts(): Promise<void> {
+  const fixture = await loadFixture();
+  const stale =
+    !existsSync(resolve(DIST_PAGEFIND, "pagefind.js")) ||
+    (await verifyContentBuild(fixture, resolve(process.cwd(), "dist", "client"))).length > 0;
+  if (stale) {
+    // Build the fixture so Pagefind indexes it (a dist built from another corpus is rebuilt).
+    // ~30-60s on first run. DATABASE_URL is the empty string, not unset: Astro copies .env into
+    // process.env at build start, and a database would overlay posts_meta on the fixture.
+    execSync("pnpm build", {
+      stdio: "inherit",
+      cwd: process.cwd(),
+      env: { ...process.env, DATABASE_URL: "", CONTENT_SNAPSHOT: FIXTURE_SNAPSHOT },
+    });
   }
   if (existsSync(PUBLIC_PAGEFIND) || lstatExistsSafe(PUBLIC_PAGEFIND)) {
     // Refresh the symlink in case dist/ moved.
@@ -49,6 +58,31 @@ function ensurePagefindArtifacts(): void {
   }
   symlinkSync(DIST_PAGEFIND, PUBLIC_PAGEFIND, "dir");
 }
+
+const loadFixture = async () => {
+  const path = resolve(process.cwd(), FIXTURE_SNAPSHOT);
+  const { minArticles } = await readManifest(process.cwd());
+  return checkSnapshot(await readJson(path), minArticles, path);
+};
+
+/**
+ * `reuseExistingServer` would accept any server on :4321, including one started on real content.
+ * The first RU article of the fixture must carry the fixture's revision.
+ *
+ * The dev server sees the local database, so a posts_meta row on a real slug (order, pinned,
+ * hidden) applies to the fixture in dev; no spec depends on list order or hidden pages.
+ */
+const assertServesFixture = async (baseURL: string): Promise<void> => {
+  const article = (await loadFixture()).articles.find((a) => a.lang === "ru");
+  if (!article) throw new Error("the fixture snapshot has no RU article");
+  const response = await fetch(new URL(`/blog/${article.slug}/`, baseURL));
+  const html = response.ok ? await response.text() : "";
+  if (!html.includes(`data-content-revision="${article.revision}"`))
+    throw new Error(
+      `the dev server on ${baseURL} does not serve the fixture (/blog/${article.slug}/ answered ` +
+        `${response.status}, revision not found): stop it and rerun`,
+    );
+};
 
 function lstatExistsSafe(p: string): boolean {
   try {
@@ -103,8 +137,8 @@ const warmUpEditor = async (baseURL: string): Promise<void> => {
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
   await removeScratchPosts();
-  await installFixtures();
-  ensurePagefindArtifacts();
+  await ensurePagefindArtifacts();
+  await assertServesFixture(config.projects[0]?.use.baseURL ?? "http://localhost:4321");
 
   await ensureAdminUser(E2E_ADMIN);
   await warmUpEditor(config.projects[0]?.use.baseURL ?? "http://localhost:4321");

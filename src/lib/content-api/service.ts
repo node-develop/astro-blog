@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import * as yaml from "~/lib/yaml";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { and, desc, eq, ilike, inArray, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db, type Database } from "../db";
+import { POSTS_DIR } from "../fs/paths";
 import {
   contentArticles,
   contentArticleVersions,
@@ -109,7 +110,7 @@ export const articleView = (article: Article, latest: Pick<Publication, "state">
 const isPublishedPostFile = (slug: string, lang: string): boolean => {
   const prefix = lang === "en" ? "en/" : "";
   for (const extension of ["md", "mdx"]) {
-    const path = resolve(`src/content/posts/${prefix}${slug}.${extension}`);
+    const path = join(POSTS_DIR, `${prefix}${slug}.${extension}`);
     if (!existsSync(path)) continue;
     const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(path, "utf8"));
     if (!match) continue;
@@ -154,7 +155,8 @@ export const relatedIsPublished = async (
 
 // TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
 // overwrite the file. Slug occupancy becomes database-only in prompt 3.6
-// (docs/specs/plans/2026-10-03-api-only-migration.md).
+// (docs/specs/plans/2026-10-03-api-only-migration.md). Still resolves from the cwd through
+// articlePath (github.ts), not POSTS_DIR, like translate/site-config.ts: moved in 2.4 / 3.6.
 export const fileOwnsSlug = (slug: string, lang: "ru" | "en"): boolean => {
   const path = articlePath(slug, lang);
   return existsSync(resolve(path)) || existsSync(resolve(`${path}x`));

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoOk } from "./helpers/goto-ok";
 
 const PAGES = [
   "/",
@@ -21,7 +22,7 @@ test.describe("mobile viewport — no horizontal overflow", () => {
 
   for (const path of PAGES) {
     test(`page ${path} fits within 375px width`, async ({ page }) => {
-      await page.goto(path);
+      await gotoOk(page, path);
       const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       const viewportWidth = page.viewportSize()!.width;
       expect(docWidth).toBeLessThanOrEqual(viewportWidth + 1);
@@ -39,7 +40,7 @@ test.describe("iphone-se (320px)", () => {
   });
 
   test("authority article fits", async ({ page }) => {
-    await page.goto("/blog/robots-txt-ai-crawlers-2026/");
+    await gotoOk(page, "/blog/robots-txt-ai-crawlers-2026/");
     const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(docWidth).toBeLessThanOrEqual(321);
   });

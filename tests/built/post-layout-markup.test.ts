@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { fixtureGuard } from "../support/snapshot";
 
 /**
  * A post page makes two claims about itself: one to a reader, in the visible
@@ -199,7 +200,8 @@ describe("post cover from another origin", () => {
       ([tag]) => /\bhref="([^"]+)"/.exec(tag)?.[1] ?? "",
     );
 
-  it("has at least one such post to check, and at least one without", () => {
+  // The shape of the corpus: a release without a third-party cover is legitimate.
+  fixtureGuard("has at least one such post to check, and at least one without", () => {
     const origins = builtPosts.map(({ file }) => thirdPartyCoverOrigin(readFileSync(file, "utf8")));
     expect(origins.filter((origin) => origin !== null).length).toBeGreaterThan(0);
     expect(origins.filter((origin) => origin === null).length).toBeGreaterThan(0);

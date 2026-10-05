@@ -1,6 +1,24 @@
-import { describe, it, expect } from "vitest";
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { describe, it, expect, vi } from "vitest";
 import { articleFromParsed, computeSourceHash, loadFileArticle } from "~/lib/social/article";
 import type { Frontmatter } from "~/lib/content/frontmatter";
+
+// The tests own the legacy files (TODO(cutover), prompt 3.6), so they pass with
+// src/content/posts empty. The directory is <tmp>/posts: <tmp>/outside.md is where a slug that
+// leaves it would land.
+const postsDir = await vi.hoisted(async () => {
+  const { writeLegacyPosts } = await import("../../../support/legacy-posts");
+  return writeLegacyPosts({
+    "legacy-twin.md": { title: "Legacy twin", cover: "/og-default.png" },
+    "en/legacy-twin.md": { title: "Legacy twin" },
+    "legacy-ru-only.md": { title: "Legacy RU only" },
+  });
+});
+vi.mock("~/lib/fs/paths", async (original) => ({
+  ...(await original<typeof import("~/lib/fs/paths")>()),
+  POSTS_DIR: postsDir,
+}));
 
 describe("computeSourceHash", () => {
   it("changes when body changes", () => {
@@ -23,36 +41,34 @@ describe("computeSourceHash", () => {
 });
 
 describe("loadFileArticle", () => {
-  it("reads a real fixture and returns correct shape", async () => {
-    const article = await loadFileArticle("local-coding-agent");
+  it("reads a legacy file post and returns correct shape", async () => {
+    const article = await loadFileArticle("legacy-twin");
 
-    expect(article.slug).toBe("local-coding-agent");
+    expect(article.slug).toBe("legacy-twin");
     expect(article.collection).toBe("posts");
     expect(article.title.length).toBeGreaterThan(0);
     expect(article.body.length).toBeGreaterThan(0);
     expect(article.lang).toBe("ru");
     expect(article.pubDate).toBeInstanceOf(Date);
     expect(Array.isArray(article.tags)).toBe(true);
-    expect(article.sourceUrl).toBe("https://artka.dev/blog/local-coding-agent");
+    expect(article.sourceUrl).toBe("https://artka.dev/blog/legacy-twin");
   });
 
-  it("populates hasEnTwin:true for local-coding-agent (EN twin exists)", async () => {
-    const article = await loadFileArticle("local-coding-agent");
+  it("populates hasEnTwin:true for a post with an EN twin file", async () => {
+    const article = await loadFileArticle("legacy-twin");
     expect(article.hasEnTwin).toBe(true);
   });
 
   it("populates hasEnTwin:false for a post without EN twin", async () => {
-    // claude.md has no EN twin in src/content/posts/en/
-    const article = await loadFileArticle("claude");
+    const article = await loadFileArticle("legacy-ru-only");
     expect(article.hasEnTwin).toBe(false);
   });
 
   it("hands social networks an absolute image URL, not the site-relative placeholder", async () => {
-    // local-coding-agent has `cover: /og-default.png`: the draft must carry the
-    // post's own card instead.
-    const article = await loadFileArticle("local-coding-agent");
+    // legacy-twin has `cover: /og-default.png`: the draft must carry the post's own card instead.
+    const article = await loadFileArticle("legacy-twin");
     expect(article.cover).toEqual({
-      src: "https://artka.dev/og/local-coding-agent-ru.png",
+      src: "https://artka.dev/og/legacy-twin-ru.png",
       alt: article.title,
     });
   });
@@ -64,8 +80,12 @@ describe("loadFileArticle", () => {
   });
 
   it("refuses a slug that leaves the posts directory", async () => {
-    // ../../../CLAUDE resolves to the repository's CLAUDE.md, a real file outside src/content/posts.
-    await expect(loadFileArticle("../../../CLAUDE")).rejects.toThrow("article not found");
+    // Without resolveSafe this would read the file next to the posts directory.
+    writeFileSync(
+      join(dirname(postsDir), "outside.md"),
+      "---\ntitle: Outside\n---\nOutside body\n",
+    );
+    await expect(loadFileArticle("../outside")).rejects.toThrow("article not found");
   });
 });
 

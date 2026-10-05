@@ -3,6 +3,13 @@ import { parseFrontmatter } from "@astrojs/markdown-remark";
 import { describe, expect, it } from "vitest";
 import { exportSchema } from "~/lib/content-api/contract";
 import { checkSnapshot, FIXTURE_SNAPSHOT, readJson, readManifest } from "~/lib/content/snapshot";
+import {
+  hasCode,
+  hasCopyableFirstBlock,
+  hasMermaid,
+  hasNoCover,
+  hasSizedCover,
+} from "../../support/snapshot-subjects";
 
 // The built and e2e suites run against this file when CONTENT_SNAPSHOT is not set and look for
 // these shapes by name. Regenerate with `pnpm content:fixture`; this test says what went missing.
@@ -33,19 +40,21 @@ describe("the content snapshot fixture", () => {
 
   it("has an English article with a Mermaid diagram", () => {
     expect(
-      find((p) => p.article.lang === "en" && p.content.includes("```mermaid")).length,
+      snapshot.articles.filter((a) => a.lang === "en" && hasMermaid(a)).length,
     ).toBeGreaterThan(0);
   });
 
   it("has a cover that is also the social image, with its size", () => {
-    const covered = find(
-      (p) =>
-        typeof p.frontmatter.cover === "string" &&
-        p.frontmatter.socialImage === p.frontmatter.cover &&
-        typeof p.frontmatter.socialImageWidth === "number" &&
-        typeof p.frontmatter.socialImageHeight === "number",
-    );
-    expect(covered.length).toBeGreaterThan(0);
+    expect(snapshot.articles.filter(hasSizedCover).length).toBeGreaterThan(0);
+  });
+
+  it("has an article without a cover", () => {
+    expect(snapshot.articles.filter(hasNoCover).length).toBeGreaterThan(0);
+  });
+
+  it("has an article with code, and one whose first code block has an empty line", () => {
+    expect(snapshot.articles.filter(hasCode).length).toBeGreaterThan(0);
+    expect(snapshot.articles.filter(hasCopyableFirstBlock).length).toBeGreaterThan(0);
   });
 
   it("has block math", () => {

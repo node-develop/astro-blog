@@ -1,9 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { getOrderedPosts } from "~/lib/content/loader";
-import { getAllTagSlugs, groupPostsByTag } from "~/lib/content/tags";
 import { isTagArchiveIndexable } from "~/lib/seo/indexability";
+import { frontmatterOf, underTest } from "../support/snapshot";
 
 const DIST = join(process.cwd(), "dist", "client");
 
@@ -34,21 +33,26 @@ describe("sitemap coverage", () => {
   const urls = inventory.allUrls;
 
   // Astro's sitemap integration emits URLs with a trailing slash for directory routes.
-  it("excludes every current tag archive below two locale posts", async () => {
-    const [ru, en] = await Promise.all([
-      getOrderedPosts({ locale: "ru" }),
-      getOrderedPosts({ locale: "en" }),
-    ]);
-    const ruGroups = groupPostsByTag(ru);
-    const enGroups = groupPostsByTag(en);
+  // Posts come from the snapshot the site was built from, not from astro:content: under vitest
+  // the content layer reads whatever data store the last sync wrote.
+  it("excludes every current tag archive below two locale posts", () => {
+    const byLocale = { ru: new Map<string, number>(), en: new Map<string, number>() };
+    for (const article of underTest.snapshot.articles) {
+      // The site builds archives from the listed posts only.
+      if (article.meta.hiddenFromList) continue;
+      const tags = frontmatterOf(article).tags;
+      if (!Array.isArray(tags)) continue;
+      const counts = byLocale[article.lang];
+      for (const tag of tags) counts.set(String(tag), (counts.get(String(tag)) ?? 0) + 1);
+    }
 
-    for (const slug of getAllTagSlugs({ ru, en })) {
-      if (!isTagArchiveIndexable(ruGroups.get(slug) ?? [])) {
+    for (const slug of new Set([...byLocale.ru.keys(), ...byLocale.en.keys()])) {
+      // The archive's posts are only counted, so a placeholder per post is enough.
+      const posts = (n = 0) => Array.from({ length: n });
+      if (!isTagArchiveIndexable(posts(byLocale.ru.get(slug))))
         expect(urls).not.toContain(`https://artka.dev/tags/${slug}/`);
-      }
-      if (!isTagArchiveIndexable(enGroups.get(slug) ?? [])) {
+      if (!isTagArchiveIndexable(posts(byLocale.en.get(slug))))
         expect(urls).not.toContain(`https://artka.dev/en/tags/${slug}/`);
-      }
     }
   });
 

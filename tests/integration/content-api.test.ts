@@ -21,6 +21,16 @@ const uploadsDir = await vi.hoisted(async () => {
   process.env.UPLOADS_DIR = dir;
   return dir;
 });
+// The legacy file fallbacks (TODO(cutover), prompt 3.6) read POSTS_DIR: the test owns its files, and
+// they are written before any API call because editorial-gates caches them per directory.
+const postsDir = await vi.hoisted(async () => {
+  const { writeLegacyPosts } = await import("../support/legacy-posts");
+  return writeLegacyPosts({ "legacy-related.md": { title: "Legacy related post" } });
+});
+vi.mock("~/lib/fs/paths", async (original) => ({
+  ...(await original<typeof import("~/lib/fs/paths")>()),
+  POSTS_DIR: postsDir,
+}));
 // getOrderedPosts reads Astro's collection: a fixed list of fake entries stands in for it.
 const collection = vi.hoisted(() => ({ ids: [] as string[] }));
 vi.mock("astro:content", () => ({
@@ -428,7 +438,7 @@ describe("content API with PostgreSQL", () => {
     const validate = (relatedSlugs: string[]) =>
       call("POST", "articles/validate", { article: { ...document, relatedSlugs } }, "related");
     // A legacy file post that has no row in the database.
-    expect((await validate(["json-ld-graph-astro"])).status).toBe(200);
+    expect((await validate(["legacy-related"])).status).toBe(200);
     expect((await validate(["no-such-article"])).status).toBe(422);
     const draft = await call(
       "POST",
@@ -446,13 +456,13 @@ describe("content API with PostgreSQL", () => {
     expect((await validate(["related-draft"])).status).toBe(200);
     // A row wins over the file: an unpublished row hides a published file with the same slug.
     await state.db!.insert(schema.contentArticles).values({
-      document: articleDocumentSchema.parse({ ...document, slug: "json-ld-graph-astro" }),
+      document: articleDocumentSchema.parse({ ...document, slug: "legacy-related" }),
       externalId: "shadow",
-      slug: "json-ld-graph-astro",
+      slug: "legacy-related",
       lang: "ru",
       keyId,
     });
-    expect((await validate(["json-ld-graph-astro"])).status).toBe(422);
+    expect((await validate(["legacy-related"])).status).toBe(422);
   });
   it("resumes safely when a GitHub commit succeeds but the response is lost", async () => {
     await make("publish");

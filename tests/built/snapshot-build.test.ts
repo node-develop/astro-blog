@@ -1,32 +1,23 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseFrontmatter } from "@astrojs/markdown-remark";
 import { describe, expect, it } from "vitest";
 import type { ExportArticle } from "~/lib/content-api/contract";
-import { checkSnapshot, readJson, readManifest, resolveSnapshotPath } from "~/lib/content/snapshot";
 import { verifyContentBuild } from "~/lib/content/verify-build";
 import { canonicalUrl } from "~/lib/seo/url-policy";
+import { bodyOf, DIST, frontmatterOf, labelOf, pageFileOf, underTest } from "../support/snapshot";
 
 /**
  * The build must show what the snapshot asked for. The snapshot is resolved exactly as the loader
  * resolves it, so CONTENT_SNAPSHOT has to be the same for `pnpm build` and this run. Every check
  * is "for each article with X, the page does Y": nothing here depends on which articles exist.
  */
-const root = process.cwd();
-const DIST = join(root, "dist", "client");
-const snapshotPath = resolveSnapshotPath(process.env, root);
-const { minArticles } = await readManifest(root);
-const snapshot = checkSnapshot(await readJson(snapshotPath), minArticles, snapshotPath);
-const where = `snapshot ${snapshotPath} (snapshotId ${snapshot.snapshotId})`;
-
-const pagePath = (a: ExportArticle): string =>
-  join(DIST, a.lang === "en" ? "en" : "", "blog", a.slug, "index.html");
-const label = (a: ExportArticle): string => `${a.slug} (${a.lang})`;
-const bodyOf = (a: ExportArticle): string => parseFrontmatter(a.content).content;
+const { snapshot } = underTest;
+const where = `snapshot ${underTest.path} (snapshotId ${snapshot.snapshotId})`;
+const label = labelOf;
 
 /** HTML of the post body, from the opening `.post__body` tag to the end of the page. */
 const postBody = async (a: ExportArticle): Promise<string> => {
-  const html = await readFile(pagePath(a), "utf8");
+  const html = await readFile(pageFileOf(a), "utf8");
   const start = html.indexOf('class="post__body');
   if (start === -1) throw new Error(`no class="post__body" on the page of ${label(a)} in ${where}`);
   return html.slice(start);
@@ -85,7 +76,7 @@ describe("build of the content snapshot", () => {
   it("does not repeat the description as a quote in the body of an article that opens with it", async () => {
     const failures: string[] = [];
     for (const a of snapshot.articles) {
-      const description = String(parseFrontmatter(a.content).frontmatter.description ?? "");
+      const description = String(frontmatterOf(a).description ?? "");
       if (!description || !bodyOf(a).trimStart().startsWith(`> ${description}`)) continue;
       const body = await postBody(a);
       const quotes = [...body.matchAll(/<blockquote\b[\s\S]*?<\/blockquote>/g)].map((m) =>
