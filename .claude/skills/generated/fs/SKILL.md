@@ -1,11 +1,9 @@
 ---
 name: fs
-description: "Skill for the Fs area of astro-blog. 6 symbols across 3 files."
+description: "Skill for the Fs area of astro-blog."
 ---
 
 # Fs
-
-6 symbols | 3 files | Cohesion: 100%
 
 ## When to Use
 
@@ -38,7 +36,7 @@ Start here when exploring this area:
 
 ## Key Symbols
 
-Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`.
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep.
 
 | Symbol                | Type     | File                         |
 | --------------------- | -------- | ---------------------------- |
@@ -51,6 +49,4 @@ Line numbers are omitted on purpose — they go stale; locate symbols with Grep 
 
 ## How to Explore
 
-1. `gitnexus_context({name: "writePostAtomically"})` — see callers and callees
-2. `gitnexus_query({query: "fs"})` — find related execution flows
-3. Read key files listed above for implementation details
+Read the key files listed above; find callers of a symbol with `git grep -n -w <symbol>`.

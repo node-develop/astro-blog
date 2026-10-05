@@ -1,11 +1,9 @@
 ---
 name: content
-description: "Skill for the Content area of astro-blog. 13 symbols across 6 files."
+description: "Skill for the Content area of astro-blog."
 ---
 
 # Content
-
-13 symbols | 6 files | Cohesion: 100%
 
 ## When to Use
 
@@ -41,7 +39,7 @@ Start here when exploring this area:
 
 ## Key Symbols
 
-Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`. Frontmatter YAML goes through `src/lib/yaml.ts` (never `js-yaml` directly).
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep. Frontmatter YAML goes through `src/lib/yaml.ts` (never `js-yaml` directly).
 
 | Symbol                 | Type     | File                                |
 | ---------------------- | -------- | ----------------------------------- |
@@ -59,15 +57,6 @@ Line numbers are omitted on purpose — they go stale; locate symbols with Grep 
 | `coerceDate`           | Function | `src/lib/content/frontmatter.ts`    |
 | `toIsoDate`            | Function | `src/lib/content/frontmatter.ts`    |
 
-## Execution Flows
-
-| Flow                          | Type            | Steps |
-| ----------------------------- | --------------- | ----- |
-| `Main → CoerceDate`           | intra_community | 4     |
-| `Main → BuildSearchVectorSql` | intra_community | 3     |
-
 ## How to Explore
 
-1. `gitnexus_context({name: "buildSearchVectorSql"})` — see callers and callees
-2. `gitnexus_query({query: "content"})` — find related execution flows
-3. Read key files listed above for implementation details
+Read the key files listed above; find callers of a symbol with `git grep -n -w <symbol>`.

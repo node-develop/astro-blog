@@ -1,6 +1,6 @@
 # Plan 2 — CMS Core (Schema · Admin · Editor · Media)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Turn the static Astro blog into an authored CMS: store post ordering, revisions, and media metadata in Postgres; keep Markdown files as source of truth for post body; provide a full admin UI under `/admin` with drag-and-drop reorder, CodeMirror-based editor, revision diff viewer, and media uploader.
 
@@ -16,7 +16,7 @@
 - `testcontainers` + real Postgres for integration tests.
 - `@axe-core/playwright` already installed for a11y checks.
 
-**Dependencies:** Spec `docs/superpowers/specs/2026-04-23-blog-admin-sidebar-search-design.md` sections 4–11, 13, 15–16. Plan 1 (visual foundation) merged on `main`.
+**Dependencies:** Spec `docs/specs/2026-04-23-blog-admin-sidebar-search-design.md` sections 4–11, 13, 15–16. Plan 1 (visual foundation) merged on `main`.
 
 **Out of scope (deferred to later plans):**
 - Pagefind index + ⌘K public search (Plan 3).

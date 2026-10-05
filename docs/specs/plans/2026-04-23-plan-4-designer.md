@@ -1,6 +1,6 @@
 # Plan 4 — Designer Subagent + Skills
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use `- [ ]` syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use `- [ ]` syntax for tracking.
 
 **Goal:** Add a `designer` subagent and two supporting skills (`design-system-tokens`, `ui-design-review`) to the project's Claude Code team. Calibrated to the live Editorial × Technical token system in `src/styles/tokens.css`.
 
@@ -166,7 +166,7 @@ Expected: no output (every token referenced in agent/skills exists in `tokens.cs
 - [ ] **Step 3: Commit**
 
 ```bash
-git add .claude/agents/designer.md .claude/skills/design-system-tokens/ .claude/skills/ui-design-review/ docs/superpowers/plans/2026-04-23-plan-4-designer.md
+git add .claude/agents/designer.md .claude/skills/design-system-tokens/ .claude/skills/ui-design-review/ docs/specs/plans/2026-04-23-plan-4-designer.md
 git commit -m "chore(claude): add designer agent + design-system-tokens + ui-design-review skills"
 ```
 

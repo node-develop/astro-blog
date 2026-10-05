@@ -93,7 +93,7 @@ export async function searchPostsMeta(
   if (query.trim().length === 0) return [];
   // TODO(cutover): file posts have no English vector and nothing writes one, so /en falls back to
   // the RU vector; hits without an EN twin are dropped by the caller's collection filter.
-  // Removed once EN posts are indexed from the database (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+  // Removed once EN posts are indexed from the database (docs/specs/plans/2026-10-03-api-only-migration.md).
   const vector =
     lang === "en" ? sql`coalesce(search_vector_en, search_vector)` : sql`search_vector`;
   // Bilingual match: OR-combine `simple` (literal/EN) and `russian` (stemmed)

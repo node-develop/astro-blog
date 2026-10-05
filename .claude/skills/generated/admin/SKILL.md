@@ -1,11 +1,9 @@
 ---
 name: admin
-description: "Skill for the Admin area of astro-blog. 10 symbols across 4 files."
+description: "Skill for the Admin area of astro-blog."
 ---
 
 # Admin
-
-10 symbols | 4 files | Cohesion: 100%
 
 ## When to Use
 
@@ -39,7 +37,7 @@ Start here when exploring this area:
 
 ## Key Symbols
 
-Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`.
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep.
 
 | Symbol            | Type     | File                                       |
 | ----------------- | -------- | ------------------------------------------ |
@@ -54,14 +52,6 @@ Line numbers are omitted on purpose — they go stale; locate symbols with Grep 
 | `RevisionList`    | Function | `src/components/admin/RevisionList.tsx`    |
 | `restore`         | Function | `src/components/admin/RevisionList.tsx`    |
 
-## Execution Flows
-
-| Flow                  | Type            | Steps |
-| --------------------- | --------------- | ----- |
-| `MediaUploader → Set` | intra_community | 3     |
-
 ## How to Explore
 
-1. `gitnexus_context({name: "MediaUploader"})` — see callers and callees
-2. `gitnexus_query({query: "admin"})` — find related execution flows
-3. Read key files listed above for implementation details
+Read the key files listed above; find callers of a symbol with `git grep -n -w <symbol>`.

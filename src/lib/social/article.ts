@@ -63,14 +63,14 @@ const notFound = (slug: string) =>
   apiError(404, "article_not_found", `article not found: posts/${slug}`);
 
 // TODO(cutover): file posts are read from disk only until they are imported into
-// content_articles. Removed with the file posts (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+// content_articles. Removed with the file posts (docs/specs/plans/2026-10-03-api-only-migration.md).
 const fileHasEnTwin = (slug: string): boolean =>
   existsSync(resolveSafe(POSTS_DIR, `en/${slug}.md`)) ||
   existsSync(resolveSafe(POSTS_DIR, `en/${slug}.mdx`));
 
 /**
  * Reads the RU post from disk. `resolveSafe` keeps a slug from leaving the posts directory.
- * TODO(cutover): removed with the file posts (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+ * TODO(cutover): removed with the file posts (docs/specs/plans/2026-10-03-api-only-migration.md).
  */
 export const loadFileArticle = async (slug: string): Promise<Article> => {
   let raw: string | null = null;

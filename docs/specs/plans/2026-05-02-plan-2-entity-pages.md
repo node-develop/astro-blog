@@ -1,10 +1,10 @@
 # LLM-Citable Entity Pages Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **Spec:** `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` (EPIC B — entity pages; phases 3-5 are out of scope)
+> **Spec:** `docs/specs/2026-05-02-llm-citable-blog-design.md` (EPIC B — entity pages; phases 3-5 are out of scope)
 >
-> **Depends on:** `docs/superpowers/plans/2026-05-02-plan-1-llm-citable-foundation.md` must be merged first. This plan assumes `src/lib/seo/{person,schema,nodes-page,nodes-global,json-ld}.ts` exist, `BaseLayout.astro` accepts `extraSchemaNodes`, and `public/llms.txt` already lists `/about`, `/now`, `/uses`, `/projects` as authoritative URLs.
+> **Depends on:** `docs/specs/plans/2026-05-02-plan-1-llm-citable-foundation.md` must be merged first. This plan assumes `src/lib/seo/{person,schema,nodes-page,nodes-global,json-ld}.ts` exist, `BaseLayout.astro` accepts `extraSchemaNodes`, and `public/llms.txt` already lists `/about`, `/now`, `/uses`, `/projects` as authoritative URLs.
 
 **Goal:** Turn `artka.dev` into a coherent author-entity surface for LLM citation by extending `/about` into a rich expert profile, shipping three new evergreen pages (`/now`, `/uses`, `/projects`), introducing a typed `projects` content collection with `CreativeWork` JSON-LD per item, and adding an `AuthorCard` to every post that closes the loop back to `/about` and `/projects`.
 
@@ -599,7 +599,7 @@ description: "Что я делаю прямо сейчас в работе и п
 
 ## Сейчас
 
-- **artka.dev v2** — превращаю блог в LLM-citable knowledge node. Spec: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`. EPIC A (foundation, schema-graph, robots/llms.txt) задеплоен, EPIC B (entity pages) — в работе.
+- **artka.dev v2** — превращаю блог в LLM-citable knowledge node. Spec: `docs/specs/2026-05-02-llm-citable-blog-design.md`. EPIC A (foundation, schema-graph, robots/llms.txt) задеплоен, EPIC B (entity pages) — в работе.
 - **Claude Code Guide, EN** — допереводы и фактчекинг английских версий после изменений в RU-источнике.
 - **Эксперименты с MCP-серверами** — личная wiki + git-граф (GitNexus) внутри редактора, тестирую границы tool-design для агентов.
 
@@ -1102,7 +1102,7 @@ links:
 
 ## Что дальше
 
-Spec на v2: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`. Превращаю блог в LLM-citable knowledge node — entity-страницы (то, что вы читаете), retrieval frontmatter, MDX-компоненты.
+Spec на v2: `docs/specs/2026-05-02-llm-citable-blog-design.md`. Превращаю блог в LLM-citable knowledge node — entity-страницы (то, что вы читаете), retrieval frontmatter, MDX-компоненты.
 ```
 
 - [x] **Step 4: Create `src/content/projects/claude-code-guide.md`**:
@@ -2344,8 +2344,8 @@ gh pr create --title "feat(entity): /about + /now + /uses + /projects + AuthorCa
 - Header nav exposes Now / Uses / Projects.
 - llms.txt link list (shipped in Plan 1) is now fully resolvable.
 
-Spec: docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md (EPIC B)
-Plan: docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md
+Spec: docs/specs/2026-05-02-llm-citable-blog-design.md (EPIC B)
+Plan: docs/specs/plans/2026-05-02-plan-2-entity-pages.md
 Depends on: PR for Plan 1 (LLM-citable foundation) — merge first.
 
 ## Test plan
@@ -2404,10 +2404,10 @@ EOF
 
 ---
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-02-plan-2-entity-pages.md`. Two execution options:**
+**Plan complete and saved to `docs/specs/plans/2026-05-02-plan-2-entity-pages.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** — Dispatch a fresh subagent per task, review between tasks; fast iteration on the mostly-additive changes.
 
-**2. Inline Execution** — Execute tasks in this session using `superpowers:executing-plans`, batched checkpoints at end of Phase 2 (after Task 4), end of Phase 5 (after Task 11), end of Phase 8 (after Task 17).
+**2. Inline Execution** — Execute tasks in this session, batched checkpoints at end of Phase 2 (after Task 4), end of Phase 5 (after Task 11), end of Phase 8 (after Task 17).
 
 **Which approach?**

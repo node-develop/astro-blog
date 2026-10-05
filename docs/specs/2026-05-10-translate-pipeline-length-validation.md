@@ -149,7 +149,7 @@ const truncateDesc = (s: string): string => {
    существующий `translate-check.ts` — там уже есть инфраструктура чтения
    EN-файлов и dirift-проверка; добавить второй проход через Zod.
 
-**Выход:** `docs/superpowers/plans/2026-05-10-translate-pipeline-length-validation.md`,
+**Выход:** `docs/specs/plans/2026-05-10-translate-pipeline-length-validation.md`,
 короткие решения по 1–4. Под 400 слов.
 
 ### 3.2. `critic` (быстрый прогон)

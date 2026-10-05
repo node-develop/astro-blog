@@ -150,7 +150,7 @@ const pushEntry = async (
 // is one of `ownedRevisions` (ids of this article's own publications): then it is our own commit
 // whose response was lost before the database recorded it.
 // TODO(cutover): the `overwrite` guard exists only while legacy file posts live in git; it goes
-// away with commitArticle in stage 2 (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+// away with commitArticle in stage 2 (docs/specs/plans/2026-10-03-api-only-migration.md).
 export const commitArticle = async (
   path: string,
   content: string,

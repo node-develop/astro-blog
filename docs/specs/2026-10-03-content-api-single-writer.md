@@ -1,7 +1,7 @@
 # Content API как единственный писатель: решения этапа 1
 
 Дата: 3 октября 2026
-План: `docs/superpowers/plans/2026-10-03-api-only-migration.md`
+План: `docs/specs/plans/2026-10-03-api-only-migration.md`
 Ранбук: `docs/runbooks/api-only-agent-prompts.md`, промпты 1.1–1.10
 
 Документ пополняется по мере прохождения промптов этапа 1. Здесь записаны решения, которых нет в плане, и отклонения от него.

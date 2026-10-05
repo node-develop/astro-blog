@@ -58,7 +58,7 @@ pnpm dev           # http://localhost:4321
 
 При публикации статьи автоматически генерируются черновики постов для X-EN, LinkedIn-EN и Telegram-RU через конвейер Writer (Haiku 4.5) → Editor (Sonnet 4.6 с voice card) → Critic (Sonnet 4.6, read-only). Драфты попадают на ревью в `/admin/social`, откуда публикуются per-channel вручную.
 
-Фича выключена по умолчанию (`SOCIAL_DRAFTS_ENABLED=false`). Полный playbook включения и cutover — в [docs/admin/social-cutover.md](docs/admin/social-cutover.md). Spec и план: `docs/superpowers/specs/2026-05-09-social-autopost-design.md`, `docs/superpowers/plans/2026-05-09-social-autopost.md`.
+Фича выключена по умолчанию (`SOCIAL_DRAFTS_ENABLED=false`). Полный playbook включения и cutover — в [docs/admin/social-cutover.md](docs/admin/social-cutover.md). Spec и план: `docs/specs/2026-05-09-social-autopost-design.md`, `docs/specs/plans/2026-05-09-social-autopost.md`.
 
 ## i18n / Translation Workflow
 
@@ -107,9 +107,9 @@ pnpm translate -- --force-all
 
 Проект настроен под Claude Code:
 
-- `CLAUDE.md` — глобальный контекст и стандарты; `AGENTS.md` — правила GitNexus
+- `CLAUDE.md` — глобальный контекст и стандарты; `AGENTS.md` — короткие правила для Codex и других агентов (редакционный процесс)
 - `.claude/agents/` — architect, sysanalyst, designer, backender, frontender, critic
-- `.claude/skills/` — new-blog-post, astro-component, design-system-tokens, ui-design-review, db-migration, deploy-check, gitnexus/\*, generated/\*
+- `.claude/skills/` — statejnik, new-blog-post, astro-component, design-system-tokens, ui-design-review, db-migration, deploy-check, write-tests; `generated/*` — справочные карты областей кода
 - `.claude/hooks/` — session-start, no-secrets (блокирует .env), format (prettier), notify-stop
 - `.claude/settings.json` — permissions + hook registrations
 

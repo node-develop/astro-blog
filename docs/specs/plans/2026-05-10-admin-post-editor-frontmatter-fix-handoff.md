@@ -1,7 +1,7 @@
 # Handoff: фикс админки + SEO внешних ссылок
 
 **Ветка:** `feat/admin-post-editor-frontmatter-fix`
-**Спека:** `docs/superpowers/specs/2026-05-10-admin-post-editor-frontmatter-fix.md`
+**Спека:** `docs/specs/2026-05-10-admin-post-editor-frontmatter-fix.md`
 **Дата:** 2026-05-10
 
 Sandbox не пускает `pnpm install` (mount restrictions на `node_modules` ops) и `git add/commit` (mount на `.git/`). Поэтому ниже — ровно те команды, которые тебе нужно выполнить локально.
@@ -95,8 +95,8 @@ git add src/content/posts/local-coding-agent.md src/content/posts/en/local-codin
 git commit -m "fix(content): починка фронтматтера local-coding-agent + EN regen"
 
 # ── Коммит 7: документация ──────────────────────────────────
-git add docs/superpowers/specs/2026-05-10-admin-post-editor-frontmatter-fix.md \
-        docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md
+git add docs/specs/2026-05-10-admin-post-editor-frontmatter-fix.md \
+        docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md
 git commit -m "docs(admin): spec + handoff по фиксу редактора и SEO"
 ```
 
@@ -121,8 +121,8 @@ git commit -m "docs(admin): spec + handoff по фиксу редактора и
 - `src/pages/admin/posts/new.astro`
 
 **Added:**
-- `docs/superpowers/specs/2026-05-10-admin-post-editor-frontmatter-fix.md`
-- `docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md`
+- `docs/specs/2026-05-10-admin-post-editor-frontmatter-fix.md`
+- `docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md`
 - `src/actions/posts.upsert.test.ts`
 - `src/components/admin/FaqEditor.tsx`
 - `src/lib/markdown/external-links.test.ts`
@@ -137,7 +137,7 @@ git commit -m "docs(admin): spec + handoff по фиксу редактора и
 
 ```bash
 git push -u origin feat/admin-post-editor-frontmatter-fix
-gh pr create --base main --title "feat(admin): summary/faq/keywords + body sanitizer + rehype-external-links" --body-file docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md
+gh pr create --base main --title "feat(admin): summary/faq/keywords + body sanitizer + rehype-external-links" --body-file docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md
 ```
 
 Если `gh pr create` не настроен — создай PR через web UI на GitHub, заголовок и body возьми из этого же файла (раздел §8).
@@ -176,7 +176,7 @@ YAML-фронтматтер. Параллельно подключаем `rehype
 
 ## Файлы
 
-См. §6 в `docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md`.
+См. §6 в `docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md`.
 
 ## Что осталось вне scope
 

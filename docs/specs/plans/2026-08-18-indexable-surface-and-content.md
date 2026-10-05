@@ -1,6 +1,6 @@
 # Indexable Surface and Content Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Submit only useful canonical pages, explicitly noindex utility/thin pages, complete the sitemap inventory, and repair the audited language/on-page defects.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro content collections, TypeScript 5, Vitest 3, Playwright, XML sitemaps
 
-**Spec:** `docs/superpowers/specs/2026-08-18-google-indexing-recovery-design.md`
+**Spec:** `docs/specs/2026-08-18-google-indexing-recovery-design.md`
 
 ## Global Constraints
 

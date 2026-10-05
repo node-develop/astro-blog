@@ -1,6 +1,6 @@
 # Canonical URL Identity Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give every artka.dev document one slash-suffixed URL identity and make redirects, metadata, structured data, feeds, Markdown, and internal links agree with it.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro 5, TypeScript 5, unified/rehype, Vitest 3, Playwright, Node standalone adapter
 
-**Spec:** `docs/superpowers/specs/2026-08-18-google-indexing-recovery-design.md`
+**Spec:** `docs/specs/2026-08-18-google-indexing-recovery-design.md`
 
 ## Global Constraints
 

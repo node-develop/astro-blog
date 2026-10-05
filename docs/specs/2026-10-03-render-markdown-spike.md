@@ -1,7 +1,7 @@
 # Спайк: `renderMarkdown` в Astro 7.3 для API-loader'а
 
 Дата: 3 октября 2026
-План: `docs/superpowers/plans/2026-10-03-api-only-migration.md` (этап 0, промпт 0.1)
+План: `docs/specs/plans/2026-10-03-api-only-migration.md` (этап 0, промпт 0.1)
 Версии: `astro` 7.3.1, `@astrojs/markdown-remark` 7.3.0
 
 ## Вывод

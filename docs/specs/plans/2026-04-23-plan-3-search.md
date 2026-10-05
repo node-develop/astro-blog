@@ -1,6 +1,6 @@
 # Plan 3 — Search Subsystem Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add hybrid search to the blog: Postgres FTS for admin (live, filters drafts) + Pagefind static index for public visitors (`⌘K` palette and SSR `/search` fallback).
 

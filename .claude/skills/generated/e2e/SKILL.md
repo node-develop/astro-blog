@@ -1,11 +1,9 @@
 ---
 name: e2e
-description: "Skill for the E2e area of astro-blog. 3 symbols across 1 files."
+description: "Skill for the E2e area of astro-blog."
 ---
 
 # E2e
-
-3 symbols | 1 files | Cohesion: 100%
 
 ## When to Use
 
@@ -31,7 +29,7 @@ Start here when exploring this area:
 
 ## Key Symbols
 
-Line numbers are omitted on purpose — they go stale; locate symbols with Grep or `gitnexus_context`. `installFixtures` / `removeFixtures` (same file) manage the `e2e-*` content fixtures that `pnpm translate` and the translation guard skip.
+Line numbers are omitted on purpose — they go stale; locate symbols with Grep. `installFixtures` / `removeFixtures` (same file) manage the `e2e-*` content fixtures that `pnpm translate` and the translation guard skip.
 
 | Symbol                    | Type     | File                        |
 | ------------------------- | -------- | --------------------------- |
@@ -41,14 +39,6 @@ Line numbers are omitted on purpose — they go stale; locate symbols with Grep 
 | `installFixtures`         | Function | `tests/e2e/global-setup.ts` |
 | `removeFixtures`          | Function | `tests/e2e/global-setup.ts` |
 
-## Execution Flows
-
-| Flow                            | Type            | Steps |
-| ------------------------------- | --------------- | ----- |
-| `GlobalSetup → LstatExistsSafe` | intra_community | 3     |
-
 ## How to Explore
 
-1. `gitnexus_context({name: "globalSetup"})` — see callers and callees
-2. `gitnexus_query({query: "e2e"})` — find related execution flows
-3. Read key files listed above for implementation details
+Read the key files listed above; find callers of a symbol with `git grep -n -w <symbol>`.

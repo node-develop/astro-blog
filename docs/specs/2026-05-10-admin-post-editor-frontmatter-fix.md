@@ -78,7 +78,7 @@ pnpm add rehype-external-links
 3. Где показывать warning «YAML вырезан из тела»: в `EditorShell` после ответа `posts.upsert`, через возвращаемое поле `warnings: string[]`.
 4. Решить, нужен ли отдельный schema-источник истины для админки или хватит `z.infer<>` поверх content-схемы.
 
-**Выход:** файл `docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix.md` с короткими решениями и обоснованиями (под 400 слов).
+**Выход:** файл `docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix.md` с короткими решениями и обоснованиями (под 400 слов).
 
 ### 4.2. `critic` — ревью архитектуры (быстрый прогон)
 

@@ -4,7 +4,7 @@ description: "My development tools: editors, Claude Code and Codex, TypeScript, 
 metaTitle: "Dev toolkit: editor, Claude Code and the stack"
 metaDescription: "The tools I use every day: editor and terminal, Claude Code and other AI assistants, the backend stack, infrastructure and observability setup."
 lang: en
-sourceHash: 411619005a2f01b66106d89068433f5cfb34130b9ed39a0bdd2e624e314d3d00
+sourceHash: b7387de2b85d5351d91b95331442bdd7dccd33f99c6fc56147a2bda304df9973
 manuallyEdited: false
 ---
 
@@ -32,7 +32,7 @@ I've also worked with **Redis, Kafka, and gRPC** in more complex systems. They s
 
 I use the **Anthropic, OpenAI, and Gemini** APIs when an application needs a model. The choice depends on the task, output quality, response time, and cost. A model's name alone tells me little about whether it will suit a product.
 
-My toolkit includes **LangGraph** for multi-step workflows, **LangSmith** for inspecting runs and evaluating responses, and **n8n** for integrations and automation. I use **MCP** to connect tools to agents, and **GitNexus** to explore relationships in code.
+My toolkit includes **LangGraph** for multi-step workflows, **LangSmith** for inspecting runs and evaluating responses, and **n8n** for integrations and automation. I use **MCP** to connect tools to agents.
 
 Project instructions, skills, and hooks help make useful actions repeatable. I try to add them for a specific need and keep the configuration understandable.
 

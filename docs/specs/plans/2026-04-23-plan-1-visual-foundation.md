@@ -1,6 +1,6 @@
 # Plan 1 — Visual Foundation (Editorial × Technical)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Redesign the public blog around an "Editorial × Technical" visual direction — warm cream palette, serif headings, sans body, mono metadata — and introduce a three-column layout with a left post-list sidebar and a right in-page TOC. No DB or admin work here.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro 5, Tailwind CSS 4 (`@tailwindcss/vite`), `@tailwindcss/typography`, `@fontsource-variable/*` (Source Serif 4, Inter, JetBrains Mono), Vitest 3, Playwright, `@axe-core/playwright`.
 
-**Dependencies:** Spec `docs/superpowers/specs/2026-04-23-blog-admin-sidebar-search-design.md` sections 4, 8.1, 12, 13.
+**Dependencies:** Spec `docs/specs/2026-04-23-blog-admin-sidebar-search-design.md` sections 4, 8.1, 12, 13.
 
 **Out of scope (deferred to later plans):**
 - DB schema / admin CRUD (Plan 2).

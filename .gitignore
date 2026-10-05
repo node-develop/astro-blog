@@ -39,15 +39,11 @@ CLAUDE.local.md
 # misc
 *.tsbuildinfo
 
-# Visual companion brainstorm artifacts
-.superpowers/
-
 # Uploaded media — persistent volume in prod, local-only in dev
 public/uploads/
 
 # Pagefind index symlinked from dist/client/pagefind by tests/e2e/global-setup.ts
 public/pagefind
-.gitnexus
 src/content/posts/e2e-*.md
 src/content/posts/e2enew*.md
 .lighthouse/
