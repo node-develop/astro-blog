@@ -13,7 +13,8 @@ import {
   primaryKey,
   customType,
   check,
-  type AnyPgColumn,
+  foreignKey,
+  type PgTableExtraConfig,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CriticNote } from "~/lib/social/types";
@@ -320,10 +321,9 @@ export const contentArticles = pgTable(
     // Desired state for the next site build: the publication whose content the
     // build must contain. Set when a publication is dispatched, i.e. before the
     // live page is verified; `publishedContent` only follows after verification.
-    buildPublicationId: uuid("build_publication_id").references(
-      (): AnyPgColumn => contentPublications.id,
-      { onDelete: "set null" },
-    ),
+    // FK declared in the table config below with an explicit name: the generated
+    // one is 64 characters, Postgres truncates it to 63 and drizzle-kit then sees a diff.
+    buildPublicationId: uuid("build_publication_id"),
     // When the document last changed in a way a reader can see (dateModified).
     lastModifiedAt: timestamp("last_modified_at", { withTimezone: true }).notNull().defaultNow(),
     // EN only: the RU version this translation was made from.
@@ -337,9 +337,16 @@ export const contentArticles = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({
+  // Annotated: content_publications references this table back, and without it
+  // the circular reference makes TypeScript infer `any` for both tables.
+  (t): PgTableExtraConfig => ({
     identity: uniqueIndex("content_articles_external_lang_idx").on(t.externalId, t.lang),
     address: uniqueIndex("content_articles_slug_lang_idx").on(t.slug, t.lang),
+    buildPublication: foreignKey({
+      name: "content_articles_build_publication_fk",
+      columns: [t.buildPublicationId],
+      foreignColumns: [contentPublications.id],
+    }).onDelete("set null"),
   }),
 );
 
