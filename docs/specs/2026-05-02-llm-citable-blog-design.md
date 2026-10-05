@@ -292,5 +292,5 @@ Two existing renderers (`blog/index.astro` line ~34, `PostLayout.astro` header) 
 - Audit findings: this document, `Current-state snapshot` table.
 - Existing layouts: `src/layouts/BaseLayout.astro`, `src/layouts/PostLayout.astro`.
 - Existing schema emitters: `BaseLayout.astro:56–67`, `PostLayout.astro:47–95`.
-- i18n contract: `docs/superpowers/specs/2026-04-27-bilingual-ru-en-design.md`.
+- i18n contract: `docs/specs/2026-04-27-bilingual-ru-en-design.md`.
 - llmstxt.org spec, schema.org `BlogPosting` + `FAQPage` + `Person` references.

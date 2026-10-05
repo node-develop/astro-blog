@@ -1,8 +1,8 @@
 # Authority Graph Implementation Plan (EPIC D)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **Spec:** `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` (EPIC D — `Authority pages` section, items D1–D5)
+> **Spec:** `docs/specs/2026-05-02-llm-citable-blog-design.md` (EPIC D — `Authority pages` section, items D1–D5)
 >
 > **Depends on:** Plan 1 (`feat/llm-citable-foundation`), Plan 2 (entity pages), Plan 3 (retrieval components) merged to `main`.
 
@@ -1225,7 +1225,7 @@ Expected: all green.
 
 - [ ] **Step 4: Optionally update `CLAUDE.md`.**
 
-If `CLAUDE.md` has an "Импорты (доп. контекст)" section with `@docs/...` pointers (added by Plan 1 Task 13), append `@docs/superpowers/plans/2026-05-02-plan-4-authority-graph.md`. If no such section exists, skip.
+If `CLAUDE.md` has an "Импорты (доп. контекст)" section with `@docs/...` pointers (added by Plan 1 Task 13), append `@docs/specs/plans/2026-05-02-plan-4-authority-graph.md`. If no such section exists, skip.
 
 - [ ] **Step 5: Final change-detection.**
 
@@ -1259,8 +1259,8 @@ gh pr create --title "feat(authority): tag archives, h1 discipline, sitemap cove
 - Stripped duplicate leading-h1 from existing post bodies; new Vitest guard prevents regressions
 - Sitemap coverage test asserts /tags, /tags/<slug>, and entity pages from Plan 2 are present
 
-Spec: docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md (EPIC D)
-Plan: docs/superpowers/plans/2026-05-02-plan-4-authority-graph.md
+Spec: docs/specs/2026-05-02-llm-citable-blog-design.md (EPIC D)
+Plan: docs/specs/plans/2026-05-02-plan-4-authority-graph.md
 
 ## Test plan
 - [ ] pnpm typecheck passes
@@ -1294,4 +1294,4 @@ Placeholder scan: no "TODO/TBD" inside executable steps. Owner-pending items (sa
 
 ---
 
-**Plan complete. Two execution options:** (1) Subagent-Driven (recommended) — fresh subagent per task with review checkpoints. (2) Inline Execution — `superpowers:executing-plans` in this session. Which approach?
+**Plan complete. Two execution options:** (1) Subagent-Driven (recommended) — fresh subagent per task with review checkpoints. (2) Inline Execution in this session. Which approach?

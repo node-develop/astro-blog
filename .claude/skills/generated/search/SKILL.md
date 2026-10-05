@@ -35,7 +35,7 @@ Invoke this skill when the task matches one of these patterns:
 | `src/lib/db/repo/posts-meta.ts`                       | `searchPostsMeta`, `setSearchVector`, `SearchHit`                                   |
 | `src/actions/posts.ts`                                | caller of `schedulePagefindRebuild`                                                 |
 
-Line numbers are intentionally omitted — they go stale; use Grep or `gitnexus_context` to locate symbols.
+Line numbers are intentionally omitted — they go stale; use Grep to locate symbols.
 
 ## Entry Points
 
@@ -47,6 +47,4 @@ Start here when exploring this area:
 
 ## How to Explore
 
-1. `gitnexus_context({name: "searchNode"})` — see callers and callees
-2. `gitnexus_query({query: "search"})` — find related execution flows
-3. Read key files listed above for implementation details
+Read the key files listed above; find callers of a symbol with `git grep -n -w <symbol>`.

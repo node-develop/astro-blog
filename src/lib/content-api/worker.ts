@@ -91,7 +91,7 @@ export const processPublication = async () =>
       if (job.state === "queued") {
         // TODO(cutover): an article owns its file once it was published or committed before;
         // a first commit must not overwrite a legacy file post that appeared at the same path.
-        // Removed with commitArticle (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+        // Removed with commitArticle (docs/specs/plans/2026-10-03-api-only-migration.md).
         // Only a `publish` commit proves ownership; an unpublish commit removes the file.
         const own = await tx
           .select({

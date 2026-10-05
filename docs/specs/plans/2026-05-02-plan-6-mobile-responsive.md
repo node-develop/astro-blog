@@ -1,6 +1,6 @@
 # Mobile-Responsive Fix Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task.
+> **For agentic workers:** Implement this plan task-by-task.
 
 **Goal:** Fix mobile-responsive issues introduced/exposed by Plans 1-5. Restore correct rendering at viewport widths down to 320px (iPhone SE) without horizontal scroll on any public page.
 

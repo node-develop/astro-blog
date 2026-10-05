@@ -105,7 +105,7 @@ export const articleView = (article: Article, latest: Pick<Publication, "state">
   updatedAt: article.updatedAt.toISOString(),
 });
 // TODO(cutover): a related slug that has no row in content_articles may still be a legacy file
-// post. Removed in prompt 3.6 with the file posts (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+// post. Removed in prompt 3.6 with the file posts (docs/specs/plans/2026-10-03-api-only-migration.md).
 const isPublishedPostFile = (slug: string, lang: string): boolean => {
   const prefix = lang === "en" ? "en/" : "";
   for (const extension of ["md", "mdx"]) {
@@ -136,7 +136,7 @@ export const relatedIsPublished = async (
   if (related.publishedVersion === null) return false;
   // TODO(cutover): also false when build_publication_id is null (the article is leaving the
   // build); see the spec, section "Export", "Ссылки relatedSlugs", and
-  // docs/superpowers/plans/2026-10-03-api-only-migration.md.
+  // docs/specs/plans/2026-10-03-api-only-migration.md.
   // An unpublication that is dispatched (or about to be) takes the page out of the next build:
   // a link to it would dangle.
   const [leaving] = await tx
@@ -154,7 +154,7 @@ export const relatedIsPublished = async (
 
 // TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
 // overwrite the file. Slug occupancy becomes database-only in prompt 3.6
-// (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+// (docs/specs/plans/2026-10-03-api-only-migration.md).
 export const fileOwnsSlug = (slug: string, lang: "ru" | "en"): boolean => {
   const path = articlePath(slug, lang);
   return existsSync(resolve(path)) || existsSync(resolve(`${path}x`));

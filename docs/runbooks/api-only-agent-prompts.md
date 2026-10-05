@@ -2,7 +2,7 @@
 
 Дата: 3 октября 2026
 Репозиторий: `/Users/artemkashuta/Documents/astro-blog`
-План: `docs/superpowers/plans/2026-10-03-api-only-migration.md`
+План: `docs/specs/plans/2026-10-03-api-only-migration.md`
 Формат такой же, как в `docs/runbooks/week-1-agent-prompts.md`: один промпт на одну сессию Claude Code.
 
 ---
@@ -22,11 +22,12 @@
 **Общая преамбула.** Каждый промпт ниже начинается с одного и того же блока, он здесь один раз, чтобы не повторять:
 
 ```
-Контекст: план docs/superpowers/plans/2026-10-03-api-only-migration.md, раздел с
+Контекст: план docs/specs/plans/2026-10-03-api-only-migration.md, раздел с
 номером этого шага. Прочитай CLAUDE.md целиком и соблюдай «Стандарты кода»,
 «Working rules» и «Запреты». Перед правкой любого символа с зависимостями
-запусти gitnexus_impact. Для задач на 3+ файла сначала architect, потом critic,
-потом реализация, в конце снова critic. Без --no-verify. В конце шага: pnpm
+найди всех вызывающих (git grep -n -w). Для задач на 3+ файла сначала
+architect, потом critic, потом реализация, в конце снова critic.
+Без --no-verify. В конце шага: pnpm
 typecheck, pnpm test, pnpm test:db (нужен Docker), после сборки pnpm test:built,
 краткий отчёт «что сделано, что проверено, что осталось». Вывод lint и
 typecheck читать без фильтров и по коду возврата: pre-push гоняет то же самое.
@@ -72,7 +73,7 @@ Astro 7.3 (package.json: astro ^7.3.1) настройку markdown.processor: un
    и вызывать createMarkdownProcessor из @astrojs/markdown-remark с тем же
    списком. Один источник конфигурации обязателен.
 5. Удали временную коллекцию. Запиши результат в
-   docs/superpowers/specs/2026-10-xx-render-markdown-spike.md: что работает,
+   docs/specs/2026-10-03-render-markdown-spike.md: что работает,
    что нет, какой путь выбран для loader'а, с цитатами из кода Astro.
 6. Закоммить только spec: `docs(spike): renderMarkdown in Astro 7.3 for API loader`.
 ```
@@ -238,7 +239,7 @@ pnpm exec drizzle-kit check, потом db:generate, потом ревью diff.
    с ON CONFLICT DO NOTHING.
 5. Backfill в той же миграции: для каждой content_articles строка версии 1 с
    текущим document.
-6. Запиши решения в docs/superpowers/specs/2026-10-xx-content-api-single-writer.md
+6. Запиши решения в docs/specs/2026-10-03-content-api-single-writer.md
    (раздел «Схема данных»), тесты на миграцию через testcontainers.
 Коммит: `feat(db): article versions, build pointer and publication batches`.
 ```
@@ -299,7 +300,7 @@ pnpm exec drizzle-kit check, потом db:generate, потом ревью diff.
 ```
 [преамбула]
 
-Бюджет: 30 шагов. Это удаление, поэтому gitnexus_impact на каждый символ.
+Бюджет: 30 шагов. Это удаление, поэтому перед удалением каждого символа найди всех вызывающих (git grep -n -w).
 
 Убрать из service.ts, worker.ts, contract.ts, routes.ts, errors.ts:
 manualRevision, manualEditsPending, acknowledgedManualRevisionId,
@@ -518,7 +519,7 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    В Astro 7.3.1 у renderMarkdown нет опции frontmatter, он разбирает шапку из
    самой строки; строка без шапки даёт пустой frontmatter, и
    strip-frontmatter-duplicates молча перестаёт убирать H1 и лид (см.
-   docs/superpowers/specs/2026-10-03-render-markdown-spike.md). pipeline.ts не
+   docs/specs/2026-10-03-render-markdown-spike.md). pipeline.ts не
    нужен: спайк подтвердил, что renderMarkdown уважает markdown.processor.
    store.set({id: lang === 'en' ?
    `en/${slug}` : slug, data, body, rendered, digest: contentSha256}).
@@ -618,7 +619,7 @@ pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
    (batchId) делает POST /repos/{owner}/{repo}/dispatches с event_type
    content-publish и client_payload {batchId, snapshotHint}. Ретраи как у
    текущего клиента. commitArticle, readRemoteArticle, articlePath удалить
-   (gitnexus_impact!).
+   (сначала git grep -n -w по каждому!).
 2. worker.ts, шаг queued: вместо commitArticle выставить build_publication_id
    (уже из 1.8) и вызвать requestRebuild один раз на batch (debounce: если
    другая задача того же batch уже dispatched_at в последние 120 с, не слать).
@@ -884,7 +885,7 @@ content_articles на проде, и совпадает ли её publishedConte
 ```
 [преамбула]
 
-Бюджет: 40 шагов. gitnexus_impact на каждый удаляемый экспорт. Удалять только
+Бюджет: 40 шагов. git grep -n -w на каждый удаляемый экспорт. Удалять только
 после того, как промпты 3.2 и 3.5 закрыты и прод работает из снапшота минимум
 неделю.
 
@@ -931,10 +932,10 @@ Postgres, снапшот), «Команды» (content:pull, mcp), «i18n» (п�
 (repository_dispatch, снапшот, теги образа, нет тома uploads), «Запреты»
 (писать в src/content/posts). README: раздел «Публикация статьи» на MCP и
 админку. docs/content-api.md финальная версия. Удали или пометь устаревшими
-docs/superpowers/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md,
+docs/specs/plans/2026-05-10-admin-post-editor-frontmatter-fix-handoff.md,
 2026-05-10-translate-pipeline-length-validation.md,
-docs/runbooks/dokploy-uploads-volume.md. .claude/skills/generated/* перегенерировать
-(gitnexus analyze).
+docs/runbooks/dokploy-uploads-volume.md. .claude/skills/generated/* обновить
+вручную под новые пути.
 ```
 
 ---

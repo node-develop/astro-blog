@@ -1,7 +1,7 @@
 /**
  * Astro Actions for /admin/social: thin wrappers around src/lib/social/service.ts that keep the
  * input and output shapes the admin UI (DraftCard) already uses. They go away in stage 3 with the
- * move of the admin to the content API (docs/superpowers/plans/2026-10-03-api-only-migration.md).
+ * move of the admin to the content API (docs/specs/plans/2026-10-03-api-only-migration.md).
  */
 import { ActionError, defineAction } from "astro:actions";
 import type { ActionAPIContext } from "astro:actions";

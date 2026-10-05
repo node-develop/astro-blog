@@ -41,7 +41,7 @@ export const documentHash = (document: ArticleDocument): string =>
 
 // TODO(cutover): legacy file posts are published articles that have no database row; their titles
 // and H2s count as peers until the files are gone (prompt 3.6,
-// docs/superpowers/plans/2026-10-03-api-only-migration.md). The article's own slug is skipped
+// docs/specs/plans/2026-10-03-api-only-migration.md). The article's own slug is skipped
 // (its committed file is its own), and so is any file whose (slug, lang) has a database row: the
 // row wins, as everywhere else.
 type LegacyFile = Readonly<{ slug: string; title?: string; headings: readonly string[] }>;

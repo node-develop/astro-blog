@@ -1,8 +1,8 @@
 # LLM-Citable Retrieval Components Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **Spec:** `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` (EPIC C only — Phases 1, 2, 4, 5 of the parent spec are out of scope for this plan)
+> **Spec:** `docs/specs/2026-05-02-llm-citable-blog-design.md` (EPIC C only — Phases 1, 2, 4, 5 of the parent spec are out of scope for this plan)
 
 **Goal:** Make every published post a citation-ready, chunkable artifact for LLM retrieval. Extend the post zod schema with `summary`, `keywords`, `faq[]`, `lang`. Ship five MDX components (`<Tldr>`, `<KeyTakeaways>`, `<Faq>`, `<Compare>`, `<Definition>`) under `src/components/mdx/`, auto-injected globally via the MDX integration so authors don't import per-file. `PostLayout` renders `<Tldr>` automatically when `frontmatter.summary` is present, renders `<Faq>` automatically when `frontmatter.faq[]` is non-empty (and merges a `FAQPage` node into the existing `@graph`), and shows a `RelatedPosts` block (top-3 by Jaccard tag overlap, same locale) above the AuthorCard.
 
@@ -2148,7 +2148,7 @@ Open `CLAUDE.md`. Under «Стандарты кода» → «Astro» (around th
   are auto-injected via `src/components/mdx/index.ts` and `<Content components={mdxComponents} />`
   in the slug pages. Authors use them as global tags in `.md`/`.mdx` posts — no per-file imports.
   Capitalised names; collision risk documented in spec
-  `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md`.
+  `docs/specs/2026-05-02-llm-citable-blog-design.md`.
 ```
 
 - [ ] **Step 11:** Run change-detection.
@@ -2202,8 +2202,8 @@ gh pr create --title "feat(retrieval): MDX components, frontmatter, related post
 - Translation pipeline (scripts/translate.ts) translates summary +
   faq[].question/answer; passes keywords/lang verbatim.
 
-Spec: docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md (EPIC C)
-Plan: docs/superpowers/plans/2026-05-02-plan-3-retrieval-components.md
+Spec: docs/specs/2026-05-02-llm-citable-blog-design.md (EPIC C)
+Plan: docs/specs/plans/2026-05-02-plan-3-retrieval-components.md
 
 ## Test plan
 - [ ] pnpm typecheck passes
@@ -2263,10 +2263,10 @@ The locked decision is: components live in `src/components/mdx/`, are re-exporte
 
 ---
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-02-plan-3-retrieval-components.md`. Two execution options:**
+**Plan complete and saved to `docs/specs/plans/2026-05-02-plan-3-retrieval-components.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration. Particularly suited here because tasks 2–6 are component-shaped and ideal for parallel subagent dispatch (Task 4, 5, 6 are independent of each other once Task 2's `index.ts` pattern is established).
 
-**2. Inline Execution** — Execute tasks in this session using `superpowers:executing-plans`, batch execution with checkpoints between phases.
+**2. Inline Execution** — Execute tasks in this session, batch execution with checkpoints between phases.
 
 **Which approach?**

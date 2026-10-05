@@ -1,8 +1,8 @@
 # LLM-Citable Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **Spec:** `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` (EPIC A only — phases 2-5 of the spec are out of scope for this plan)
+> **Spec:** `docs/specs/2026-05-02-llm-citable-blog-design.md` (EPIC A only — phases 2-5 of the spec are out of scope for this plan)
 
 **Goal:** Make `artka.dev` a citation-ready knowledge node for Claude/ChatGPT/Perplexity/Gemini by hardening the AI-access surface (`robots.txt`, `llms.txt`, `llms-full.txt`) and replacing per-page inline JSON-LD blocks with a single coherent `@graph` schema emitted from `BaseLayout`.
 
@@ -1789,7 +1789,7 @@ Expected: all green.
 Open `CLAUDE.md` and add after the existing `@docs/...` imports:
 
 ```markdown
-@docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md
+@docs/specs/2026-05-02-llm-citable-blog-design.md
 ```
 
 This makes the spec accessible to future Claude sessions touching SEO/schema work.
@@ -1830,8 +1830,8 @@ gh pr create --title "feat(seo): LLM-citable foundation — robots, llms.txt, un
 - Single @graph JSON-LD emitted from BaseLayout (Person/Organization/WebSite + per-page nodes connected by @id)
 - BlogPosting now includes articleBody (≤800-word excerpt) and wordCount
 
-Spec: docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md (EPIC A)
-Plan: docs/superpowers/plans/2026-05-02-plan-1-llm-citable-foundation.md
+Spec: docs/specs/2026-05-02-llm-citable-blog-design.md (EPIC A)
+Plan: docs/specs/plans/2026-05-02-plan-1-llm-citable-foundation.md
 
 ## Test plan
 - [ ] pnpm typecheck passes
@@ -1869,10 +1869,10 @@ Placeholder scan: every step contains the actual file content or shell command. 
 
 ---
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-02-plan-1-llm-citable-foundation.md`. Two execution options:**
+**Plan complete and saved to `docs/specs/plans/2026-05-02-plan-1-llm-citable-foundation.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration.
 
-**2. Inline Execution** — Execute tasks in this session using `superpowers:executing-plans`, batch execution with checkpoints.
+**2. Inline Execution** — Execute tasks in this session, batch execution with checkpoints.
 
 **Which approach?**

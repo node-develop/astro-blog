@@ -1,6 +1,6 @@
 # Runtime, Build, and Search Handoff Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make anonymous public rendering independent of auth secrets, normalize trusted www requests, eliminate audited build warnings, and provide production-equivalent verification plus an external recovery runbook.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro middleware, Better Auth, Node child processes, Vitest 3, standalone Node adapter, Docker
 
-**Spec:** `docs/superpowers/specs/2026-08-18-google-indexing-recovery-design.md`
+**Spec:** `docs/specs/2026-08-18-google-indexing-recovery-design.md`
 
 ## Global Constraints
 
@@ -54,7 +54,7 @@
 - Create: `scripts/verify-seo-build.test.ts`
 - Modify: `package.json`
 - Create: `docs/runbooks/google-indexing-recovery.md`
-- Modify: `docs/superpowers/specs/2026-08-18-google-indexing-recovery-design.md`
+- Modify: `docs/specs/2026-08-18-google-indexing-recovery-design.md`
 
 **Interfaces:**
 - Produces: `requiresAuthContext(request: Request, pathname: string): boolean`

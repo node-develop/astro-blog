@@ -1,6 +1,6 @@
 # Social Autopost — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** При публикации статьи автоматически генерировать черновики соц-постов для X-EN, LinkedIn-EN, Telegram-RU через конвейер Writer → Editor → Critic, складывать в outbox-таблицу и предоставлять админ-UI для ревью и публикации per-channel.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro 5 (SSR + Actions), Drizzle ORM + Postgres 18, Better-Auth (admin guard), Anthropic SDK (Claude Haiku 4.5 + Sonnet 4.6), Vitest + msw (unit/integration), Playwright (e2e), pino (logging), Tailwind 4 + React island для DraftCard.
 
-**Spec:** `docs/superpowers/specs/2026-05-09-social-autopost-design.md`
+**Spec:** `docs/specs/2026-05-09-social-autopost-design.md`
 
 ---
 
@@ -3676,7 +3676,7 @@ git commit -m "docs(social): cutover playbook"
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-05-09-social-autopost.md`. Two execution options:
+Plan complete and saved to `docs/specs/plans/2026-05-09-social-autopost.md`. Two execution options:
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration.
 

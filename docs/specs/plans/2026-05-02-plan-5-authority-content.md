@@ -1,8 +1,8 @@
 # EPIC E — Authority Content Brief
 
-> **For agentic workers:** This is a **content brief**, not a code-implementation plan. Most of the work is writing prose: TL;DR lines, FAQs, new article outlines, an `about.md` rewrite. Use `superpowers:writing-skills` discipline (verify-before-claim, evidence beats assertion) when authoring. NO new code is required for E1 and E3; E2 produces three Markdown posts under `src/content/posts/`.
+> **For agentic workers:** This is a **content brief**, not a code-implementation plan. Most of the work is writing prose: TL;DR lines, FAQs, new article outlines, an `about.md` rewrite. Verify before claiming: evidence beats assertion. NO new code is required for E1 and E3; E2 produces three Markdown posts under `src/content/posts/`.
 >
-> **Spec:** `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` § Phase 5 ("Authority content (rolling)") and EPIC E in the executive summary.
+> **Spec:** `docs/specs/2026-05-02-llm-citable-blog-design.md` § Phase 5 ("Authority content (rolling)") and EPIC E in the executive summary.
 >
 > **Depends on:** Plan 3 (Retrieval-layer frontmatter — `summary`, `keywords`, `faq[]` zod fields) must ship before E1/E2 frontmatter changes typecheck. Until then, draft the prose in this document and merge frontmatter wholesale once the schema lands.
 
@@ -336,7 +336,7 @@ The three picks:
 
 Rejected from the candidate list and why:
 - Pagefind indexing postmortem — currently only 14 posts; not enough scale to make claims interesting yet. Revisit at 50+ posts.
-- Astro 5 i18n architecture — already covered exhaustively in `docs/superpowers/specs/2026-04-27-bilingual-ru-en-design.md`; would duplicate.
+- Astro 5 i18n architecture — already covered exhaustively in `docs/specs/2026-04-27-bilingual-ru-en-design.md`; would duplicate.
 - Drizzle + Postgres 18 admin — admin is private, code is small, hard to write authoritatively without leaking schema choices.
 - "Why I avoided `class` in 4000 lines of TypeScript" — opinion piece, weak authority signal without code metrics. Could ship later as a v2.
 
@@ -442,7 +442,7 @@ Mermaid-диаграммы — это плохой client-side opex (больш�
 3. До/после: количество `<script type="application/ld+json">` блоков на странице (1 vs 3+).
 4. Скриншот валидации в Google Rich Results Test или Schema.org validator до и после.
 5. Реальный JSON-LD `@graph` со страницы поста — вставить целиком (он же помещается в ~3 KB).
-6. Цитата из spec — `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` § "Schema-graph design", чтобы статья ссылалась на собственный spec.
+6. Цитата из spec — `docs/specs/2026-05-02-llm-citable-blog-design.md` § "Schema-graph design", чтобы статья ссылалась на собственный spec.
 
 **Estimated word count:** 2000–2600 слов.
 **Writing effort:** ~4 часа письма + 1 час на замеры/скриншоты.
@@ -612,7 +612,7 @@ These rules apply to every new post (E2) and every E1 backfill where applicable.
 
 A 12-step checklist the owner runs end-to-end:
 
-1. **Brainstorm topic.** Run `superpowers:brainstorming` (10–20 min). Output: 1 thesis paragraph, 5–8 H2 headings.
+1. **Brainstorm topic** (10–20 min). Output: 1 thesis paragraph, 5–8 H2 headings.
 2. **Outline.** Sketch H2s and 2–3 sub-bullets each. Stop here, don't write yet.
 3. **Evidence pass.** For each H2 with a numerical or factual claim, identify the data source (file in repo, command to run, doc to cite, screenshot to capture). If you can't find a source — drop the claim or relabel it as opinion.
 4. **Draft RU under `src/content/posts/<NN>-<slug>.md`.** Use the `new-blog-post` skill or the existing post template. Frontmatter includes `title`, `description`, `summary`, `keywords`, `tags`, `pubDate`, `cover`, `coverAlt`, `lang: "ru"`.
@@ -650,9 +650,9 @@ A 12-step checklist the owner runs end-to-end:
 
 # References
 
-- Spec: `docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md` § Phase 5
+- Spec: `docs/specs/2026-05-02-llm-citable-blog-design.md` § Phase 5
 - Companion plans: Plans 1 (foundation), 2 (entities), 3 (retrieval), 4 (authority graph)
 - Existing posts: `src/content/posts/01-introduction.md` … `14-claims-verification.md`
 - About source: `src/content/site/about.md`
-- i18n contract: `docs/superpowers/specs/2026-04-27-bilingual-ru-en-design.md`
+- i18n contract: `docs/specs/2026-04-27-bilingual-ru-en-design.md`
 - Tag display labels: `src/i18n/tags.ru.json`, `src/i18n/tags.en.json`

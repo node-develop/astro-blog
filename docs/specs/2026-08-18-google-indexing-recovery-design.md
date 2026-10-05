@@ -249,7 +249,7 @@ Each sequence item is independently tested and reviewed before the next begins.
 
 ## External handoff after merge and deployment
 
-Use the owner-gated [Google Indexing Recovery Runbook](../../runbooks/google-indexing-recovery.md) for commands, expected statuses, Search Console steps, and weekly tracking. DNS/TLS, deployment, and Search Console mutations are not completed by this PR.
+Use the owner-gated [Google Indexing Recovery Runbook](../runbooks/google-indexing-recovery.md) for commands, expected statuses, Search Console steps, and weekly tracking. DNS/TLS, deployment, and Search Console mutations are not completed by this PR.
 
 1. Configure valid TLS and apex redirect for `www.artka.dev` at the DNS/proxy provider.
 2. Deploy the verified application build.

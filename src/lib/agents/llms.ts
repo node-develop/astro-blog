@@ -37,7 +37,7 @@ export interface LlmsInput {
   readonly enLessons: ReadonlyArray<LlmsLesson>;
 }
 
-/** Budget from docs/superpowers/specs/2026-05-02-llm-citable-blog-design.md ("≤ 200 KB"). */
+/** Budget from docs/specs/2026-05-02-llm-citable-blog-design.md ("≤ 200 KB"). */
 export const LLMS_FULL_BUDGET_BYTES = 200 * 1024;
 
 const dateOnly = (value: Date): string => value.toISOString().slice(0, 10);
