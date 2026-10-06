@@ -1,16 +1,15 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { fixtureGuard } from "../support/snapshot";
 
 /**
  * A post page makes two claims about itself: one to a reader, in the visible
  * markup, and one to a crawler, in the JSON-LD graph. These tests assert the
  * rules that keep the two from drifting apart:
  *
- *   - every `@id` the BlogPosting points at is a node the same page emits
- *     (a reference to a node nobody publishes is the same as no reference);
- *   - one article is written by one person, so the page describes exactly one
- *     Person across JSON-LD and microdata taken together;
+ *   - one article is written by one person: the JSON-LD graph has exactly one
+ *     Person (build check) and the markup carries no microdata Person (here);
  *   - the breadcrumb trail a reader sees is the BreadcrumbList, item for item;
  *   - the byline a reader sees is what `article:author` tells a machine.
  *
@@ -73,25 +72,6 @@ const nodeOfType = (
   return node;
 };
 
-/** Every `@id` reachable from a value, ignoring the `@id` that names a node. */
-const referencedIds = (value: unknown): ReadonlyArray<string> => {
-  if (Array.isArray(value)) return value.flatMap(referencedIds);
-  if (!isRecord(value)) return [];
-  const own = typeof value["@id"] === "string" ? [value["@id"]] : [];
-  const nested = Object.entries(value)
-    .filter(([key]) => key !== "@id")
-    .flatMap(([, child]) => referencedIds(child));
-  return [...own, ...nested];
-};
-
-/** Objects of a given `@type` anywhere in the graph, nested ones included. */
-const countTyped = (value: unknown, type: string): number => {
-  if (Array.isArray(value)) return value.reduce<number>((sum, x) => sum + countTyped(x, type), 0);
-  if (!isRecord(value)) return 0;
-  const here = typesOf(value).includes(type) ? 1 : 0;
-  return Object.values(value).reduce<number>((sum, x) => sum + countTyped(x, type), here);
-};
-
 /** `&amp;` goes last, or `&amp;lt;` would decode twice. */
 const decodeEntities = (value: string): string =>
   value
@@ -151,12 +131,13 @@ describe("built post pages", () => {
     expect(new Set(builtPosts.map((post) => post.locale))).toEqual(new Set(["ru", "en"]));
   });
 
-  it.each(builtPosts)("$route describes exactly one Person", ({ file }) => {
-    const html = readFileSync(file, "utf8");
-
-    expect(countTyped(graphOf(html), "Person")).toBe(1);
-    // A microdata Person next to the JSON-LD one is a second, anonymous author.
-    expect(html).not.toMatch(/itemtype=["']?https?:\/\/schema\.org\/Person\b/i);
+  // "Exactly one Person in the JSON-LD graph" lives in the build check (scripts/seo-checks/jsonld.ts,
+  // via validatePageGraph). What no JSON-LD check can see is microdata: a microdata Person next
+  // to the JSON-LD one is a second, anonymous author.
+  it.each(builtPosts)("$route has no microdata Person next to the JSON-LD one", ({ file }) => {
+    expect(readFileSync(file, "utf8")).not.toMatch(
+      /itemtype=["']?https?:\/\/schema\.org\/Person\b/i,
+    );
   });
 
   it.each(builtPosts)("$route shows the breadcrumb trail it marks up", ({ file }) => {
@@ -199,7 +180,8 @@ describe("post cover from another origin", () => {
       ([tag]) => /\bhref="([^"]+)"/.exec(tag)?.[1] ?? "",
     );
 
-  it("has at least one such post to check, and at least one without", () => {
+  // The shape of the corpus: a release without a third-party cover is legitimate.
+  fixtureGuard("has at least one such post to check, and at least one without", () => {
     const origins = builtPosts.map(({ file }) => thirdPartyCoverOrigin(readFileSync(file, "utf8")));
     expect(origins.filter((origin) => origin !== null).length).toBeGreaterThan(0);
     expect(origins.filter((origin) => origin === null).length).toBeGreaterThan(0);

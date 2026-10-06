@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { login } from "./helpers/admin";
+import { gotoOk } from "./helpers/goto-ok";
 
 interface PageDef {
   readonly path: string;
@@ -22,7 +23,7 @@ test.describe("accessibility baseline", () => {
   for (const { path, auth } of PAGES) {
     test(`no serious/critical a11y violations on ${path}`, async ({ page }) => {
       if (auth === "admin") await login(page);
-      await page.goto(path);
+      await gotoOk(page, path);
 
       const result = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

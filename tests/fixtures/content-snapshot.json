@@ -1,0 +1,235 @@
+{
+  "snapshotId": "b31fb509-cdd0-824e-bf94-7274efcc9d17",
+  "generatedAt": "2026-10-05T00:00:00.000Z",
+  "count": 19,
+  "articles": [
+    {
+      "slug": "claude-code-video-guide",
+      "lang": "en",
+      "revision": "c9a8f705-8c0a-84ca-a798-c7174999d454",
+      "content": "---\ntitle: A video guide to Claude Code for beginners (fixture)\ndescription: \"How to build a working Claude Code routine in one evening: install, commands, checks.\"\nsummary: >-\n  A short learning path for Claude Code: install, the first session, running checks and reading the result. The text is\n  a build test fixture.\npubDate: \"2026-05-03T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - claude-code\n  - guide\nkeywords:\n  - Claude Code\n  - video guide\nfaq: []\napiRevision: c9a8f705-8c0a-84ca-a798-c7174999d454\n---\n\nThis text is for the site build, not for a reader: it checks how code blocks and links are rendered.\n\n## Install\n\nInstall the tool and check the version.\n\n```bash\nnpm install -g @anthropic-ai/claude-code\nclaude --version\n```\n\n## The first session\n\nDescribe the task in one sentence and ask for a plan first.\n\n```ts\nexport const plan = (task: string): string[] => [`read ${task}`, `change ${task}`];\n```\n\n## Sources\n\n- [Claude Code overview](https://docs.anthropic.com/en/docs/claude-code/overview)\n",
+      "contentSha256": "0dbd378a591017c9c09494f0e20f0f3f235dd12daa9a846d8cc9774086b25d4f",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "claude-code-video-guide",
+      "lang": "ru",
+      "revision": "d3078df3-efed-8627-a9e8-3dee0890e735",
+      "content": "---\ntitle: Видеогид по Claude Code для новичков (фикстура)\ndescription: \"Как за один вечер собрать рабочий процесс с Claude Code: установка, команды, проверки.\"\nsummary: >-\n  Короткий учебный маршрут по Claude Code: установка, первая сессия, запуск проверок и разбор результата. Текст служит\n  тестовой фикстурой сборки.\npubDate: \"2026-05-03T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - claude-code\n  - guide\nkeywords:\n  - Claude Code\n  - видеогид\nfaq: []\napiRevision: d3078df3-efed-8627-a9e8-3dee0890e735\n---\n\nЭтот текст нужен сборке сайта, а не читателю: он проверяет вывод блоков кода и ссылок.\n\n## Установка\n\nПоставьте инструмент и проверьте версию.\n\n```bash\nnpm install -g @anthropic-ai/claude-code\nclaude --version\n```\n\n## Первая сессия\n\nОпишите задачу одной фразой и попросите сначала составить план.\n\n```ts\nexport const plan = (task: string): string[] => [`read ${task}`, `change ${task}`];\n```\n\n## Источники\n\n- [Claude Code overview](https://docs.anthropic.com/en/docs/claude-code/overview)\n",
+      "contentSha256": "d7f09e9bbb4737b1a4b7f6407fc771d570df61190e0d0ac2b1b65249165f02bf",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "claude-md-12-rules",
+      "lang": "en",
+      "revision": "dd511dc3-8089-874c-86ec-73949c4b44fd",
+      "content": "---\ntitle: Twelve rules for CLAUDE.md (fixture)\ndescription: How to check every rule in CLAUDE.md by the trace it leaves in a task.\nsummary: >-\n  A build fixture: an article with a table of contents, a first code block with an empty line and a Mermaid diagram that\n  has a title and a description.\npubDate: \"2026-05-10T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - ai\n  - claude-code\n  - prompt-engineering\nkeywords:\n  - CLAUDE.md\n  - agent rules\nfaq: []\napiRevision: dd511dc3-8089-874c-86ec-73949c4b44fd\n---\n\nA CLAUDE.md file works while every rule can be checked after a task.\n\n## Where the rules come from\n\nA rule comes from an observed failure, not from a wish to describe an ideal.\n\n```ts\nconst rules = loadRules(\"CLAUDE.md\");\n\nexport const check = (diff: string): boolean => rules.every((rule) => rule.test(diff));\n```\n\n## The checking loop\n\n```mermaid\nflowchart LR\n  accTitle: The rule loop in CLAUDE.md\n  accDescr: An observed failure becomes a rule, the rule is applied to a task, and the result is checked through the diff and the tests.\n  A[Failure] --> B[Rule]\n  B --> C[Diff and checks]\n```\n\n## What to keep\n\nKeep the rules that change the agent behavior and show up in the diff.\n\n## Sources\n\n- [Claude Code memory](https://docs.anthropic.com/en/docs/claude-code/memory)\n",
+      "contentSha256": "8bdf9163c1527eb24effc12e37dde2adcdfe5164f4aa509cf105e80dd4c99bb7",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "claude-md-12-rules",
+      "lang": "ru",
+      "revision": "b6233be6-49f5-8317-b069-ccf546121e1a",
+      "content": "---\ntitle: Двенадцать правил для CLAUDE.md (фикстура)\ndescription: Как проверять каждое правило в CLAUDE.md по следу, который оно оставляет в задаче.\nsummary: >-\n  Фикстура сборки: статья с оглавлением, первым блоком кода с пустой строкой и диаграммой Mermaid, у которой есть\n  заголовок и описание.\npubDate: \"2026-05-10T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - ai\n  - claude-code\n  - prompt-engineering\nkeywords:\n  - CLAUDE.md\n  - правила для агента\nfaq: []\napiRevision: b6233be6-49f5-8317-b069-ccf546121e1a\n---\n\nФайл CLAUDE.md работает, пока каждое правило можно проверить после задачи.\n\n## Откуда берутся правила\n\nПравило появляется из замеченной ошибки, а не из желания описать идеал.\n\n```ts\nconst rules = loadRules(\"CLAUDE.md\");\n\nexport const check = (diff: string): boolean => rules.every((rule) => rule.test(diff));\n```\n\n## Цикл проверки\n\n```mermaid\nflowchart LR\n  accTitle: Цикл правила в CLAUDE.md\n  accDescr: Замеченная ошибка становится правилом, правило применяется к задаче, результат проверяется по диффу и тестам.\n  A[Ошибка] --> B[Правило]\n  B --> C[Дифф и проверки]\n```\n\n## Что оставить\n\nОставьте правила, которые меняют поведение агента и видны в диффе.\n\n## Источники\n\n- [Claude Code memory](https://docs.anthropic.com/en/docs/claude-code/memory)\n",
+      "contentSha256": "3baa4958ea95c9e3bab1113ec4d1529d70be92c8f54cb2f49bbbefaa9876f803",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "crawled-not-indexed-astro-audit",
+      "lang": "en",
+      "revision": "6e872902-a04e-8289-869a-02f43ca22311",
+      "content": "---\ntitle: \"Crawled but not indexed: an audit of an Astro site (fixture)\"\ndescription: Why a page gets the crawled but not indexed status and which checks to run first on an Astro site\nsummary: >-\n  A build fixture: the body starts with a quote that repeats the description and has a block and an inline formula. It\n  shows that the renderer received the document header.\npubDate: \"2026-06-01T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - seo\n  - astro\nkeywords:\n  - not indexed\n  - Astro audit\nfaq: []\napiRevision: 6e872902-a04e-8289-869a-02f43ca22311\n---\n\n> Why a page gets the crawled but not indexed status and which checks to run first on an Astro site\n\nA search engine sees the page but does not consider it useful enough for the index.\n\n## A simple model\n\nLet the share of useful pages be $p$, then the expected coverage depends on it linearly.\n\n$$\nE = p \\cdot N\n$$\n\n## What to check\n\nCheck canonical addresses, duplicate titles and internal links.\n\n## Sources\n\n- [Crawling and indexing](https://developers.google.com/search/docs/crawling-indexing)\n",
+      "contentSha256": "fd4c69c04b7bdd6a97e62a89ed088da577981ab5ef03e912beb8e597a237c7bf",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "crawled-not-indexed-astro-audit",
+      "lang": "ru",
+      "revision": "bf4bfafb-4350-8944-925c-2adf87f37ca6",
+      "content": "---\ntitle: \"Страница просканирована, но не в индексе: аудит сайта на Astro (фикстура)\"\ndescription: Почему страница получает статус crawled but not indexed и какие проверки сайта на Astro стоит сделать первыми\nsummary: >-\n  Фикстура сборки: тело начинается с цитаты, повторяющей описание, и содержит блочную и строчную формулы. Так видно, что\n  рендер получил заголовок документа.\npubDate: \"2026-06-01T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - seo\n  - astro\nkeywords:\n  - не в индексе\n  - аудит Astro\nfaq: []\napiRevision: bf4bfafb-4350-8944-925c-2adf87f37ca6\n---\n\n> Почему страница получает статус crawled but not indexed и какие проверки сайта на Astro стоит сделать первыми\n\nПоисковик видит страницу, но не считает её достаточно полезной для индекса.\n\n## Простая модель\n\nПусть доля полезных страниц равна $p$, тогда ожидаемый охват зависит от неё линейно.\n\n$$\nE = p \\cdot N\n$$\n\n## Что проверить\n\nПроверьте канонические адреса, дубли заголовков и внутренние ссылки.\n\n## Источники\n\n- [Crawling and indexing](https://developers.google.com/search/docs/crawling-indexing)\n",
+      "contentSha256": "213f9337227a5463f4b93c2e6fa66fa5cc99f653f727ecca8509b64323d85c65",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "custom-domain-email-mailu-dokploy",
+      "lang": "en",
+      "revision": "7b5330f1-9a0c-8540-824c-2aa2eeb328d7",
+      "content": "---\ntitle: Custom domain email without Google Workspace (fixture)\ndescription: \"A build fixture: an article with an external cover of a known size and a separate SEO title.\"\nsummary: >-\n  A test article with an external cover: the cover is the same as the social image and its size is recorded in the\n  document header.\npubDate: \"2026-08-01T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - seo\n  - build-tooling\nkeywords:\n  - custom domain email\n  - Mailu\nfaq: []\napiRevision: 7b5330f1-9a0c-8540-824c-2aa2eeb328d7\nseoTitle: Custom domain email with Mailu and Dokploy (fixture)\ncover: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp\ncoverAlt: \"Ink illustration: a laptop, a mail server, a delivery service and a separate account key.\"\nsocialImage: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp\nsocialImageAlt: \"Ink illustration: a laptop, a mail server, a delivery service and a separate account key.\"\nsocialImageWidth: 1729\nsocialImageHeight: 910\n---\n\nThe text is a build fixture.\n\n## The scheme\n\nThe mail server runs on your own VPS.\n\n## Sources\n\n- [Mailu documentation](https://mailu.io/master/)\n",
+      "contentSha256": "31a7324dac3bc0b66798bc845af9121ce815920a24c9c08ca91b040db3c5d97b",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "custom-domain-email-mailu-dokploy",
+      "lang": "ru",
+      "revision": "8f73869d-7e67-8873-bfb9-86a7f23e74df",
+      "content": "---\ntitle: Почта на своём домене без Google Workspace (фикстура)\ndescription: \"Фикстура сборки: статья с внешней обложкой, у которой известен размер, и отдельным SEO-заголовком.\"\nsummary: >-\n  Тестовая статья с внешней обложкой: обложка совпадает с социальным изображением, а её размер записан в заголовке\n  документа.\npubDate: \"2026-08-01T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - seo\n  - build-tooling\nkeywords:\n  - почта на домене\n  - Mailu\nfaq: []\napiRevision: 8f73869d-7e67-8873-bfb9-86a7f23e74df\nseoTitle: Почта на своём домене через Mailu и Dokploy (фикстура)\ncover: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp\ncoverAlt: \"Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи.\"\nsocialImage: https://media.tgapps.cloud/articles/ccfa00aae02c7991826287e1a4f450740f9a342f013ec7e88f33577318537cfb.webp\nsocialImageAlt: \"Иллюстрация тушью: ноутбук, почтовый сервер, служба доставки и отдельный ключ учётной записи.\"\nsocialImageWidth: 1729\nsocialImageHeight: 910\n---\n\nТекст служит фикстурой сборки.\n\n## Схема\n\nПочтовый сервер работает на своём VPS.\n\n## Источники\n\n- [Mailu documentation](https://mailu.io/master/)\n",
+      "contentSha256": "88d1f90c7dc44d0f7e26e3d5484c439a195c16e2123ece7a720101850cb67292",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "e2e-ru-only",
+      "lang": "ru",
+      "revision": "6477fb92-bd5c-8e97-b539-63ef044630cf",
+      "content": "---\ntitle: Статья только на русском (фикстура)\ndescription: \"Статья без английской версии: переключатель языка на ней должен быть выключен.\"\nsummary: >-\n  Фикстура сборки и e2e: у статьи нет английского двойника, поэтому страница не объявляет hreflang и не отдаёт ложную\n  ссылку на перевод.\npubDate: \"2026-04-20T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - deepseek\nkeywords:\n  - без перевода\nfaq: []\napiRevision: 6477fb92-bd5c-8e97-b539-63ef044630cf\n---\n\nАнглийской версии у этой статьи нет.\n\n## Что проверяется\n\nОтсутствие ссылки на несуществующий перевод.\n\n## Источники\n\n- [Localized versions](https://developers.google.com/search/docs/specialty/international/localized-versions)\n",
+      "contentSha256": "faacb0eb608ca88af6da8276334c8b7cdefafdac7f7727fae0ac9dee06924a3d",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "fixture-hidden",
+      "lang": "en",
+      "revision": "4772c6c2-5708-8bd7-b55a-1d19b049acad",
+      "content": "---\ntitle: An article hidden from the list (fixture)\ndescription: \"An article with hiddenFromList: the page exists, but feeds, the sitemap and search skip it.\"\nsummary: >-\n  A build fixture: an article hidden from lists. It shows that order and visibility come from the snapshot metadata, not\n  from a local database.\npubDate: \"2026-08-20T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - seo\nkeywords:\n  - hidden article\nfaq: []\napiRevision: 4772c6c2-5708-8bd7-b55a-1d19b049acad\n---\n\nThe page opens by a direct link.\n\n## Why it exists\n\nIt checks visibility in lists.\n\n## Sources\n\n- [Sitemaps overview](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview)\n",
+      "contentSha256": "69e0e3a6262e37748546ea53f54fb17301c0045259cad4e949e41438c3d24c5b",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": true
+      }
+    },
+    {
+      "slug": "fixture-hidden",
+      "lang": "ru",
+      "revision": "9e7df3f3-94f4-89e4-b01c-252302bfcd67",
+      "content": "---\ntitle: Скрытая статья из списка (фикстура)\ndescription: \"Статья с hiddenFromList: страница есть, а в лентах, карте сайта и поиске её нет.\"\nsummary: >-\n  Фикстура сборки: скрытая из списков статья. Показывает, что порядок и видимость берутся из метаданных снимка, а не из\n  локальной базы.\npubDate: \"2026-08-20T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - seo\nkeywords:\n  - скрытая статья\nfaq: []\napiRevision: 9e7df3f3-94f4-89e4-b01c-252302bfcd67\n---\n\nСтраница открывается по прямой ссылке.\n\n## Зачем она\n\nОна проверяет видимость в списках.\n\n## Источники\n\n- [Sitemaps overview](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview)\n",
+      "contentSha256": "8765d176077f300c86e477bf6a7e507eb90c4e9edee0cfd1b4ffcee012bf5304",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": true
+      }
+    },
+    {
+      "slug": "json-ld-graph-astro",
+      "lang": "en",
+      "revision": "83e98b1a-dc01-845a-a201-359f2480c1be",
+      "content": "---\ntitle: A JSON-LD graph on an Astro site (fixture)\ndescription: How to join Person, Article and BreadcrumbList nodes into one graph with shared identifiers.\nsummary: >-\n  A build fixture: a json code block and two questions in the FAQ block. It checks that the markup is built from the\n  document data.\npubDate: \"2026-06-15T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - seo\n  - astro\n  - schema-org\nkeywords:\n  - JSON-LD\n  - schema.org\nfaq:\n  - question: Why link JSON-LD nodes together?\n    answer: A linked graph shows a search engine that the author, the article and the breadcrumbs belong to one page.\n  - question: Should a page have one block?\n    answer: One block with a shared graph is easier to validate and does not duplicate nodes.\napiRevision: 83e98b1a-dc01-845a-a201-359f2480c1be\n---\n\nOne graph is better than three separate blocks: nodes refer to each other by identifier.\n\n## Example\n\n```json\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Article\",\n  \"headline\": \"Fixture\"\n}\n```\n\n## Validation\n\nOpen the page in a validator and make sure the node references resolve.\n\n## Sources\n\n- [schema.org Article](https://schema.org/Article)\n",
+      "contentSha256": "6b0684dce5fc08c332a78d76d9ebd05d9b84f7d0128ea6049d64ee62ec330cd3",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "json-ld-graph-astro",
+      "lang": "ru",
+      "revision": "5d7c5cab-0c15-81c8-b898-606effb784a0",
+      "content": "---\ntitle: Граф JSON-LD на сайте Astro (фикстура)\ndescription: Как связать узлы Person, Article и BreadcrumbList одним графом с общими идентификаторами.\nsummary: \"Фикстура сборки: блок кода json и два вопроса в блоке FAQ. Проверяет, что разметка собирается из данных документа.\"\npubDate: \"2026-06-15T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - seo\n  - astro\n  - schema-org\nkeywords:\n  - JSON-LD\n  - schema.org\nfaq:\n  - question: Зачем связывать узлы JSON-LD?\n    answer: Связанный граф показывает поисковой системе, что автор, статья и хлебные крошки относятся к одной странице.\n  - question: Нужен ли один блок на страницу?\n    answer: \"Удобнее один блок с общим графом: так проще проверять идентификаторы и не дублировать узлы.\"\napiRevision: 5d7c5cab-0c15-81c8-b898-606effb784a0\n---\n\nОдин граф лучше трёх разрозненных блоков: узлы ссылаются друг на друга по идентификатору.\n\n## Пример\n\n```json\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Article\",\n  \"headline\": \"Fixture\"\n}\n```\n\n## Проверка\n\nОткройте страницу в валидаторе и убедитесь, что ссылки на узлы разрешаются.\n\n## Источники\n\n- [schema.org Article](https://schema.org/Article)\n",
+      "contentSha256": "8d590c8b4c6d01025f509ff8a708b946511ac85c9f53b1941bed4f6d4246fe53",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "local-coding-agent",
+      "lang": "en",
+      "revision": "17caa699-c0d4-8e88-867b-3a290d1d0cbd",
+      "content": "---\ntitle: A local coding agent on your own hardware (fixture)\ndescription: What it takes to run a coding agent with a local model and not depend on the cloud.\nsummary: >-\n  A build fixture: prose without code and a link to the article about agent rules. The language switch is tested on this\n  pair.\npubDate: \"2026-07-01T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - ai\n  - local-inference\nkeywords:\n  - local agent\n  - local model\nfaq: []\napiRevision: 17caa699-c0d4-8e88-867b-3a290d1d0cbd\n---\n\nA local model is slower than a cloud one, but the data never leaves the machine.\n\n## What you need\n\nYou need memory for the weights, a fast disk and a tool that can call a model at a local address.\n\n## Limits\n\nA long context is expensive in memory, so split the work into small steps.\n\n## Sources\n\n- [llama.cpp](https://github.com/ggml-org/llama.cpp)\n\n## Related articles\n\n- [claude-md-12-rules](/en/blog/claude-md-12-rules/)\n",
+      "contentSha256": "5190059e231bab9006175988e785139cd188d60f9db6e4d8d1f3989c7495f6a9",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "local-coding-agent",
+      "lang": "ru",
+      "revision": "99096b93-18ce-83d8-af62-d02180ade4b8",
+      "content": "---\ntitle: Локальный кодинг-агент на своём железе (фикстура)\ndescription: Что нужно, чтобы запустить кодинг-агента с локальной моделью и не зависеть от облака.\nsummary: >-\n  Фикстура сборки: проза без кода и ссылка на статью о правилах для агента. На этой паре проверяется переключатель\n  языка.\npubDate: \"2026-07-01T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - ai\n  - local-inference\nkeywords:\n  - локальный агент\n  - локальная модель\nfaq: []\napiRevision: 99096b93-18ce-83d8-af62-d02180ade4b8\n---\n\nЛокальная модель медленнее облачной, но данные не покидают машину.\n\n## Что понадобится\n\nНужны память под веса, быстрый диск и инструмент, который умеет вызывать модель по локальному адресу.\n\n## Ограничения\n\nДлинный контекст дорог по памяти, поэтому задачи стоит делить на небольшие шаги.\n\n## Источники\n\n- [llama.cpp](https://github.com/ggml-org/llama.cpp)\n\n## Читайте также\n\n- [claude-md-12-rules](/blog/claude-md-12-rules/)\n",
+      "contentSha256": "9c1c7e4ba253775d1a985def64989adcef16d5d0762423e56ed95306fe4fbc79",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "mermaid-svg-playwright-build-time",
+      "lang": "en",
+      "revision": "928e337e-c314-8b1e-863e-21cc8b0e843c",
+      "content": "---\ntitle: Mermaid diagrams as SVG at build time (fixture)\ndescription: How to render Mermaid diagrams through Playwright at build time and ship a ready SVG.\nsummary: >-\n  A build fixture: two Mermaid diagrams with a title and a description and a code block. It checks the illustration\n  captions.\npubDate: \"2026-07-20T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - astro\n  - build-tooling\nkeywords:\n  - Mermaid\n  - Playwright\nfaq: []\napiRevision: 928e337e-c314-8b1e-863e-21cc8b0e843c\n---\n\nA diagram becomes an image during the build, so the browser only has to show it.\n\n## The pipeline\n\n```mermaid\nflowchart LR\n  accTitle: The diagram pipeline\n  accDescr: A Mermaid source block is rendered by a browser at build time and reaches the page as a finished image.\n  A[Mermaid block] --> B[Playwright]\n  B --> C[Finished SVG]\n```\n\n## Captions\n\n```mermaid\nflowchart LR\n  accTitle: Where the caption comes from\n  accDescr: The diagram title becomes the caption under the picture and the description becomes the alternative text.\n  A[accTitle] --> B[Caption]\n  B --> C[accDescr]\n```\n\n## Command\n\n```bash\npnpm exec playwright install --only-shell chromium\n```\n\n## Sources\n\n- [Mermaid](https://mermaid.js.org/)\n",
+      "contentSha256": "5cfb0122c9f84e74d92ea7773b69388b351fc4bea4fcf1fc6d02a99b11db6777",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "mermaid-svg-playwright-build-time",
+      "lang": "ru",
+      "revision": "94db5572-6345-8aaf-b081-5a9ff20fe415",
+      "content": "---\ntitle: Диаграммы Mermaid в SVG на этапе сборки (фикстура)\ndescription: Как отрисовывать диаграммы Mermaid через Playwright при сборке и отдавать готовый SVG.\nsummary: \"Фикстура сборки: две диаграммы Mermaid с заголовком и описанием и блок кода. Проверяет подписи к иллюстрациям.\"\npubDate: \"2026-07-20T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - astro\n  - build-tooling\nkeywords:\n  - Mermaid\n  - Playwright\nfaq: []\napiRevision: 94db5572-6345-8aaf-b081-5a9ff20fe415\n---\n\nДиаграмма превращается в картинку во время сборки, поэтому браузеру остаётся только показать её.\n\n## Конвейер\n\n```mermaid\nflowchart LR\n  accTitle: Конвейер диаграммы\n  accDescr: Исходный блок Mermaid отрисовывается браузером при сборке и попадает на страницу как готовое изображение.\n  A[Блок Mermaid] --> B[Playwright]\n  B --> C[Готовый SVG]\n```\n\n## Подписи\n\n```mermaid\nflowchart LR\n  accTitle: Источник подписи\n  accDescr: Заголовок диаграммы становится подписью под рисунком, а описание становится альтернативным текстом.\n  A[accTitle] --> B[Подпись]\n  B --> C[accDescr]\n```\n\n## Команда\n\n```bash\npnpm exec playwright install --only-shell chromium\n```\n\n## Источники\n\n- [Mermaid](https://mermaid.js.org/)\n",
+      "contentSha256": "3e14eb0302656960642e5dcd308db781873e24e376db20eb10637a4ebca17e01",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "robots-txt-ai-crawlers-2026",
+      "lang": "en",
+      "revision": "336305e4-7bb6-8d53-8e08-adb462710e74",
+      "content": "---\ntitle: robots.txt and AI crawlers in 2026 (fixture)\ndescription: Which AI crawlers read a site and how to describe their rules in robots.txt without losing search traffic\nsummary: >-\n  A build fixture: the body starts with a quote that repeats the description, and the robots.txt block has a line longer\n  than one hundred and twenty characters.\npubDate: \"2026-08-10T10:00:00.000Z\"\nlang: en\ndraft: false\ntags:\n  - seo\n  - ai-crawlers\nkeywords:\n  - robots.txt\n  - AI crawlers\nfaq: []\napiRevision: 336305e4-7bb6-8d53-8e08-adb462710e74\n---\n\n> Which AI crawlers read a site and how to describe their rules in robots.txt without losing search traffic\n\nEvery crawler announces its own user agent, and its rules are written separately.\n\n## An example file\n\n```txt\nUser-agent: GPTBot\nDisallow: /admin/\n# Fixture line that is intentionally longer than one hundred and twenty characters so that the code block has to scroll sideways on a narrow screen\n```\n\n## Checking\n\nRequest the file from the live address and compare it with what you expect.\n\n## Sources\n\n- [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309)\n",
+      "contentSha256": "d0a8b5d777d4512c1bd410a5b02eb5e7a330bb335ebb14d3c6f69743cc5195f9",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    },
+    {
+      "slug": "robots-txt-ai-crawlers-2026",
+      "lang": "ru",
+      "revision": "43209466-1ec0-84e9-b87e-f5035a70995a",
+      "content": "---\ntitle: robots.txt и ИИ-краулеры в 2026 году (фикстура)\ndescription: Какие ИИ-краулеры читают сайт и как описать им правила в robots.txt без потери поисковой выдачи\nsummary: >-\n  Фикстура сборки: тело начинается с цитаты, повторяющей описание, а в блоке robots.txt есть строка длиннее ста двадцати\n  символов.\npubDate: \"2026-08-10T09:00:00.000Z\"\nlang: ru\ndraft: false\ntags:\n  - seo\n  - ai-crawlers\nkeywords:\n  - robots.txt\n  - ИИ-краулеры\nfaq: []\napiRevision: 43209466-1ec0-84e9-b87e-f5035a70995a\n---\n\n> Какие ИИ-краулеры читают сайт и как описать им правила в robots.txt без потери поисковой выдачи\n\nКаждый краулер объявляет свой user agent, и правила для него пишутся отдельно.\n\n## Пример файла\n\n```txt\nUser-agent: GPTBot\nDisallow: /admin/\n# Fixture line that is intentionally longer than one hundred and twenty characters so that the code block has to scroll sideways on a narrow screen\n```\n\n## Проверка\n\nЗапросите файл с боевого адреса и сравните его с ожиданием.\n\n## Источники\n\n- [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309)\n",
+      "contentSha256": "2dcc923946cf12448007f384fbb7e5d83099d2311140923d5dea67ceb3c39a10",
+      "meta": {
+        "order": 2000000000,
+        "pinned": false,
+        "hiddenFromList": false
+      }
+    }
+  ]
+}

@@ -3,6 +3,10 @@ name: CI
 "on":
   pull_request:
   workflow_call:
+    secrets:
+      # Read by the `snapshot` job. required: a caller that forgets to pass it fails at startup.
+      CONTENT_EXPORT_TOKEN:
+        required: true
 
 permissions:
   contents: read
@@ -16,12 +20,45 @@ concurrency:
 # Three independent jobs, one per test layer (vitest.config.ts `projects`).
 # Each fails fast on its cheapest step.
 jobs:
-  checks:
+  # Releases (everything except pull_request: ci.yml is called from docker-publish.yml) are
+  # built from the real export and fail when it is unreachable or fails the floor. A pull
+  # request builds from the fixture; the two never swap. In a called workflow `github.event_name`
+  # is the caller's event.
+  snapshot:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
+
+      - name: Pull the content snapshot
+        env:
+          CONTENT_EXPORT_TOKEN: ${{ secrets.CONTENT_EXPORT_TOKEN }}
+          SITE_URL: https://artka.dev
+        run: pnpm content:pull content-snapshot.json
+
+      # Public repo: any signed-in GitHub user can download artifacts, and the snapshot holds
+      # hiddenFromList articles, hence the short retention.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: content-snapshot
+          path: content-snapshot.json
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+
+      # `astro sync` (run by typecheck) renders posts and lessons, mermaid included, and the
+      # snapshot loader fails loud on a render error, so the checks job needs the browser too.
+      - name: Install Playwright Chromium headless shell
+        run: pnpm exec playwright install --with-deps --only-shell chromium
 
       - run: pnpm lint
       - run: pnpm typecheck
@@ -36,22 +73,51 @@ jobs:
         continue-on-error: true
 
   build:
+    needs: snapshot
+    # `snapshot` is skipped on a pull request and must have succeeded on a release; a failed
+    # `snapshot` fails `validate` and this job is skipped.
+    if: ${{ !cancelled() && (needs.snapshot.result == 'success' || (github.event_name == 'pull_request' && needs.snapshot.result == 'skipped')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    env:
+      # Explicit in both modes: an empty value makes resolveSnapshotPath throw.
+      CONTENT_SNAPSHOT: ${{ github.event_name == 'pull_request' && 'tests/fixtures/content-snapshot.json' || 'content-snapshot.json' }}
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
+
+      - name: Download the content snapshot
+        if: github.event_name != 'pull_request'
+        uses: actions/download-artifact@v4
+        with:
+          name: content-snapshot
+          path: .
 
       # Headless shell only: rehype-mermaid renders diagrams at build time, and
       # two built-site tests drive a page. Nothing here needs headed Chromium.
       - name: Install Playwright Chromium headless shell
         run: pnpm exec playwright install --with-deps --only-shell chromium
 
+      # Fresh build, then every dist check (JSON-LD, hreflang, sitemaps, images, social meta,
+      # diagrams, internal links) and the snapshot marker.
       - name: Build and verify fresh SEO output
         run: pnpm verify:seo-build
 
+      # The next two run even when the step above failed on findings, so one red run shows all of
+      # them. When the build itself failed there is no dist, and they fail on that, too.
+      - name: Validate built HTML (html-validate)
+        if: ${{ !cancelled() }}
+        run: pnpm verify:html
+
       - name: Built-site tests (dist + standalone server)
-        run: pnpm test:built
+        if: ${{ !cancelled() }}
+        run: pnpm test:built --reporter=verbose
+
+      # Pull requests only: scores depend on the runner and must not block a release.
+      # Chrome is preinstalled on ubuntu-latest; Unlighthouse uses the system one.
+      - name: Lighthouse budgets (home, RU post, EN post)
+        if: github.event_name == 'pull_request'
+        run: pnpm lighthouse:pr
 
   db:
     runs-on: ubuntu-latest

@@ -51,3 +51,10 @@ src/content/posts/e2enew*.md
 # Рабочие деревья агентов и черновики, созданные ассистентом
 .claude/worktrees/
 Claude outputs/
+
+# Снапшот контента (pnpm content:pull)
+.content/
+/content-snapshot.json
+
+# unlighthouse
+.unlighthouse/

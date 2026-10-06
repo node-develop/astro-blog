@@ -223,6 +223,11 @@ export const scopeSchema = z.enum([
 export type ApiScope = z.infer<typeof scopeSchema>;
 export type ArticleDocument = z.infer<typeof articleDocumentSchema>;
 
+const imageSizesSchema = z.record(
+  z.string().min(1),
+  z.tuple([z.int().positive(), z.int().positive()]),
+);
+
 // These optional fields extend the existing Markdown contract without changing old posts.
 export const apiFrontmatterFields = {
   seoTitle: z.string().max(120).optional(),
@@ -233,6 +238,8 @@ export const apiFrontmatterFields = {
   socialImageHeight: z.number().int().positive().optional(),
   coverCaption: z.string().optional(),
   apiRevision: z.string().uuid().optional(),
+  /** Intrinsic [width, height] of the asset images in the body, keyed by the URL the body carries. */
+  imageSizes: imageSizesSchema.optional(),
 };
 
 // ── Reading ────────────────────────────────────────────────────────────────
@@ -355,7 +362,12 @@ export const publicationSchema = z.strictObject({
   articleId: z.uuid(),
   version: z.number().int().positive(),
   state: publicationStateSchema,
-  commitSha: z.string().nullable(),
+  commitSha: z
+    .string()
+    .nullable()
+    .describe(
+      "Deprecated: always null for publications created since stage 2.4 (no git commit); historical rows keep their sha.",
+    ),
   attempts: z.number().int().nonnegative(),
   error: z.strictObject({ code: z.string(), message: z.string() }).nullable(),
   createdAt: instant,

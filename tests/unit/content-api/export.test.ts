@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exportSchema } from "~/lib/content-api/contract";
-import { snapshotIdOf, type ManifestEntry } from "~/lib/content-api/export";
+import { snapshotIdOf, type ManifestEntry } from "~/lib/content-api/snapshot-id";
 
 const entry = (over: Partial<ManifestEntry> = {}): ManifestEntry => ({
   slug: "a-post",

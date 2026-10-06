@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   checkCover,
+  checkHeadings,
+  checkReservedHeadingIds,
   checkInternalLinks,
   checkMermaid,
   checkPhrases,
@@ -128,6 +130,34 @@ describe("checkMermaid", () => {
   });
 });
 
+describe("checkHeadings", () => {
+  it("accepts a body that opens at H2 and goes down one level at a time", () => {
+    expect(checkHeadings("## A\n\n### B\n\n#### C\n\n## D\n\n### E")).toEqual([]);
+    expect(checkHeadings("Just prose, no headings.")).toEqual([]);
+  });
+  it("accepts going back up several levels at once", () => {
+    expect(checkHeadings("## A\n\n### B\n\n#### C\n\n## D")).toEqual([]);
+  });
+  it("rejects a first heading below H2 and a skipped level", () => {
+    const first = checkHeadings("### Starts too deep\n\n## After");
+    expect(codes(first)).toEqual(["heading_skip"]);
+    expect(first[0]!.context).toMatchObject({ depth: 3, after: 1 });
+    const skip = checkHeadings("## A\n\n#### Skips H3\n\n## B");
+    expect(codes(skip)).toEqual(["heading_skip"]);
+    expect(skip[0]!.context).toMatchObject({ heading: "Skips H3", depth: 4, after: 2 });
+  });
+});
+
+describe("checkReservedHeadingIds", () => {
+  it("rejects a heading that slugs to a layout id", () => {
+    expect(codes(checkReservedHeadingIds("## Main\n\n## Other"))).toEqual(["heading_reserved_id"]);
+    expect(codes(checkReservedHeadingIds("## Related Heading"))).toEqual(["heading_reserved_id"]);
+  });
+  it("accepts ordinary headings", () => {
+    expect(checkReservedHeadingIds("## Main idea\n\n## Related work")).toEqual([]);
+  });
+});
+
 describe("checkCover", () => {
   const asset = { assetId: "6f1c7a52-98f0-4c3e-8f5e-3f3d6a1b2c4d", alt: "Cover" };
   it("needs a cover", () => {
@@ -211,6 +241,13 @@ describe("evaluateEditorial, splitByBaseline, formatWarning", () => {
     expect(codes(errors)).toEqual(["cover_missing"]);
     expect(codes(carried)).toEqual(["too_short", "too_few_sources", "too_few_internal_links"]);
     expect(splitByBaseline(current, null).errors).toEqual(current);
+  });
+  it("never carries a finding that a release check mirrors", () => {
+    const body = "## A\n\n#### Skips\n\n## Main";
+    const current = evaluateEditorial({ document: doc({ body }), coverWidth: null, peers });
+    const { errors, carried } = splitByBaseline(current, current);
+    expect(codes(errors)).toEqual(["heading_skip", "heading_reserved_id"]);
+    expect(codes(carried)).not.toContain("heading_skip");
   });
   it("formats a warning as `<code>: <message>`", () => {
     const [finding] = checkCover(undefined, null);

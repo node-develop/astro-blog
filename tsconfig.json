@@ -24,7 +24,8 @@
     ".astro/**/*.d.ts",
     "drizzle.config.ts",
     "astro.config.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "unlighthouse.config.ts"
   ],
   "exclude": ["dist", "node_modules"]
 }

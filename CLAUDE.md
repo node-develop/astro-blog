@@ -61,8 +61,14 @@ astro-blog/
 - `pnpm test` — unit-тесты (чистая логика, без билда и Docker; то же гоняет pre-push)
 - `pnpm test:built` — проверки собранного сайта и standalone-сервера (`tests/built/`); сначала `pnpm build`, без `dist/` падает
 - `pnpm test:db` — Postgres-сьюты `tests/integration/` через testcontainers (нужен Docker); `pnpm test:all` — все три слоя
-- `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверка вывода билда на известные SEO-регрессии (`scripts/verify-seo-build.ts`)
+- `pnpm verify:content-build <snapshot> <dist/client>` — сверить собранный сайт со снапшотом (ревизии, sitemap); гоняется в Dockerfile после `pnpm build`
+- `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверки `dist/` (`scripts/seo-checks/`: JSON-LD, hreflang, sitemap, картинки/OG, Mermaid, ссылки, сверка со снапшотом); `--dist-only` — без пересборки
+- `pnpm verify:html` — html-validate по `dist/client` (`.htmlvalidate.json`)
+- `pnpm lighthouse:pr` — Unlighthouse по трём страницам (главная, пост RU/EN) с бюджетами из `unlighthouse.config.ts`; в CI только на PR
 - `pnpm test:e2e` — Playwright
+- `pnpm content:pull` — скачать снапшот контента из `/api/v1/export/` в `.content/snapshot.json` (нужен `CONTENT_EXPORT_TOKEN`; источник — `SITE_URL`, из `.env.example` это localhost, для прода `SITE_URL=https://artka.dev pnpm content:pull`); сборка читает его через `CONTENT_SNAPSHOT=… pnpm build`, по умолчанию — фикстура `tests/fixtures/content-snapshot.json`
+- `pnpm content:fixture` — пересобрать фикстуру снапшота из `scripts/dev/fixture-articles.ts`
+- `pnpm typecheck` и `pnpm build` требуют Playwright chromium-headless-shell: коллекция `posts` рендерит mermaid при `astro sync`
 - `pnpm translate` — сгенерировать EN-двойники контента (см. «i18n»)
 - `pnpm translate:check` — проверить, что EN-двойники актуальны (только файловая система, без API; гоняется в CI)
 - `pnpm db:generate` — сгенерировать миграцию из schema.ts
@@ -193,12 +199,13 @@ Plan: `docs/specs/plans/2026-05-09-home-page-admin-editor.md`
 
 ## Деплой
 
-Пуш в `main` → `.github/workflows/docker-publish.yml` → образ `ghcr.io/node-develop/astro-blog` (теги `main`, `sha-…`, `latest`, semver для `v*.*.*`) → POST на `DOKPLOY_WEBHOOK_URL` (secret) → Dokploy тянет образ и перезапускает сервис. Локальная проверка образа — скилл `deploy-check`.
+Пуш в `main` → `.github/workflows/docker-publish.yml` → образ `ghcr.io/node-develop/astro-blog` (теги `main`, `sha-…`, `latest`, `content-<snapshotId>`, semver для `v*.*.*`; `content-<id>` изменяемый: последний образ main, собранный из этого контента) → POST на `DOKPLOY_WEBHOOK_URL` (secret) → Dokploy тянет образ и перезапускает сервис. Локальная проверка образа — скилл `deploy-check`.
 
 - **Runtime env (обязательные в проде):** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (или `SITE_URL` как fallback — `src/lib/auth.ts` падает без одного из них). Остальное — см. `.env.example`; canonical/sitemap/RSS берут `CANONICAL_ORIGIN` из `src/lib/seo/url-policy.ts`, а не env.
 - **Uploads:** образ ставит `UPLOADS_DIR=/app/dist/client/uploads` — единственный путь, который и записываем, и раздаёт node-адаптер. В Dokploy на него нужен persistent volume, иначе файлы из `/admin/media` пропадают при редеплое. Runbook: `docs/runbooks/dokploy-uploads-volume.md`.
 - **Одна реплика.** `docker-entrypoint.sh` при старте гоняет миграции (`scripts/migrate-prod.mjs`) и backfill (`scripts/backfill-prod.mjs`) без блокировки; два контейнера, стартующие одновременно, будут гонять их параллельно. Не масштабировать горизонтально без вынесения миграций в отдельный шаг. Ошибка миграции/backfill — fail-loud, контейнер не стартует.
 - **Healthcheck:** `GET /api/version` (Dockerfile `HEALTHCHECK`); `GIT_SHA` и `BUILT_AT` прокидываются build-args. Если `CONTENT_WORKER_SECRET` задан, роут отвечает 503 после 180 с без тика воркера публикаций (`src/lib/content-api/heartbeat.ts`); секрет короче 32 байт роняет старт контейнера.
+- **Снапшот контента:** релизная сборка (push, теги, dispatch) берёт реальный export через job `snapshot` в `ci.yml` (секрет `CONTENT_EXPORT_TOKEN` обязателен, без него релиз падает); PR собирается на фикстуре, и наоборот никогда. Пол `minArticles` в `content-manifest.json` понижается только руками. Локальному `docker build` нужен `content-snapshot.json` в корне (см. скилл `deploy-check`). `/api/version` отдаёт `contentSnapshotId` (из `CONTENT_SNAPSHOT_ID`).
 - **Известный пробел в миграциях:** `drizzle/meta/0002_snapshot.json` отсутствует, хотя `_journal.json` содержит idx 2. Из-за этого `pnpm db:generate` может выдать ложный diff. Лечится регенерацией снапшота на машине с БД: `pnpm exec drizzle-kit check`, затем `pnpm db:generate` и ревью результата (см. `.claude/skills/db-migration/SKILL.md`). Не «чинить» руками, копируя соседний snapshot.
 
 ## Команда агентов

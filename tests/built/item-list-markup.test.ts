@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, inject, it } from "vitest";
 import { graphIds } from "~/lib/seo/nodes-global";
 import { fetchWithTimeout } from "../support/production-server";
+import { fixtureGuard } from "../support/snapshot";
 
 const origin = inject("siteOrigin");
 
@@ -169,7 +170,7 @@ describe("the main list of articles is in the markup — server-rendered pages",
     const response = await fetchWithTimeout(`${origin}${path}`, {}, 10_000);
     expect(response.status, path).toBe(200);
     const listed = assertListMatchesMarkup(path, await response.text(), locale);
-    // Fixture guard: the comparisons are vacuous on a page that links nothing,
+    // Structural: the comparisons are vacuous on a page that links nothing,
     // and the home page and the blog index always list posts.
     expect(listed, `${path}: page links at least one post`).toBeGreaterThan(0);
   });
@@ -183,7 +184,7 @@ describe("the main list of articles is in the markup — built tag archives", ()
   // other, and there "no links, no entries" IS the rule holding. What must not
   // happen is a run where nothing is listed anywhere, or where only one-post
   // archives exist and the ORDER of the list is never exercised.
-  it("covers archives that list posts, some of them more than one", () => {
+  fixtureGuard("covers archives that list posts, some of them more than one", () => {
     const linkCounts = archives.map(
       ([path, html]) => postLinksInMain(html, path.startsWith("/en/") ? "/en" : "").length,
     );

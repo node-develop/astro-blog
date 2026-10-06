@@ -25,10 +25,17 @@ RUN pnpm exec playwright install --with-deps chromium-headless-shell
 ARG SITE_URL=https://artka.dev
 ARG GIT_SHA=unknown
 ARG BUILT_AT=unknown
-ENV SITE_URL=$SITE_URL
+ARG CONTENT_SNAPSHOT_ID=
+# The default fixture lives under tests/, which .dockerignore keeps out of the context, so the
+# snapshot always comes from the repo root: CI downloads it there, a local build copies it there.
+ENV SITE_URL=$SITE_URL \
+    CONTENT_SNAPSHOT=/app/content-snapshot.json
 COPY . .
+RUN test -s "$CONTENT_SNAPSHOT" || { echo "content-snapshot.json is missing from the build context. Release images: CI puts it there. Local: SITE_URL=https://artka.dev pnpm content:pull content-snapshot.json, or cp tests/fixtures/content-snapshot.json content-snapshot.json for a throwaway image" >&2; exit 1; }
 ENV NODE_ENV=production
 RUN pnpm build
+# The build must match the snapshot (revisions, sitemaps); tsx is still installed here.
+RUN pnpm verify:content-build "$CONTENT_SNAPSHOT" dist/client ${CONTENT_SNAPSHOT_ID:+--expect-id $CONTENT_SNAPSHOT_ID}
 # Отделяем прод-зависимости
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --prod --ignore-scripts
@@ -37,12 +44,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM node:24-bookworm-slim AS runner
 ARG GIT_SHA=unknown
 ARG BUILT_AT=unknown
+ARG CONTENT_SNAPSHOT_ID=unknown
 WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4321 \
     GIT_SHA=$GIT_SHA \
     BUILT_AT=$BUILT_AT \
+    CONTENT_SNAPSHOT_ID=$CONTENT_SNAPSHOT_ID \
     UPLOADS_DIR=/app/dist/client/uploads
 
 # Непривилегированный пользователь
@@ -74,6 +83,6 @@ RUN chmod +x ./docker-entrypoint.sh
 USER astro
 EXPOSE 4321
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD node -e "fetch('http://127.0.0.1:4321/api/version').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+    CMD node -e "fetch('http://127.0.0.1:4321/api/version/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["./docker-entrypoint.sh"]

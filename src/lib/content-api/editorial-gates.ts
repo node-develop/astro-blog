@@ -9,13 +9,13 @@
  * unpublished (no live version) are checked strictly.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
 import sharp from "sharp";
 import * as yaml from "~/lib/yaml";
 import type { Database } from "../db";
 import { contentArticles, contentArticleVersions, contentAssets } from "../db/schema";
-import { resolveSafe, UPLOADS_DIR } from "../fs/paths";
+import { POSTS_DIR, resolveSafe, UPLOADS_DIR } from "../fs/paths";
 import { logger } from "../logger";
 import { hasBlockNote } from "../social/critic-notes";
 import { hash } from "./auth";
@@ -77,9 +77,9 @@ const legacyFiles = (dir: string): readonly LegacyFile[] => {
 };
 
 const legacyFilePeers = (document: ArticleDocument, rows: ReadonlySet<string>): EditorialPeers => {
-  const files = legacyFiles(
-    resolve(`src/content/posts${document.lang === "en" ? "/en" : ""}`),
-  ).filter((f) => f.slug !== document.slug && !rows.has(`${f.slug}:${document.lang}`));
+  const files = legacyFiles(join(POSTS_DIR, document.lang === "en" ? "en" : "")).filter(
+    (f) => f.slug !== document.slug && !rows.has(`${f.slug}:${document.lang}`),
+  );
   return {
     titles: files.flatMap((f) => (f.title === undefined ? [] : [f.title])),
     headings: files.flatMap((f) => f.headings),

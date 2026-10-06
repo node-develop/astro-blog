@@ -13,6 +13,18 @@ import type { Database } from "../../src/lib/db";
 import * as schema from "../../src/lib/db/schema";
 
 const state = vi.hoisted(() => ({ db: undefined as Database | undefined }));
+// The file-post fallback (TODO(cutover), prompt 3.6) reads POSTS_DIR: a legacy post with an EN twin.
+const postsDir = await vi.hoisted(async () => {
+  const { writeLegacyPosts } = await import("../support/legacy-posts");
+  return writeLegacyPosts({
+    "legacy-twin.md": { title: "Legacy twin" },
+    "en/legacy-twin.md": { title: "Legacy twin" },
+  });
+});
+vi.mock("~/lib/fs/paths", async (original) => ({
+  ...(await original<typeof import("~/lib/fs/paths")>()),
+  POSTS_DIR: postsDir,
+}));
 vi.mock("~/lib/db", () => ({
   get db() {
     return state.db;
@@ -267,7 +279,7 @@ describe("social drafts through the content API", () => {
   });
 
   it("falls back to the file post for a slug with no article row, and 404s an unknown slug", async () => {
-    const result = await call("POST", "social/generate", KEYS.full, { slug: "local-coding-agent" });
+    const result = await call("POST", "social/generate", KEYS.full, { slug: "legacy-twin" });
     expect(result.status).toBe(202);
     expect([...result.body.channels].sort()).toEqual(["li_en", "tg_ru", "x_en"]); // it has an EN twin file
     await vi.waitFor(() => expect(runPipeline).toHaveBeenCalled());
@@ -377,7 +389,7 @@ describe("social drafts through the content API", () => {
     });
 
     it("rechecks a draft made from a file post while an unpublished API row shares its slug", async () => {
-      const fileSlug = "local-coding-agent";
+      const fileSlug = "legacy-twin";
       await state.db!.insert(schema.contentArticles).values({
         externalId: fileSlug,
         lang: "ru",

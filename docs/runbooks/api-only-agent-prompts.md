@@ -97,9 +97,9 @@ Astro 7.3 (package.json: astro ^7.3.1) настройку markdown.processor: un
    Добавь триггер repository_dispatch с types: [content-publish] (сам dispatch
    появится в этапе 2, триггер нужен уже сейчас, чтобы тесты workflow его
    знали). Условие шага Dokploy: push || repository_dispatch.
-3. Обнови tests/unit/ci-workflow.test.ts и tests/unit/deploy-gate.test.ts под
-   новую структуру, не ослабляя их смысл (needs: validate и шаг webhook
-   остаются закреплёнными).
+3. (Выполнено и устарело: tests/unit/ci-workflow.test.ts и deploy-gate.test.ts
+   потом удалены из main, а .claude/hooks/test-guard.sh запрещает тесты,
+   читающие YAML. Порядок шагов workflow проверяет сам CI.)
 4. Локальная проверка образа по скиллу deploy-check: собери образ дважды подряд
    и покажи, что второй раз слой Chromium взят из кэша.
 5. Коммит: `build(docker): cache the Chromium layer and gate deploys with concurrency`.
@@ -581,6 +581,16 @@ Judgment-only до написания кода (src/lib/content-api/translate-ar
    добавляет Артём руками.
 ```
 
+Отклонения при выполнении (2026-10-05):
+
+- Пункт 1: флага `--allow-removal` нет. Пол только из `content-manifest.json`, понижается коммитом: при `repository_dispatch` нет предыдущего значения для сравнения, а обычное снятие с публикации не должно блокировать релиз.
+- Пункт 3: копия снапшота в S3 отложена. Настроенный бакет публичный (медиа), архив сделал бы статьи `hiddenFromList` перечислимыми и добавил бы в CI ключ на запись. Артефакт `content-snapshot` живёт 7 дней. Снапшот скачивает job `build` в ci.yml (не `validate`); id тега берётся из скачанного файла, а не из outputs workflow. Секреты в `validate` передаются явно (только `CONTENT_EXPORT_TOKEN`), не `inherit`.
+- Пункт 3: job `snapshot` идёт на любом событии, кроме pull_request (в т.ч. теги `v*` и `workflow_dispatch`), а не только на push в main и `repository_dispatch`: релиз по тегу тоже собирается из реального контента.
+- Пункт 4: тег `content-<id>` только на ветке по умолчанию (изменяемый); сборка падает, если id равен id фикстуры.
+- Пункты 5-6: `COPY src/content/posts` (в Dockerfile строка 58 в HEAD, сейчас 67; не 55), `backfill-prod.mjs` и его вызов в entrypoint остаются до 3.6, пока живы рантайм-читатели файлов. Снапшот лежит в `/app/content-snapshot.json` (builder), в runner не копируется.
+- Пункт 8: Cloudflare не используется, A-запись указывает на VPS, раннеры GitHub доходят до export напрямую.
+- Дополнительно: HEALTHCHECK переведён на `/api/version/` (экономит редирект 301).
+
 ## Промпт 2.3. Тесты и e2e на фикстуру
 
 ```
@@ -640,6 +650,17 @@ pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
    Contents: write. Это открытый вопрос, спроси.
 ```
 
+Отклонения при выполнении (2026-10-05):
+
+- Пункт 3 (S0): воркер не сверяет `contentSnapshotId` из `/api/version`. Проверка остаётся прежней: `data-content-revision === job.id` плюс картинки и sitemap для publish, 404 и отсутствие в sitemap для unpublish. Ожидаемый id знает только post-deploy job, ожидание `contentSnapshotId` переезжает в промпт 2.6. `builtAt > dispatched_at` ненадёжно: на push `BUILT_AT` равен `head_commit.timestamp`.
+- Пункт 2: dispatch вынесен из шага `queued` в отдельный шаг (`publishing` с `dispatched_at IS NULL`). Шаг `queued` переставляет указатель и не ходит в GitHub: указатель закоммичен до запроса, а потерянный ответ даёт только повторный (безвредный) dispatch. Из-за этого каждая публикация на один тик (около 5 с) длиннее.
+- Пункт 2: debounce детерминированный, без окна в 120 с. Batch шлёт один dispatch, когда ни один член не в `queued` и ни у одного соседа нет `dispatched_at`; член, чей сосед уже отправил dispatch, берёт его `dispatched_at` без нового вызова. Таймаут в 30 минут считается от `dispatched_at`.
+- Пункт 1: `requestRebuild` на голом `fetch`, без ретраев; статус кроме 204 это ошибка (429 и 5xx: `503 rebuild_unavailable`, остальное: `502 rebuild_rejected`, никогда 403: воркер считает 403 постоянным `key_revoked`). `snapshotHint` убран: воркер его не знает. `github.ts` удалён целиком (`articleUrl` в `urls.ts`, `fetchWithDeadline` в `rebuild.ts`, приватный `articlePath` в `service.ts` ради `fileOwnsSlug` с `TODO(cutover)`).
+- Cleanup на 3.6: `src/lib/git/github-publisher.ts` (`publish.one`) теперь единственный пользователь Octokit (`@octokit/rest`); пока он жив, в проекте два способа ходить в GitHub (`fetch` в `rebuild.ts` и Octokit). Убрать вместе с ним и зависимость.
+- `mayBeInBuild` (бывший `ownsCommittedFile`) консервативное: publish учитывается, если он хоть раз покинул `queued` (`state !== "queued"`) или есть унаследованный `commitSha`; unpublish учитывается при `state = published`; решает самое новое. Причина: указатель сборки переставляется в шаге `queued`, и любая сборка до dispatch (чужой dispatch, push) может выкатить страницу. Принятое ложное срабатывание: publish, упавший ещё в `queued` (`cover_unreachable`, `key_revoked`, `version_conflict`), тоже считается, и `DELETE` отвечает `409 unpublish_first`, а `unpublish` не отвечает `not_published`; рычаг: unpublish, затем delete.
+- Условия выкладки 2.4 (иначе каждая публикация получит 204 и через 30 минут `deployment_timeout`, громко упасть нечему): (1) 2.2 смержен в main (триггер `repository_dispatch: types: [content-publish]` читается только с ветки по умолчанию); (2) секрет `CONTENT_EXPORT_TOKEN` задан; (3) prod `GITHUB_PAT` проверен на `POST /dispatches` (Contents: write; локальный PAT 2026-10-05 ответил 204 на пробный event_type, prod не проверен); (4) в export число статей не ниже пола (`minArticles`, импорт старых постов, промпт 3.1): иначе снятие статьи роняет snapshot job и воркер через 30 минут уходит в `deployment_timeout` (G8).
+- Открытое: задание, упавшее после того как страница уже ушла live (например, исчерпан `sitemap_pending`), откатывает указатель без новой пересборки; рычаги: `unpublish` или повторная публикация. Автоматического dispatch при сбое нет. Таймаут 30 минут (`DEPLOY_TIMEOUT_MS`) может не хватить на validate + build + Dokploy в очереди; решить после замера p95 dispatch до live.
+
 ## Промпт 2.5. Расширение verify-seo-build
 
 ```
@@ -684,6 +705,35 @@ pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
 10. ci.yml: порядок шагов как в плане (translate:check, build, verify, html,
     links, unit, smoke, e2e, lighthouse).
 ```
+
+Отклонения при выполнении (2026-10-05):
+
+- Пункт 1: `schema-dts` не внедрён. Контракт графа задают Zod-схемы `src/lib/seo/graph-schema.ts`; `src/lib/seo/graph-schema.test.ts` держит вывод билдеров в соответствии со схемами, а `scripts/seo-checks/jsonld.ts` применяет ту же функцию к dist (и smoke-тест к SSR-страницам). Типы `schema-dts` дали бы огромные union и ни одной рантайм-гарантии.
+- Пункты 3 и 5: `xmllint` заменён на `fast-xml-parser` (`XMLValidator` плюс проверки одного корня и только пяти предопределённых сущностей: сам валидатор пропускает `&nbsp;` и два корня). `XMLValidator` в 5.11 помечен deprecated (рекомендуют отдельный пакет `fast-xml-validator`), на typecheck это hint, не ошибка.
+- Пункт 4: правило «обложка поста шире 1200» и правило «размер чужого og:image» удалены: оба читали литералы разметки (`coverSize` в `PostLayout` и `?? 1200 / 630` в `BaseLayout`) и не могли упасть. Ширина обложки живёт в одном месте, в API-гейте `cover_too_narrow` / `cover_width_unknown`. Размер og:image на своём origin по-прежнему замеряется по PNG (`probe-image-size` вместо `image-size`, он уже в дереве). HEAD для внешних og:image переезжает в 2.6.
+- Пункт 4: правило width/height у `.prose img` включено вместе с G6: сериализатор пишет `imageSizes` во frontmatter для asset-картинок тела, rehype-шаг `src/lib/rehype/image-dimensions.ts` ставит размеры. Пустой `imageSizes` не пишется, `pnpm content:fixture` даёт пустой diff. Поэтому в фикстуре нет картинки в теле статьи, поведение держат unit-тесты сериализатора и rehype-шага.
+- Пункт 5: правило «title или aria-label» у SVG дополнено обязательными alt у img и figcaption с текстом помимо номера.
+- Теги: пара hreflang для архива тега считается по `getOrderedPosts` (тот же список, что и у страницы тега, включая переопределение из `posts_meta`), отдельного предиката по `_meta` нет.
+- Пункт 4: правило `twitter:card` удалено (читало литерал `BaseLayout`). Правило `max-image-preview:large` оставлено как принятая проверка литерала, перенесено из `diagram-illustrations.test.ts`.
+- Follow-up: перейти с `XMLValidator` на `fast-xml-validator`.
+- Пункт 7: вместо lychee и linkinator своя офлайн-проверка внутренних ссылок и якорей (`scripts/seo-checks/links.ts`): негативный тест lychee без бинаря в unit-слое пустой, linkinator тянет HTTP-сервер и 11 зависимостей. Внешние ссылки не проверяются. `alt` проверяют два места по-разному: `wcag/h37` (атрибут есть везде) и правило images (непустой alt в `.prose`).
+- Новый гейт `heading_skip` в `src/lib/content-api/editorial.ts` (черновик: предупреждение, публикация: ошибка): правило html-validate `heading-level` на теле статьи не должно ронять релиз из-за контента, который API принял.
+- Исправлено в исходниках по находкам проверок на текущем dist: `aria-controls="site-drawer"` ссылался на несуществующий id (добавлен `id` у `MobileDrawer`), `AuthorCard` вёл на `/about/#me` без такого якоря (добавлен `id="me"` на `/about/` и `/en/about/`), крошка «Курсы» без `item` на странице курса убрана из видимой цепочки и из BreadcrumbList (индекса `/courses/` нет; ключ `breadcrumbs.courses` в `strings.*.json` удалён), пара hreflang у архива тега считается по тому же списку `getOrderedPosts`, что и страница тега и её `noindex` (скрытый пост не считается ни там, ни там; негативный тест на синтетическом dist).
+- Маршруты on demand разделены на `ON_DEMAND_SITEMAP` (`/`, `/en/`, `/blog/`, `/en/blog/`) и `ON_DEMAND_NOINDEX` (search, login, llms, admin, api…): `<loc>` из второй группы это ошибка; `staleExemptions` вызывает один оркестратор.
+- Пункт 6: категорию `content build` оркестратор берёт из `verifyContentBuild`; CLI `verify-content-build` для Dockerfile остаётся, дубль в `tests/built/snapshot-build.test.ts` удалён. Из `tests/built` удалены `hreflang-markup`, `hreflang-targets`, `og-card-coverage`, `diagram-illustrations` и сокращены `sitemap-coverage`, `snapshot-build`, `generated-url-policy`, `post-layout-markup` (микроданные Person остались там: JSON-LD их не видит).
+- Пункт 10: e2e в CI не подключён (G15: нужен Postgres-сервис, миграции и ветка webServer для CI, отдельная задача). Строка про скриншоты (G17) не выполнена: промпта на неё нет.
+- Полный краул Unlighthouse на main (report-only, после `post-deploy` job) уходит в 2.6.
+- html-validate (`.htmlvalidate.json`, `pnpm verify:html`): правила `wcag/h37`, `no-dup-id`, `heading-level`, `no-missing-references`; `long-title` не включён, длину title держит `tests/built/title-budget.test.ts`. `heading-level` на 30 страницах курса и уроков был настоящим дефектом разметки: `CourseSidebar` выводил подпись списка как `h3` до `h1`. Исправлено в компоненте (`p`, у `nav` есть `aria-label`), `/courses/**` из правила не исключён и содержимое уроков не менялось. Per-file ignore не используются.
+- У html-validate 11 `engines` `^22.22.0 || >=24.8.0`, у Unlighthouse `>=22.18.0`, а в `package.json` `>=22.12.0 <25`. Для devDependencies это допустимо: CI и `.nvmrc` на Node 24.
+- Unlighthouse (`unlighthouse.config.ts`, `pnpm lighthouse:pr`): только на pull request, шагом job `build` после `test:built` (использует тот же `dist`, отдельный job пересобирал бы сайт). Бюджеты: SEO 100, accessibility 95, performance 85; `throttle: true`, `samples: 3`, `maxConcurrency: 1`, `ignoreI18nPages: false` (иначе все маршруты выпадают из отчёта из-за `x-default` на каноническом origin). Бюджет сам пропускает страницу без категорий, поэтому `scripts/lighthouse-pr.ts` сверяет `.unlighthouse/ci-result.json`: на каждый из трёх путей нужны числовые performance, accessibility и seo. Локальный прогон на фикстуре: `/` 0.94/0.96/1, RU-пост 0.89/1/1, EN-пост 0.91/1/1 (performance/accessibility/seo). Скрипт `lighthouse:prod` не добавлен: его вводит 2.6.
+- Ссылки внутри тела статьи (`.prose a`) проверкой `links.ts` не проверяются: API проверяет только их форму (`safeLink`), а страница-цель может быть снята с публикации или якорь переименован, и тогда падал бы весь релиз. Картинки, стили и скрипты в `.prose` проверяются. Follow-up: API-гейт на ссылки тела (опубликованный маршрут того же языка, якорь из slug заголовков цели) и защита unpublish, которая разбирает ссылки (сейчас `strpos` по `(/blog/slug/)`, не видит `/blog/slug`, `/blog/slug/#a` и абсолютные URL).
+- Гейты `heading_skip` и новый `heading_reserved_id` (slug заголовка совпадает с id макета: `main`, `faq-heading` и т. д.; список в `src/lib/content-api/reserved-ids.ts`) зеркалят `heading-level` и `no-dup-id`, поэтому ratchet их не переносит (`carried`): они всегда ошибка.
+- html-validate видит только `dist/client`. Страницы с `prerender = false` (`/`, `/en/`, `/blog/`, `/en/blog/`) туда не попадают и не валидируются. Follow-up: валидировать ответы production-сервера (как это делает `lighthouse:pr`).
+- Preset'ы html-validate (`recommended`, `a11y`) не подключены: `extends: []` и четыре правила из дизайна §6. Прогон пресетов по текущему dist показал настоящие дефекты, их надо завести отдельными задачами: `element-permitted-content` (h2/p внутри `a > span` на `/tags/*`), `aria-label-misuse` на `span` в `/tags/`, дробный `width` у Mermaid `img` (`attribute-allowed-values`), `hidden-focusable` у drawer с `aria-hidden` без `inert` (возможно ложный), `unique-landmark`, `no-redundant-role`. Расширять набор правил решает пользователь.
+- Бюджет performance 85 откалиброван на ноутбуке (RU-пост 0.89), шаг Lighthouse в CI ещё не запускался, наличие Chrome на `ubuntu-latest` не проверено. До мержа: один зелёный PR-прогон и пересчёт бюджета по цифрам раннера.
+- `unlighthouse.config.ts` не типизирован (`@unlighthouse/core` транзитивная зависимость, типы из неё не импортируются); опечатка в ключе будет проигнорирована, ключи сверены с `index.d.mts` core вручную.
+- CLAUDE.md не менялся: строки `verify:html` и `lighthouse:pr` в «Команды» добавляются только с согласия пользователя.
+- Порядок CI: параллельные jobs (`checks`, `build`, `db`), а не линейная цепочка из промпта; внутри `build` шаг `verify:html` идёт с `if: ${{ !cancelled() }}`, чтобы падение `verify:seo-build` не скрывало находки html-validate.
 
 ## Промпт 2.6. Post-deploy smoke и IndexNow после выкладки
 

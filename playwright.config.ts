@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { FIXTURE_SNAPSHOT } from "./src/lib/content/snapshot";
 
 export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
@@ -56,7 +57,7 @@ export default defineConfig({
         url: "http://localhost:4321",
         reuseExistingServer: true,
         timeout: 120_000,
-        env: { ASTRO_DEV_BACKGROUND: "1" },
+        env: { ASTRO_DEV_BACKGROUND: "1", CONTENT_SNAPSHOT: FIXTURE_SNAPSHOT },
         stdout: "pipe",
         stderr: "pipe",
       },

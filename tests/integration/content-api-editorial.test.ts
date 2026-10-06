@@ -4,22 +4,34 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
 import { and, eq } from "drizzle-orm";
 import type { APIContext } from "astro";
-import * as yaml from "~/lib/yaml";
 import type { Database } from "../../src/lib/db";
 import * as schema from "../../src/lib/db/schema";
 
 const state = vi.hoisted(() => ({ db: undefined as Database | undefined }));
+// legacyFilePeers (TODO(cutover), prompt 3.6) reads POSTS_DIR, and caches what it parsed per
+// directory: the file exists before the first save of the run.
+const { LEGACY_TITLE, postsDir } = await vi.hoisted(async () => {
+  const LEGACY_TITLE = "Title of a legacy file post";
+  const { writeLegacyPosts } = await import("../support/legacy-posts");
+  return {
+    LEGACY_TITLE,
+    postsDir: writeLegacyPosts({ "legacy-title.md": { title: LEGACY_TITLE } }),
+  };
+});
+vi.mock("~/lib/fs/paths", async (original) => ({
+  ...(await original<typeof import("~/lib/fs/paths")>()),
+  POSTS_DIR: postsDir,
+}));
 vi.mock("~/lib/db", () => ({
   get db() {
     return state.db;
   },
 }));
-vi.mock("../../src/lib/content-api/github", async (original) => ({
-  ...(await original<typeof import("../../src/lib/content-api/github")>()),
-  commitArticle: vi.fn(async () => "commit-1"),
+vi.mock("../../src/lib/content-api/rebuild", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/rebuild")>()),
+  requestRebuild: vi.fn(async () => undefined),
 }));
 
 /** The critic's SDK boundary: the notes it "emits", or a failure. Never the real API. */
@@ -135,6 +147,7 @@ describe("editorial gates and article review with PostgreSQL", () => {
   const liveHtml = (url: string, revision: string) =>
     `<html><head><link rel="canonical" href="${url}"><meta name="description" content="D"></head><article data-content-revision="${revision}"></article></html>`;
   const goLive = async (url: string, publicationId: string) => {
+    await processPublication();
     await processPublication();
     remote.live = liveHtml(url, publicationId);
     remote.sitemap = `<?xml version="1.0"?><urlset><url><loc>${url}</loc></url></urlset>`;
@@ -257,32 +270,15 @@ describe("editorial gates and article review with PostgreSQL", () => {
     });
 
     it("treats the title of a legacy file post as taken, but never the article's own file or twin", async () => {
-      // TODO(cutover): delete this test together with legacyFilePeers (prompt 3.6); it reads real files.
-      const dir = "src/content/posts";
-      const file = readdirSync(dir).find((name) => {
-        if (!name.endsWith(".md")) return false;
-        const fm = yaml.load(
-          /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(`${dir}/${name}`, "utf8"))![1]!,
-        ) as {
-          draft?: boolean;
-        };
-        return fm.draft !== true;
-      });
-      if (!file)
-        throw new Error(
-          "no non-draft legacy post in src/content/posts: delete this test with legacyFilePeers (cutover)",
-        );
-      const fm = yaml.load(
-        /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(`${dir}/${file}`, "utf8"))![1]!,
-      ) as { title: string };
+      // TODO(cutover): delete this test together with legacyFilePeers (prompt 3.6).
       const clash = await call("POST", "articles", {
-        article: compliantArticle({ slug: "file-title-clash", title: fm.title }),
+        article: compliantArticle({ slug: "file-title-clash", title: LEGACY_TITLE }),
         mode: "publish",
       });
       expect(codesOf(clash.body)).toEqual(["title_duplicate"]);
       // The same title on the slug of that very file is its own: no duplicate.
       const own = await call("POST", "articles/validate", {
-        article: compliantArticle({ slug: file.replace(/\.md$/, ""), title: fm.title }),
+        article: compliantArticle({ slug: "legacy-title", title: LEGACY_TITLE }),
       });
       expect(own.status).toBe(200);
       expect((own.body.warnings as string[]).some((w) => w.startsWith("title_duplicate"))).toBe(

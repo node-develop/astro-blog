@@ -83,9 +83,23 @@ describe("content API contract and rendering", () => {
     expect(parsed.apiRevision).toBe(id);
     expect(parsed.seoTitle).toBe("Search title");
     expect(parsed.socialImageWidth).toBe(800);
+    // The body image's size travels in the header so the page can reserve its space.
+    expect(parsed.imageSizes).toEqual({ "https://cdn.example/image.png": [800, 600] });
     expect(raw).toContain("https://cdn.example/image.png");
     expect(raw).not.toContain("asset:");
     expect(raw).toContain("\\<script>");
+  });
+  it("writes no imageSizes for a body without asset images, so existing headers stay as they were", async () => {
+    const id = "349ad05b-41ae-4b63-93ab-d7679c82c886";
+    const raw = await serializeArticle(
+      { ...document, cover: { assetId: id, alt: "Cover" } },
+      [{ id, url: "https://cdn.example/image.png", width: 800, height: 600 }],
+      "349ad05b-41ae-4b63-93ab-d7679c82c886",
+      new Date("2026-09-07T10:00:00Z"),
+    );
+    expect(yaml.load(raw.split("---\n")[1]!) as Record<string, unknown>).not.toHaveProperty(
+      "imageSizes",
+    );
   });
   it("writes a plain-url cover without inventing social image dimensions", async () => {
     const raw = await serializeArticle(

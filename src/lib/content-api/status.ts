@@ -28,14 +28,19 @@ export type PublicationEvent = Readonly<{
 }>;
 
 /**
- * Does the article's file sit in git right now? The newest of two kinds of event decides: a
- * `publish` that recorded a commit puts the file there, an `unpublish` that finished took it away.
- * Failed or queued unpublications prove nothing. Pure: no database.
+ * Can the article's page be in a build right now? A build reads the export, which follows
+ * `build_publication_id`; that pointer moves in the worker's first step (`queued` to `publishing`),
+ * before the rebuild is requested, and any build in between (another article's dispatch, a push)
+ * can carry the page. So a `publish` counts once it ever left `queued`, or has a legacy
+ * `commitSha` (rows from before the rebuild flow). An `unpublish` counts once it finished.
+ * The newest counting event decides. Accepted false positive: a publish that failed while still
+ * `queued` (`cover_unreachable`, `key_revoked`, `version_conflict`) also counts; the lever is
+ * unpublish, then delete. Pure: no database.
  */
-export const ownsCommittedFile = (publications: readonly PublicationEvent[]): boolean => {
+export const mayBeInBuild = (publications: readonly PublicationEvent[]): boolean => {
   const events = publications.filter(
     (p) =>
-      (p.kind === "publish" && p.commitSha !== null) ||
+      (p.kind === "publish" && (p.state !== "queued" || p.commitSha !== null)) ||
       (p.kind === "unpublish" && p.state === "published"),
   );
   const newest = events.reduce<PublicationEvent | null>(

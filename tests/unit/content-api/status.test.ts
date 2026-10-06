@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   articleStatus,
   buildPointerAfterFailure,
-  ownsCommittedFile,
+  mayBeInBuild,
   type PublicationEvent,
   type StatusInput,
 } from "~/lib/content-api/status";
@@ -53,7 +53,7 @@ describe("articleStatus", () => {
   });
 });
 
-describe("ownsCommittedFile", () => {
+describe("mayBeInBuild", () => {
   const event = (
     kind: PublicationEvent["kind"],
     state: PublicationEvent["state"],
@@ -67,10 +67,12 @@ describe("ownsCommittedFile", () => {
   });
   it.each<[string, PublicationEvent[], boolean]>([
     ["no publications", [], false],
-    ["a publish that never reached git", [event("publish", "failed", null, 1)], false],
-    ["a publish with a commit", [event("publish", "failed", "sha", 1)], true],
+    ["a publish that never left queued", [event("publish", "queued", null, 1)], false],
+    ["a publish that left queued and failed", [event("publish", "failed", null, 1)], true],
+    ["a publish that is dispatched", [event("publish", "publishing", null, 1)], true],
+    ["a legacy publish with a commit, still queued", [event("publish", "queued", "sha", 1)], true],
     [
-      "the file was removed after the commit",
+      "taken down after the publish",
       [event("publish", "published", "a", 1), event("unpublish", "published", "b", 2)],
       false,
     ],
@@ -84,17 +86,17 @@ describe("ownsCommittedFile", () => {
       true,
     ],
     [
-      "an unpublish that has not finished does not take the file away",
+      "an unpublish that has not finished does not take the page away",
       [event("publish", "published", "a", 1), event("unpublish", "publishing", "b", 2)],
       true,
     ],
     [
-      "a failed unpublish does not take the file away",
+      "a failed unpublish does not take the page away",
       [event("publish", "published", "a", 1), event("unpublish", "failed", "b", 2)],
       true,
     ],
   ])("%s -> %s", (_name, events, expected) => {
-    expect(ownsCommittedFile(events)).toBe(expected);
+    expect(mayBeInBuild(events)).toBe(expected);
   });
 });
 

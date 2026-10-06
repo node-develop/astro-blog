@@ -1,0 +1,11 @@
+{
+  "root": true,
+  "extends": [],
+  "elements": ["html5"],
+  "rules": {
+    "wcag/h37": "error",
+    "no-dup-id": "error",
+    "heading-level": ["error", { "allowMultipleH1": false, "minInitialRank": "h1" }],
+    "no-missing-references": "error"
+  }
+}

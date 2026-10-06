@@ -1,5 +1,5 @@
 import type { APIContext } from "astro";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GET, prerender } from "../../../src/pages/llms-full.txt";
 import { buildLlmsFull, LLMS_FULL_BUDGET_BYTES, type LlmsInput } from "~/lib/agents/llms";
 
@@ -62,7 +62,10 @@ describe("buildLlmsFull", () => {
 });
 
 describe("llms-full.txt endpoint", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
   it("renders the digest as runtime plain text from shared content", async () => {
+    vi.stubEnv("DATABASE_URL", ""); // a local .env may point at an unreachable DB; use snapshot meta
     const response = await GET({} as APIContext);
     const body = await response.text();
 

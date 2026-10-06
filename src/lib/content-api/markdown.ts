@@ -77,7 +77,26 @@ export const serializeArticle = async (
       : coverAsset?.url
     : undefined;
   const social = document.socialImage ? byId.get(document.socialImage.assetId) : coverAsset;
-  const { body } = inspectMarkdown(document.body, new Map(assets.map((a) => [a.id, a.url])));
+  const { body, assetIds } = inspectMarkdown(
+    document.body,
+    new Map(assets.map((a) => [a.id, a.url])),
+  );
+  // Intrinsic size of every asset image in the body, keyed by the URL the body now carries. The
+  // site's rehype step (src/lib/rehype/image-dimensions.ts) turns it into width/height so the page
+  // does not shift while an image loads. Nothing is written for a body without such images: that
+  // keeps the header (and so the snapshot hash) of every existing article as it was.
+  const imageSizes = Object.fromEntries(
+    assetIds.flatMap((id) => {
+      const asset = byId.get(id);
+      const known =
+        asset !== undefined &&
+        Number.isInteger(asset.width) &&
+        Number.isInteger(asset.height) &&
+        asset.width > 0 &&
+        asset.height > 0;
+      return known ? [[asset.url, [asset.width, asset.height]] as const] : [];
+    }),
+  );
   const frontmatter = {
     title: document.title,
     description: document.description,
@@ -95,6 +114,7 @@ export const serializeArticle = async (
     ...(coverUrl
       ? { cover: coverUrl, coverAlt: document.cover!.alt, coverCaption: document.cover!.caption }
       : {}),
+    ...(Object.keys(imageSizes).length > 0 ? { imageSizes } : {}),
     ...(social
       ? {
           socialImage: social.url,

@@ -4,10 +4,12 @@
  * Markdown is read through the same parser as `inspectMarkdown`, so code, inline code and math
  * never count as prose.
  */
+import GithubSlugger from "github-slugger";
 import { EDITORIAL_LIMITS } from "../content/limits";
 import bannedJson from "../content/banned-phrases.json" with { type: "json" };
 import type { ArticleDocument } from "./contract";
 import { parseArticleMarkdown } from "./markdown";
+import { isReservedElementId } from "./reserved-ids";
 
 export type EditorialCode =
   | "too_short"
@@ -15,6 +17,8 @@ export type EditorialCode =
   | "too_few_internal_links"
   | "title_duplicate"
   | "mermaid_accessibility"
+  | "heading_skip"
+  | "heading_reserved_id"
   | "cover_missing"
   | "cover_placeholder"
   | "cover_width_unknown"
@@ -182,6 +186,63 @@ export const checkMermaid = (
         : [];
     });
 
+// ── Headings ───────────────────────────────────────────────────────────────
+
+/**
+ * The title is the page's H1, so the body opens at H2 and may go down one level at a time. A skip
+ * (an H3 right after the title, an H4 after an H2) is exactly what the build's html-validate
+ * `heading-level` rule fails on, so it is caught here, at the request, not as a failed release.
+ * Going up any number of levels is fine.
+ */
+export const checkHeadings = (
+  body: string,
+  tree: Node = treeOf(body),
+): readonly EditorialFinding[] => {
+  const headings = nodesOf(tree).flatMap((node: Node & { depth?: number }) =>
+    node.type === "heading" && typeof node.depth === "number"
+      ? [{ depth: node.depth, text: textOf(node).trim() }]
+      : [],
+  );
+  return headings.flatMap((heading, index): readonly EditorialFinding[] => {
+    const previous = index === 0 ? 1 : headings[index - 1]!.depth;
+    if (heading.depth <= previous + 1) return [];
+    return [
+      {
+        code: "heading_skip",
+        key: `heading_skip:${heading.text}`,
+        message: `The heading "${heading.text}" is H${heading.depth} right after ${index === 0 ? "the title (H1)" : `an H${previous}`}; do not skip a level.`,
+        context: { heading: heading.text, depth: heading.depth, after: previous },
+      },
+    ];
+  });
+};
+
+/**
+ * A body heading whose slug is an id the layout owns (`main`, `faq-heading`, ...) would duplicate
+ * it in the built page: html-validate `no-dup-id` fails the release. Slugs are built the way
+ * rehype-slug builds them (github-slugger, in document order).
+ */
+export const checkReservedHeadingIds = (
+  body: string,
+  tree: Node = treeOf(body),
+): readonly EditorialFinding[] => {
+  const slugger = new GithubSlugger();
+  return nodesOf(tree).flatMap((node: Node): readonly EditorialFinding[] => {
+    if (node.type !== "heading") return [];
+    const text = textOf(node).trim();
+    const slug = slugger.slug(text);
+    if (!isReservedElementId(slug)) return [];
+    return [
+      {
+        code: "heading_reserved_id",
+        key: `heading_reserved_id:${slug}`,
+        message: `The heading "${text}" gets the id "${slug}", which the page layout already uses; rename the heading.`,
+        context: { heading: text, id: slug },
+      },
+    ];
+  });
+};
+
 // ── Cover ──────────────────────────────────────────────────────────────────
 
 const pathOf = (url: string): string =>
@@ -348,14 +409,23 @@ export const evaluateEditorial = (
     ...checkInternalLinks(input.document, tree),
     ...checkTitle(input.document.title, input.peers),
     ...checkMermaid(input.document.body, tree),
+    ...checkHeadings(input.document.body, tree),
+    ...checkReservedHeadingIds(input.document.body, tree),
     ...checkCover(input.document.cover, input.coverWidth),
     ...checkPhrases(input.document, tree),
   ];
 };
 
 /**
+ * Findings a release check of the build mirrors (html-validate `heading-level`, `no-dup-id`): a
+ * live article that carries one would fail the next release, so they are never carried.
+ */
+const NEVER_CARRIED: ReadonlySet<EditorialCode> = new Set(["heading_skip", "heading_reserved_id"]);
+
+/**
  * The ratchet: against a live version, only findings the live version did not have are errors;
- * the rest are `carried` (warnings). No baseline (a new article, an unpublished one): all errors.
+ * the rest are `carried` (warnings), except `NEVER_CARRIED` ones, which are always errors.
+ * No baseline (a new article, an unpublished one): all errors.
  */
 export const splitByBaseline = (
   current: readonly EditorialFinding[],
@@ -364,8 +434,8 @@ export const splitByBaseline = (
   if (baseline === null) return { errors: current, carried: [] };
   const known = new Set(baseline.map((f) => f.key));
   return {
-    errors: current.filter((f) => !known.has(f.key)),
-    carried: current.filter((f) => known.has(f.key)),
+    errors: current.filter((f) => NEVER_CARRIED.has(f.code) || !known.has(f.key)),
+    carried: current.filter((f) => !NEVER_CARRIED.has(f.code) && known.has(f.key)),
   };
 };
 

@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import * as yaml from "~/lib/yaml";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { and, desc, eq, ilike, inArray, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db, type Database } from "../db";
+import { POSTS_DIR } from "../fs/paths";
 import {
   contentArticles,
   contentArticleVersions,
@@ -35,11 +36,11 @@ import {
   type socialDraftSchema,
   type versionListSchema,
 } from "./contract";
-import { articleStatus, ownsCommittedFile } from "./status";
+import { articleStatus, mayBeInBuild } from "./status";
 import { hash, type Actor } from "./auth";
 import { canonicalJson } from "./canonical";
 import { apiError } from "./errors";
-import { articlePath, articleUrl } from "./github";
+import { articleUrl } from "./urls";
 import { coverUrlOf, uploadsFileExists } from "./cover";
 import { inspectMarkdown, serializeArticle } from "./markdown";
 import { hasBlockNote } from "../social/critic-notes";
@@ -109,7 +110,7 @@ export const articleView = (article: Article, latest: Pick<Publication, "state">
 const isPublishedPostFile = (slug: string, lang: string): boolean => {
   const prefix = lang === "en" ? "en/" : "";
   for (const extension of ["md", "mdx"]) {
-    const path = resolve(`src/content/posts/${prefix}${slug}.${extension}`);
+    const path = join(POSTS_DIR, `${prefix}${slug}.${extension}`);
     if (!existsSync(path)) continue;
     const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(path, "utf8"));
     if (!match) continue;
@@ -152,9 +153,13 @@ export const relatedIsPublished = async (
   return !leaving;
 };
 
-// TODO(cutover): while legacy file posts exist, an article on their slug would make the worker
-// overwrite the file. Slug occupancy becomes database-only in prompt 3.6
-// (docs/specs/plans/2026-10-03-api-only-migration.md).
+// TODO(cutover): while legacy file posts exist, an article on their slug would collide with the
+// post once it is imported (the snapshot check `duplicate article` would fail the build). Slug occupancy becomes database-only in prompt 3.6
+// (docs/specs/plans/2026-10-03-api-only-migration.md). Still resolves from the cwd through
+// the path below, not POSTS_DIR, like translate/site-config.ts: moved in 3.6.
+// TODO(cutover): goes away with fileOwnsSlug.
+const articlePath = (slug: string, lang: string): string =>
+  `src/content/posts/${lang === "en" ? "en/" : ""}${slug}.md`;
 export const fileOwnsSlug = (slug: string, lang: "ru" | "en"): boolean => {
   const path = articlePath(slug, lang);
   return existsSync(resolve(path)) || existsSync(resolve(`${path}x`));
@@ -600,8 +605,8 @@ export const restoreVersion = async (
 /**
  * Deletes a draft that never went live. Checks, in order: 404; 412 when `ifMatch` is not the
  * current version; 409 `publication_in_progress`; 409 `unpublish_first` while the article is
- * published or its file sits in git (a failed first publication whose commit landed: deleting the
- * row would leave a non-draft file for the next build); 409 `was_published` for an article that
+ * published or may already be in a build (a publication that left `queued` moved the export
+ * pointer; deleting the row would leave a page the next build still carries); 409 `was_published` for an article that
  * ever went live, so the history of anything that was public survives. Publications are deleted
  * first (`content_publications.article_id` is RESTRICT); versions go with the article (CASCADE).
  * `posts_meta` is shared by both languages and is left alone.
@@ -613,11 +618,11 @@ export const deleteDraft = async (tx: Tx, id: string, ifMatch: number): Promise<
       version: article.version,
     });
   await requireIdle(tx, id);
-  if (article.publishedVersion !== null || ownsCommittedFile(await publicationEvents(tx, id)))
+  if (article.publishedVersion !== null || mayBeInBuild(await publicationEvents(tx, id)))
     throw apiError(
       409,
       "unpublish_first",
-      "The article is published or its file is already committed; unpublish it first.",
+      "The article is published or may already be in a build; unpublish it first.",
     );
   if (article.firstPublishedAt !== null)
     throw apiError(
@@ -631,8 +636,8 @@ export const deleteDraft = async (tx: Tx, id: string, ifMatch: number): Promise<
 };
 
 /**
- * Queues the removal of the article's file (this language only). An article that is not
- * published and has no file in git has nothing to remove: `unchanged` when it already was
+ * Queues taking the article out of the export (this language only). An article that is not
+ * published and was never sent to a build has nothing to remove: `unchanged` when it already was
  * unpublished, else 409 `not_published`. Refused while a published article of the same language
  * links to it (409 `referenced_by_related`). The check reads the Markdown that is live
  * (`publishedContent`), the content the build pointer selects and any queued or dispatched publish
@@ -649,10 +654,7 @@ export const enqueueUnpublication = async (
       version: article.version,
     });
   const latest = await requireIdle(tx, article.id);
-  if (
-    article.publishedVersion === null &&
-    !ownsCommittedFile(await publicationEvents(tx, article.id))
-  ) {
+  if (article.publishedVersion === null && !mayBeInBuild(await publicationEvents(tx, article.id))) {
     if (article.unpublishedAt)
       return { status: 200, data: { ...articleView(article, latest), unchanged: true } };
     throw apiError(409, "not_published", "The article is not published.");

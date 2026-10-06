@@ -21,6 +21,16 @@ const uploadsDir = await vi.hoisted(async () => {
   process.env.UPLOADS_DIR = dir;
   return dir;
 });
+// The legacy file fallbacks (TODO(cutover), prompt 3.6) read POSTS_DIR: the test owns its files, and
+// they are written before any API call because editorial-gates caches them per directory.
+const postsDir = await vi.hoisted(async () => {
+  const { writeLegacyPosts } = await import("../support/legacy-posts");
+  return writeLegacyPosts({ "legacy-related.md": { title: "Legacy related post" } });
+});
+vi.mock("~/lib/fs/paths", async (original) => ({
+  ...(await original<typeof import("~/lib/fs/paths")>()),
+  POSTS_DIR: postsDir,
+}));
 // getOrderedPosts reads Astro's collection: a fixed list of fake entries stands in for it.
 const collection = vi.hoisted(() => ({ ids: [] as string[] }));
 vi.mock("astro:content", () => ({
@@ -28,7 +38,11 @@ vi.mock("astro:content", () => ({
     collection.ids
       .map((id, index) => ({
         id,
-        data: { draft: false, pubDate: new Date(Date.UTC(2026, 0, 10 - index)) },
+        data: {
+          draft: false,
+          pubDate: new Date(Date.UTC(2026, 0, 10 - index)),
+          _meta: { order: index, pinned: false, hiddenFromList: false },
+        },
       }))
       .filter(filter),
 }));
@@ -38,53 +52,14 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 const remote = vi.hoisted(() => ({
-  content: null as string | null,
-  commits: 0,
-  deletes: 0,
   /** The page body; `null` is a 404. */
   live: "" as string | null,
   sitemap: "",
 }));
-vi.mock("../../src/lib/content-api/github", async (original) => {
-  const actual = await original<typeof import("../../src/lib/content-api/github")>();
-  return {
-    ...actual,
-    // The same contract as the real adapter: identical content is a recovery, a file at the path
-    // is overwritten only for an article that owns it.
-    commitArticle: vi.fn(
-      async (
-        _path: string,
-        content: string,
-        { overwrite, ownedRevisions = [] }: { overwrite: boolean; ownedRevisions?: string[] },
-      ) => {
-        if (remote.content === content) return "commit-1";
-        const revision = remote.content === null ? null : actual.fileApiRevision(remote.content);
-        const owns = overwrite || (revision !== null && ownedRevisions.includes(revision));
-        if (remote.content !== null && !owns)
-          throw Object.assign(new Error("Existing file"), { status: 409, code: "slug_conflict" });
-        remote.content = content;
-        remote.commits++;
-        return `commit-${remote.commits}`;
-      },
-    ),
-    // Same contract as the real adapter: a missing file is a recovery, a foreign file is refused.
-    deleteArticle: vi.fn(
-      async (
-        _path: string,
-        { overwrite, ownedRevisions = [] }: { overwrite: boolean; ownedRevisions?: string[] },
-      ) => {
-        if (remote.content === null) return "parent";
-        const revision = actual.fileApiRevision(remote.content);
-        const owns = overwrite || (revision !== null && ownedRevisions.includes(revision));
-        if (!owns)
-          throw Object.assign(new Error("Existing file"), { status: 409, code: "slug_conflict" });
-        remote.content = null;
-        remote.deletes++;
-        return `delete-${remote.deletes}`;
-      },
-    ),
-  };
-});
+vi.mock("../../src/lib/content-api/rebuild", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/rebuild")>()),
+  requestRebuild: vi.fn(async () => undefined),
+}));
 
 import { articleDocumentSchema } from "../../src/lib/content-api/contract";
 import {
@@ -94,7 +69,7 @@ import {
 } from "../support/editorial-fixture";
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
-import { commitArticle } from "../../src/lib/content-api/github";
+import { requestRebuild } from "../../src/lib/content-api/rebuild";
 import { searchPostsMeta } from "../../src/lib/db/repo/posts-meta";
 import { getOrderedPosts } from "../../src/lib/content/loader";
 
@@ -163,9 +138,6 @@ describe("content API with PostgreSQL", () => {
       .returning();
     keyId = key!.id;
     await insertCoverAsset(state.db!, keyId);
-    remote.content = null;
-    remote.commits = 0;
-    remote.deletes = 0;
     remote.live = "";
     remote.sitemap = "";
     vi.clearAllMocks();
@@ -190,6 +162,9 @@ describe("content API with PostgreSQL", () => {
   const due = async () => {
     await client`update content_publications set next_attempt_at = now() - interval '1 second'`;
   };
+  /** The 30 minutes count from the rebuild request. */
+  const ageDispatch = () =>
+    client`update content_publications set dispatched_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second' where dispatched_at is not null`;
 
   it("authenticates, enforces scopes, revocation and the rate limit", async () => {
     expect((await call("POST", "articles", { article: document }, "x", "bad")).status).toBe(401);
@@ -341,7 +316,10 @@ describe("content API with PostgreSQL", () => {
     expect(republish.status).toBe(409);
     expect(republish.body.error.code).toBe("publication_in_progress");
     await processPublication();
-    expect(remote.commits).toBe(1);
+    expect(requestRebuild).not.toHaveBeenCalled(); // the pointer moves first
+    await processPublication();
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
+    expect(requestRebuild).toHaveBeenCalledWith(expect.any(String));
     await due();
     await processPublication();
     expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
@@ -371,51 +349,28 @@ describe("content API with PostgreSQL", () => {
       ).body.unchanged,
     ).toBe(true);
   });
-  it("serialises concurrent workers: one commit for one publication", async () => {
+  it("publishes a hidden article without waiting for the sitemap that leaves it out", async () => {
+    const article = await make("publish");
+    await state.db!.insert(schema.postsMeta).values({
+      slug: document.slug,
+      order: 1,
+      hiddenFromList: true,
+    });
+    await processPublication(); // pointer moves
+    await processPublication(); // rebuild requested
+    remote.live = liveHtml(article.url, article.publication.id);
+    remote.sitemap = sitemapOf(OTHER_URL);
+    await due();
+    await processPublication();
+    expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
+      "published",
+    );
+  });
+  it("serialises concurrent workers: one rebuild request for one publication", async () => {
     const article = await make("publish");
     await Promise.all([processPublication(), processPublication()]);
-    expect(remote.commits).toBe(1);
-    expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
-      "publishing",
-    );
-  });
-  it("never overwrites a file the article has not committed before", async () => {
-    const article = await make("publish");
-    remote.content = "A legacy post pushed to the same path";
-    await processPublication();
-    expect(remote.commits).toBe(0);
-    expect(remote.content).toBe("A legacy post pushed to the same path");
-    expect((await call("GET", `publications/${article.publication.id}`)).body).toMatchObject({
-      state: "failed",
-      error: { code: "slug_conflict" },
-    });
-  });
-  it("overwrites a reformatted file once the article has been committed before", async () => {
-    const article = await make("publish");
-    await processPublication();
-    await client`update content_publications set updated_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second'`;
-    await processPublication();
-    expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe("failed");
-    remote.content = "---\ntitle: 'reformatted by prettier'\n---\n";
-    const retry = await call(
-      "POST",
-      `articles/${article.id}/publish`,
-      { expectedVersion: 1 },
-      "retry-reformatted",
-    );
-    await processPublication();
-    expect(remote.commits).toBe(2);
-    expect(remote.content).not.toContain("reformatted by prettier");
-    expect((await call("GET", `publications/${retry.body.publication.id}`)).body.state).toBe(
-      "publishing",
-    );
-  });
-  it("overwrites the file of an already published article even without an earlier commit row", async () => {
-    const article = await make("publish");
-    await state.db!.update(schema.contentArticles).set({ publishedVersion: 1 });
-    remote.content = "Reformatted copy of the live article";
-    await processPublication();
-    expect(remote.commits).toBe(1);
+    await Promise.all([processPublication(), processPublication()]);
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
     expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
       "publishing",
     );
@@ -424,7 +379,7 @@ describe("content API with PostgreSQL", () => {
     const validate = (relatedSlugs: string[]) =>
       call("POST", "articles/validate", { article: { ...document, relatedSlugs } }, "related");
     // A legacy file post that has no row in the database.
-    expect((await validate(["json-ld-graph-astro"])).status).toBe(200);
+    expect((await validate(["legacy-related"])).status).toBe(200);
     expect((await validate(["no-such-article"])).status).toBe(422);
     const draft = await call(
       "POST",
@@ -442,61 +397,50 @@ describe("content API with PostgreSQL", () => {
     expect((await validate(["related-draft"])).status).toBe(200);
     // A row wins over the file: an unpublished row hides a published file with the same slug.
     await state.db!.insert(schema.contentArticles).values({
-      document: articleDocumentSchema.parse({ ...document, slug: "json-ld-graph-astro" }),
+      document: articleDocumentSchema.parse({ ...document, slug: "legacy-related" }),
       externalId: "shadow",
-      slug: "json-ld-graph-astro",
+      slug: "legacy-related",
       lang: "ru",
       keyId,
     });
-    expect((await validate(["json-ld-graph-astro"])).status).toBe(422);
+    expect((await validate(["legacy-related"])).status).toBe(422);
   });
-  it("resumes safely when a GitHub commit succeeds but the response is lost", async () => {
-    await make("publish");
-    const normal = vi.mocked(commitArticle).getMockImplementation()!;
-    vi.mocked(commitArticle).mockImplementationOnce(async (...args) => {
-      await normal(...args);
-      throw new Error("connection reset after commit");
+  it("asks again when the answer to the rebuild request is lost", async () => {
+    const article = await make("publish");
+    await processPublication(); // pointer moves
+    vi.mocked(requestRebuild).mockRejectedValueOnce(new Error("connection reset"));
+    expect(await processPublication()).toMatchObject({
+      worked: true,
+      error: "upstream_unavailable",
     });
-    await processPublication();
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
+    const [lost] = await publicationRows();
+    expect(lost).toMatchObject({
+      state: "publishing",
+      dispatchedAt: null,
+      error: { code: "upstream_unavailable" },
+    });
+    expect((await articleRow(article.id)).buildPublicationId).toBe(article.publication.id);
     await due();
     await processPublication();
-    expect(remote.commits).toBe(1);
-    expect((await state.db!.select().from(schema.contentPublications))[0]?.state).toBe(
-      "publishing",
-    );
-  });
-  it("recovers an article whose only commit was accepted by GitHub but never recorded", async () => {
-    const article = await make("publish");
-    const normal = vi.mocked(commitArticle).getMockImplementation()!;
-    vi.mocked(commitArticle).mockImplementation(async (...args) => {
-      await normal(...args);
-      throw new Error("connection reset after commit");
-    });
-    await client`update content_publications set attempts = 4`;
+    expect(requestRebuild).toHaveBeenCalledTimes(2);
+    expect((await publicationRows())[0]!.dispatchedAt).not.toBeNull();
+    remote.live = liveHtml(article.url, article.publication.id);
+    remote.sitemap = sitemapOf(article.url, OTHER_URL);
+    await due();
     await processPublication();
-    vi.mocked(commitArticle).mockImplementation(normal);
-    const failed = (await call("GET", `publications/${article.publication.id}`)).body;
-    expect(failed.state).toBe("failed");
-    expect(failed.commitSha ?? null).toBeNull();
-    expect(remote.content).toContain(article.publication.id);
-    const retry = await call(
-      "POST",
-      `articles/${article.id}/publish`,
-      { expectedVersion: 1 },
-      "retry-lost",
+    expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
+      "published",
     );
-    await processPublication();
-    expect((await call("GET", `publications/${retry.body.publication.id}`)).body.state).toBe(
-      "publishing",
-    );
-    expect(remote.content).toContain(retry.body.publication.id);
   });
   it("fails a timed-out deployment and retries with a fresh build marker", async () => {
     const article = await make("publish");
     await processPublication();
-    await client`update content_publications set updated_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second'`;
+    await processPublication();
+    await ageDispatch();
     await processPublication();
     expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe("failed");
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
     const retry = await call(
       "POST",
       `articles/${article.id}/publish`,
@@ -506,7 +450,8 @@ describe("content API with PostgreSQL", () => {
     expect(retry.status).toBe(202);
     expect(retry.body.publication.id).not.toBe(article.publication.id);
     await processPublication();
-    expect(remote.commits).toBe(2);
+    await processPublication();
+    expect(requestRebuild).toHaveBeenCalledTimes(2);
   });
   it("a publication waiting for its next attempt does not block the one queued behind it", async () => {
     const first = await make("publish");
@@ -532,19 +477,22 @@ describe("content API with PostgreSQL", () => {
       "publishing",
     );
     expect((await call("GET", `publications/${first.publication.id}`)).body.state).toBe("queued");
-    expect(remote.commits).toBe(1);
+    expect(requestRebuild).not.toHaveBeenCalled();
   });
-  it("does not execute pending publications after revocation", async () => {
-    await make("publish");
+  it("does not request a rebuild for a publication whose key was revoked after the pointer moved", async () => {
+    const article = await make("publish");
+    await processPublication();
     await state
       .db!.update(schema.contentApiKeys)
       .set({ revokedAt: new Date() })
       .where(eq(schema.contentApiKeys.id, keyId));
     await processPublication();
-    expect(remote.commits).toBe(0);
-    expect((await state.db!.select().from(schema.contentPublications))[0]?.error?.code).toBe(
-      "key_revoked",
-    );
+    expect(requestRebuild).not.toHaveBeenCalled();
+    expect((await publicationRows())[0]).toMatchObject({
+      state: "failed",
+      error: { code: "key_revoked" },
+    });
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
   });
 
   // ── Prompt 1.5: versions, restore, delete, unpublish, batch, status ──────────────────────────
@@ -553,9 +501,10 @@ describe("content API with PostgreSQL", () => {
   const sitemapOf = (...urls: string[]) =>
     `<?xml version="1.0"?><urlset>${urls.map((u) => `<url><loc>${u}</loc></url>`).join("")}</urlset>`;
   const OTHER_URL = "https://artka.dev/blog/some-other-post/";
-  /** Runs one publication through commit, live page and sitemap to `published`. */
+  /** Runs one publication through the pointer, the rebuild request, live page and sitemap to `published`. */
   const goLive = async (url: string, publicationId: string) => {
-    await processPublication();
+    await processPublication(); // pointer moves
+    await processPublication(); // rebuild requested
     remote.live = liveHtml(url, publicationId);
     remote.sitemap = sitemapOf(url, OTHER_URL);
     await due();
@@ -714,14 +663,37 @@ describe("content API with PostgreSQL", () => {
     ]);
   });
 
-  it("deletes a draft together with its failed publication and history", async () => {
+  it("treats a publication that failed after leaving queued as possibly built: unpublish first, then delete", async () => {
     const article = await make("publish");
-    remote.content = "A legacy post pushed to the same path";
-    await processPublication(); // slug_conflict: failed, nothing committed.
-    expect((await publicationRows())[0]).toMatchObject({ state: "failed", commitSha: null });
-    const deleted = await call("DELETE", `articles/${article.id}`, undefined, "d", token, {
-      "if-match": '"1"',
+    await processPublication(); // pointer moves: from here a build may carry the page
+    vi.mocked(requestRebuild).mockRejectedValueOnce(new Error("GitHub is down"));
+    await client`update content_publications set attempts = 4`;
+    await processPublication(); // the rebuild request is exhausted
+    expect((await publicationRows())[0]).toMatchObject({
+      state: "failed",
+      dispatchedAt: null,
+      commitSha: null,
     });
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
+    const del = () =>
+      call("DELETE", `articles/${article.id}`, undefined, "d", token, { "if-match": '"1"' });
+    const refused = await del();
+    expect([refused.status, refused.body.error.code]).toEqual([409, "unpublish_first"]);
+    // The lever: an unpublish that finishes proves the page is gone, then the draft can go.
+    const unpublish = await call(
+      "POST",
+      `articles/${article.id}/unpublish`,
+      { expectedVersion: 1 },
+      "lever",
+    );
+    expect(unpublish.status).toBe(202);
+    await processPublication();
+    await processPublication();
+    remote.live = null;
+    remote.sitemap = sitemapOf(OTHER_URL);
+    await due();
+    await processPublication();
+    const deleted = await del();
     expect([deleted.status, deleted.body]).toEqual([200, { id: article.id, deleted: true }]);
     expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(0);
     expect(await publicationRows()).toHaveLength(0);
@@ -762,17 +734,18 @@ describe("content API with PostgreSQL", () => {
     expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(1);
   });
 
-  it("refuses to delete a draft whose file is already in git, and an active publication", async () => {
+  it("refuses to delete a draft that was sent to a build, and an active publication", async () => {
     const article = await make("publish");
     const del = () =>
       call("DELETE", `articles/${article.id}`, undefined, "d", token, { "if-match": '"1"' });
-    await processPublication(); // The commit lands.
+    await processPublication(); // The pointer moves.
+    await processPublication(); // The rebuild is requested.
     expect((await del()).body.error.code).toBe("publication_in_progress");
     await state.db!.update(schema.contentPublications).set({ state: "failed" });
     const refused = await del();
     expect([refused.status, refused.body.error.code]).toEqual([409, "unpublish_first"]);
     expect(await state.db!.select().from(schema.contentArticles)).toHaveLength(1);
-    // Unpublishing the stray file frees the draft for deletion.
+    // Unpublishing the stray page frees the draft for deletion.
     const unpublish = await call(
       "POST",
       `articles/${article.id}/unpublish`,
@@ -781,11 +754,12 @@ describe("content API with PostgreSQL", () => {
     );
     expect(unpublish.status).toBe(202);
     await processPublication();
+    await processPublication();
     remote.live = null;
     remote.sitemap = sitemapOf(OTHER_URL);
     await due();
     await processPublication();
-    expect(remote.content).toBeNull();
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
     expect((await del()).status).toBe(200);
   });
 
@@ -801,10 +775,13 @@ describe("content API with PostgreSQL", () => {
     expect(queued.body).toMatchObject({ status: "publishing", publication: { kind: "unpublish" } });
     const unpublishId = queued.body.publication.id;
     const state_ = async () => (await call("GET", `publications/${unpublishId}`)).body;
-    // The file goes away in a commit; the page still answers 200.
+    // The article leaves the export first, then the rebuild is requested; the page still answers 200.
+    const requested = vi.mocked(requestRebuild).mock.calls.length;
     await processPublication();
-    expect(remote.deletes).toBe(1);
-    expect(remote.content).toBeNull();
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
+    expect(requestRebuild).toHaveBeenCalledTimes(requested);
+    await processPublication();
+    expect(requestRebuild).toHaveBeenCalledTimes(requested + 1);
     expect(await state_()).toMatchObject({ state: "publishing", kind: "unpublish" });
     await due();
     await processPublication();
@@ -871,13 +848,14 @@ describe("content API with PostgreSQL", () => {
     });
   });
 
-  it("lets POST /publish restore a page whose unpublish failed after its commit", async () => {
+  it("lets POST /publish restore a page whose unpublish failed after its rebuild request", async () => {
     const article = await publishedArticle();
     await call("POST", `articles/${article.id}/unpublish`, { expectedVersion: 1 }, "unpublish");
     await processPublication();
-    expect(remote.content).toBeNull();
+    await processPublication();
+    expect((await articleRow(article.id)).buildPublicationId).toBeNull();
     // The page never disappears: the unpublish times out and fails; publishedVersion is intact.
-    await client`update content_publications set updated_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second' where kind = 'unpublish'`;
+    await client`update content_publications set dispatched_at = now() - interval '31 minutes', next_attempt_at = now() - interval '1 second' where kind = 'unpublish'`;
     await processPublication();
     expect((await call("GET", `articles/${article.id}`)).body).toMatchObject({
       status: "failed",
@@ -891,7 +869,7 @@ describe("content API with PostgreSQL", () => {
     );
     expect([retry.status, retry.body.unchanged]).toEqual([202, undefined]);
     await processPublication();
-    expect(remote.content).toContain(retry.body.publication.id);
+    expect((await articleRow(article.id)).buildPublicationId).toBe(retry.body.publication.id);
   });
 
   it("will not unpublish an article that a published article links to", async () => {
@@ -984,6 +962,52 @@ describe("content API with PostgreSQL", () => {
     );
     expect(replay.body.batchId).toBe(result.body.batchId);
     expect(await publicationRows()).toHaveLength(2);
+  });
+
+  it("requests one rebuild for a ru/en batch, and only once no member is still queued", async () => {
+    const ru = await make();
+    const en = await makeEnglish();
+    const result = await call(
+      "POST",
+      "publish",
+      {
+        items: [
+          { id: ru.id, expectedVersion: 1 },
+          { id: en.id, expectedVersion: 1 },
+        ],
+      },
+      "batch-rebuild",
+    );
+    const states = async () =>
+      Object.fromEntries((await publicationRows()).map((r) => [r.articleId, r]));
+    await processPublication(); // tick 1: ru moves its pointer
+    expect((await states())[ru.id]).toMatchObject({ state: "publishing", dispatchedAt: null });
+    await processPublication(); // tick 2: ru must wait, en is still queued
+    expect(requestRebuild).not.toHaveBeenCalled();
+    expect((await states())[en.id]!.state).toBe("queued");
+    expect((await states())[ru.id]!.dispatchedAt).toBeNull();
+    await processPublication(); // tick 3: en moves its pointer
+    expect((await states())[en.id]).toMatchObject({ state: "publishing", dispatchedAt: null });
+    expect(requestRebuild).not.toHaveBeenCalled();
+    await processPublication(); // tick 4: the one request for the whole batch
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
+    expect(requestRebuild).toHaveBeenCalledWith(result.body.batchId);
+    await due();
+    await processPublication(); // ru adopts the request en already made
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
+    const rows = await states();
+    expect(rows[ru.id]!.dispatchedAt).not.toBeNull();
+    expect(rows[ru.id]!.dispatchedAt).toEqual(rows[en.id]!.dispatchedAt);
+    const ruLive = liveHtml(ru.url, rows[ru.id]!.id);
+    const enLive = liveHtml(en.url, rows[en.id]!.id);
+    remote.live = ruLive + enLive;
+    remote.sitemap = sitemapOf(ru.url, en.url, OTHER_URL);
+    for (let i = 0; i < 2; i++) {
+      await due();
+      await processPublication();
+    }
+    expect(Object.values(await states()).map((r) => r.state)).toEqual(["published", "published"]);
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a batch of different slugs, stale versions and a failing item without leaving rows", async () => {
@@ -1140,7 +1164,7 @@ describe("content API with PostgreSQL", () => {
     );
     expect(created.status).toBe(202);
     await processPublication();
-    expect(remote.commits).toBe(0);
+    expect(requestRebuild).not.toHaveBeenCalled();
     expect((await call("GET", `publications/${created.body.publication.id}`)).body).toMatchObject({
       state: "queued",
       error: { code: "cover_unreachable" },
@@ -1148,9 +1172,10 @@ describe("content API with PostgreSQL", () => {
     coverAnswer = () => new Response(null, { headers: { "content-type": "image/webp" } });
     await due();
     await goLive(created.body.url, created.body.publication.id);
-    expect(remote.commits).toBe(1);
-    expect(remote.content).toContain(`cover: ${coverUrl}`);
-    expect(remote.content).not.toContain("socialImage");
+    expect(requestRebuild).toHaveBeenCalledTimes(1);
+    const [stored] = await publicationRows();
+    expect(stored!.content).toContain(`cover: ${coverUrl}`);
+    expect(stored!.content).not.toContain("socialImage");
     expect((await call("GET", `publications/${created.body.publication.id}`)).body.state).toBe(
       "published",
     );
@@ -1263,8 +1288,6 @@ describe("content API with PostgreSQL", () => {
     );
     await goLive(ru.body.url, ru.body.publication.id);
     expect((await searchPostsMeta("борщ")).map((hit) => hit.slug)).toEqual([document.slug]);
-    // The mock remote keeps a single file: the English twin lives at another path.
-    remote.content = null;
     const en = await call(
       "POST",
       "articles",

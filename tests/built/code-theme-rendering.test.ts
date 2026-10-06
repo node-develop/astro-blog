@@ -1,27 +1,37 @@
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { chromium, type Browser } from "playwright";
+import { hasCode, hasCopyableFirstBlock, routeOf, underTest } from "../support/snapshot";
 
 const origin = inject("siteOrigin");
 
 let browser: Browser;
 
 beforeAll(async () => {
-  browser = await chromium.launch({ headless: true });
+  if (underTest.isFixture) browser = await chromium.launch({ headless: true });
 });
 
 afterAll(async () => {
   await browser?.close();
 });
 
-const routes = [
-  "/blog/claude-md-12-rules/",
-  "/blog/json-ld-graph-astro/",
-  "/courses/claude-code-guide/05-hooks/",
-  "/blog/claude-code-video-guide/",
-  "/en/blog/claude-code-video-guide/",
-];
+// Rendering of the theme is checked on the fixture: a real article can legitimately overflow
+// 375px (a wide table, a long line), and a publication must not fail a release for it. The
+// fixture is guarded to contain code and a copyable first block in the snapshot unit test.
+const checked = describe.skipIf(!underTest.isFixture);
+const reason = `[fixture-only${underTest.isFixture ? "" : `; skipped for ${underTest.path}`}] theme rendering is checked on the fixture; real content can legitimately overflow`;
 
-describe.each([375, 1440])("code readability at %ipx", (width) => {
+// One article per slug (RU when there is one) with a non-mermaid fenced block, plus a course lesson.
+const codeArticles = underTest.snapshot.articles.filter(hasCode);
+const preferRu = (slug: string) =>
+  codeArticles.find((a) => a.slug === slug && a.lang === "ru") ??
+  codeArticles.find((a) => a.slug === slug)!;
+const routes = [
+  ...[...new Set(codeArticles.map((a) => a.slug))].map((slug) => routeOf(preferRu(slug))),
+  "/courses/claude-code-guide/05-hooks/",
+];
+const copySubject = underTest.snapshot.articles.find(hasCopyableFirstBlock);
+
+checked.each([375, 1440])(`${reason}: code readability at %ipx`, (width) => {
   it.each(["light", "dark"] as const)(
     "uses the selected site theme regardless of the %s system theme",
     async (systemTheme) => {
@@ -98,25 +108,28 @@ describe.each([375, 1440])("code readability at %ipx", (width) => {
   );
 });
 
-it("preserves code text and empty lines when copying", async () => {
-  const page = await browser.newPage();
-  try {
-    await page.goto(origin + routes[0]);
-    const pre = page.locator("pre.astro-code").first();
-    const expected = await pre.textContent();
-    expect(expected).toContain("\n\n");
-    await page.evaluate(() => {
-      Object.defineProperty(navigator, "clipboard", {
-        value: {
-          writeText: async (text: string) => {
-            document.documentElement.dataset.copiedCode = text;
+it.skipIf(!underTest.isFixture)(
+  `${reason}: preserves code text and empty lines when copying`,
+  async () => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(origin + routeOf(copySubject!));
+      const pre = page.locator("pre.astro-code").first();
+      const expected = await pre.textContent();
+      expect(expected).toContain("\n\n");
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          value: {
+            writeText: async (text: string) => {
+              document.documentElement.dataset.copiedCode = text;
+            },
           },
-        },
+        });
       });
-    });
-    await page.locator(".code-block__copy").first().click();
-    expect(await page.locator("html").getAttribute("data-copied-code")).toBe(expected);
-  } finally {
-    await page.close();
-  }
-});
+      await page.locator(".code-block__copy").first().click();
+      expect(await page.locator("html").getAttribute("data-copied-code")).toBe(expected);
+    } finally {
+      await page.close();
+    }
+  },
+);

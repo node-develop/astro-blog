@@ -72,9 +72,13 @@ describe("GET /api/version as the Docker healthcheck", () => {
 
   it("stays 200 when the worker is deliberately disabled, however long it has been silent", async () => {
     vi.stubEnv("CONTENT_WORKER_SECRET", "");
+    vi.stubEnv("CONTENT_SNAPSHOT_ID", "00000000-0000-4000-8000-0000000000aa");
     silentFor(WORKER_MAX_SILENCE_MS + 60_000);
     const response = await GET({} as APIContext);
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ worker: { status: "disabled" } });
+    expect(await response.json()).toMatchObject({
+      contentSnapshotId: "00000000-0000-4000-8000-0000000000aa",
+      worker: { status: "disabled" },
+    });
   });
 });

@@ -42,8 +42,9 @@ import {
   type ApiScope,
 } from "./contract";
 import { apiError } from "./errors";
-import { exportManifest, exportStream, snapshotIdOf } from "./export";
-import { articleUrl } from "./github";
+import { exportManifest, exportStream } from "./export";
+import { snapshotIdOf } from "./snapshot-id";
+import { articleUrl } from "./urls";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
 import {
   handleApi,
