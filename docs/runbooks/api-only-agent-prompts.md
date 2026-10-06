@@ -650,6 +650,17 @@ pnpm test:e2e зелёные при CONTENT_SNAPSHOT=фикстура и
    Contents: write. Это открытый вопрос, спроси.
 ```
 
+Отклонения при выполнении (2026-10-05):
+
+- Пункт 3 (S0): воркер не сверяет `contentSnapshotId` из `/api/version`. Проверка остаётся прежней: `data-content-revision === job.id` плюс картинки и sitemap для publish, 404 и отсутствие в sitemap для unpublish. Ожидаемый id знает только post-deploy job, ожидание `contentSnapshotId` переезжает в промпт 2.6. `builtAt > dispatched_at` ненадёжно: на push `BUILT_AT` равен `head_commit.timestamp`.
+- Пункт 2: dispatch вынесен из шага `queued` в отдельный шаг (`publishing` с `dispatched_at IS NULL`). Шаг `queued` переставляет указатель и не ходит в GitHub: указатель закоммичен до запроса, а потерянный ответ даёт только повторный (безвредный) dispatch. Из-за этого каждая публикация на один тик (около 5 с) длиннее.
+- Пункт 2: debounce детерминированный, без окна в 120 с. Batch шлёт один dispatch, когда ни один член не в `queued` и ни у одного соседа нет `dispatched_at`; член, чей сосед уже отправил dispatch, берёт его `dispatched_at` без нового вызова. Таймаут в 30 минут считается от `dispatched_at`.
+- Пункт 1: `requestRebuild` на голом `fetch`, без ретраев; статус кроме 204 это ошибка (429 и 5xx: `503 rebuild_unavailable`, остальное: `502 rebuild_rejected`, никогда 403: воркер считает 403 постоянным `key_revoked`). `snapshotHint` убран: воркер его не знает. `github.ts` удалён целиком (`articleUrl` в `urls.ts`, `fetchWithDeadline` в `rebuild.ts`, приватный `articlePath` в `service.ts` ради `fileOwnsSlug` с `TODO(cutover)`).
+- Cleanup на 3.6: `src/lib/git/github-publisher.ts` (`publish.one`) теперь единственный пользователь Octokit (`@octokit/rest`); пока он жив, в проекте два способа ходить в GitHub (`fetch` в `rebuild.ts` и Octokit). Убрать вместе с ним и зависимость.
+- `mayBeInBuild` (бывший `ownsCommittedFile`) консервативное: publish учитывается, если он хоть раз покинул `queued` (`state !== "queued"`) или есть унаследованный `commitSha`; unpublish учитывается при `state = published`; решает самое новое. Причина: указатель сборки переставляется в шаге `queued`, и любая сборка до dispatch (чужой dispatch, push) может выкатить страницу. Принятое ложное срабатывание: publish, упавший ещё в `queued` (`cover_unreachable`, `key_revoked`, `version_conflict`), тоже считается, и `DELETE` отвечает `409 unpublish_first`, а `unpublish` не отвечает `not_published`; рычаг: unpublish, затем delete.
+- Условия выкладки 2.4 (иначе каждая публикация получит 204 и через 30 минут `deployment_timeout`, громко упасть нечему): (1) 2.2 смержен в main (триггер `repository_dispatch: types: [content-publish]` читается только с ветки по умолчанию); (2) секрет `CONTENT_EXPORT_TOKEN` задан; (3) prod `GITHUB_PAT` проверен на `POST /dispatches` (Contents: write; локальный PAT 2026-10-05 ответил 204 на пробный event_type, prod не проверен); (4) в export число статей не ниже пола (`minArticles`, импорт старых постов, промпт 3.1): иначе снятие статьи роняет snapshot job и воркер через 30 минут уходит в `deployment_timeout` (G8).
+- Открытое: задание, упавшее после того как страница уже ушла live (например, исчерпан `sitemap_pending`), откатывает указатель без новой пересборки; рычаги: `unpublish` или повторная публикация. Автоматического dispatch при сбое нет. Таймаут 30 минут (`DEPLOY_TIMEOUT_MS`) может не хватить на validate + build + Dokploy в очереди; решить после замера p95 dispatch до live.
+
 ## Промпт 2.5. Расширение verify-seo-build
 
 ```

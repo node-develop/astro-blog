@@ -6657,6 +6657,7 @@
             ]
           },
           "commitSha": {
+            "description": "Deprecated: always null for publications created since stage 2.4 (no git commit); historical rows keep their sha.",
             "type": [
               "string",
               "null"
@@ -7272,6 +7273,7 @@
                   ]
                 },
                 "commitSha": {
+                  "description": "Deprecated: always null for publications created since stage 2.4 (no git commit); historical rows keep their sha.",
                   "type": [
                     "string",
                     "null"

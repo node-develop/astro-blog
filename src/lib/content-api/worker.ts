@@ -1,11 +1,12 @@
-import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import { contentApiKeys, contentArticles, contentPublications, postsMeta } from "../db/schema";
 import { effectiveScopes } from "./auth";
 import { apiError, isApiError } from "./errors";
-import { articlePath, articleUrl, commitArticle, deleteArticle } from "./github";
+import { articleUrl } from "./urls";
+import { requestRebuild } from "./rebuild";
 import { CONTENT_LOCK, requireArticle, validateDocument } from "./service";
-import { buildPointerAfterFailure, ownsCommittedFile } from "./status";
+import { buildPointerAfterFailure } from "./status";
 import { buildSearchVectorSql } from "../search/vector";
 import { logger } from "../logger";
 import { coverUrlOf, probeImageUrl } from "./cover";
@@ -27,6 +28,8 @@ export const verifyPublication = async (url: string, revision: string): Promise<
 };
 
 const PENDING_RETRY_MS = 15_000;
+/** From the rebuild request to the page (or its absence) being live; one constant for both kinds. */
+const DEPLOY_TIMEOUT_MS = 30 * 60_000;
 const sitemapUrl = (url: string, lang: string): URL => new URL(`/sitemap-${lang}.xml`, url);
 
 /**
@@ -51,9 +54,12 @@ export const verifyUnpublished = async (url: string, lang: string): Promise<bool
   return xml.includes("<urlset") && xml.includes("<loc>") && !xml.includes(`<loc>${url}</loc>`);
 };
 
-/** One durable step per call. PostgreSQL owns the lock, including across replicas.
- * If the process dies during a GitHub call, the transaction rolls back; the next
- * attempt detects the exact immutable content already committed and resumes.
+/**
+ * One durable step per call. PostgreSQL owns the lock, including across replicas.
+ * Steps: `queued` moves the export pointer and goes `publishing` (no GitHub call);
+ * `publishing` without `dispatched_at` requests a rebuild once no member of the batch is still
+ * `queued` (one request per batch; a lost answer only means a second, harmless build);
+ * `publishing` with `dispatched_at` verifies the public site.
  */
 export const processPublication = async () =>
   db.transaction(async (tx) => {
@@ -89,27 +95,6 @@ export const processPublication = async () =>
       if (article.version !== job.version)
         throw apiError(409, "version_conflict", "Article changed after publication was queued.");
       if (job.state === "queued") {
-        // TODO(cutover): an article owns its file once it was published or committed before;
-        // a first commit must not overwrite a legacy file post that appeared at the same path.
-        // Removed with commitArticle (docs/specs/plans/2026-10-03-api-only-migration.md).
-        // Only a `publish` commit proves ownership; an unpublish commit removes the file.
-        const own = await tx
-          .select({
-            id: contentPublications.id,
-            kind: contentPublications.kind,
-            state: contentPublications.state,
-            commitSha: contentPublications.commitSha,
-            createdAt: contentPublications.createdAt,
-          })
-          .from(contentPublications)
-          .where(eq(contentPublications.articleId, article.id));
-        const ownership = {
-          overwrite: article.publishedVersion !== null || ownsCommittedFile(own),
-          // A commit accepted by GitHub whose response was lost leaves no commit_sha, but the file
-          // carries the publication id as apiRevision.
-          ownedRevisions: own.filter((p) => p.kind === "publish").map((p) => p.id),
-        };
-        const path = articlePath(article.slug, article.lang);
         // An https cover must answer as an image before the page goes live: afterwards a dead
         // cover would already be public. A `/uploads/` cover was checked when the job was queued.
         const coverUrl = coverUrlOf(article.document.cover);
@@ -130,35 +115,71 @@ export const processPublication = async () =>
             "The cover URL does not answer as an image; fix it or retry publication later.",
             { url: coverUrl },
           );
-        const sha =
-          job.kind === "unpublish"
-            ? await deleteArticle(path, ownership)
-            : await (async () => {
-                // Pre-create visible metadata for the build and runtime lists. No page is
-                // public until GitHub's build includes the non-draft Markdown document.
-                await tx
-                  .insert(postsMeta)
-                  .values({ slug: article.slug, order: 2_000_000_000, hiddenFromList: false })
-                  .onConflictDoNothing({ target: postsMeta.slug });
-                return commitArticle(path, job.content, ownership);
-              })();
+        if (job.kind === "publish")
+          // Pre-create visible metadata for the build and runtime lists. No page is public
+          // until a build includes the article.
+          await tx
+            .insert(postsMeta)
+            .values({ slug: article.slug, order: 2_000_000_000, hiddenFromList: false })
+            .onConflictDoNothing({ target: postsMeta.slug });
         await tx
           .update(contentPublications)
           .set({
             state: "publishing",
-            commitSha: sha,
+            dispatchedAt: null,
             error: null,
             updatedAt: new Date(),
-            nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS),
+            nextAttemptAt: new Date(),
           })
           .where(eq(contentPublications.id, job.id));
-        // Dispatch moves the desired build state (docs: spec "Export (промпт 1.8)"): a publish
-        // points the article at its content, an unpublish takes it out of the export. Same
-        // transaction as the state change, so export never sees one without the other.
+        // Moves the desired build state (docs: spec "Export (промпт 1.8)"): a publish points the
+        // article at its content, an unpublish takes it out of the export. Same transaction as
+        // the state change, so export never sees one without the other, and the pointer is
+        // committed before any rebuild is requested.
         await tx
           .update(contentArticles)
           .set({ buildPublicationId: job.kind === "unpublish" ? null : job.id })
           .where(eq(contentArticles.id, article.id));
+      } else if (job.dispatchedAt === null) {
+        const siblings = job.batchId
+          ? await tx
+              .select({
+                state: contentPublications.state,
+                dispatchedAt: contentPublications.dispatchedAt,
+              })
+              .from(contentPublications)
+              .where(
+                and(
+                  eq(contentPublications.batchId, job.batchId),
+                  ne(contentPublications.id, job.id),
+                ),
+              )
+          : [];
+        if (siblings.some((sib) => sib.state === "queued")) {
+          // A member has not moved its pointer yet: a build requested now could miss it.
+          await tx
+            .update(contentPublications)
+            .set({ nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS) })
+            .where(eq(contentPublications.id, job.id));
+        } else {
+          // A sibling that already asked for the rebuild covers this member too: all pointers
+          // were committed before the first request could go out.
+          const adopted = siblings.find((sib) => sib.dispatchedAt !== null)?.dispatchedAt ?? null;
+          if (adopted === null) {
+            const batchKey = job.batchId ?? job.id;
+            await requestRebuild(batchKey);
+            logger.info({ publicationId: job.id, batchKey }, "rebuild requested");
+          }
+          await tx
+            .update(contentPublications)
+            .set({
+              dispatchedAt: adopted ?? new Date(),
+              error: null,
+              updatedAt: new Date(),
+              nextAttemptAt: new Date(Date.now() + PENDING_RETRY_MS),
+            })
+            .where(eq(contentPublications.id, job.id));
+        }
       } else if (job.kind === "unpublish") {
         const url = articleUrl(article.slug, article.lang);
         if (await verifyUnpublished(url, article.lang)) {
@@ -184,7 +205,7 @@ export const processPublication = async () =>
               updatedAt: new Date(),
             })
             .where(eq(contentPublications.id, job.id));
-        } else if (Date.now() - job.updatedAt.getTime() > 30 * 60_000) {
+        } else if (Date.now() - job.dispatchedAt.getTime() > DEPLOY_TIMEOUT_MS) {
           throw apiError(
             504,
             "deployment_timeout",
@@ -260,7 +281,7 @@ export const processPublication = async () =>
             .update(contentPublications)
             .set({ state: "published", error: null, updatedAt: new Date() })
             .where(eq(contentPublications.id, job.id));
-        } else if (Date.now() - job.updatedAt.getTime() > 30 * 60_000) {
+        } else if (Date.now() - job.dispatchedAt.getTime() > DEPLOY_TIMEOUT_MS) {
           throw apiError(
             504,
             "deployment_timeout",
@@ -276,6 +297,7 @@ export const processPublication = async () =>
       return { worked: true, publicationId: job.id };
     } catch (error) {
       const code = isApiError(error) ? error.code : "upstream_unavailable";
+      logger.warn({ err: error, publicationId: job.id, code }, "publication step failed");
       const message = isApiError(error)
         ? error.message
         : "GitHub or the public site is unavailable. Retry publication after checking service health.";

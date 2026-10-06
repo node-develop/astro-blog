@@ -355,7 +355,12 @@ export const publicationSchema = z.strictObject({
   articleId: z.uuid(),
   version: z.number().int().positive(),
   state: publicationStateSchema,
-  commitSha: z.string().nullable(),
+  commitSha: z
+    .string()
+    .nullable()
+    .describe(
+      "Deprecated: always null for publications created since stage 2.4 (no git commit); historical rows keep their sha.",
+    ),
   attempts: z.number().int().nonnegative(),
   error: z.strictObject({ code: z.string(), message: z.string() }).nullable(),
   createdAt: instant,

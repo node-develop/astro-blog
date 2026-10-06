@@ -42,58 +42,19 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 const remote = vi.hoisted(() => ({
-  content: null as string | null,
-  commits: 0,
-  deletes: 0,
   /** The page body; `null` is a 404. */
   live: "" as string | null,
   sitemap: "",
 }));
-vi.mock("../../src/lib/content-api/github", async (original) => {
-  const actual = await original<typeof import("../../src/lib/content-api/github")>();
-  return {
-    ...actual,
-    // The same contract as the real adapter: identical content is a recovery, a file at the path
-    // is overwritten only for an article that owns it.
-    commitArticle: vi.fn(
-      async (
-        _path: string,
-        content: string,
-        { overwrite, ownedRevisions = [] }: { overwrite: boolean; ownedRevisions?: string[] },
-      ) => {
-        if (remote.content === content) return "commit-1";
-        const revision = remote.content === null ? null : actual.fileApiRevision(remote.content);
-        const owns = overwrite || (revision !== null && ownedRevisions.includes(revision));
-        if (remote.content !== null && !owns)
-          throw Object.assign(new Error("Existing file"), { status: 409, code: "slug_conflict" });
-        remote.content = content;
-        remote.commits++;
-        return `commit-${remote.commits}`;
-      },
-    ),
-    // Same contract as the real adapter: a missing file is a recovery, a foreign file is refused.
-    deleteArticle: vi.fn(
-      async (
-        _path: string,
-        { overwrite, ownedRevisions = [] }: { overwrite: boolean; ownedRevisions?: string[] },
-      ) => {
-        if (remote.content === null) return "parent";
-        const revision = actual.fileApiRevision(remote.content);
-        const owns = overwrite || (revision !== null && ownedRevisions.includes(revision));
-        if (!owns)
-          throw Object.assign(new Error("Existing file"), { status: 409, code: "slug_conflict" });
-        remote.content = null;
-        remote.deletes++;
-        return `delete-${remote.deletes}`;
-      },
-    ),
-  };
-});
+vi.mock("../../src/lib/content-api/rebuild", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/rebuild")>()),
+  requestRebuild: vi.fn(async () => undefined),
+}));
 
 import { exportSchema } from "../../src/lib/content-api/contract";
 import { ALL } from "../../src/pages/api/v1/[...path]";
 import { processPublication } from "../../src/lib/content-api/worker";
-import { commitArticle } from "../../src/lib/content-api/github";
+import { requestRebuild } from "../../src/lib/content-api/rebuild";
 import {
   compliantArticle,
   insertCoverAsset,
@@ -162,9 +123,6 @@ describe("GET /export/ with PostgreSQL", () => {
       ])
       .returning();
     await insertCoverAsset(state.db!, keys[0]!.id);
-    remote.content = null;
-    remote.commits = 0;
-    remote.deletes = 0;
     remote.live = "";
     remote.sitemap = "";
     vi.clearAllMocks();
@@ -184,14 +142,15 @@ describe("GET /export/ with PostgreSQL", () => {
   const due = () =>
     client`update content_publications set next_attempt_at = now() - interval '1 second'`;
   const age = () =>
-    client`update content_publications set updated_at = now() - interval '31 minutes' where state in ('queued', 'publishing')`;
+    client`update content_publications set dispatched_at = now() - interval '31 minutes' where state = 'publishing' and dispatched_at is not null`;
   const liveHtml = (url: string, revision: string) =>
     `<html><head><link rel="canonical" href="${url}"><meta name="description" content="Description"></head><article data-content-revision="${revision}"></article></html>`;
   const sitemapOf = (...urls: string[]) =>
     `<?xml version="1.0"?><urlset>${urls.map((u) => `<url><loc>${u}</loc></url>`).join("")}</urlset>`;
   const OTHER_URL = "https://artka.dev/blog/some-other-post/";
   const goLive = async (url: string, publicationId: string) => {
-    await processPublication();
+    await processPublication(); // pointer moves
+    await processPublication(); // rebuild requested
     remote.live = liveHtml(url, publicationId);
     remote.sitemap = sitemapOf(url, OTHER_URL);
     await due();
@@ -253,6 +212,7 @@ describe("GET /export/ with PostgreSQL", () => {
     // Queued: nothing is dispatched, the build still gets v1.
     expect((await exported()).articles[0]!.revision).toBe(first.publication.id);
     await processPublication();
+    await processPublication(); // rebuild requested
     const waiting = (await exported()).articles[0]!;
     expect(waiting.revision).toBe(v2Id);
     expect(waiting.content).toContain("The second version.");
@@ -271,7 +231,7 @@ describe("GET /export/ with PostgreSQL", () => {
     expect(await exported()).toMatchObject({ articles: [v1] });
   });
 
-  it("keeps the pointer after a transient error", async () => {
+  it("keeps the pointer after a transient rebuild error", async () => {
     const article = await publishedArticle();
     await call(
       "PUT",
@@ -286,18 +246,26 @@ describe("GET /export/ with PostgreSQL", () => {
       },
       "v2",
     );
-    vi.mocked(commitArticle).mockRejectedValueOnce(new Error("GitHub is down"));
+    await processPublication(); // pointer moves
+    vi.mocked(requestRebuild).mockRejectedValueOnce(new Error("GitHub is down"));
     expect(await processPublication()).toMatchObject({
       worked: true,
       error: "upstream_unavailable",
     });
-    expect((await exported()).articles[0]!.revision).toBe(article.publication.id);
+    // The pointer was committed before the request: a lost request does not take it back, the
+    // job stays `publishing` and asks again.
+    const [second] = (await state.db!.select().from(schema.contentPublications)).filter(
+      (p) => p.state === "publishing",
+    );
+    expect(second).toMatchObject({ dispatchedAt: null, error: { code: "upstream_unavailable" } });
+    expect((await exported()).articles[0]!.revision).toBe(second!.id);
   });
 
   it("does not return drafts, a first publication that is only queued, or unpublished articles", async () => {
     const live = await publishedArticle();
     expect((await exported()).count).toBe(1);
     await call("POST", `articles/${live.id}/unpublish`, { expectedVersion: 1 }, "unpublish");
+    await processPublication();
     await processPublication();
     remote.live = null;
     remote.sitemap = sitemapOf(OTHER_URL);
@@ -321,6 +289,7 @@ describe("GET /export/ with PostgreSQL", () => {
     expect((await exported()).count).toBe(1);
     await processPublication();
     expect((await exported()).count).toBe(0);
+    await processPublication(); // rebuild requested
     // The page never goes away within 30 minutes.
     await age();
     await due();
@@ -355,8 +324,6 @@ describe("GET /export/ with PostgreSQL", () => {
 
   it("serves the stored content with its sha256, sorted, and the same bytes twice", async () => {
     await publishedArticle();
-    // The fake repository holds one file: the English twin goes to an empty path.
-    remote.content = null;
     const en = await make({ lang: "en" }, "publish", "english");
     await goLive("https://artka.dev/en/blog/export-article/", en.publication.id);
     await make({ slug: "another-post", externalId: "another" }, "publish", "another");

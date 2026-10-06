@@ -16,10 +16,10 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
-// The worker's first step commits through GitHub: stand in for the adapter, nothing else.
-vi.mock("../../src/lib/content-api/github", async (original) => ({
-  ...(await original<typeof import("../../src/lib/content-api/github")>()),
-  commitArticle: vi.fn(async () => "commit-1"),
+// The worker asks GitHub for a rebuild: stand in for that request, nothing else.
+vi.mock("../../src/lib/content-api/rebuild", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/rebuild")>()),
+  requestRebuild: vi.fn(async () => undefined),
 }));
 
 import { ALL } from "../../src/pages/api/v1/[...path]";

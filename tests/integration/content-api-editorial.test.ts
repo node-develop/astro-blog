@@ -29,9 +29,9 @@ vi.mock("~/lib/db", () => ({
     return state.db;
   },
 }));
-vi.mock("../../src/lib/content-api/github", async (original) => ({
-  ...(await original<typeof import("../../src/lib/content-api/github")>()),
-  commitArticle: vi.fn(async () => "commit-1"),
+vi.mock("../../src/lib/content-api/rebuild", async (original) => ({
+  ...(await original<typeof import("../../src/lib/content-api/rebuild")>()),
+  requestRebuild: vi.fn(async () => undefined),
 }));
 
 /** The critic's SDK boundary: the notes it "emits", or a failure. Never the real API. */
@@ -147,6 +147,7 @@ describe("editorial gates and article review with PostgreSQL", () => {
   const liveHtml = (url: string, revision: string) =>
     `<html><head><link rel="canonical" href="${url}"><meta name="description" content="D"></head><article data-content-revision="${revision}"></article></html>`;
   const goLive = async (url: string, publicationId: string) => {
+    await processPublication();
     await processPublication();
     remote.live = liveHtml(url, publicationId);
     remote.sitemap = `<?xml version="1.0"?><urlset><url><loc>${url}</loc></url></urlset>`;

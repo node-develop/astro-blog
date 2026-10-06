@@ -44,7 +44,7 @@ import {
 import { apiError } from "./errors";
 import { exportManifest, exportStream } from "./export";
 import { snapshotIdOf } from "./snapshot-id";
-import { articleUrl } from "./github";
+import { articleUrl } from "./urls";
 import { workerHeartbeat, workerSecretFromEnv } from "./heartbeat";
 import {
   handleApi,
