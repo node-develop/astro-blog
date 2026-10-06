@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { APIContext } from "astro";
 import { GET as getLlmsFull } from "~/pages/llms-full.txt";
@@ -220,11 +220,13 @@ it.each([
   ]);
 });
 
-it("resolves every generated RU and EN lesson link to a built course route", () => {
+// That each of these links resolves to a built page is the build check
+// (scripts/seo-checks/links.ts). What stays here is what that check cannot see: a link that glues two
+// lesson slugs into one path, and that the lessons really carry links to look at.
+it("never links one lesson to the glued path of two lesson slugs", () => {
   const lessonFiles = filesUnder(DIST, ".html").filter((file) =>
     /(?:^|\/)courses\/claude-code-guide\/[^/]+\/index\.html$/.test(file),
   );
-  const violations: Violation[] = [];
   const gluedLinks: string[] = [];
   let checkedLinks = 0;
 
@@ -248,22 +250,17 @@ it("resolves every generated RU and EN lesson link to a built course route", () 
       }
 
       checkedLinks += 1;
-      // The link itself must be a built route. Following the redirect table
+      // The link itself must not be a glued pair. Following the redirect table
       // here would forgive exactly the glued lesson pairs the table lists.
       const sourcePath = canonicalPath(resolved.pathname);
       if (resolveConcatenatedLessonPath(sourcePath) !== null) {
         gluedLinks.push(`${relative(ROOT, file)}: ${href} glues two lesson slugs (${sourcePath})`);
-      }
-      const generatedFile = join(DIST, sourcePath.slice(1), "index.html");
-      if (!existsSync(generatedFile)) {
-        addViolation(violations, file, href, ORIGIN + sourcePath);
       }
     }
   }
 
   expect(checkedLinks).toBeGreaterThan(100);
   expect(gluedLinks).toEqual([]);
-  expect(violations).toEqual([]);
 });
 
 it("emits one apex HTTPS slash identity for every internal document URL", async () => {

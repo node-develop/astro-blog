@@ -17,6 +17,10 @@ const posts = defineCollection({
     socialImageWidth: z.number().int().positive().optional(),
     socialImageHeight: z.number().int().positive().optional(),
     coverCaption: z.string().optional(),
+    // [width, height] of the body's asset images by URL; read by src/lib/rehype/image-dimensions.ts.
+    imageSizes: z
+      .record(z.string().min(1), z.tuple([z.int().positive(), z.int().positive()]))
+      .optional(),
     apiRevision: z.string().uuid().optional(),
     title: z.string().min(POST_LIMITS.title.min).max(POST_LIMITS.title.max),
     description: z.string().min(POST_LIMITS.description.min).max(POST_LIMITS.description.max),

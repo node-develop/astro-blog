@@ -56,9 +56,10 @@ const siteBase = Astro.site?.toString() ?? "https://artka.dev";
 const canonical = canonicalUrl(Astro.url.pathname);
 const homeAbs = canonicalUrl(locale === "en" ? "/en/" : "/");
 
+// There is no /courses/ index page, so a "Courses" crumb would have nothing to link to and a
+// non-final BreadcrumbList item without `item` is invalid. The trail is Home > course.
 const breadcrumbItems = [
   { name: t(locale, "nav.home"), href: homeAbs },
-  { name: t(locale, "breadcrumbs.courses") },
   { name: course.data.title },
 ] as const;
 

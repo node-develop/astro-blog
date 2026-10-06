@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ExportArticle } from "~/lib/content-api/contract";
-import { verifyContentBuild } from "~/lib/content/verify-build";
 import { canonicalUrl } from "~/lib/seo/url-policy";
 import { bodyOf, DIST, frontmatterOf, labelOf, pageFileOf, underTest } from "../support/snapshot";
 
@@ -36,10 +35,6 @@ const plainText = (html: string): string =>
     .replace(/[^\p{L}\p{N}]+/gu, "");
 
 describe("build of the content snapshot", () => {
-  it(`matches ${where}: pages, revisions and sitemaps`, async () => {
-    expect(await verifyContentBuild(snapshot, DIST), where).toEqual([]);
-  });
-
   it("renders block math as KaTeX for every article that has it", async () => {
     const failures: string[] = [];
     for (const a of snapshot.articles) {

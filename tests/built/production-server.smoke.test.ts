@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { findDanglingGraphRefs, graphNodesOf } from "~/lib/seo/graph-refs";
+import { validatePageGraph } from "~/lib/seo/graph-schema";
+import { canonicalUrl } from "~/lib/seo/url-policy";
 import {
   fetchWithTimeout,
   startProductionServer,
@@ -254,6 +256,16 @@ describe("production standalone server", () => {
           });
           expect(
             dangling.map((ref) => `${ref.path} -> ${ref.id}`),
+            pathname,
+          ).toEqual([]);
+          // The same contract the build check applies to dist (scripts/seo-checks/jsonld.ts).
+          expect(
+            validatePageGraph({
+              graph: graphNodesOf(JSON.parse(block)),
+              locale,
+              canonical: canonicalUrl(pathname),
+              isPost: false,
+            }),
             pathname,
           ).toEqual([]);
         }

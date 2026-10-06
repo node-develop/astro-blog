@@ -49,7 +49,6 @@
   "site.feedTitle": "artka.dev — Записки из продакшна",
   "site.feedDescription": "Заметки про Claude Code, AI-агентов, RAG-пайплайны и production backend от Artyom Kashuta.",
   "breadcrumbs.aria": "Хлебные крошки",
-  "breadcrumbs.courses": "Курсы",
   "certificate.label": "СЕРТИФИКАТ О ПРОХОЖДЕНИИ",
   "certificate.copy": "Вы прошли все {count} уроков. Сертификат — PNG 1600×1100, подходит для печати на A4.",
   "certificate.download": "Скачать сертификат",

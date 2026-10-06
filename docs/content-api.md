@@ -206,6 +206,7 @@ curl --fail-with-body "$CONTENT_API_BASE/media/" \
 | `too_few_sources` | не менее 3 `sources` |
 | `too_few_internal_links` | не менее 2 различных целей: ссылки `/blog/…`, `/courses/…` (с префиксом `/en` или без) в теле плюс `relatedSlugs`; ссылка на себя не считается |
 | `title_duplicate` | `title` совпадает с заголовком или H2 (без нумерации `1. `) другой **опубликованной** статьи того же языка, включая файловые посты |
+| `heading_skip` | заголовки тела идут без пропуска уровня: тело начинается с H2 (H1 даёт `title`), дальше вниз не больше чем на один уровень за раз; сборка сайта проверяет это правилом `heading-level` |
 | `mermaid_accessibility` | у каждого блока ` ```mermaid ` есть `accTitle` и `accDescr` (форма `accDescr:` или `accDescr {`) |
 | `cover_missing`, `cover_placeholder`, `cover_width_unknown`, `cover_too_narrow` | обложка задана, не `/og-default.*`, шириной не менее 1200 px. Ширина известна у asset, у файла `/uploads/…` и у https-URL, совпадающего с нашим asset; иначе загрузите картинку через `POST /media/` и укажите `assetId` |
 | `banned_phrase` | штампы из `src/lib/content/banned-phrases.json` для языка статьи (`en` или `ru`) |

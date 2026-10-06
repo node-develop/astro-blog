@@ -1,17 +1,28 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   assertFontPreloadsResolved,
-  assertNoDanglingGraphRefs,
   assertOgAuthorNames,
   assertSeoBuildOutput,
+  DIST_CHECK_CATEGORIES,
   diagnoseSeoBuildOutput,
+  formatFinding,
+  runDistChecks,
 } from "./verify-seo-build";
+import { createHash } from "node:crypto";
+import type { ExportArticle, ExportSnapshot } from "../src/lib/content-api/contract";
 import { person } from "../src/lib/seo/person";
-import { graphIds } from "../src/lib/seo/nodes-global";
-import { safeJsonLd } from "../src/lib/seo/json-ld";
+import { readDist } from "./seo-checks/dist";
+import {
+  disposeDists,
+  edit,
+  POST_REVISIONS,
+  validFiles,
+  writeDist,
+  type Files,
+} from "./seo-checks/test-dist";
 
 describe("assertSeoBuildOutput", () => {
   it("accepts clean build output", () => {
@@ -270,162 +281,6 @@ describe("assertOgAuthorNames", () => {
   });
 });
 
-/**
- * The rule itself is unit-tested in `src/lib/seo/graph-refs.test.ts`; these
- * cover the part only the script owns — finding the pages in `dist/client`,
- * pulling the JSON-LD out of the HTML, and deciding what counts as broken.
- */
-describe("assertNoDanglingGraphRefs", () => {
-  let dist = "";
-
-  const POST = "https://artka.dev/blog/example/";
-
-  const page = async (rel: string, lang: string, jsonLd: readonly string[]): Promise<void> => {
-    const full = join(dist, rel);
-    await mkdir(dirname(full), { recursive: true });
-    const blocks = jsonLd
-      .map((body) => `<script type="application/ld+json">${body}</script>`)
-      .join("");
-    await writeFile(
-      full,
-      `<!doctype html><html lang="${lang}"><head>${blocks}</head></html>`,
-      "utf8",
-    );
-  };
-
-  const graph = (nodes: readonly unknown[]): string =>
-    safeJsonLd({ "@context": "https://schema.org", "@graph": nodes });
-
-  const CLOSED_GRAPH = [
-    { "@type": "Blog", "@id": graphIds.blogRu, url: "https://artka.dev/blog/" },
-    { "@type": "BlogPosting", "@id": `${POST}#blogposting`, isPartOf: { "@id": graphIds.blogRu } },
-  ];
-
-  beforeEach(async () => {
-    dist = await mkdtemp(join(tmpdir(), "seo-graph-refs-"));
-  });
-
-  afterEach(async () => {
-    await rm(dist, { recursive: true, force: true });
-  });
-
-  it("accepts a page whose graph resolves against itself", async () => {
-    await page("blog/example/index.html", "ru", [graph(CLOSED_GRAPH)]);
-
-    expect(await assertNoDanglingGraphRefs(dist)).toEqual([]);
-  });
-
-  it("names the page, the node path and the id of a dangling isPartOf", async () => {
-    await page("blog/example/index.html", "ru", [
-      graph([
-        {
-          "@type": "BlogPosting",
-          "@id": `${POST}#blogposting`,
-          isPartOf: { "@id": graphIds.blogRu },
-        },
-      ]),
-    ]);
-
-    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
-      `blog/example/index.html: BlogPosting.isPartOf -> ${graphIds.blogRu}`,
-    ]);
-  });
-
-  it("reports JSON-LD that does not parse", async () => {
-    await page("broken/index.html", "ru", ["{ not json }"]);
-
-    const issues = await assertNoDanglingGraphRefs(dist);
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toContain("broken/index.html: JSON-LD does not parse");
-  });
-
-  const plainPage = async (rel: string): Promise<void> => {
-    const full = join(dist, rel);
-    await mkdir(dirname(full), { recursive: true });
-    await writeFile(full, '<!doctype html><html lang="ru"><body>hi</body></html>', "utf8");
-  };
-
-  it("is silent about a page that emits no JSON-LD next to pages that do", async () => {
-    await page("blog/example/index.html", "ru", [graph(CLOSED_GRAPH)]);
-    await plainPage("plain/index.html");
-
-    expect(await assertNoDanglingGraphRefs(dist)).toEqual([]);
-  });
-
-  it("refuses to pass a build in which it found no JSON-LD at all", async () => {
-    // Every real page carries a graph, so "nothing found" means the extractor
-    // went blind (say, the <script> markup changed) — not that all is well.
-    await plainPage("plain/index.html");
-    await plainPage("other/index.html");
-
-    const issues = await assertNoDanglingGraphRefs(dist);
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toContain("no JSON-LD block found in any of 2 built page(s)");
-  });
-
-  it("applies each page's own locale to the cross-locale exception", async () => {
-    // The same reference: allowed from an English page, broken on a Russian one.
-    await page("en/blog/example/index.html", "en", [
-      graph([
-        {
-          "@type": "WebSite",
-          "@id": graphIds.websiteEn,
-          translationOfWork: { "@id": graphIds.websiteRu },
-        },
-      ]),
-    ]);
-    await page("blog/example/index.html", "ru", [
-      graph([
-        {
-          "@type": "WebSite",
-          "@id": graphIds.websiteEn,
-          translationOfWork: { "@id": graphIds.websiteRu },
-        },
-      ]),
-    ]);
-
-    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
-      `blog/example/index.html: WebSite.translationOfWork -> ${graphIds.websiteRu}`,
-    ]);
-  });
-
-  it("refuses a page that carries JSON-LD under a lang the site does not have", async () => {
-    await page("de/index.html", "de", [graph(CLOSED_GRAPH)]);
-
-    const issues = await assertNoDanglingGraphRefs(dist);
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toContain("not a site locale");
-  });
-
-  it("checks every JSON-LD block on a page that emits more than one", async () => {
-    await page("multi/index.html", "ru", [
-      graph(CLOSED_GRAPH),
-      graph([
-        {
-          "@type": "WebPage",
-          "@id": "https://artka.dev/multi/#webpage",
-          about: { "@id": graphIds.person },
-        },
-      ]),
-    ]);
-
-    expect(await assertNoDanglingGraphRefs(dist)).toEqual([
-      `multi/index.html (block 2): WebPage.about -> ${graphIds.person}`,
-    ]);
-  });
-
-  it("reports an unreadable build output instead of passing", async () => {
-    const missing = join(dist, "never-built");
-
-    expect(await assertNoDanglingGraphRefs(missing)).toEqual([
-      `build output is unreadable: ${missing}`,
-    ]);
-  });
-});
-
 describe("assertFontPreloadsResolved", () => {
   let root = "";
   beforeEach(async () => {
@@ -459,5 +314,95 @@ describe("assertFontPreloadsResolved", () => {
     expect(await assertFontPreloadsResolved(root)).toEqual([
       "font preload href not found in emitted or inline CSS: /_astro/display.woff2",
     ]);
+  });
+});
+
+/**
+ * Each check has its own tests; this holds the WIRING. A check that was written but never added
+ * to `runDistChecks` would stay green in its own file and silently not run on a real build.
+ */
+describe("runDistChecks", () => {
+  const article = (lang: "ru" | "en"): ExportArticle => {
+    const content = `---\nlang: ${lang}\n---\n\nBody\n`;
+    return {
+      slug: "hello",
+      lang,
+      revision: POST_REVISIONS[lang],
+      content,
+      contentSha256: createHash("sha256").update(content, "utf8").digest("hex"),
+      meta: { order: 1, pinned: false, hiddenFromList: false },
+    };
+  };
+  const snapshot: ExportSnapshot = {
+    snapshotId: "0d7bb1d4-4f0a-4b38-86f5-2c4cb9b6a4e9",
+    generatedAt: "2026-10-05T00:00:00.000Z",
+    count: 2,
+    articles: [article("ru"), article("en")],
+  };
+
+  let valid: Files;
+  beforeAll(async () => {
+    valid = await validFiles();
+  });
+  afterAll(disposeDists);
+
+  it("reports nothing for a build that satisfies every check and its snapshot", async () => {
+    expect(await runDistChecks(await writeDist(valid), snapshot)).toEqual([]);
+  });
+
+  it("reports every category when each check has one defect to find", async () => {
+    const POST = "blog/hello/index.html";
+    const defects: ReadonlyArray<(files: Files) => Files> = [
+      // json-ld: the author Person loses sameAs
+      (files) => edit(files, POST, (html) => html.replace(/"sameAs":\[[^\]]*\],?/, "")),
+      // hreflang: the EN twin stops linking back
+      (files) =>
+        edit(files, "en/about/index.html", (html) =>
+          html.replace(/<link rel="alternate" hreflang="[^"]*" href="[^"]*">/g, ""),
+        ),
+      // sitemap: a search route is listed
+      (files) =>
+        edit(files, "sitemap-ru.xml", (xml) =>
+          xml.replace("</urlset>", "<url><loc>https://artka.dev/search/</loc></url></urlset>"),
+        ),
+      // images: a prose image without alt
+      (files) => edit(files, POST, (html) => html.replace('alt="A screenshot"', "")),
+      // social: summary card
+      (files) => edit(files, POST, (html) => html.replace("summary_large_image", "summary")),
+      // diagrams: Mermaid source left in the page
+      (files) =>
+        edit(files, "courses/guide/01-intro/index.html", (html) =>
+          html.replace("<p>Lesson.</p>", '<pre class="mermaid">graph TD</pre>'),
+        ),
+      // links: a link to a page that does not exist
+      (files) =>
+        edit(files, "about/index.html", (html) =>
+          html.replace("</article>", '</article><a href="/nope/">x</a>'),
+        ),
+      // on-demand: a route listed as on demand now has a file
+      (files) => ({ ...files, "search/index.html": '<!doctype html><html lang="ru"></html>' }),
+      // content build: the post loses its revision marker
+      (files) => edit(files, POST, (html) => html.replace(/ data-content-revision="[^"]*"/, "")),
+    ];
+    const broken = defects.reduce((files, defect) => defect(files), valid);
+
+    const findings = await runDistChecks(await writeDist(broken), snapshot);
+
+    expect([...new Set(findings.map(([category]) => category))].sort()).toEqual(
+      [...DIST_CHECK_CATEGORIES].sort(),
+    );
+  });
+
+  it("prints `[seo-build] <category>: <issue>` without repeating a rule the check already names", () => {
+    expect(formatFinding(["links", "links: no internal reference"])).toBe(
+      "[seo-build] links: no internal reference",
+    );
+    expect(formatFinding(["content build", "hello (ru): page is missing"])).toBe(
+      "[seo-build] content build: hello (ru): page is missing",
+    );
+  });
+
+  it("fails loudly on a build output that is not there", async () => {
+    await expect(readDist(join(tmpdir(), "seo-checks-never-built"))).rejects.toThrow();
   });
 });

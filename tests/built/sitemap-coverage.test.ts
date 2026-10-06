@@ -55,14 +55,4 @@ describe("sitemap coverage", () => {
         expect(urls).not.toContain(`https://artka.dev/en/tags/${slug}/`);
     }
   });
-
-  it("excludes search, login, admin, and API routes", () => {
-    expect(urls).not.toContain("https://artka.dev/search/");
-    expect(urls).not.toContain("https://artka.dev/en/search/");
-    expect(urls).not.toContain("https://artka.dev/login/");
-    for (const u of urls!) {
-      expect(u).not.toMatch(/\/admin\//);
-      expect(u).not.toMatch(/\/api\//);
-    }
-  });
 });

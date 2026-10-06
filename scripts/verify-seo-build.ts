@@ -1,11 +1,26 @@
 import { spawn } from "node:child_process";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { extname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { stripVTControlCharacters } from "node:util";
 import { person } from "../src/lib/seo/person";
-import { findDanglingGraphRefs, graphNodesOf } from "../src/lib/seo/graph-refs";
-import { isLocale } from "../src/i18n";
+import type { ExportSnapshot } from "../src/lib/content-api/contract";
+import {
+  checkSnapshot,
+  readJson,
+  readManifest,
+  resolveSnapshotPath,
+} from "../src/lib/content/snapshot";
+import { verifyContentBuild } from "../src/lib/content/verify-build";
+import { readDist } from "./seo-checks/dist";
+import { checkDiagrams } from "./seo-checks/diagrams";
+import { checkHreflang } from "./seo-checks/hreflang";
+import { checkImages } from "./seo-checks/images";
+import { checkJsonLd } from "./seo-checks/jsonld";
+import { checkInternalLinks } from "./seo-checks/links";
+import { staleExemptions } from "./seo-checks/on-demand";
+import { checkSitemaps } from "./seo-checks/sitemap";
+import { checkSocialMeta } from "./seo-checks/social";
 
 type SeoBuildViolation = {
   readonly label: string;
@@ -94,95 +109,6 @@ export const assertFontPreloadsResolved = async (
   return preloadHrefs
     .filter((href) => !styles.some((css) => css.includes(href)))
     .map((href) => `font preload href not found in emitted or inline CSS: ${href}`);
-};
-
-/** `safeJsonLd` escapes `<` and `>`, so a block can never contain `</script>`. */
-const JSON_LD_BLOCK =
-  /<script\b[^>]*\btype=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-const HTML_LANG = /<html\b[^>]*\blang=["']([^"']*)["']/i;
-
-const builtHtmlFiles = async (distClientDir: string): Promise<string[] | null> => {
-  const entries = await readdir(distClientDir, { recursive: true, withFileTypes: true }).catch(
-    () => null,
-  );
-  return entries === null
-    ? null
-    : entries
-        .filter((entry) => !entry.isDirectory() && entry.name.endsWith(".html"))
-        .map((entry) => relative(distClientDir, join(entry.parentPath, entry.name)))
-        .sort();
-};
-
-/**
- * Fail-loud guard against a JSON-LD `@graph` that points at nothing.
- *
- * Two dangling references shipped for months because nothing ever looked at
- * the markup: `BlogPosting.isPartOf` on every post named a `Blog` node the
- * post page did not emit, and `CollectionPage.hasPart` on the portfolio named
- * nodes that live on the project pages. Both parse, both validate, both
- * resolve to nothing — exactly the shape of error that looks like success.
- *
- * The rule itself lives in `src/lib/seo/graph-refs.ts` as pure data in / data
- * out, because only part of the site can be checked from `dist`: `/`, `/blog/`
- * and their EN twins are rendered on demand (`prerender = false`) and never
- * reach the build output. Those pages are covered by the production server
- * smoke test, which feeds the same function the HTML it fetches.
- */
-export const assertNoDanglingGraphRefs = async (
-  distClientDir: string = DIST_CLIENT_DIR,
-): Promise<string[]> => {
-  const files = await builtHtmlFiles(distClientDir);
-  if (files === null) return [`build output is unreadable: ${distClientDir}`];
-
-  const issues: string[] = [];
-  let pagesWithJsonLd = 0;
-
-  for (const file of files) {
-    const page = file.split(sep).join("/");
-    const html = await readFile(join(distClientDir, file), "utf8");
-    const blocks = [...html.matchAll(JSON_LD_BLOCK)].map((match) => match[1] ?? "");
-    // A page without JSON-LD is not an error: plenty of routes emit none.
-    if (blocks.length === 0) continue;
-    pagesWithJsonLd += 1;
-
-    const lang = HTML_LANG.exec(html)?.[1];
-    if (!isLocale(lang)) {
-      issues.push(
-        `${page}: carries JSON-LD but <html lang> is ${JSON.stringify(lang ?? null)}, not a site ` +
-          `locale — the cross-locale exception cannot be applied to it`,
-      );
-      continue;
-    }
-
-    blocks.forEach((block, index) => {
-      const label = blocks.length === 1 ? page : `${page} (block ${index + 1})`;
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(block);
-      } catch (error) {
-        issues.push(
-          `${label}: JSON-LD does not parse (${error instanceof Error ? error.message : String(error)})`,
-        );
-        return;
-      }
-      for (const ref of findDanglingGraphRefs({ graph: graphNodesOf(parsed), locale: lang })) {
-        issues.push(`${label}: ${ref.path} -> ${ref.id}`);
-      }
-    });
-  }
-
-  // One page without JSON-LD is fine; a whole build without any means this
-  // guard looked at nothing (BaseLayout emits a graph on every page) — the
-  // extractor went blind, e.g. the markup of the <script> tag changed. Same
-  // stance as "no font preload <link> found on probe page" above.
-  if (pagesWithJsonLd === 0) {
-    issues.push(
-      `no JSON-LD block found in any of ${files.length} built page(s) under ${distClientDir} — ` +
-        `nothing was checked`,
-    );
-  }
-
-  return issues;
 };
 
 const OG_SOURCE_ROOTS: ReadonlyArray<string> = ["src/lib/og", "src/pages/og"];
@@ -311,63 +237,134 @@ export const assertOgAuthorNames = async (
   return issues;
 };
 
-const runBuild = async (): Promise<number> => {
+/** Category of every finding `runDistChecks` can produce; the test holds this list to the wiring. */
+export const DIST_CHECK_CATEGORIES = [
+  "json-ld",
+  "hreflang",
+  "sitemap",
+  "images",
+  "social",
+  "diagrams",
+  "links",
+  "on-demand",
+  "content build",
+] as const;
+
+export type DistFinding = readonly [category: string, issue: string];
+
+/**
+ * Every check on the finished build, over one read of the pages of `dist/client`: the page checks of
+ * `scripts/seo-checks/` and the comparison with the snapshot the build came from
+ * (`verifyContentBuild`: revision marker, sitemap membership, hiddenFromList). Stale on-demand
+ * exemptions are reported here, once, not by each check that consults the list.
+ */
+export const runDistChecks = async (
+  root: string,
+  snapshot: ExportSnapshot,
+): Promise<readonly DistFinding[]> => {
+  const dist = await readDist(root);
+  const tag =
+    (category: string) =>
+    (issues: readonly string[]): readonly DistFinding[] =>
+      issues.map((issue) => [category, issue] as const);
+  return [
+    ...tag("json-ld")(checkJsonLd(dist)),
+    ...tag("hreflang")(checkHreflang(dist)),
+    ...tag("sitemap")(checkSitemaps(dist)),
+    ...tag("images")(checkImages(dist)),
+    ...tag("social")(await checkSocialMeta(dist)),
+    ...tag("diagrams")(checkDiagrams(dist)),
+    ...tag("links")(checkInternalLinks(dist)),
+    ...tag("on-demand")(staleExemptions(dist)),
+    ...tag("content build")(await verifyContentBuild(snapshot, root)),
+  ];
+};
+
+/** `[seo-build] <category>: <issue>`; a check that already names its rule is not prefixed twice. */
+export const formatFinding = ([category, issue]: DistFinding): string =>
+  `[seo-build] ${issue.startsWith(`${category}: `) ? issue : `${category}: ${issue}`}`;
+
+const loadSnapshot = async (): Promise<ExportSnapshot> => {
+  const path = resolveSnapshotPath(process.env, process.cwd());
+  const { minArticles } = await readManifest(process.cwd());
+  return checkSnapshot(await readJson(path), minArticles, path);
+};
+
+const fail = (message: string): void => {
+  process.stderr.write(`${message}\n`);
+};
+
+const runBuild = async (distOnly: boolean): Promise<number> => {
   // Static source guard first: it reads no build output, so a hardcoded
   // byline is reported in a second instead of after a full `pnpm build`.
   const nameIssues = await assertOgAuthorNames();
   for (const issue of nameIssues) {
-    console.error(`[seo-build] og byline: ${issue}`);
+    fail(`[seo-build] og byline: ${issue}`);
   }
   if (nameIssues.length > 0) return 1;
 
-  let output = "";
-  const child = spawn("pnpm", ["build"], {
-    cwd: process.cwd(),
-    env: process.env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  child.stdout.on("data", (chunk: Buffer) => {
-    output += chunk.toString();
-    process.stdout.write(chunk);
-  });
-  child.stderr.on("data", (chunk: Buffer) => {
-    output += chunk.toString();
-    process.stderr.write(chunk);
-  });
-
-  const exitCode = await new Promise<number>((resolveExit) => {
-    child.once("error", (error) => {
-      console.error(`[seo-build] Failed to start pnpm build: ${error.message}`);
-      resolveExit(1);
+  if (!distOnly) {
+    let output = "";
+    const child = spawn("pnpm", ["build"], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    child.once("close", (code) => resolveExit(code ?? 1));
-  });
 
-  const diagnostics = diagnoseSeoBuildOutput(output);
-  for (const { label, block } of diagnostics) {
-    console.error(`[seo-build] ${label}:\n${block}\n`);
+    child.stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString();
+      process.stdout.write(chunk);
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      output += chunk.toString();
+      process.stderr.write(chunk);
+    });
+
+    const exitCode = await new Promise<number>((resolveExit) => {
+      child.once("error", (error) => {
+        fail(`[seo-build] Failed to start pnpm build: ${error.message}`);
+        resolveExit(1);
+      });
+      child.once("close", (code) => resolveExit(code ?? 1));
+    });
+
+    const diagnostics = diagnoseSeoBuildOutput(output);
+    for (const { label, block } of diagnostics) {
+      fail(`[seo-build] ${label}:\n${block}\n`);
+    }
+
+    if (exitCode !== 0) return exitCode;
+    if (diagnostics.length > 0) return 1;
   }
 
-  if (exitCode !== 0) return exitCode;
-  if (diagnostics.length > 0) return 1;
+  // The snapshot is loaded the way the build loaded it (CONTENT_SNAPSHOT or the fixture), so the
+  // marker check compares the build with the file it was made from.
+  const snapshot = await loadSnapshot();
 
   const fontIssues = await assertFontPreloadsResolved();
   for (const issue of fontIssues) {
-    console.error(`[seo-build] font preload: ${issue}`);
+    fail(`[seo-build] font preload: ${issue}`);
   }
 
-  // Both output guards run on every green build: one `pnpm build` costs
-  // minutes, so a run must report everything it can see, not the first thing.
-  const graphIssues = await assertNoDanglingGraphRefs();
-  for (const issue of graphIssues) {
-    console.error(`[seo-build] dangling graph ref: ${issue}`);
+  // Everything runs on every green build: one `pnpm build` costs minutes, so a run must
+  // report everything it can see, not the first thing.
+  const distReadable = await stat(DIST_CLIENT_DIR).then(
+    (info) => info.isDirectory(),
+    () => false,
+  );
+  if (!distReadable) {
+    fail(`[seo-build] build output is unreadable: ${DIST_CLIENT_DIR}`);
+    return 1;
+  }
+  const findings = await runDistChecks(DIST_CLIENT_DIR, snapshot);
+  for (const finding of findings) {
+    fail(formatFinding(finding));
   }
 
-  return fontIssues.length === 0 && graphIssues.length === 0 ? 0 : 1;
+  return fontIssues.length === 0 && findings.length === 0 ? 0 : 1;
 };
 
 const entrypoint = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;
 if (entrypoint === import.meta.url) {
-  process.exitCode = await runBuild();
+  process.exitCode = await runBuild(process.argv.includes("--dist-only"));
 }

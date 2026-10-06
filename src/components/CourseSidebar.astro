@@ -47,11 +47,11 @@ const lessonHref = (lesson: CollectionEntry<"lesson">): string =>
 {
   series.length > 0 && (
     <nav class="sidebar" aria-label={t(locale, "sidebar.guide")}>
-      <h3 class="sidebar__label">
+      <p class="sidebar__label">
         <a href={courseLandingHref} class="sidebar__label-link">
           {t(locale, "sidebar.guide")}
         </a>
-      </h3>
+      </p>
       <ol class="sidebar__list">
         {series.map((lesson: CollectionEntry<"lesson">) => (
           <li>

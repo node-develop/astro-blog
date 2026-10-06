@@ -2,25 +2,12 @@ import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { Locale } from "~/i18n";
 import { canonicalPath } from "~/lib/seo/url-policy";
+import { stripLocalePrefix } from "./paths";
 import { isTagArchiveIndexable } from "~/lib/seo/indexability";
+import { getOrderedPosts } from "~/lib/content/loader";
+import { groupPostsByTag } from "~/lib/content/tags";
 
-const isEnPrefix = (pathname: string): boolean => pathname === "/en" || pathname.startsWith("/en/");
-
-export const getLocaleFromPath = (pathname: string): Locale => (isEnPrefix(pathname) ? "en" : "ru");
-
-export const stripLocalePrefix = (pathname: string): string => {
-  if (pathname === "/en" || pathname === "/en/") return "/";
-  if (pathname.startsWith("/en/")) return pathname.slice(3);
-  return pathname;
-};
-
-export const getCounterpart = (pathname: string, currentLocale: Locale): string => {
-  if (currentLocale === "ru") {
-    if (pathname === "/") return "/en/";
-    return canonicalPath(`/en${pathname}`);
-  }
-  return canonicalPath(stripLocalePrefix(pathname));
-};
+export { getLocaleFromPath, stripLocalePrefix, getCounterpart } from "./paths";
 
 const otherLocale = (locale: Locale): Locale => (locale === "ru" ? "en" : "ru");
 
@@ -58,17 +45,18 @@ export const tagArchiveSlug = (pathname: string): string | null =>
 // A tag archive below MIN_INDEXABLE_TAG_POSTS is noindexed, and a noindexed
 // page must not be advertised as an hreflang alternate (Google treats the
 // cluster as broken). Both locale archives have to be indexable for the pair
-// to be emitted. Counts non-draft posts per locale straight from the
-// collection; hidden-from-list posts (DB flag) are ignored here, which can
-// only over-count — never advertise a page that is indexable as missing.
+// to be emitted. The count uses `getOrderedPosts`, the very list `tags/[tag].astro`
+// (RU and EN) decides its own `noindex` over (drafts, hidden-from-list posts and the
+// `posts_meta` override included), so the pair and the page cannot disagree.
 const tagArchivePairIndexable = async (slug: string): Promise<boolean> => {
-  const tagged = await getCollection(
-    "posts",
-    (e: CollectionEntry<"posts">) => !e.data.draft && e.data.tags.includes(slug),
+  const [ru, en] = await Promise.all([
+    getOrderedPosts({ locale: "ru" }),
+    getOrderedPosts({ locale: "en" }),
+  ]);
+  return (
+    isTagArchiveIndexable(groupPostsByTag(ru).get(slug) ?? []) &&
+    isTagArchiveIndexable(groupPostsByTag(en).get(slug) ?? [])
   );
-  const ru = tagged.filter((e: CollectionEntry<"posts">) => !e.id.startsWith("en/"));
-  const en = tagged.filter((e: CollectionEntry<"posts">) => e.id.startsWith("en/"));
-  return isTagArchiveIndexable(ru) && isTagArchiveIndexable(en);
 };
 
 // The helpers below answer "does the page route of `locale` build this page?"

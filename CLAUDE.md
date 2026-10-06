@@ -62,7 +62,9 @@ astro-blog/
 - `pnpm test:built` — проверки собранного сайта и standalone-сервера (`tests/built/`); сначала `pnpm build`, без `dist/` падает
 - `pnpm test:db` — Postgres-сьюты `tests/integration/` через testcontainers (нужен Docker); `pnpm test:all` — все три слоя
 - `pnpm verify:content-build <snapshot> <dist/client>` — сверить собранный сайт со снапшотом (ревизии, sitemap); гоняется в Dockerfile после `pnpm build`
-- `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверка вывода билда на известные SEO-регрессии (`scripts/verify-seo-build.ts`)
+- `pnpm verify:seo-build` — свежий `pnpm build` + fail-loud проверки `dist/` (`scripts/seo-checks/`: JSON-LD, hreflang, sitemap, картинки/OG, Mermaid, ссылки, сверка со снапшотом); `--dist-only` — без пересборки
+- `pnpm verify:html` — html-validate по `dist/client` (`.htmlvalidate.json`)
+- `pnpm lighthouse:pr` — Unlighthouse по трём страницам (главная, пост RU/EN) с бюджетами из `unlighthouse.config.ts`; в CI только на PR
 - `pnpm test:e2e` — Playwright
 - `pnpm content:pull` — скачать снапшот контента из `/api/v1/export/` в `.content/snapshot.json` (нужен `CONTENT_EXPORT_TOKEN`; источник — `SITE_URL`, из `.env.example` это localhost, для прода `SITE_URL=https://artka.dev pnpm content:pull`); сборка читает его через `CONTENT_SNAPSHOT=… pnpm build`, по умолчанию — фикстура `tests/fixtures/content-snapshot.json`
 - `pnpm content:fixture` — пересобрать фикстуру снапшота из `scripts/dev/fixture-articles.ts`

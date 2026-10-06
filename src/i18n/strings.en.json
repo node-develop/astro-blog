@@ -49,7 +49,6 @@
   "site.feedTitle": "artka.dev — Notes from production",
   "site.feedDescription": "Notes on Claude Code, AI agents, RAG pipelines and production backend by Artyom Kashuta.",
   "breadcrumbs.aria": "Breadcrumbs",
-  "breadcrumbs.courses": "Courses",
   "certificate.label": "CERTIFICATE OF COMPLETION",
   "certificate.copy": "You have completed all {count} lessons. Certificate — PNG 1600×1100, suitable for printing on A4.",
   "certificate.download": "Download certificate",

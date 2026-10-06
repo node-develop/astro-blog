@@ -14,6 +14,8 @@ vi.mock("astro:content", () => {
       readonly draft?: boolean;
       readonly tags?: readonly string[];
       readonly locale?: "ru" | "en";
+      readonly _meta?: { readonly hiddenFromList: boolean };
+      readonly pubDate?: Date;
     };
   }
   const posts: readonly MockEntry[] = [
@@ -25,6 +27,14 @@ vi.mock("astro:content", () => {
     { id: "en/04-draft", data: { draft: true, tags: ["claude-code"] } },
     { id: "en/05-ru-draft", data: { draft: false, tags: [] } },
     { id: "en/03-skills", data: { draft: false, tags: ["pair"] } },
+    // Tag "hidden-one": two RU posts, one hidden from the list, so the RU archive lists one post.
+    { id: "08-listed", data: { draft: false, tags: ["hidden-one"] } },
+    {
+      id: "09-hidden",
+      data: { draft: false, tags: ["hidden-one"], _meta: { hiddenFromList: true } },
+    },
+    { id: "en/08-listed", data: { draft: false, tags: ["hidden-one"] } },
+    { id: "en/09-hidden", data: { draft: false, tags: ["hidden-one"] } },
   ];
   const projects: readonly MockEntry[] = [
     { id: "paired-project", data: {} },
@@ -66,7 +76,19 @@ vi.mock("astro:content", () => {
   };
   return {
     getCollection: vi.fn(async (name: string, filter?: (e: MockEntry) => boolean) => {
-      const all = collections[name] ?? [];
+      // Real posts always carry the snapshot `_meta` and a pubDate (the loader reads both).
+      const all = (collections[name] ?? []).map((e) =>
+        name === "posts"
+          ? {
+              ...e,
+              data: {
+                pubDate: new Date(0),
+                ...e.data,
+                _meta: { order: 0, pinned: false, hiddenFromList: false, ...e.data._meta },
+              },
+            }
+          : e,
+      );
       return filter ? all.filter(filter) : all;
     }),
   };
@@ -153,6 +175,13 @@ describe("checkCounterpartExists", () => {
     expect(await checkCounterpartExists("/tags/solo/", "ru")).toBe(false);
     expect(await checkCounterpartExists("/tags/pair/", "ru")).toBe(true);
     expect(await checkCounterpartExists("/en/tags/pair/", "en")).toBe(true);
+  });
+
+  // The archive page noindexes on the posts the blog lists, so a hidden post must not count toward
+  // the pair either: RU lists one post here, the page is noindex, and EN must not point at it.
+  it("does not count a hidden-from-list post toward the tag-archive pair", async () => {
+    expect(await checkCounterpartExists("/tags/hidden-one/", "ru")).toBe(false);
+    expect(await checkCounterpartExists("/en/tags/hidden-one/", "en")).toBe(false);
   });
 
   it.each(["/login/", "/admin/", "/admin/posts/", "/api/auth/get-session/"])(

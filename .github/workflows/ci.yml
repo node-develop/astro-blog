@@ -78,7 +78,7 @@ jobs:
     # `snapshot` fails `validate` and this job is skipped.
     if: ${{ !cancelled() && (needs.snapshot.result == 'success' || (github.event_name == 'pull_request' && needs.snapshot.result == 'skipped')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       # Explicit in both modes: an empty value makes resolveSnapshotPath throw.
       CONTENT_SNAPSHOT: ${{ github.event_name == 'pull_request' && 'tests/fixtures/content-snapshot.json' || 'content-snapshot.json' }}
@@ -98,11 +98,26 @@ jobs:
       - name: Install Playwright Chromium headless shell
         run: pnpm exec playwright install --with-deps --only-shell chromium
 
+      # Fresh build, then every dist check (JSON-LD, hreflang, sitemaps, images, social meta,
+      # diagrams, internal links) and the snapshot marker.
       - name: Build and verify fresh SEO output
         run: pnpm verify:seo-build
 
+      # The next two run even when the step above failed on findings, so one red run shows all of
+      # them. When the build itself failed there is no dist, and they fail on that, too.
+      - name: Validate built HTML (html-validate)
+        if: ${{ !cancelled() }}
+        run: pnpm verify:html
+
       - name: Built-site tests (dist + standalone server)
+        if: ${{ !cancelled() }}
         run: pnpm test:built --reporter=verbose
+
+      # Pull requests only: scores depend on the runner and must not block a release.
+      # Chrome is preinstalled on ubuntu-latest; Unlighthouse uses the system one.
+      - name: Lighthouse budgets (home, RU post, EN post)
+        if: github.event_name == 'pull_request'
+        run: pnpm lighthouse:pr
 
   db:
     runs-on: ubuntu-latest
