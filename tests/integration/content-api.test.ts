@@ -349,6 +349,23 @@ describe("content API with PostgreSQL", () => {
       ).body.unchanged,
     ).toBe(true);
   });
+  it("publishes a hidden article without waiting for the sitemap that leaves it out", async () => {
+    const article = await make("publish");
+    await state.db!.insert(schema.postsMeta).values({
+      slug: document.slug,
+      order: 1,
+      hiddenFromList: true,
+    });
+    await processPublication(); // pointer moves
+    await processPublication(); // rebuild requested
+    remote.live = liveHtml(article.url, article.publication.id);
+    remote.sitemap = sitemapOf(OTHER_URL);
+    await due();
+    await processPublication();
+    expect((await call("GET", `publications/${article.publication.id}`)).body.state).toBe(
+      "published",
+    );
+  });
   it("serialises concurrent workers: one rebuild request for one publication", async () => {
     const article = await make("publish");
     await Promise.all([processPublication(), processPublication()]);

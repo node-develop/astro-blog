@@ -242,19 +242,26 @@ export const processPublication = async () =>
               "images_pending",
               "Referenced images are not publicly readable yet.",
             );
-          // Check the discovery surface as well; hidden metadata must not count as success.
-          const sitemap = sitemapUrl(url, article.lang);
-          const response = await fetch(sitemap, {
-            redirect: "error",
-            signal: AbortSignal.timeout(10_000),
-            cache: "no-store",
-          });
-          if (!response.ok || !(await response.text()).includes(`<loc>${url}</loc>`))
-            throw apiError(
-              503,
-              "sitemap_pending",
-              "Article is live but not yet present in its sitemap.",
-            );
+          // Check the discovery surface as well, except for a hidden article: the build keeps
+          // it out of the sitemap on purpose, so waiting for it there would time out every time.
+          const [meta] = await tx
+            .select({ hiddenFromList: postsMeta.hiddenFromList })
+            .from(postsMeta)
+            .where(eq(postsMeta.slug, article.slug));
+          if (!meta?.hiddenFromList) {
+            const sitemap = sitemapUrl(url, article.lang);
+            const response = await fetch(sitemap, {
+              redirect: "error",
+              signal: AbortSignal.timeout(10_000),
+              cache: "no-store",
+            });
+            if (!response.ok || !(await response.text()).includes(`<loc>${url}</loc>`))
+              throw apiError(
+                503,
+                "sitemap_pending",
+                "Article is live but not yet present in its sitemap.",
+              );
+          }
           await tx
             .update(contentArticles)
             .set({
