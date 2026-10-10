@@ -7,6 +7,7 @@ export default [
   {
     ignores: [
       "dist/**",
+      ".claude/**",
       ".astro/**",
       "node_modules/**",
       "drizzle/**",

@@ -52,8 +52,6 @@ pnpm dev           # http://localhost:4321
 3. Markdown + опционально Mermaid-блоки и LaTeX (`$...$`, `$$...$$`).
 4. `pnpm dev` → `http://localhost:4321/blog/<slug>`.
 
-Подробнее — в `.claude/skills/new-blog-post/SKILL.md`.
-
 ## Social autopost
 
 При публикации статьи автоматически генерируются черновики постов для X-EN, LinkedIn-EN и Telegram-RU через конвейер Writer (Haiku 4.5) → Editor (Sonnet 4.6 с voice card) → Critic (Sonnet 4.6, read-only). Драфты попадают на ревью в `/admin/social`, откуда публикуются per-channel вручную.
@@ -107,17 +105,15 @@ pnpm translate -- --force-all
 
 Проект настроен под Claude Code:
 
-- `CLAUDE.md` — глобальный контекст и стандарты; `AGENTS.md` — короткие правила для Codex и других агентов (редакционный процесс)
-- `.claude/agents/` — architect, sysanalyst, designer, backender, frontender, critic
-- `.claude/skills/` — statejnik, new-blog-post, astro-component, design-system-tokens, ui-design-review, db-migration, deploy-check, write-tests; `generated/*` — справочные карты областей кода
-- `.claude/hooks/` — session-start, no-secrets (блокирует .env), format (prettier), notify-stop
-- `.claude/settings.json` — permissions + hook registrations
+- `CLAUDE.md` — глобальный контекст и стандарты; `AGENTS.md` — указатель для Codex и других агентов
+- `.claude/skills/seo*`, `.claude/agents/seo-*` — SEO-аудит [claude-seo](https://github.com/AgriciDaniel/claude-seo), см. «SEO-инструменты» в `CLAUDE.md`
+- `.claude/settings.json` — permissions
 
 ## Структура репозитория
 
 ```
 astro-blog/
-├── .claude/                  — claude-code harness
+├── .claude/                  — claude-seo: SEO-скиллы и агенты
 ├── .github/workflows/        — CI и публикация Docker
 ├── src/
 │   ├── content.config.ts     — content layer схема
