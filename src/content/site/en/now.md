@@ -2,9 +2,9 @@
 title: Now
 description: "What I am working on in September 2026: my personal site, practical writing, and tools for developing software with AI."
 metaTitle: "Now: the projects I am working on in 2026"
-metaDescription: "What I am working on right now: growing artka.dev, writing the Claude Code course and testing AI tools for development. Updated every month."
+metaDescription: "What I am working on right now: growing artka.dev, writing articles on Claude Code and testing AI tools for development. Updated every month."
 lang: en
-sourceHash: ac4a602de87c658a5a9bf20626658b65a652dda3d53dd3e46b4dd51ba9165908
+sourceHash: 751ade1150c7797acb92818427be330733c3a787c2dde3aba0d70e4bf80b817c
 manuallyEdited: false
 ---
 
@@ -20,7 +20,7 @@ I recently added a publishing API so external tools can submit article text, ima
 
 ## Improving the material
 
-I've revised the articles and [Claude Code course](/en/courses/claude-code-guide/), updating instructions, removing unsupported claims, and making the limits of teaching examples clearer.
+I've revised the articles, updating instructions, removing unsupported claims, and making the limits of teaching examples clearer.
 
 Next, I want to add more writeups that readers can reproduce: a small problem, the code, verification results, and an account of what didn't work. My near-term topics are agents using tools and content publishing with Astro.
 

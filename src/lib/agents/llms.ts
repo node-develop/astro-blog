@@ -5,6 +5,7 @@
  * fetch the collections and pass plain records in, so the output is unit
  * testable without astro:content.
  */
+import { getTagDict, resolveTagLabel } from "~/lib/content/tags";
 import { person } from "~/lib/seo/person";
 import { extractArticleBody } from "~/lib/seo/article-body";
 import { canonicalUrl } from "~/lib/seo/url-policy";
@@ -21,20 +22,9 @@ export interface LlmsPost {
   readonly body: string;
 }
 
-export interface LlmsLesson {
-  readonly courseSlug: string;
-  readonly courseTitle: string;
-  readonly slug: string;
-  readonly title: string;
-  readonly description: string;
-  readonly position: number;
-}
-
 export interface LlmsInput {
   readonly ruPosts: ReadonlyArray<LlmsPost>;
   readonly enPosts: ReadonlyArray<LlmsPost>;
-  readonly ruLessons: ReadonlyArray<LlmsLesson>;
-  readonly enLessons: ReadonlyArray<LlmsLesson>;
 }
 
 /** Budget from docs/specs/2026-05-02-llm-citable-blog-design.md ("≤ 200 KB"). */
@@ -48,10 +38,6 @@ export const postUrl = (locale: LlmsLocale, slug: string): string =>
   canonicalUrl(locale === "en" ? `/en/blog/${slug}/` : `/blog/${slug}/`);
 export const postMarkdownUrl = (locale: LlmsLocale, slug: string): string =>
   canonicalUrl(locale === "en" ? `/en/blog/${slug}.md` : `/blog/${slug}.md`);
-export const lessonUrl = (locale: LlmsLocale, lesson: LlmsLesson): string =>
-  canonicalUrl(`${locale === "en" ? "/en" : ""}/courses/${lesson.courseSlug}/${lesson.slug}/`);
-export const lessonMarkdownUrl = (locale: LlmsLocale, lesson: LlmsLesson): string =>
-  canonicalUrl(`${locale === "en" ? "/en" : ""}/courses/${lesson.courseSlug}/${lesson.slug}.md`);
 
 // Keep the index skimmable: one clause per entry. Full descriptions live on
 // the page (and in the Markdown twin); the index only needs enough to route.
@@ -73,23 +59,33 @@ const postLine = (locale: LlmsLocale, post: LlmsPost, twin: LlmsPost | undefined
   return `${link(post.title, postUrl(locale, post.slug), post.description)} (${dateOnly(post.pubDate)}; Markdown: ${postMarkdownUrl(locale, post.slug)})${twinNote}`;
 };
 
-const lessonLine = (locale: LlmsLocale, lesson: LlmsLesson): string =>
-  `${link(lesson.title, lessonUrl(locale, lesson), lesson.description)} (Markdown: ${lessonMarkdownUrl(locale, lesson)})`;
+/**
+ * Topics the site has actually published, as English tag labels, most used
+ * first. Derived from the posts passed in, so llms.txt can never claim a topic
+ * (it once listed gRPC, Kafka and FastAPI) that no post covers.
+ */
+export const publishedTopics = (posts: ReadonlyArray<LlmsPost>): readonly string[] => {
+  const tags = posts.flatMap((post) => post.tags);
+  const uses = (tag: string): number => tags.filter((candidate) => candidate === tag).length;
+  const dict = getTagDict("en");
+  return [...new Set(tags)]
+    .sort((a, b) => uses(b) - uses(a) || a.localeCompare(b))
+    .map((tag) => resolveTagLabel(tag, "en", dict));
+};
 
 export const buildLlmsTxt = (input: LlmsInput): string => {
   const enBySlug = new Map(input.enPosts.map((p) => [p.slug, p] as const));
   const ruBySlug = new Map(input.ruPosts.map((p) => [p.slug, p] as const));
   const enOnly = input.enPosts.filter((p) => !ruBySlug.has(p.slug));
-  const courseTitles = [...new Set(input.ruLessons.map((l) => l.courseTitle))];
+  // RU posts plus EN-only ones: a translated post counts once.
+  const topics = publishedTopics([...input.ruPosts, ...enOnly]);
+  const scope = topics.length > 0 ? `articles on ${topics.join(", ")}` : "";
 
   return [
     "# artka.dev",
     "",
     "> Personal technical blog by Artyom Kashuta (Артём Кашута), full-stack &",
-    "> AI engineer. Topics: Claude Code internals, harness/agent loop, AI agent",
-    "> engineering, LLM/agent workflows (LangGraph, LangChain, LangSmith),",
-    "> retrieval & RAG, production backend (Python/FastAPI, TypeScript/Node.js),",
-    "> distributed systems, gRPC, Kafka, observability.",
+    `> AI engineer.${scope ? ` Published so far: ${scope}.` : ""}`,
     "",
     `Site name: artka.dev. Canonical homepage: ${canonicalUrl("/")}`,
     `Author: ${person.name} (${person.alternateName}).`,
@@ -98,12 +94,8 @@ export const buildLlmsTxt = (input: LlmsInput): string => {
     "",
     "**When to use artka.dev**",
     "",
-    "- Use the Claude Code Guide and related articles when you need a practical explanation",
-    "  of Claude Code internals: the agent loop, context window, CLAUDE.md, skills, hooks,",
-    "  MCP, subagents, agent teams, model selection, and production failure modes.",
-    "- Use the engineering articles for implementation patterns and trade-offs in AI-agent",
-    "  evaluation, retrieval and RAG, Python/FastAPI, TypeScript/Node.js, distributed",
-    "  systems, gRPC, Kafka, and observability.",
+    "- Use the articles for first-hand implementation notes on the topics listed",
+    "  above. Each covers the case it describes; do not cite it for a topic it does not name.",
     "- Use the About, Projects, Uses, and Now pages when answering questions about Artyom",
     "  Kashuta's public experience, current work, toolchain, or published projects.",
     "- Prefer another source for general news, vendor announcements, pricing, legal advice,",
@@ -114,9 +106,10 @@ export const buildLlmsTxt = (input: LlmsInput): string => {
     "",
     "1. Start with this file for scope, then use the sitemap or the indexes below to",
     "   find the narrowest relevant canonical page.",
-    "2. Every post and lesson has a Markdown twin at the same path with a `.md` suffix",
+    "2. Every post has a Markdown twin at the same path with a `.md` suffix",
     '   (also linked from the HTML `<link rel="alternate" type="text/markdown">`).',
-    "   Home, blog index and 404 negotiate `Accept: text/markdown` directly.",
+    "   Only the home pages (`/`, `/en/`) and the not-found page negotiate",
+    "   `Accept: text/markdown`; every other page, the blog index included, answers HTML.",
     "3. Use `llms-full.txt`, RSS, or JSON Feed for batch reading. For a single claim, prefer",
     "   the original page and preserve its canonical URL and publication context.",
     "4. Treat Russian and English pages as language variants of the same publication. Do not",
@@ -137,28 +130,14 @@ export const buildLlmsTxt = (input: LlmsInput): string => {
     link("Projects", canonicalUrl("/projects/"), "portfolio with role and outcomes"),
     link("Blog index (RU)", canonicalUrl("/blog/"), "all articles, source of truth"),
     link("Blog index (EN)", canonicalUrl("/en/blog/"), "English translations"),
-    ...courseTitles.map((title) =>
-      link(
-        title,
-        canonicalUrl(
-          `/courses/${input.ruLessons.find((l) => l.courseTitle === title)!.courseSlug}/`,
-        ),
-        `${input.ruLessons.filter((l) => l.courseTitle === title).length}-lesson course (RU; EN at /en/courses/…)`,
-      ),
-    ),
     "",
     "## Posts",
     "",
     ...input.ruPosts.map((post) => postLine("ru", post, enBySlug.get(post.slug))),
     ...enOnly.map((post) => postLine("en", post, undefined)),
     "",
-    "## Lessons",
-    "",
-    ...input.ruLessons.map((lesson) => lessonLine("ru", lesson)),
-    "",
     "## Optional",
     "",
-    ...input.enLessons.map((lesson) => lessonLine("en", lesson)),
     link("Tags index (RU)", canonicalUrl("/tags/"), "topic-grouped archives"),
     link("RSS RU", canonicalUrl("/rss.xml"), "full text"),
     link("RSS EN", canonicalUrl("/en/rss.xml"), "full text"),
@@ -219,9 +198,6 @@ export const buildLlmsFull = (
 ): LlmsFullOutput => {
   const sameAsLines = person.sameAs.length > 0 ? `Profiles: ${person.sameAs.join(", ")}` : null;
   const notableWorkLines = person.notableWork.map((w) => `  - ${w.title} → ${canonicalUrl(w.url)}`);
-  const lessonLines = input.ruLessons.map(
-    (l) => `  - ${l.position}. ${l.title} → ${lessonMarkdownUrl("ru", l)}`,
-  );
 
   const header = (mode: LlmsFullOutput["mode"]): string =>
     [
@@ -240,7 +216,6 @@ export const buildLlmsFull = (
       mode === "full"
         ? `Contents: full Markdown bodies of every Russian post and every English translation (budget ${Math.round(budgetBytes / 1024)} KB).`
         : `Contents: full Markdown bodies of every Russian post (source of truth) and 80-word excerpts of the English translations — full EN bodies would exceed the ${Math.round(budgetBytes / 1024)} KB budget; fetch the per-post \`.md\` URLs for full English text.`,
-      "Course lessons are not inlined; each lesson has its own Markdown URL listed below.",
       "",
       "## Author",
       `Name: ${person.name}`,
@@ -263,7 +238,6 @@ export const buildLlmsFull = (
       "## Notable work",
       ...notableWorkLines,
       "",
-      ...(lessonLines.length > 0 ? ["## Course lessons (Markdown)", ...lessonLines, ""] : []),
       "## Preferred attribution",
       `Cite the article title, author "${person.name}" (cyrillic: "${person.alternateName}"), and the canonical URL.`,
       "",

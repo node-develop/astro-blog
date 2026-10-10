@@ -12,27 +12,6 @@ export const minutesToIsoDuration = (minutes: number): string | null => {
   return `PT${hours > 0 ? `${hours}H` : ""}${rest > 0 || hours === 0 ? `${rest}M` : ""}`;
 };
 
-/**
- * Best-effort ISO 8601 duration from a human workload string such as
- * "~6 часов", "6 hours", "45 мин" or "1.5h". Returns null when no number +
- * recognisable unit is present — callers then simply omit the field.
- */
-export const parseWorkloadToIsoDuration = (text: string | undefined): string | null => {
-  if (!text) return null;
-  const match = text.match(/(\d+(?:[.,]\d+)?)\s*([a-zа-яё]+)/i);
-  if (!match) return null;
-  const amount = Number(match[1]!.replace(",", "."));
-  const unit = match[2]!.toLowerCase();
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  if (/^(h|hr|hrs|hour|hours|ч|час|часа|часов)$/.test(unit)) {
-    return minutesToIsoDuration(amount * 60);
-  }
-  if (/^(m|min|mins|minute|minutes|мин|минут|минуты|минута)$/.test(unit)) {
-    return minutesToIsoDuration(amount);
-  }
-  return null;
-};
-
 export interface BlogPostingInput {
   readonly locale: Locale;
   readonly canonical: string;
@@ -220,12 +199,12 @@ export interface WebPageInput {
   readonly breadcrumbId?: string;
   /** `@id` of the node this page is primarily about (e.g. `#person` on /about). */
   readonly aboutId?: string;
-  /** `@id` of the node this page is a container for (BlogPosting, Course, …). */
+  /** `@id` of the node this page is a container for (BlogPosting, …). */
   readonly mainEntityId?: string;
 }
 
 // `about: #person` used to be stamped on every WebPage, which told crawlers
-// that the blog index, tag archives and lessons were all "about" the author.
+// that the blog index and tag archives were all "about" the author.
 // Only pages that really are (About/Profile) should pass `aboutId`.
 export const buildWebPageNode = (input: WebPageInput) => ({
   "@type": input.type ?? "WebPage",
@@ -271,123 +250,5 @@ export const buildFaqPageNode = (input: FaqPageInput) => {
         text: it.answer,
       },
     })),
-  };
-};
-
-export type CourseLevel = "beginner" | "intermediate" | "advanced";
-
-export interface CourseNodeInput {
-  readonly locale: Locale;
-  readonly canonical: string;
-  readonly name: string;
-  readonly description: string;
-  readonly level: CourseLevel;
-  /** Human workload string from frontmatter, e.g. "~6 часов". Optional. */
-  readonly workload?: string;
-  /** Lessons in course order: canonical URL of the lesson page and its title. */
-  readonly lessons: ReadonlyArray<CourseLessonEntry>;
-  readonly image?: string;
-  readonly datePublished?: Date;
-  readonly dateModified?: Date | null;
-}
-
-/** One lesson as the course page lists it. */
-export interface CourseLessonEntry {
-  readonly url: string;
-  readonly name: string;
-}
-
-export const courseId = (canonical: string): string => `${canonical}#course`;
-export const lessonId = (canonical: string): string => `${canonical}#lesson`;
-
-const educationalLevel = (level: CourseLevel): string =>
-  level === "beginner" ? "Beginner" : level === "advanced" ? "Advanced" : "Intermediate";
-
-export const buildCourseNode = (input: CourseNodeInput) => {
-  const courseWorkload = parseWorkloadToIsoDuration(input.workload);
-  return {
-    "@type": "Course",
-    "@id": courseId(input.canonical),
-    url: input.canonical,
-    name: input.name,
-    description: input.description,
-    inLanguage: inLang(input.locale),
-    isAccessibleForFree: true,
-    educationalLevel: educationalLevel(input.level),
-    numberOfLessons: input.lessons.length,
-    provider: { "@id": graphIds.organization },
-    author: { "@id": graphIds.person },
-    publisher: { "@id": graphIds.organization },
-    hasCourseInstance: [
-      {
-        "@type": "CourseInstance",
-        courseMode: "online",
-        ...(courseWorkload ? { courseWorkload } : {}),
-      },
-    ],
-    // hasPart used to be bare `{"@id": "…#lesson"}` references to nodes that
-    // exist only on the lesson pages, so on the course page every part of the
-    // course resolved to nothing. Each entry now carries a minimal node under
-    // the SAME `@id` the lesson page uses for the full LearningResource, the
-    // way hasPart does for the portfolio in nodes-projects.ts.
-    hasPart: input.lessons.map((lesson, index) => ({
-      "@type": "LearningResource",
-      "@id": lessonId(lesson.url),
-      url: lesson.url,
-      name: lesson.name,
-      position: index + 1,
-    })),
-    ...(input.image ? { image: input.image } : {}),
-    ...(input.datePublished ? { datePublished: input.datePublished.toISOString() } : {}),
-    ...(input.dateModified ? { dateModified: input.dateModified.toISOString() } : {}),
-  };
-};
-
-export interface LearningResourceNodeInput {
-  readonly locale: Locale;
-  readonly canonical: string;
-  readonly courseCanonical: string;
-  /** Title of the course the lesson belongs to, for the embedded Course node. */
-  readonly courseName: string;
-  readonly name: string;
-  readonly description: string;
-  /** 1-based position inside the course. */
-  readonly position: number;
-  /** Lesson duration in minutes (frontmatter `duration`). Optional. */
-  readonly durationMinutes?: number;
-  readonly datePublished?: Date;
-  readonly dateModified?: Date;
-  /** What the lesson teaches — course tags or a short topic list. */
-  readonly teaches?: ReadonlyArray<string>;
-}
-
-export const buildLearningResourceNode = (input: LearningResourceNodeInput) => {
-  const timeRequired =
-    input.durationMinutes === undefined ? null : minutesToIsoDuration(input.durationMinutes);
-  return {
-    "@type": "LearningResource",
-    "@id": lessonId(input.canonical),
-    url: input.canonical,
-    name: input.name,
-    description: input.description,
-    learningResourceType: "lesson",
-    position: input.position,
-    inLanguage: inLang(input.locale),
-    isAccessibleForFree: true,
-    // The full Course node lives on the course page, not here. A bare
-    // reference to it resolved to nothing on all 28 lesson pages, so the
-    // lesson names its course with a minimal node under the same `@id`.
-    isPartOf: {
-      "@type": "Course",
-      "@id": courseId(input.courseCanonical),
-      url: input.courseCanonical,
-      name: input.courseName,
-    },
-    author: { "@id": graphIds.person },
-    publisher: { "@id": graphIds.organization },
-    ...(timeRequired ? { timeRequired } : {}),
-    ...(input.datePublished ? { datePublished: input.datePublished.toISOString() } : {}),
-    ...(input.dateModified ? { dateModified: input.dateModified.toISOString() } : {}),
-    ...(input.teaches && input.teaches.length > 0 ? { teaches: input.teaches.join(", ") } : {}),
   };
 };

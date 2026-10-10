@@ -13,12 +13,12 @@ const date = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
 
 const projectEntries = [
   { id: "astro-blog", data: { pubDate: date("2025-01-01"), updatedDate: date("2026-06-01") } },
-  { id: "claude-code-guide", data: { pubDate: date("2026-02-02") } },
+  { id: "second-project", data: { pubDate: date("2026-02-02") } },
   {
     id: "en/astro-blog",
     data: { pubDate: date("2025-01-03"), updatedDate: date("2026-06-03") },
   },
-  { id: "en/claude-code-guide", data: { pubDate: date("2026-02-04") } },
+  { id: "en/second-project", data: { pubDate: date("2026-02-04") } },
 ] as const;
 
 const localeInput = (locale: "ru" | "en"): SitemapInput => ({
@@ -31,57 +31,21 @@ const localeInput = (locale: "ru" | "en"): SitemapInput => ({
       },
     },
   ],
-  courseEntries: [
-    { id: "course/_index", data: { pubDate: date("2026-01-10") } },
-    {
-      id: "course/en/_index",
-      data: { pubDate: date("2026-01-11"), updatedDate: date("2026-02-11") },
-    },
-  ],
-  lessonEntries: [
-    { id: "course/01-lesson", data: { pubDate: date("2026-03-10") } },
-    { id: "course/en/01-lesson", data: { pubDate: date("2026-03-11") } },
-  ],
   projectEntries,
-  tagGroups: new Map([
-    ["one-post", [{}]],
-    ["seo", [{}, {}]],
-  ]),
 });
 
 describe("locale sitemap inventory", () => {
-  it("uses a lesson revision date", () => {
-    const entries = buildLocaleSitemapEntries({
-      ...localeInput("ru"),
-      lessonEntries: [
-        {
-          id: "course/01-lesson",
-          data: {
-            pubDate: date("2026-03-10"),
-            updatedDate: date("2026-09-08"),
-          },
-        },
-      ],
-    });
-    expect(entries.find((entry) => entry.loc.endsWith("/01-lesson/"))?.lastmod).toBe("2026-09-08");
-  });
   it("includes complete RU indexable content with content-derived dates", () => {
     const entries = buildLocaleSitemapEntries(localeInput("ru"));
     const ruUrls = entries.map((entry) => entry.loc);
 
     expect(ruUrls).toContain("https://artka.dev/projects/astro-blog/");
-    expect(ruUrls).toContain("https://artka.dev/projects/claude-code-guide/");
-    expect(ruUrls).toContain("https://artka.dev/tags/seo/");
-    expect(ruUrls).not.toContain("https://artka.dev/tags/one-post/");
+    expect(ruUrls).toContain("https://artka.dev/projects/second-project/");
     expect(new Set(ruUrls).size).toBe(ruUrls.length);
     expect(entries.find((entry) => entry.loc.endsWith("/blog/post/"))?.lastmod).toBe("2026-07-12");
     expect(entries.find((entry) => entry.loc.endsWith("/projects/astro-blog/"))?.lastmod).toBe(
       "2026-06-01",
     );
-    expect(entries.find((entry) => entry.loc.endsWith("/courses/course/"))?.lastmod).toBe(
-      "2026-01-10",
-    );
-    expect(entries.find((entry) => entry.loc.endsWith("/01-lesson/"))?.lastmod).toBe("2026-03-10");
   });
 
   it("includes complete EN indexable content with stripped locale IDs", () => {
@@ -89,36 +53,39 @@ describe("locale sitemap inventory", () => {
     const enUrls = entries.map((entry) => entry.loc);
 
     expect(enUrls).toContain("https://artka.dev/en/projects/astro-blog/");
-    expect(enUrls).toContain("https://artka.dev/en/projects/claude-code-guide/");
-    expect(enUrls).toContain("https://artka.dev/en/tags/seo/");
-    expect(enUrls).not.toContain("https://artka.dev/en/tags/one-post/");
-    expect(enUrls).toContain("https://artka.dev/en/courses/course/01-lesson/");
+    expect(enUrls).toContain("https://artka.dev/en/projects/second-project/");
     expect(new Set(enUrls).size).toBe(enUrls.length);
   });
 
   it("keeps navigation roots first and sorts all generated URLs by location", () => {
     const locations = buildLocaleSitemapEntries(localeInput("ru")).map((entry) => entry.loc);
 
-    expect(locations.slice(0, 7)).toEqual([
+    expect(locations.slice(0, 6)).toEqual([
       "https://artka.dev/",
       "https://artka.dev/blog/",
       "https://artka.dev/projects/",
       "https://artka.dev/about/",
       "https://artka.dev/uses/",
       "https://artka.dev/now/",
-      "https://artka.dev/tags/",
     ]);
-    expect(locations.slice(7)).toEqual([...locations.slice(7)].sort());
+    expect(locations.slice(6)).toEqual([...locations.slice(6)].sort());
+  });
+
+  // Tag archives and the tag index are noindex,follow; a sitemap entry would
+  // ask the crawler to index a page that refuses it.
+  it("lists no tag archive or tag index in either locale", () => {
+    for (const locale of ["ru", "en"] as const) {
+      const locations = buildLocaleSitemapEntries(localeInput(locale)).map((entry) => entry.loc);
+      expect(locations.length).toBeGreaterThan(0);
+      expect(locations.filter((loc) => /\/tags\//.test(new URL(loc).pathname))).toEqual([]);
+    }
   });
 
   it("includes localized contact and privacy pages even with no content", () => {
     const empty = (locale: "ru" | "en"): SitemapInput => ({
       locale,
       posts: [],
-      courseEntries: [],
-      lessonEntries: [],
       projectEntries: [],
-      tagGroups: new Map(),
     });
     const ruUrls = buildLocaleSitemapEntries(empty("ru")).map((entry) => entry.loc);
     const enUrls = buildLocaleSitemapEntries(empty("en")).map((entry) => entry.loc);
@@ -177,8 +144,8 @@ describe("hreflang alternates", () => {
     const ru = buildLocaleSitemapEntries(localeInput("ru"));
     const en = buildLocaleSitemapEntries({
       ...localeInput("en"),
-      // EN has no "seo" archive with ≥2 posts → RU /tags/seo/ must not advertise it.
-      tagGroups: new Map([["one-post", [{}]]]),
+      // EN lacks the second project → its RU page must not advertise an alternate.
+      projectEntries: projectEntries.filter((entry) => entry.id !== "en/second-project"),
     });
     const ruLinked = attachAlternates(ru, "ru", en);
     const enLinked = attachAlternates(en, "en", ru);
@@ -196,7 +163,7 @@ describe("hreflang alternates", () => {
       { hreflang: "x-default", href: "https://artka.dev/blog/post/" },
     ]);
     expect(
-      ruLinked.find((e) => e.loc === "https://artka.dev/tags/seo/")!.alternates,
+      ruLinked.find((e) => e.loc === "https://artka.dev/projects/second-project/")!.alternates,
     ).toBeUndefined();
     expect(counterpartLocation("https://artka.dev/en/", "en")).toBe("https://artka.dev/");
     expect(counterpartLocation("https://artka.dev/blog/x/", "ru")).toBe(

@@ -76,8 +76,8 @@ describe("checkInternalLinks", () => {
   it("counts distinct targets, either language prefix, anchors and slashes folded", () => {
     const body = "[a](/blog/x/) [b](/en/blog/x#part) [c](/blog/x?utm=1)";
     expect(codes(checkInternalLinks(doc({ body })))).toEqual(["too_few_internal_links"]);
-    expect(checkInternalLinks(doc({ body: body + " [d](/courses/c/lesson/)" }))).toEqual([]);
-    expect(checkInternalLinks(doc({ body: "[a](/en/courses/c/) [b](/en/blog/y/)" }))).toEqual([]);
+    expect(checkInternalLinks(doc({ body: body + " [d](/blog/z/)" }))).toEqual([]);
+    expect(checkInternalLinks(doc({ body: "[a](/en/blog/z/) [b](/en/blog/y/)" }))).toEqual([]);
   });
   it("does not count a link to itself, an external link, or the same slug in relatedSlugs", () => {
     const body = "[self](/blog/own-slug/) [ext](https://example.com/blog/z/)";

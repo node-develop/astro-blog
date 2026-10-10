@@ -30,7 +30,6 @@ export const renderHomeMarkdown = ({
           author: "Independent technical notes by Artyom Kashuta.",
           explore: "Start here",
           blog: "All articles",
-          course: "Claude Code Guide — 14 lessons",
           projects: "Projects and implementations",
           about: "About the author",
           contact: "Contact",
@@ -41,7 +40,6 @@ export const renderHomeMarkdown = ({
           author: "Независимые технические заметки Артёма Кашуты.",
           explore: "С чего начать",
           blog: "Все статьи",
-          course: "Claude Code Guide — 14 уроков",
           projects: "Проекты и реализации",
           about: "Об авторе",
           contact: "Контакты",
@@ -65,7 +63,6 @@ export const renderHomeMarkdown = ({
     `## ${labels.explore}`,
     "",
     `- [${labels.blog}](${canonicalUrl(`${prefix}/blog/`)})`,
-    `- [${labels.course}](${canonicalUrl(`${prefix}/courses/claude-code-guide/`)})`,
     `- [${labels.projects}](${canonicalUrl(`${prefix}/projects/`)})`,
     `- [${labels.about}](${canonicalUrl(`${prefix}/about/`)})`,
     `- [${labels.contact}](${canonicalUrl(`${prefix}/contact/`)})`,
@@ -92,7 +89,6 @@ export const renderAgent404Markdown = (locale: AgentLocale, requestedPath: strin
       "",
       `- [Home](${canonicalUrl("/en/")})`,
       `- [Articles](${canonicalUrl("/en/blog/")})`,
-      `- [Claude Code Guide](${canonicalUrl("/en/courses/claude-code-guide/")})`,
       `- [Sitemap](${canonicalUrl("/sitemap-index.xml")})`,
       `- [Instructions for agents](${canonicalUrl("/llms.txt")})`,
       "",
@@ -105,7 +101,6 @@ export const renderAgent404Markdown = (locale: AgentLocale, requestedPath: strin
     "",
     `- [Главная](${canonicalUrl("/")})`,
     `- [Статьи](${canonicalUrl("/blog/")})`,
-    `- [Claude Code Guide](${canonicalUrl("/courses/claude-code-guide/")})`,
     `- [Карта сайта](${canonicalUrl("/sitemap-index.xml")})`,
     `- [Инструкции для агентов](${canonicalUrl("/llms.txt")})`,
     "",
@@ -124,8 +119,6 @@ export interface DocumentMarkdownInput {
   readonly pubDate: Date;
   readonly updatedDate?: Date | null;
   readonly tags?: ReadonlyArray<string>;
-  /** Extra `key: value` lines appended to the header (e.g. course, lesson). */
-  readonly extra?: ReadonlyArray<readonly [string, string]>;
   /** Raw Markdown body as authored (frontmatter already stripped). */
   readonly body: string;
 }
@@ -135,8 +128,9 @@ const dateOnly = (value: Date): string => value.toISOString().slice(0, 10);
 // YAML-ish header + the authored body. This is the representation linked from
 // `<link rel="alternate" type="text/markdown">` on the HTML page; the header
 // carries the canonical URL so an agent that fetched the .md directly still
-// cites the HTML page. Prerendered endpoints cannot set a `Link:` header, so
-// the canonical lives in the body instead.
+// cites the HTML page. The twin routes also send it as a `Link: rel=canonical`
+// header (for search engines, src/lib/agents/documents.ts); the body copy is
+// for agents, which read the file rather than its headers.
 export const renderDocumentMarkdown = (input: DocumentMarkdownInput): string => {
   const header: Array<readonly [string, string]> = [
     ["title", JSON.stringify(input.title)],
@@ -150,7 +144,6 @@ export const renderDocumentMarkdown = (input: DocumentMarkdownInput): string => 
     ...(input.tags && input.tags.length > 0
       ? [["tags", `[${input.tags.join(", ")}]`] as const]
       : []),
-    ...(input.extra ?? []),
   ];
   return [
     "---",

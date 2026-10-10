@@ -1,6 +1,6 @@
 ---
 title: artka.dev (this blog)
-description: "Personal publishing site on Astro 7: bilingual articles, courses, a content API and reproducible builds."
+description: "Personal publishing site on Astro 7: bilingual articles, a content API and reproducible builds."
 role: "Solo: design, backend, frontend, SEO, deploy"
 status: active
 pubDate: 2026-04-15 00:00:00+00:00
@@ -28,13 +28,13 @@ links:
     url: https://github.com/node-develop/astro-blog
   - label: Live
     url: https://artka.dev/
-sourceHash: c8466a7cd805714c362dc6e7b0c0aa388e44d97f9e0b726746b6a0f0ce76c9cd
+sourceHash: 4a49cc8e3fc93cf6e0fcaabe0adcae48938c5227b0f3ee0952b6efdef273d69b
 manuallyEdited: false
 ---
 
 ## What is running
 
-This site combines articles, a course and project notes. Source and configuration are public on GitHub; package.json and the lockfile record dependencies.
+This site combines articles and project notes. Source and configuration are public on GitHub; package.json and the lockfile record dependencies.
 
 Public articles are built as HTML. PostgreSQL stores server data, Better Auth handles authentication and Pagefind searches public content. Programmatic publishing uses the [Content API](/api/v1/openapi.json).
 

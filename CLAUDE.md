@@ -4,7 +4,7 @@
 
 ## Стек (актуально на сентябрь 2026)
 
-Единственный источник правды по версиям — этот раздел и `package.json`. Агенты и скиллы в `.claude/` не дублируют номера версий — ссылаются сюда.
+Единственный источник правды по версиям — этот раздел и `package.json`.
 
 - **Runtime:** Node.js 24 LTS в проде (`.nvmrc` → 24), `engines` `>=22.12 <25`
 - **Язык:** TypeScript 6.0 (strict). НЕ TS 7: у него пока нет programmatic API, поэтому `@astrojs/check` и typescript-eslint на нём не работают — пересмотреть на TS 7.1+
@@ -29,7 +29,7 @@
 
 ```
 astro-blog/
-├── .claude/                  — агенты, скиллы, хуки (см. 09-subagents.md)
+├── .claude/                  — SEO-скиллы и агенты claude-seo (см. «SEO-инструменты»)
 ├── src/
 │   ├── content.config.ts     — content layer (Astro 5+), НЕ src/content/config.ts
 │   ├── content/posts/        — *.md/*.mdx
@@ -108,9 +108,8 @@ Behavioural rules layered on top of `Стандарты кода` and `Запр�
 
 Use the model only for decisions that code cannot make: classification, extraction, drafting, summarization, translation. Do NOT use it for routing, retries, or deterministic transformations. If a status code or a Zod schema already answers the question — code answers it.
 
-Concretely, LLM calls (`@anthropic-ai/sdk`) are allowed in exactly five places, all judgment tasks:
+Concretely, LLM calls (`@anthropic-ai/sdk`) are allowed in exactly four places, all judgment tasks:
 
-- `src/pages/api/check.ts` — grading answers in course challenges (`claude-haiku-4-5`).
 - `src/lib/social/**` — writers → editors → critic pipeline for social drafts (entered from Astro Actions, the `/api/v1/social/*` routes and the worker's post-publish hook `src/lib/content-api/hooks.ts`; all behind `SOCIAL_DRAFTS_ENABLED`).
 - `src/lib/translate/**` — RU→EN translation (`translate.one` action and `pnpm translate`).
 - `src/lib/content-api/translate-article.ts` — RU→EN translation of a Content API article (`POST /articles/{id}/translate/`); model and prompts come from `src/lib/translate/claude.ts`.
@@ -132,7 +131,7 @@ Before adding code to a file, read it in full: exports, nearest callers, shared 
 
 ### Tests: few, behavioural, in the right layer
 
-Default is **no new test**. Write one only for behaviour that can regress and that typecheck, Zod schemas, `astro build` / `verify:seo-build` or `translate:check` do not already catch — and prove it goes red when the code breaks. Never test by reading source/config text (`readFileSync` + regex over `.astro`, CSS, CI yaml, `astro.config`) — `.claude/hooks/test-guard.sh` blocks it; assert on the output instead. Layers: `unit` (pure `src/lib` logic) → `built` (`dist/` + served pages) → `db` (Postgres) → e2e (a handful of critical flows). Checklist and anti-patterns: skill `write-tests`.
+Default is **no new test**. Write one only for behaviour that can regress and that typecheck, Zod schemas, `astro build` / `verify:seo-build` or `translate:check` do not already catch — and prove it goes red when the code breaks. Never test by reading source/config text (`readFileSync` + regex over `.astro`, CSS, CI yaml, `astro.config`) — assert on the output instead. Layers: `unit` (pure `src/lib` logic) → `built` (`dist/` + served pages) → `db` (Postgres) → e2e (a handful of critical flows).
 
 ### Checkpoint after every significant step
 
@@ -157,7 +156,6 @@ When making changes to content:
 - Hand-edited EN file → add `manuallyEdited: true` to its frontmatter to protect from regen. After bringing such a twin up to date by hand, run `pnpm translate -- --rebase <slug>` (records the RU content hash, no API call). Posts with `apiRevision` belong to the content API and are never regenerated.
 - e2e fixtures → name with `e2e-*` prefix; the guard and orchestrator skip them automatically.
 - CI runs `pnpm translate:check`. It fails on a missing or orphaned twin and on an EN schema violation; an EN post that lags behind its RU source is a warning, not a failure. `sourceHash` is a hash of the translatable content only (body plus the translated frontmatter fields), so editing `updatedDate`, `keywords`, `tags` or `cover` does not make a twin stale.
-- Courses and lessons are NOT covered by `pnpm translate`: write the EN twin by hand as `src/content/courses/<course>/en/<file>.md` with `locale: en`. `pnpm translate:check` fails on a missing or orphaned twin of a course, lesson, project or site page, and `checkCounterpartExists` answers from the collections, so a page without a twin gets no hreflang and a disabled language toggle instead of advertising a 404.
 
 Spec: `docs/specs/2026-04-27-bilingual-ru-en-design.md`
 Plan: `docs/specs/plans/2026-04-27-bilingual-ru-en.md`
@@ -169,7 +167,7 @@ Plan: `docs/specs/plans/2026-05-02-plan-2-entity-pages.md`
 
 ## Главная страница (`/` и `/en/`)
 
-Контент главной редактируется только через `/admin/home`. Источник истины — `src/content/site/home.md` (RU) и `src/content/site/en/home.md` (EN). 14 полей frontmatter (heroTitle, heroLede, courseTitle, authorBio, metaTitle, metaDescription, …) — см. `src/lib/content/home-schema.ts`.
+Контент главной редактируется только через `/admin/home`. Источник истины — `src/content/site/home.md` (RU) и `src/content/site/en/home.md` (EN). 10 полей frontmatter (heroTitle, heroLede, authorBio, metaTitle, metaDescription, …) — см. `src/lib/content/home-schema.ts`.
 
 - Ключи `home.*` и `meta.home.*` удалены из `strings.{ru,en}.json` — не возвращайте их. `tags.title` остаётся в strings (используется в `/tags`).
 - Прямой URL `/admin/site/home` → 308 → `/admin/home`. Action `site.update` бросает `BAD_REQUEST` для slug=home — пиши через `home.update`.
@@ -193,43 +191,21 @@ Plan: `docs/specs/plans/2026-05-09-home-page-admin-editor.md`
 
 ## Деплой
 
-Пуш в `main` → `.github/workflows/docker-publish.yml` → образ `ghcr.io/node-develop/astro-blog` (теги `main`, `sha-…`, `latest`, semver для `v*.*.*`) → POST на `DOKPLOY_WEBHOOK_URL` (secret) → Dokploy тянет образ и перезапускает сервис. Локальная проверка образа — скилл `deploy-check`.
+Пуш в `main` → `.github/workflows/docker-publish.yml` → образ `ghcr.io/node-develop/astro-blog` (теги `main`, `sha-…`, `latest`, semver для `v*.*.*`) → POST на `DOKPLOY_WEBHOOK_URL` (secret) → Dokploy тянет образ и перезапускает сервис. Перед мержем в `main`: `pnpm lint && pnpm typecheck && pnpm test && pnpm verify:seo-build && pnpm test:built`.
 
 - **Runtime env (обязательные в проде):** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (или `SITE_URL` как fallback — `src/lib/auth.ts` падает без одного из них). Остальное — см. `.env.example`; canonical/sitemap/RSS берут `CANONICAL_ORIGIN` из `src/lib/seo/url-policy.ts`, а не env.
 - **Uploads:** образ ставит `UPLOADS_DIR=/app/dist/client/uploads` — единственный путь, который и записываем, и раздаёт node-адаптер. В Dokploy на него нужен persistent volume, иначе файлы из `/admin/media` пропадают при редеплое. Runbook: `docs/runbooks/dokploy-uploads-volume.md`.
 - **Одна реплика.** `docker-entrypoint.sh` при старте гоняет миграции (`scripts/migrate-prod.mjs`) и backfill (`scripts/backfill-prod.mjs`) без блокировки; два контейнера, стартующие одновременно, будут гонять их параллельно. Не масштабировать горизонтально без вынесения миграций в отдельный шаг. Ошибка миграции/backfill — fail-loud, контейнер не стартует.
 - **Healthcheck:** `GET /api/version` (Dockerfile `HEALTHCHECK`); `GIT_SHA` и `BUILT_AT` прокидываются build-args. Если `CONTENT_WORKER_SECRET` задан, роут отвечает 503 после 180 с без тика воркера публикаций (`src/lib/content-api/heartbeat.ts`); секрет короче 32 байт роняет старт контейнера.
-- **Известный пробел в миграциях:** `drizzle/meta/0002_snapshot.json` отсутствует, хотя `_journal.json` содержит idx 2. Из-за этого `pnpm db:generate` может выдать ложный diff. Лечится регенерацией снапшота на машине с БД: `pnpm exec drizzle-kit check`, затем `pnpm db:generate` и ревью результата (см. `.claude/skills/db-migration/SKILL.md`). Не «чинить» руками, копируя соседний snapshot.
+- **Известный пробел в миграциях:** `drizzle/meta/0002_snapshot.json` отсутствует, хотя `_journal.json` содержит idx 2. Из-за этого `pnpm db:generate` может выдать ложный diff. Лечится регенерацией снапшота на машине с БД: `pnpm exec drizzle-kit check`, затем `pnpm db:generate` и ревью сгенерированного SQL (никаких DROP без явного согласия). Не «чинить» руками, копируя соседний snapshot.
 
-## Команда агентов
+## SEO-инструменты
 
-В `.claude/agents/` лежат субагенты для этого проекта. Вызываются через `Agent` с `subagent_type`:
+В `.claude/` вендорен [claude-seo](https://github.com/AgriciDaniel/claude-seo) v2.4.2 (MIT): скиллы `seo-*` в `.claude/skills/`, агенты `seo-*` в `.claude/agents/`, Python-скрипты в `.claude/skills/seo/scripts/`. Других скиллов, агентов и хуков в проекте нет.
 
-- `architect` — проектирование, выбор подхода
-- `sysanalyst` — требования, спеки, пользовательские сценарии
-- `designer` — UI/UX-проектирование: варианты, типографика, палитра, HTML-эскизы, ревью против токенов `src/styles/tokens.css`. Не пишет код — делегирует `frontender`. Звать ПЕРЕД новым визуальным элементом
-- `backender` — API, БД, auth, миграции
-- `frontender` — Astro, компоненты, стили, UX
-- `critic` — код-ревью, поиск проблем, anti-patterns
-
-**Правило:** задачи на 3+ шагов сначала прогнать через `architect` → `critic`. Реализацию делит `backender` / `frontender` по домену (визуальные решения — через `designer`). Финальная проверка — `critic`.
-
-Для редакционных задач по `statejnik` без изменения приложения маршрут — автор → редактор → независимый проверяющий по этому скиллу. Дополнительная инженерная цепочка выше нужна, если задача затрагивает код приложения.
-
-Скиллы в `.claude/skills/` (вызов через `Skill`):
-
-- `statejnik` — основной процесс написания, рерайта и расширения: драфт, сравнение до/после, редактура; см. `.claude/skills/statejnik/SKILL.md`
-- `new-blog-post` — справочник формата и голоса; при редакционной работе приоритет у `statejnik` и текущего запроса пользователя
-- `astro-component` — новый компонент в `src/components/` с типизированными props
-- `design-system-tokens` — добавить/изменить токен в `src/styles/tokens.css` + `@theme`
-- `ui-design-review` — чек-лист дизайн-ревью (контраст, иерархия, dark mode, a11y)
-- `db-migration` — схема → `pnpm db:generate` → ревью SQL → `pnpm db:migrate`
-- `deploy-check` — pre-deploy чеклист (билд, тесты, типы, docker, миграции)
-- `write-tests` — нужен ли тест, в каком слое, как написать, чтобы падал на регрессии
-
-Карты областей кода — `.claude/skills/generated/<area>/SKILL.md` (`admin`, `content`, `e2e`, `fs`, `search`): ключевые файлы, символы и точки входа. Через `Skill` не подгружаются (вложены на уровень глубже), читать напрямую; пути проверять `ls` перед использованием.
-
-## Импорты (доп. контекст)
-
-@docs/claude-code-guide/13-best-practices.md
-@docs/claude-code-guide/12-travel-agent-blueprint.md
+- Полный аудит: скилл `seo-audit`; одна страница: `seo-page`; только техника: `seo-technical`.
+- Скрипты: `.claude/skills/seo/scripts/claude-seo run <script>.py ...`. Один раз на машине: `.claude/skills/seo/scripts/claude-seo setup` (venv и Chromium).
+- Сетевые скрипты отказываются работать через HTTP-прокси на локальном адресе (защита от SSRF в `url_safety.py`). Запускать с машины без такого прокси.
+- Расширения (`seo-dataforseo`, `seo-ahrefs`, `seo-firecrawl`, `seo-google` и др.) работают только с ключами; без ключей их не звать.
+- Файлы в `.claude/skills/seo*` и `.claude/agents/seo-*` не править руками: обновление только переустановкой с нового тега.
+- Аудиты лежат в `docs/audits/`.

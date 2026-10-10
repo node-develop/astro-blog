@@ -6,7 +6,7 @@ import { GET, prerender } from "../../../src/pages/llms.txt";
 import { buildLlmsTxt, type LlmsInput } from "~/lib/agents/llms";
 
 // llms.txt moved from a static public/ file to a generated endpoint so the
-// post/lesson inventory can never drift from the content again (the static
+// post inventory can never drift from the content again (the static
 // file claimed sitemap hreflang and a "full" digest that did not exist).
 
 const fixture: LlmsInput = {
@@ -38,26 +38,6 @@ const fixture: LlmsInput = {
       body: "# Heading\n\nPost text.",
     },
   ],
-  ruLessons: [
-    {
-      courseSlug: "claude-code-guide",
-      courseTitle: "Claude Code Guide",
-      slug: "01-introduction",
-      title: "01. Введение",
-      description: "Зачем курс.",
-      position: 1,
-    },
-  ],
-  enLessons: [
-    {
-      courseSlug: "claude-code-guide",
-      courseTitle: "Claude Code Guide",
-      slug: "01-introduction",
-      title: "01. Introduction",
-      description: "Why this course.",
-      position: 1,
-    },
-  ],
 };
 
 describe("buildLlmsTxt", () => {
@@ -65,24 +45,24 @@ describe("buildLlmsTxt", () => {
 
   it("starts with an H1 site name and llmstxt.org sections", () => {
     expect(content).toMatch(/^# artka\.dev$/m);
-    for (const section of ["## Docs", "## Posts", "## Lessons", "## Optional"]) {
+    for (const section of ["## Docs", "## Posts", "## Optional"]) {
       expect(content).toMatch(new RegExp(`^${section}$`, "m"));
     }
   });
 
-  it("lists every RU post with its EN twin and Markdown URL, plus every lesson", () => {
+  it("lists every RU post with its EN twin and Markdown URL", () => {
     expect(content).toContain(
       "- [CLAUDE.md: 12 правил](https://artka.dev/blog/claude-md/): Как писать CLAUDE.md. (2026-05-01; Markdown: https://artka.dev/blog/claude-md.md) EN: https://artka.dev/en/blog/claude-md/",
     );
     expect(content).toContain("- [Только RU \\[черновик\\]](https://artka.dev/blog/ru-only/)");
     expect(content).not.toContain("EN: https://artka.dev/en/blog/ru-only/");
-    expect(content).toContain(
-      "- [01. Введение](https://artka.dev/courses/claude-code-guide/01-introduction/): Зачем курс. (Markdown: https://artka.dev/courses/claude-code-guide/01-introduction.md)",
-    );
-    expect(content).toContain("https://artka.dev/en/courses/claude-code-guide/01-introduction/");
-    expect(content).toContain(
-      "[Claude Code Guide](https://artka.dev/courses/claude-code-guide/): 1-lesson course",
-    );
+  });
+
+  // The summary used to promise gRPC, Kafka and FastAPI coverage that no post
+  // had; it is now built from the posts' tags (EN labels).
+  it("summarises only topics the posts are tagged with", () => {
+    expect(content).toContain("> AI engineer. Published so far: articles on Claude Code.");
+    expect(content).not.toMatch(/gRPC|Kafka|FastAPI/);
   });
 
   it("links the canonical authoritative pages", () => {
@@ -131,7 +111,7 @@ describe("llms.txt endpoint", () => {
     expect(body).toMatch(/^# artka\.dev$/m);
     expect(body).toContain("**When to use artka.dev**");
     // Was "< 4096" for the static file; the generated index now enumerates every
-    // post, twin and lesson, so the ceiling is raised (still a small index).
+    // post and twin, so the ceiling is raised (still a small index).
     expect(Buffer.byteLength(body, "utf8")).toBeGreaterThan(1_000);
     expect(Buffer.byteLength(body, "utf8")).toBeLessThan(24 * 1024);
   });

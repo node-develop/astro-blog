@@ -9,7 +9,7 @@ import { actions } from "astro:actions";
  * actions and the auto-translate-on-save preference (stored in
  * localStorage, per-browser).
  */
-type Collection = "posts" | "site" | "projects" | "courses" | "lessons";
+type Collection = "posts" | "site" | "projects";
 
 interface Props {
   /** Which collection the slug belongs to. */

@@ -53,7 +53,7 @@ tags:
 cover: /og-default.png
 coverAlt: artka.dev, technical blog
 lang: en
-sourceHash: 151597c6aa2a096f4d62de3ab17c1750d1e0dca72fbc1a6d6af31466f5acdfa7
+sourceHash: 5f2db6dcd5b8a7130346d0290311fa580b072fa6308f1018be6c477f25a4980d
 manuallyEdited: true
 draft: false
 ---
@@ -303,7 +303,7 @@ The choice between it and rehype depends on how content is organized: a diagram 
 
 The defects found and the cause of exclusion from the index are separate questions. The fixes above corrected links, archive output, and markup. This audit did not establish their effect on the indexing of the 112 pages.
 
-On September 19, 2026, exactly one of the 35 addresses in the Russian sitemap contained text longer than a thousand words. The rest were articles under five hundred words and lessons from the [Claude Code course](/en/courses/claude-code-guide/) running 250–400 words, which accounted for 30 of the 35 addresses. This describes the length of the material; it does not prove the cause of exclusion. [Google states that it has no preferred word count](https://developers.google.com/search/docs/fundamentals/creating-helpful-content). A short lesson can answer a question fully; a long article can leave it unanswered.
+On September 19, 2026, exactly one of the 35 addresses in the Russian sitemap contained text longer than a thousand words. The rest were articles under five hundred words and lessons from the Claude Code course running 250–400 words, which accounted for 30 of the 35 addresses. This describes the length of the material; it does not prove the cause of exclusion. [Google states that it has no preferred word count](https://developers.google.com/search/docs/fundamentals/creating-helpful-content). A short lesson can answer a question fully; a long article can leave it unanswered.
 
 The practical value of the material is a hypothesis to check, not an established diagnosis for this site. Look for a specific gap: does the reader have the explanation, example, and way to verify the result they need? These data do not support adding words to reach a thousand-word threshold.
 

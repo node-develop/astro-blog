@@ -108,15 +108,6 @@ export const publishedUrlsFor = (
         return slug === "home" ? ["/", "/en"] : pair(`/${slug}`, `/en/${slug}`);
       case "projects":
         return [...pair(`/projects/${slug}`, `/en/projects/${slug}`), "/projects", "/en/projects"];
-      case "courses":
-        return pair(`/courses/${slug}`, `/en/courses/${slug}`);
-      case "lessons": {
-        const [course, lesson] = slug.split("/");
-        return [
-          ...pair(`/courses/${course}/${lesson}`, `/en/courses/${course}/${lesson}`),
-          `/courses/${course}`,
-        ];
-      }
     }
   })();
   return paths.map(canonicalPath);

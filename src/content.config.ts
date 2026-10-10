@@ -1,7 +1,6 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
-import { courses as course, lessons as lesson } from "~/lib/courses/schema";
 import { POST_LIMITS, PROJECT_LIMITS, SITE_LIMITS } from "~/lib/content/limits";
 import { person } from "~/lib/seo/person";
 
@@ -64,10 +63,6 @@ const site = defineCollection({
     heroCta: z.string().optional(),
     sealPhrase: z.string().optional(),
     tickerItems: z.string().optional(),
-    courseEyebrow: z.string().optional(),
-    courseTitle: z.string().optional(),
-    courseLede: z.string().optional(),
-    courseCta: z.string().optional(),
     latestLabel: z.string().optional(),
     authorLabel: z.string().optional(),
     authorBio: z.string().optional(),
@@ -97,4 +92,4 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { posts, site, projects, course, lesson };
+export const collections = { posts, site, projects };

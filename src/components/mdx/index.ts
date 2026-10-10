@@ -13,8 +13,6 @@ import Compare from "./Compare.astro";
 import Definition from "./Definition.astro";
 import KeyTakeaways from "./KeyTakeaways.astro";
 import Callout from "./Callout.astro";
-import CodeChallenge from "./CodeChallenge.astro";
-import ExerciseCheck from "./ExerciseCheck.astro";
 import Diagram from "./Diagram.astro";
 
 export const mdxComponents = {
@@ -24,8 +22,6 @@ export const mdxComponents = {
   Definition,
   KeyTakeaways,
   Callout,
-  CodeChallenge,
-  ExerciseCheck,
   Diagram,
 } as const;
 

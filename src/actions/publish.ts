@@ -54,12 +54,10 @@ const COLLECTION_LABEL: Record<TranslateCollection, string> = {
   posts: "post",
   site: "site page",
   projects: "project",
-  courses: "course",
-  lessons: "lesson",
 };
 
 export type PublishOneInput = {
-  collection: "posts" | "site" | "projects" | "courses" | "lessons";
+  collection: TranslateCollection;
   slug: string;
   message?: string | undefined;
 };
@@ -194,7 +192,7 @@ export const publishOneHandler = async (
 export const publish = {
   one: defineAction({
     input: z.object({
-      collection: z.enum(["posts", "site", "projects", "courses", "lessons"]),
+      collection: z.enum(["posts", "site", "projects"]),
       slug: z.string().min(1).max(200),
       message: z.string().max(200).optional(),
     }),

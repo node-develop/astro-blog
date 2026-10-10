@@ -33,7 +33,7 @@ describe("writeHomeToDisk — T-1 round-trip", () => {
       heroLede: "Подзаголовок",
       heroEyebrow: "Eyebrow",
       heroCta: "CTA",
-      courseTitle: "Курс",
+      latestLabel: "Последние",
       metaTitle: "Meta",
       metaDescription: "Meta description",
       manuallyEdited: false,
@@ -77,7 +77,7 @@ describe("writeHomeToDisk — T-2b merge-semantics", () => {
       title: "Главная",
       heroTitle: "Original hero",
       heroLede: "Original lede",
-      courseTitle: "Original course",
+      latestLabel: "Original latest",
       authorLabel: "Original author",
       metaTitle: "Original meta",
       metaDescription: "Original description, ten plus characters",
@@ -91,7 +91,7 @@ describe("writeHomeToDisk — T-2b merge-semantics", () => {
     expect(after["heroTitle"]).toBe("Updated hero");
     // All other fields must survive untouched.
     expect(after["heroLede"]).toBe("Original lede");
-    expect(after["courseTitle"]).toBe("Original course");
+    expect(after["latestLabel"]).toBe("Original latest");
     expect(after["authorLabel"]).toBe("Original author");
     expect(after["metaTitle"]).toBe("Original meta");
     expect(after["metaDescription"]).toBe("Original description, ten plus characters");

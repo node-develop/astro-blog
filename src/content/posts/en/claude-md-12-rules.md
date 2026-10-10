@@ -22,7 +22,7 @@ keywords:
 - multi-step ai workflows
 - behavioral contract llm
 lang: en
-sourceHash: 28cf6c88dead34ef952189dc0cae90ec815fdc7198e7a41c01fae87accfc63f1
+sourceHash: 9da4ce81f75849adc98955eee5f4c08469bfe09c54da9836aa2a004fbef55415
 manuallyEdited: true
 updatedDate: 2026-09-07
 ---
@@ -81,7 +81,7 @@ In a [Claude Code video project](/en/blog/claude-code-video-guide/), that contra
 
 The [Claude Code memory documentation](https://code.claude.com/docs/en/memory) distinguishes contextual instructions from executable configuration. Keeping CLAUDE.md under 200 lines is guidance, not an enforcement guarantee. `@path` imports organize text; imported material still loads into context.
 
-Use environment and application controls for secrets, write access and publishing. “Do not touch .env” cannot replace keeping production credentials out of an agent’s environment. The course explains [CLAUDE.md](/en/courses/claude-code-guide/03-claude-md/) and [hooks](/en/courses/claude-code-guide/05-hooks/) separately.
+Use environment and application controls for secrets, write access and publishing. “Do not touch .env” cannot replace keeping production credentials out of an agent’s environment.
 
 ## Evaluate a change on your own tasks
 

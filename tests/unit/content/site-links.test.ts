@@ -7,7 +7,7 @@ import { join } from "node:path";
 // `pnpm translate`, which can keep the source link — so the check lives here.
 const PAGES = {
   about: ["blog", "projects", "now", "uses"],
-  now: ["about", "contact", "courses/claude-code-guide"],
+  now: ["about", "contact", "projects/astro-blog"],
   uses: ["projects/astro-blog", "contact"],
 } as const;
 

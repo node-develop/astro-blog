@@ -1,7 +1,7 @@
 /**
  * /llms.txt — llmstxt.org index. Generated at request time so it lists every
- * currently visible post (same DB-curated set as the blog index), the EN
- * twins and the course lessons; the former static public/llms.txt drifted
+ * currently visible post (same DB-curated set as the blog index) and the EN
+ * twins; the former static public/llms.txt drifted
  * (it claimed sitemap hreflang and a "full" digest that were not true).
  */
 import type { APIContext } from "astro";

@@ -46,6 +46,8 @@ const rows = slugs.map((slug) => ({
   label: resolveTagLabel(slug, locale, dict),
   count: grouped.get(slug)?.length ?? 0,
 }));
+// noindex,follow like every tag archive it lists (see tags/[tag].astro): a
+// chip cloud of ~50 words is not a page to rank, only a way to the posts.
 ---
 
 <BaseLayout
@@ -54,6 +56,7 @@ const rows = slugs.map((slug) => ({
   ogImage={ogImagePath}
   fullWidth={true}
   noSidebar={true}
+  noindex={true}
   extraSchemaNodes={[webPageNode, breadcrumbsNode]}
 >
   <section class="tags-index">

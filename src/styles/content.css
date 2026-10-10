@@ -1,5 +1,5 @@
-/* Second Tailwind entry point for `.prose` content pages (posts, courses,
- * lessons, entity pages). Split out of global.css so pages that never
+/* Second Tailwind entry point for `.prose` content pages (posts, entity
+ * pages). Split out of global.css so pages that never
  * render markdown (/, /blog/, /tags, 404, /admin) don't ship typography
  * CSS. `@tailwindcss/typography` moves here with it — the plugin only
  * emits `.prose` where it's registered, and the `--tw-prose-*` vars in

@@ -3,7 +3,7 @@
  * (page × locale) pair, generated at build time via the same
  * Satori + resvg pipeline as per-post OG.
  *
- * Slug shape: `<page>-<locale>` (e.g. "blog-ru", "course-ccg-en").
+ * Slug shape: `<page>-<locale>` (e.g. "blog-ru", "projects-en").
  *
  * C-1: allLandingMeta() is now async (reads home.md via getEntry).
  * getStaticPaths supports async, so this is safe.

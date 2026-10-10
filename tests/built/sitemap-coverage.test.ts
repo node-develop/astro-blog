@@ -1,9 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { getOrderedPosts } from "~/lib/content/loader";
-import { getAllTagSlugs, groupPostsByTag } from "~/lib/content/tags";
-import { isTagArchiveIndexable } from "~/lib/seo/indexability";
 
 const DIST = join(process.cwd(), "dist", "client");
 
@@ -33,23 +30,20 @@ describe("sitemap coverage", () => {
     throw new Error("dist/client/sitemap-{ru,en}.xml not found — run `pnpm build` first");
   const urls = inventory.allUrls;
 
-  // Astro's sitemap integration emits URLs with a trailing slash for directory routes.
-  it("excludes every current tag archive below two locale posts", async () => {
-    const [ru, en] = await Promise.all([
-      getOrderedPosts({ locale: "ru" }),
-      getOrderedPosts({ locale: "en" }),
-    ]);
-    const ruGroups = groupPostsByTag(ru);
-    const enGroups = groupPostsByTag(en);
-
-    for (const slug of getAllTagSlugs({ ru, en })) {
-      if (!isTagArchiveIndexable(ruGroups.get(slug) ?? [])) {
-        expect(urls).not.toContain(`https://artka.dev/tags/${slug}/`);
-      }
-      if (!isTagArchiveIndexable(enGroups.get(slug) ?? [])) {
-        expect(urls).not.toContain(`https://artka.dev/en/tags/${slug}/`);
-      }
-    }
+  // Every tag archive and both tag indexes are noindex,follow, so none of them
+  // may be listed.
+  it("lists no tag archive and no tag index, in either locale", () => {
+    const isTagUrl = (url: string): boolean => /^https:\/\/artka\.dev\/(?:en\/)?tags\//.test(url);
+    // Positive control: the pattern matches the archives the build really made,
+    // so an empty result below means "not listed", not "pattern never matches".
+    const builtArchives = ["tags", "en/tags"].flatMap((dir) =>
+      readdirSync(join(DIST, dir), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `https://artka.dev/${dir}/${entry.name}/`),
+    );
+    expect(builtArchives.length).toBeGreaterThan(0);
+    expect(builtArchives.every(isTagUrl)).toBe(true);
+    expect(urls.filter(isTagUrl)).toEqual([]);
   });
 
   it("excludes search, login, admin, and API routes", () => {

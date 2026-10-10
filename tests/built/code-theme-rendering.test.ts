@@ -16,7 +16,6 @@ afterAll(async () => {
 const routes = [
   "/blog/claude-md-12-rules/",
   "/blog/json-ld-graph-astro/",
-  "/courses/claude-code-guide/05-hooks/",
   "/blog/claude-code-video-guide/",
   "/en/blog/claude-code-video-guide/",
 ];

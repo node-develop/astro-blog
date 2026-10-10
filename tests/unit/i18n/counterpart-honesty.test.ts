@@ -8,18 +8,10 @@
 // of the page routes' getStaticPaths), against the real src/pages tree for the
 // routes that get an unconditional "yes", and against the real build output.
 // The last block runs translate-check on a throwaway content tree, because the
-// build-time guard is the only thing that catches a lesson published in one
+// build-time guard is the only thing that catches a page published in one
 // language before it ships.
 import { spawnSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,7 +30,6 @@ interface MockEntry {
   readonly data: {
     readonly draft?: boolean;
     readonly tags?: readonly string[];
-    readonly locale?: Locale;
   };
 }
 
@@ -57,7 +48,7 @@ const useCollections = (collections: MockCollections): void => {
   store.collections = { ...collections };
 };
 
-/** Every combination the routes can meet: paired, one-sided, draft, unflagged. */
+/** Every combination the routes can meet: paired, one-sided, draft. */
 const MIXED: MockCollections = {
   posts: [
     { id: "paired-post", data: { draft: false, tags: [] } },
@@ -83,33 +74,11 @@ const MIXED: MockCollections = {
     { id: "now", data: {} },
     { id: "en/uses", data: {} },
   ],
-  course: [
-    { id: "guide/_index", data: { locale: "ru" } },
-    { id: "guide/en/_index", data: { locale: "en" } },
-    { id: "ru-only-course/_index", data: { locale: "ru" } },
-    { id: "en-only-course/en/_index", data: { locale: "en" } },
-  ],
-  lesson: [
-    { id: "guide/01-paired", data: { locale: "ru" } },
-    { id: "guide/en/01-paired", data: { locale: "en" } },
-    { id: "guide/15-ru-only", data: { locale: "ru" } },
-    { id: "guide/en/16-en-only", data: { locale: "en" } },
-    // EN file without `locale: en`: the EN route skips it.
-    { id: "guide/17-unflagged-twin", data: { locale: "ru" } },
-    { id: "guide/en/17-unflagged-twin", data: { locale: "ru" } },
-    // Twin files exist, but the course has no landing in the other language.
-    { id: "ru-only-course/01-intro", data: { locale: "ru" } },
-    { id: "ru-only-course/en/01-intro", data: { locale: "en" } },
-    { id: "en-only-course/01-intro", data: { locale: "ru" } },
-    { id: "en-only-course/en/01-intro", data: { locale: "en" } },
-  ],
 };
 
 // --- independent mirror of the page routes ---------------------------------
 // Written from src/pages/**/getStaticPaths, NOT from routing.ts: list the
 // entries the route takes, then derive the URL the way the route derives it.
-
-const lastSegment = (id: string): string => id.replace(/^.*\//, "");
 
 const builtPaths = (c: MockCollections, locale: Locale): ReadonlySet<string> => {
   const en = locale === "en";
@@ -128,22 +97,7 @@ const builtPaths = (c: MockCollections, locale: Locale): ReadonlySet<string> => 
     (c["site"] ?? []).some((e) => e.id === (en ? `en/${slug}` : slug)),
   ).map((slug) => `${prefix}/${slug}/`);
 
-  const inLocale = (e: MockEntry): boolean =>
-    en ? e.data.locale === "en" : e.data.locale !== "en";
-  const courses = (c["course"] ?? []).filter(inLocale);
-  const lessons = (c["lesson"] ?? []).filter(inLocale);
-  const coursePages = courses.flatMap((course) => {
-    const slug = course.id.replace(en ? /\/en\/?_index$/ : /\/?_index$/, "");
-    const lessonPrefix = en ? `${slug}/en/` : `${slug}/`;
-    return [
-      `${prefix}/courses/${slug}/`,
-      ...lessons
-        .filter((l) => l.id.startsWith(lessonPrefix))
-        .map((l) => `${prefix}/courses/${slug}/${lastSegment(l.id)}/`),
-    ];
-  });
-
-  return new Set([...posts, ...projects, ...sitePages, ...coursePages]);
+  return new Set([...posts, ...projects, ...sitePages]);
 };
 
 describe("checkCounterpartExists against the pages the routes build", () => {
@@ -166,9 +120,9 @@ describe("checkCounterpartExists against the pages the routes build", () => {
     },
   );
 
-  it("covers a lesson with a twin, one without, a project without, and a draft twin", async () => {
-    expect(await checkCounterpartExists("/courses/guide/01-paired/", "ru")).toBe(true);
-    expect(await checkCounterpartExists("/courses/guide/15-ru-only/", "ru")).toBe(false);
+  it("covers a post with a twin, one without, a project without, and a draft twin", async () => {
+    expect(await checkCounterpartExists("/blog/paired-post/", "ru")).toBe(true);
+    expect(await checkCounterpartExists("/blog/ru-only-post/", "ru")).toBe(false);
     expect(await checkCounterpartExists("/projects/ru-only-project/", "ru")).toBe(false);
     expect(await checkCounterpartExists("/blog/draft-twin-post/", "ru")).toBe(false);
   });
@@ -246,12 +200,7 @@ describe("static routes", () => {
 const SCRIPT = join(process.cwd(), "scripts", "translate-check.ts");
 const TSX_LOADER = import.meta.resolve("tsx");
 
-const lessonFile = (title: string, locale?: Locale): string =>
-  `---\ntitle: "${title}"\npubDate: 2026-04-23\n${locale ? `locale: ${locale}\n` : ""}---\n\nBody.\n`;
-const courseFile = (title: string, locale?: Locale): string =>
-  `---\ntitle: "${title}"\nblurb: "Blurb"\npubDate: 2026-04-23\n${locale ? `locale: ${locale}\n` : ""}---\n\nBody.\n`;
-
-describe("pnpm translate:check on courses and lessons", () => {
+describe("pnpm translate:check on site pages and projects", () => {
   const roots: string[] = [];
   afterAll(() => {
     for (const root of roots) rmSync(root, { recursive: true, force: true });
@@ -277,57 +226,34 @@ describe("pnpm translate:check on courses and lessons", () => {
     return { status: result.status, output: `${result.stdout}\n${result.stderr}` };
   };
 
-  const pairedCourse = {
-    "courses/guide/_index.md": courseFile("Курс"),
-    "courses/guide/en/_index.md": courseFile("Course", "en"),
-    "courses/guide/01-intro.md": lessonFile("Урок"),
-    "courses/guide/en/01-intro.md": lessonFile("Lesson", "en"),
+  const pairedPage = {
+    "site/about.md": "---\ntitle: Об авторе\n---\n",
+    "site/en/about.md": "---\ntitle: About\n---\n",
   };
 
-  it("passes when every lesson has a built twin", () => {
-    const result = runCheck(pairedCourse);
+  it("passes when every page has its twin", () => {
+    const result = runCheck(pairedPage);
     expect(result.output).toContain("in sync");
     expect(result.status).toBe(0);
   });
 
-  it("fails on a lesson published in Russian only", () => {
-    const result = runCheck({
-      ...pairedCourse,
-      "courses/guide/15-new.md": lessonFile("Пятнадцатый урок"),
-    });
-    expect(result.status).toBe(1);
-    expect(result.output).toMatch(/Missing EN twins:.*lessons\/guide\/15-new/);
-    // pnpm translate does not produce lessons, so it must not be the advice.
-    expect(result.output).not.toContain("Run `pnpm translate`");
-    expect(result.output).toContain("NOT covered by `pnpm translate`");
-  });
-
-  it("fails on an EN lesson file the EN route would not build", () => {
-    const result = runCheck({
-      ...pairedCourse,
-      "courses/guide/02-cache.md": lessonFile("Кеш"),
-      "courses/guide/en/02-cache.md": lessonFile("Cache"),
-    });
-    expect(result.status).toBe(1);
-    expect(result.output).toMatch(/no page route builds:.*lessons\/guide\/02-cache \(en\)/);
-  });
-
   it("fails on a project and a site page without a twin, in either direction", () => {
     const result = runCheck({
-      ...pairedCourse,
+      ...pairedPage,
       "projects/ru-only.md": "---\ntitle: x\n---\n",
       "site/en/orphan.md": "---\ntitle: Orphan\n---\n",
     });
     expect(result.status).toBe(1);
     expect(result.output).toMatch(/Missing EN twins:.*projects\/ru-only/);
     expect(result.output).toMatch(/without a RU source:.*site\/orphan/);
+    expect(result.output).toContain("Run `pnpm translate`");
   });
 
   it("keeps skipping e2e fixtures", () => {
     const result = runCheck({
-      ...pairedCourse,
-      "courses/guide/e2e-ru-only.md": lessonFile("Фикстура"),
+      ...pairedPage,
       "projects/e2e-ru-only.md": "---\ntitle: x\n---\n",
+      "site/en/e2e-orphan.md": "---\ntitle: Orphan\n---\n",
     });
     expect(result.status).toBe(0);
   });

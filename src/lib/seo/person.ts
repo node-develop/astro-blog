@@ -75,12 +75,6 @@ export const person: PersonProfile = {
 
   notableWork: [
     {
-      title: "Claude Code Guide (RU, 14 lessons)",
-      url: `${SITE}/courses/claude-code-guide`,
-      description:
-        "A 14-lesson series on Claude Code internals — harness, agent loop, context, skills, hooks, MCP, subagents, models, and antipatterns.",
-    },
-    {
       title: "artka.dev — personal blog",
       url: SITE,
       description:

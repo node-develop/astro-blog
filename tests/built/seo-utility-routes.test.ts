@@ -76,4 +76,42 @@ describe("built utility routes", () => {
     expect(enSearchHtml).toContain('aria-label="Search query"');
     expect(enSearchHtml).toContain("Enter a query or press");
   });
+
+  // A prerendered twin was a bare file with no headers, so a search engine that
+  // crawled one had no signal to drop it. Each twin must name its HTML page as
+  // canonical and opt out of the index, and only a served response shows that.
+  it("serves Markdown twins as noindex duplicates of their canonical HTML page", async () => {
+    // llms.txt names the RU post twins; llms-full.txt names a twin for every
+    // post in both languages.
+    const llms = [
+      await fetchBuiltRoute(origin, "/llms.txt"),
+      await fetchBuiltRoute(origin, "/llms-full.txt"),
+    ].join("\n");
+    const twinUrls = [...llms.matchAll(/Markdown: (https:\/\/artka\.dev\/[^\s)]+\.md)/g)].map(
+      ([, url]) => new URL(url!),
+    );
+    const samples = [
+      twinUrls.find((url) => url.pathname.startsWith("/blog/")),
+      twinUrls.find((url) => url.pathname.startsWith("/en/blog/")),
+    ];
+
+    for (const sample of samples) {
+      expect(sample, "the llms files list a twin of each kind").toBeDefined();
+      const twin = await fetchBuiltResponse(origin, sample!.pathname);
+      const canonical = `${CANONICAL_ORIGIN}${sample!.pathname.slice(0, -".md".length)}/`;
+      expect(twin.response.status, sample!.pathname).toBe(200);
+      expect(twin.response.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+      expect(twin.response.headers.get("x-robots-tag"), sample!.pathname).toBe("noindex");
+      expect(twin.response.headers.get("link"), sample!.pathname).toBe(
+        `<${canonical}>; rel="canonical"`,
+      );
+      expect(twin.body, sample!.pathname).toContain(`canonical: ${canonical}`);
+    }
+
+    for (const missing of ["/blog/__missing-twin__.md", "/en/blog/__missing-twin__.md"]) {
+      const response = await fetchWithTimeout(`${origin}${missing}`, { redirect: "manual" });
+      await response.body?.cancel();
+      expect(response.status, missing).toBe(404);
+    }
+  });
 });

@@ -6,7 +6,6 @@ import HomeMasthead from "~/components/HomeMasthead.astro";
 import Ticker from "~/components/Ticker.astro";
 import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
 import PostCard from "~/components/PostCard.astro";
-import HomeCourseBand from "~/components/HomeCourseBand.astro";
 import HomeTopics from "~/components/HomeTopics.astro";
 import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
@@ -45,7 +44,6 @@ const grid = posts.slice(1, 7);
 const blogHref = canonicalPath("/en/blog");
 // The booking section on the contact page; the masthead's secondary action.
 const bookHref = `${canonicalPath("/en/contact")}#book`;
-const courseHref = canonicalPath("/en/courses/claude-code-guide");
 const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 const gridVariants = assignArtVariants(grid.map((p) => bareSlug(p.entry.id)));
 // See the RU twin: exactly the posts this page links, in the order shown.
@@ -167,14 +165,6 @@ const webPageNode = buildWebPageNode({
         </section>
       )
     }
-
-    <HomeCourseBand
-      eyebrow={data.courseEyebrow}
-      title={data.courseTitle}
-      lede={data.courseLede}
-      cta={data.courseCta}
-      href={courseHref}
-    />
 
     <HomeAuthorCard
       label={data.authorLabel ?? ""}

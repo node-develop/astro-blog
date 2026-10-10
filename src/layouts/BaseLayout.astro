@@ -17,7 +17,7 @@
  *      and keep SVG as og:image:secure).
  *
  * The fonts/maskable PNG referenced here are documented in
- * phase-5/public/FAVICON-RASTER-README.md — generate them locally
+ * docs/assets/FAVICON-RASTER-README.md — generate them locally
  * from the shipped SVGs before deploying.
  */
 import "~/styles/global.css";
@@ -176,7 +176,6 @@ const footerLinks = {
   ],
   read: [
     footerLink(canonicalPath(`${localePrefix}/blog`), "nav.posts"),
-    footerLink(canonicalPath(`${localePrefix}/courses/claude-code-guide`), "footer.link.course"),
     footerLink(canonicalPath(`${localePrefix}/tags`), "footer.link.tags"),
     footerLink(rssHref, "footer.link.rss"),
     footerLink(jsonFeedHref, "footer.link.json"),
@@ -308,7 +307,7 @@ const socialLabel = (url: string): string => {
     <slot name="head" />
     <ClientRouter />
   </head>
-  <body data-auth="signed-out">
+  <body>
     <SkipLink />
     <Header />
     <!--
@@ -537,37 +536,5 @@ const socialLabel = (url: string): string => {
         }
       }
     </style>
-
-    <!--
-      Auth signal for client-side widgets that need to know whether the
-      user is signed in (e.g. CertificateButton, course progress sync).
-      The Better-Auth middleware should set body[data-auth="signed-in"]
-      when a session is active. This is a tiny island — replace with
-      your own equivalent if you wire it in differently.
-    -->
-    <script>
-      // Auth probe is deferred to idle so it never competes with FCP/TTI.
-      // Anonymous visitors pay a wasted request otherwise. UI islands that
-      // gate on body[data-auth="signed-in"] (CertificateButton, course
-      // progress) should render a skeleton until the attribute appears,
-      // not assume it's there on first paint.
-      const probeAuth = async () => {
-        try {
-          const r = await fetch("/api/auth/get-session/", { credentials: "same-origin" });
-          if (r.ok) {
-            const data = await r.json();
-            if (data?.user) document.body.setAttribute("data-auth", "signed-in");
-          }
-        } catch {
-          /* anonymous */
-        }
-      };
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(probeAuth, { timeout: 2000 });
-      } else {
-        // Safari < 17 fallback. setTimeout(0) yields after the current task.
-        setTimeout(probeAuth, 0);
-      }
-    </script>
   </body>
 </html>

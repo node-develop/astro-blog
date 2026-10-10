@@ -22,5 +22,5 @@ src/content/posts/en/claude-md-12-rules.md
 # lock-and-generated files
 *.min.*
 
-# Vendored editorial standard: preserve supplied upstream bytes.
-.claude/skills/statejnik/references/editorial-standard-upstream.md
+# Vendored claude-seo: upstream bytes, updated only by reinstall.
+.claude/

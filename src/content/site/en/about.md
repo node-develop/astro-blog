@@ -4,7 +4,7 @@ description: "Artyom Kashuta is a full-stack and AI engineer. My background, app
 metaTitle: "Artyom Kashuta: full-stack and AI engineer"
 metaDescription: "Artyom Kashuta — full-stack and AI engineer: TypeScript, Python, AI agents and distributed systems. Background at TaxDome and 9RED, and how I work."
 lang: en
-sourceHash: d64ebd02064ab3ecc16b5110626bb5bc400a2ae83ab093f050a75d19c76e7946
+sourceHash: a56b7dd757761a597e77e4a4c853bc4c49502895c898432f44b8a838a8fe2b6e
 manuallyEdited: false
 ---
 
@@ -31,7 +31,6 @@ I prefer small functions, explicit dependencies, and code that makes sense witho
 This is where I collect what I learn about software development, AI agents, and my own projects. I want each writeup to leave the reader with something useful: an idea, an example, or a way to test their own approach.
 
 - [Articles](/en/blog/) — notes on development tools, Astro, and working with AI.
-- [Claude Code course](/en/courses/claude-code-guide/) — 14 lessons on context, instructions, tools, and checking an agent's work.
 - [Projects](/en/projects/) — a closer look at things I've built, including this site.
 
 I write in Russian and English. For current priorities, see [Now](/en/now/). My development tools are on [Uses](/en/uses/).

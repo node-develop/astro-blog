@@ -173,8 +173,11 @@ export const mediaAssets = pgTable(
 
 /**
  * Course progress — one row per (user, course, lesson) completion.
- * Anonymous users keep using localStorage; only authenticated sessions
- * round-trip to this table.
+ *
+ * The course and its progress tracking were removed from the site; nothing
+ * reads or writes this table any more. The definition stays so drizzle-kit
+ * does not emit a DROP TABLE as a side effect of an unrelated migration.
+ * Dropping it (and its rows) is a separate, deliberate migration.
  */
 export const courseProgress = pgTable(
   "course_progress",
@@ -267,9 +270,6 @@ export type NewPostRevision = typeof postRevisions.$inferInsert;
 
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 export type NewMediaAsset = typeof mediaAssets.$inferInsert;
-
-export type CourseProgressRow = typeof courseProgress.$inferSelect;
-export type NewCourseProgressRow = typeof courseProgress.$inferInsert;
 
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type NewSocialPost = typeof socialPosts.$inferInsert;

@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
  */
 const DIST = join(process.cwd(), "dist/client");
 
-/** Every built page under `dir`, at any depth: posts are flat, lessons are nested. */
+/** Every built page under `dir`, at any depth. */
 const pagesUnder = (dir: string): readonly { route: string; html: string }[] =>
   readdirSync(join(DIST, dir), { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && entry.name === "index.html")
@@ -25,15 +25,12 @@ const pagesUnder = (dir: string): readonly { route: string; html: string }[] =>
 const postPages = (): readonly { route: string; html: string }[] =>
   ["blog", "en/blog"].flatMap(pagesUnder);
 
-const lessonPages = (): readonly { route: string; html: string }[] =>
-  ["courses", "en/courses"].flatMap(pagesUnder);
-
 const figuresOf = (html: string): readonly string[] =>
   html.match(/<figure class="diagram">[\s\S]*?<\/figure>/g) ?? [];
 
-describe("Mermaid diagrams in built posts and lessons", () => {
+describe("Mermaid diagrams in built posts", () => {
   const posts = postPages();
-  const pages = [...posts, ...lessonPages()];
+  const pages = posts;
   const withDiagrams = pages.filter((page) => page.html.includes('class="diagram"'));
 
   it("the build produced posts with diagrams to check", () => {

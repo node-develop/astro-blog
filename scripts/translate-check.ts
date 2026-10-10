@@ -10,7 +10,6 @@ import {
   isFixtureSlug,
   shouldFail,
   type FileState,
-  type TwinSide,
   type TwinState,
 } from "../src/lib/translate/sync-check";
 import { PATHS } from "../src/lib/translate/site-config";
@@ -21,7 +20,6 @@ interface FrontmatterPeek {
   readonly apiRevision?: string;
   readonly sourceHash?: string;
   readonly manuallyEdited?: boolean;
-  readonly locale?: string;
 }
 
 const peekFrontmatter = (src: string): FrontmatterPeek => {
@@ -82,7 +80,6 @@ const validateEnDir = async (
 };
 
 const CONTENT_FILE = /\.(md|mdx)$/;
-const COURSE_LANDING = "_index";
 
 /** Slugs of the content files directly inside `dir` (no recursion, no dotfiles). */
 const listSlugs = async (dir: string): Promise<readonly string[]> => {
@@ -110,59 +107,6 @@ const collectFlatTwins = async (
     ru: ru.includes(slug) ? "built" : "absent",
     en: en.includes(slug) ? "built" : "absent",
   }));
-};
-
-const readLocale = async (dir: string, slug: string): Promise<string | undefined> => {
-  const file = [`${slug}.md`, `${slug}.mdx`].map((f) => join(dir, f)).find((f) => existsSync(f));
-  return file ? peekFrontmatter(await readFile(file, "utf8")).locale : undefined;
-};
-
-/**
- * Courses and lessons. Mirrors src/pages/courses/[course]/** and its EN twin:
- * the routes choose the language by frontmatter `locale` (schema default "ru"),
- * not by the folder, and lessons are only built under a course landing of the
- * same language. So an EN file without `locale: en` is a file, not a page.
- */
-const collectCourseTwins = async (): Promise<readonly TwinState[]> => {
-  if (!existsSync(PATHS.coursesDir)) return [];
-  const courses = (await readdir(PATHS.coursesDir, { withFileTypes: true }))
-    .filter((e) => e.isDirectory() && !e.name.startsWith("."))
-    .map((e) => e.name);
-
-  const states: TwinState[] = [];
-  for (const course of courses) {
-    const ruDir = join(PATHS.coursesDir, course);
-    const enDir = join(ruDir, "en");
-    const ruSlugs = await listSlugs(ruDir);
-    const enSlugs = await listSlugs(enDir);
-
-    const side = async (
-      dir: string,
-      slugs: readonly string[],
-      slug: string,
-      locale: "ru" | "en",
-      landingBuilt: boolean,
-    ): Promise<TwinSide> => {
-      if (!slugs.includes(slug)) return "absent";
-      const isEn = (await readLocale(dir, slug)) === "en";
-      return (locale === "en" ? isEn : !isEn) && landingBuilt ? "built" : "unbuilt";
-    };
-
-    const ruLanding = await side(ruDir, ruSlugs, COURSE_LANDING, "ru", true);
-    const enLanding = await side(enDir, enSlugs, COURSE_LANDING, "en", true);
-    states.push({ collection: "courses", slug: course, ru: ruLanding, en: enLanding });
-
-    const lessons = union(ruSlugs, enSlugs).filter((slug) => slug !== COURSE_LANDING);
-    for (const lesson of lessons) {
-      states.push({
-        collection: "lessons",
-        slug: `${course}/${lesson}`,
-        ru: await side(ruDir, ruSlugs, lesson, "ru", ruLanding === "built"),
-        en: await side(enDir, enSlugs, lesson, "en", enLanding === "built"),
-      });
-    }
-  }
-  return states;
 };
 
 const main = async (): Promise<void> => {
@@ -207,13 +151,10 @@ const main = async (): Promise<void> => {
 
   const report = detectDrift(states);
 
-  // Pair presence for everything localised that is not a post. Courses and
-  // lessons are not part of `pnpm translate` (their twins are written by hand),
-  // so this is the only place a lesson published in one language gets caught.
+  // Pair presence for everything localised that is not a post.
   const twins = detectMissingTwins([
     ...(await collectFlatTwins("site", PATHS.siteDir, PATHS.siteEnDir)),
     ...(await collectFlatTwins("projects", PATHS.projectsDir, PATHS.projectsEnDir)),
-    ...(await collectCourseTwins()),
   ]);
   const missingEn = [...report.missing, ...twins.missingEn];
 
@@ -231,9 +172,6 @@ const main = async (): Promise<void> => {
   if (twins.missingRu.length) {
     console.error(`✗ EN twins without a RU source: ${twins.missingRu.join(", ")}`);
   }
-  if (twins.unbuilt.length) {
-    console.error(`✗ Files no page route builds: ${twins.unbuilt.join(", ")}`);
-  }
   if (report.drift.length) {
     console.warn(
       `⚠ EN twins behind their RU source (run \`pnpm translate\`): ${report.drift.join(", ")}`,
@@ -247,23 +185,9 @@ const main = async (): Promise<void> => {
     }
   }
 
-  // Courses and lessons are written by hand; posts, site pages and projects are
-  // what `pnpm translate` generates. The advice has to match the collection.
-  const isHandWritten = (label: string): boolean =>
-    label.startsWith("courses/") || label.startsWith("lessons/");
-  const handWritten = [...twins.missingEn, ...twins.missingRu, ...twins.unbuilt].some(
-    isHandWritten,
-  );
-  const translatable = twins.missingEn.some((label) => !isHandWritten(label));
-
   if (shouldFail({ report, twins, schemaErrorCount: schemaErrors.length })) {
-    if (report.missing.length || translatable) {
+    if (missingEn.length) {
       console.error("\nRun `pnpm translate` and commit the result.");
-    }
-    if (handWritten) {
-      console.error(
-        "\nCourses and lessons are NOT covered by `pnpm translate`: write the twin by hand as src/content/courses/<course>/en/<file>.md with `locale: en` in its frontmatter (RU files carry no `locale`, or `locale: ru`).",
-      );
     }
     if (twins.missingRu.length) {
       console.error(

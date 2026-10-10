@@ -53,7 +53,7 @@ cover: /og-default.png
 coverAlt: artka.dev — technical blog
 draft: false
 lang: en
-sourceHash: 93f89beda3a00070a1b96bc38a0519b7cdf62b43ec6af2751154df06ed8c3b62
+sourceHash: d981d9608cdc90e8e3e9ef610c74fcd7d2b27b45ecf180b480b2f5085ac5c26b
 manuallyEdited: false
 updatedDate: 2026-09-19
 ---
@@ -299,7 +299,7 @@ export const findDangling = (graph: ReadonlyArray<Record<string, unknown>>): Dan
 };
 ```
 
-One caveat is mandatory, or the check will be noisy. References to a node in the other language (`#website-en` from Russian pages, and vice versa) are meant to point at a node in a different document. They need to go on an allowed-exceptions list. The same applies to lesson references from a course page: the node lives on its own page.
+One caveat is mandatory, or the check will be noisy. References to a node in the other language (`#website-en` from Russian pages, and vice versa) are meant to point at a node in a different document. They need to go on an allowed-exceptions list.
 
 A second check worth adding compares the markup against what's on screen: the graph's `headline` against the rendered H1 text, and `dateModified` against the visible date. This directly covers Google's requirement that dates match and its ban on marking up what isn't visible.
 

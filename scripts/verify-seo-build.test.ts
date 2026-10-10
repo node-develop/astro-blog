@@ -192,7 +192,7 @@ describe("assertOgAuthorNames", () => {
   });
 
   it("scans nested route folders under the default roots", async () => {
-    const nested = "src/pages/og/lesson/[course]/[lesson].png.ts";
+    const nested = "src/pages/og/project/[slug].png.ts";
     await write("src/lib/og/og-image.ts", CLEAN_OG_IMAGE);
     await write(nested, 'export const card = { byline: "Someone Else" };\n');
 
