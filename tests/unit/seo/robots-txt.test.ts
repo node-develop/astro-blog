@@ -36,6 +36,9 @@ describe("public/robots.txt", () => {
       expect(block).toMatch(/^Disallow:\s*\/api\//m);
       expect(block).not.toMatch(/^Disallow:\s*\/login\b/m);
       expect(block).not.toMatch(/^Disallow:\s*\/(?:en\/)?search\b/m);
+      // Markdown twins answer with X-Robots-Tag: noindex + a canonical Link
+      // header; a crawler blocked here never sees them and cannot drop the twin.
+      expect(block).not.toMatch(/^Disallow:.*\.md/m);
     }
   });
 

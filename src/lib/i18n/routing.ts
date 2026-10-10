@@ -2,7 +2,6 @@ import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { Locale } from "~/i18n";
 import { canonicalPath } from "~/lib/seo/url-policy";
-import { isTagArchiveIndexable } from "~/lib/seo/indexability";
 
 const isEnPrefix = (pathname: string): boolean => pathname === "/en" || pathname.startsWith("/en/");
 
@@ -55,20 +54,20 @@ const isPairedStaticRoute = (ruPath: string): boolean =>
 export const tagArchiveSlug = (pathname: string): string | null =>
   canonicalPath(pathname).match(TAG_ARCHIVE)?.[1] ?? null;
 
-// A tag archive below MIN_INDEXABLE_TAG_POSTS is noindexed, and a noindexed
-// page must not be advertised as an hreflang alternate (Google treats the
-// cluster as broken). Both locale archives have to be indexable for the pair
-// to be emitted. Counts non-draft posts per locale straight from the
-// collection; hidden-from-list posts (DB flag) are ignored here, which can
-// only over-count — never advertise a page that is indexable as missing.
-const tagArchivePairIndexable = async (slug: string): Promise<boolean> => {
+// Every tag archive is noindex, so BaseLayout never puts one in an hreflang
+// cluster; this answer only drives the language toggle (and og:locale:alternate).
+// Both tag routes build a page for every slug used in either language, but a
+// twin with no posts is just the "nothing in this language yet" placeholder, so
+// the twin counts as present only when it lists at least one non-draft post.
+// Counts straight from the collection; hidden-from-list posts (DB flag) are
+// ignored here, which can only over-count.
+const isTagArchiveBuilt = async (slug: string, locale: Locale): Promise<boolean> => {
   const tagged = await getCollection(
     "posts",
-    (e: CollectionEntry<"posts">) => !e.data.draft && e.data.tags.includes(slug),
+    (e: CollectionEntry<"posts">) =>
+      !e.data.draft && e.data.tags.includes(slug) && e.id.startsWith("en/") === (locale === "en"),
   );
-  const ru = tagged.filter((e: CollectionEntry<"posts">) => !e.id.startsWith("en/"));
-  const en = tagged.filter((e: CollectionEntry<"posts">) => e.id.startsWith("en/"));
-  return isTagArchiveIndexable(ru) && isTagArchiveIndexable(en);
+  return tagged.length > 0;
 };
 
 // The helpers below answer "does the page route of `locale` build this page?"
@@ -146,7 +145,7 @@ const isLessonBuilt = async (course: string, lesson: string, locale: Locale): Pr
  *
  * - posts, projects, course landings, lessons, site entity pages: answered from
  *   the content collections, with the same filters the page routes apply;
- * - tag archives: both archives have to be indexable;
+ * - tag archives: the other-language archive lists at least one post;
  * - PAIRED_STATIC_ROUTES: unconditional `true` (see the list for why);
  * - anything else (utility routes, unknown paths, a 404): `false`.
  */
@@ -161,7 +160,7 @@ export const checkCounterpartExists = async (
   const target = otherLocale(currentLocale);
 
   const tagSlug = tagArchiveSlug(canonical);
-  if (tagSlug !== null) return tagArchivePairIndexable(tagSlug);
+  if (tagSlug !== null) return isTagArchiveBuilt(tagSlug, target);
 
   const sitePage = canonical.match(SITE_ENTRY_PAGE)?.[1];
   if (sitePage !== undefined) return isSitePageBuilt(sitePage, target);

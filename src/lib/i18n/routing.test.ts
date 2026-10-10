@@ -18,11 +18,14 @@ vi.mock("astro:content", () => {
   }
   const posts: readonly MockEntry[] = [
     { id: "01-introduction", data: { draft: false, tags: ["claude-code", "solo", "pair"] } },
-    { id: "02-context-and-cache", data: { draft: false, tags: ["claude-code", "pair"] } },
-    { id: "04-draft", data: { draft: false, tags: [] } },
+    {
+      id: "02-context-and-cache",
+      data: { draft: false, tags: ["claude-code", "pair", "ru-only-tag"] },
+    },
+    { id: "04-draft", data: { draft: false, tags: ["en-draft-only"] } },
     { id: "05-ru-draft", data: { draft: true, tags: [] } },
     { id: "en/01-introduction", data: { draft: false, tags: ["claude-code", "solo", "pair"] } },
-    { id: "en/04-draft", data: { draft: true, tags: ["claude-code"] } },
+    { id: "en/04-draft", data: { draft: true, tags: ["claude-code", "en-draft-only"] } },
     { id: "en/05-ru-draft", data: { draft: false, tags: [] } },
     { id: "en/03-skills", data: { draft: false, tags: ["pair"] } },
   ];
@@ -143,16 +146,19 @@ describe("checkCounterpartExists", () => {
     expect(await checkCounterpartExists("/en/blog/01-introduction", "en")).toBe(true);
   });
 
-  // Tag archives: hreflang pair only when BOTH locale archives are indexable
-  // (>= MIN_INDEXABLE_TAG_POSTS non-draft posts). "claude-code" has 2 RU but
-  // only 1 non-draft EN post, so the EN archive is noindexed and must not be
-  // advertised as an alternate from either side.
-  it("suppresses the tag-archive counterpart when the EN archive is noindexed", async () => {
-    expect(await checkCounterpartExists("/tags/claude-code/", "ru")).toBe(false);
-    expect(await checkCounterpartExists("/en/tags/claude-code/", "en")).toBe(false);
-    expect(await checkCounterpartExists("/tags/solo/", "ru")).toBe(false);
+  // Tag archives are all noindex, so this only drives the language toggle: the
+  // twin counts when it lists at least one non-draft post, whatever the count.
+  it("answers for tag archives from the other language's non-draft posts", async () => {
+    expect(await checkCounterpartExists("/tags/claude-code/", "ru")).toBe(true);
+    expect(await checkCounterpartExists("/en/tags/claude-code/", "en")).toBe(true);
+    expect(await checkCounterpartExists("/tags/solo/", "ru")).toBe(true);
     expect(await checkCounterpartExists("/tags/pair/", "ru")).toBe(true);
     expect(await checkCounterpartExists("/en/tags/pair/", "en")).toBe(true);
+    // No EN post carries the tag: the EN archive is only the empty placeholder.
+    expect(await checkCounterpartExists("/tags/ru-only-tag/", "ru")).toBe(false);
+    // The only EN post with the tag is a draft; the RU side has a published one.
+    expect(await checkCounterpartExists("/tags/en-draft-only/", "ru")).toBe(false);
+    expect(await checkCounterpartExists("/en/tags/en-draft-only/", "en")).toBe(true);
   });
 
   it.each(["/login/", "/admin/", "/admin/posts/", "/api/auth/get-session/"])(

@@ -172,7 +172,9 @@ describe("production standalone server", () => {
           headers: { Accept: "text/html" },
         });
         expect(htmlVariant.status).toBe(200);
-        expect(htmlVariant.headers.get("content-type")).toContain("text/html");
+        // On-demand HTML carries its charset (src/middleware.ts), as the
+        // prerendered pages do; without it a client sniffs the Cyrillic text.
+        expect(htmlVariant.headers.get("content-type")).toBe("text/html; charset=utf-8");
         expectNegotiatedVary(htmlVariant);
         await htmlVariant.body?.cancel();
 
@@ -422,7 +424,7 @@ describe("production standalone server", () => {
         headers: { Accept: "text/html" },
       });
       expect(html404.status).toBe(404);
-      expect(html404.headers.get("content-type")).toContain("text/html");
+      expect(html404.headers.get("content-type")).toBe("text/html; charset=utf-8");
       expectNegotiatedVary(html404);
       const html404Body = await html404.text();
       expect(html404Body).toContain("Страница не найдена");

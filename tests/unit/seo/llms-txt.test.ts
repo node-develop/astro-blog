@@ -85,6 +85,15 @@ describe("buildLlmsTxt", () => {
     );
   });
 
+  // The summary used to promise gRPC, Kafka and FastAPI coverage that no post
+  // had; it is now built from the posts' tags (EN labels) and the course list.
+  it("summarises only topics the posts are tagged with, plus the courses", () => {
+    expect(content).toContain(
+      "> AI engineer. Published so far: the Claude Code Guide course; articles on Claude Code.",
+    );
+    expect(content).not.toMatch(/gRPC|Kafka|FastAPI/);
+  });
+
   it("links the canonical authoritative pages", () => {
     expect(content).toContain("https://artka.dev/about/");
     expect(content).toContain("https://artka.dev/blog/");

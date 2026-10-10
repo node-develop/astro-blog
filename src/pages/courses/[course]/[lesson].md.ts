@@ -1,18 +1,28 @@
 /**
  * Markdown twin of a prerendered lesson: /courses/<course>/<lesson>.md
- * See src/pages/blog/[slug].md.ts for the rationale.
+ * Rendered on demand for its noindex + canonical headers; see
+ * src/pages/blog/[slug].md.ts for the rationale. Unknown lessons answer 404.
  */
 import type { APIRoute } from "astro";
 import {
-  lessonMarkdownPaths,
+  findLessonMarkdown,
+  lessonCanonicalUrl,
   markdownFileResponse,
+  markdownNotFoundResponse,
   renderLessonMarkdown,
-  type LessonMarkdownProps,
 } from "~/lib/agents/documents";
 
-export const prerender = true;
+export const prerender = false;
 
-export const getStaticPaths = () => lessonMarkdownPaths("ru");
-
-export const GET: APIRoute = ({ props }) =>
-  markdownFileResponse(renderLessonMarkdown(props as LessonMarkdownProps, "ru"));
+export const GET: APIRoute = async ({ params, request }) => {
+  const props =
+    typeof params.course === "string" && typeof params.lesson === "string"
+      ? await findLessonMarkdown("ru", params.course, params.lesson)
+      : null;
+  if (!props) return markdownNotFoundResponse(request, "ru");
+  return markdownFileResponse(
+    request,
+    renderLessonMarkdown(props, "ru"),
+    lessonCanonicalUrl(props, "ru"),
+  );
+};

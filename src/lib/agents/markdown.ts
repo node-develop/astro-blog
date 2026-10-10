@@ -135,8 +135,9 @@ const dateOnly = (value: Date): string => value.toISOString().slice(0, 10);
 // YAML-ish header + the authored body. This is the representation linked from
 // `<link rel="alternate" type="text/markdown">` on the HTML page; the header
 // carries the canonical URL so an agent that fetched the .md directly still
-// cites the HTML page. Prerendered endpoints cannot set a `Link:` header, so
-// the canonical lives in the body instead.
+// cites the HTML page. The twin routes also send it as a `Link: rel=canonical`
+// header (for search engines, src/lib/agents/documents.ts); the body copy is
+// for agents, which read the file rather than its headers.
 export const renderDocumentMarkdown = (input: DocumentMarkdownInput): string => {
   const header: Array<readonly [string, string]> = [
     ["title", JSON.stringify(input.title)],

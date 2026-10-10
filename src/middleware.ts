@@ -3,6 +3,7 @@ import { auth } from "~/lib/auth";
 import { canonicalHostRedirect, requiresAuthContext } from "~/lib/auth/request-classification";
 import { CAL_ORIGIN } from "~/lib/booking/config";
 import { i18nRootRedirect } from "~/lib/i18n/middleware";
+import { logger } from "~/lib/logger";
 import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
 
 const canonicalHostNormalization = defineMiddleware((context, next) => {
@@ -105,11 +106,36 @@ const securityHeaders = defineMiddleware(async (context, next) => {
   return response;
 });
 
+/**
+ * Astro answers on-demand pages (home, blog index, search, the runtime 404)
+ * with a bare `Content-Type: text/html`. Without a charset a client has to
+ * sniff the encoding of Cyrillic text; prerendered files already get
+ * `charset=utf-8` from the static server. Only the exact bare value is
+ * rewritten: a type a route chose itself (Markdown, JSON, an explicit charset)
+ * is left alone.
+ */
+const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
+
+const htmlCharset = defineMiddleware(async (context, next) => {
+  const response = await next();
+  if (response.headers.get("content-type")?.trim().toLowerCase() !== "text/html") {
+    return response;
+  }
+  try {
+    response.headers.set("Content-Type", HTML_CONTENT_TYPE);
+  } catch (err) {
+    logger.warn({ err, path: context.url.pathname }, "html charset: immutable response headers");
+  }
+  return response;
+});
+
 // `securityHeaders` goes FIRST: it awaits `next()` and decorates whatever
 // comes back, so it must wrap the whole chain — otherwise the redirects and
-// the 403 short-circuits returned by the guards below skip it.
+// the 403 short-circuits returned by the guards below skip it. `htmlCharset`
+// wraps everything after it for the same reason.
 export const onRequest = sequence(
   securityHeaders,
+  htmlCharset,
   canonicalHostNormalization,
   concatenatedLessonRecovery,
   i18nRootRedirect,

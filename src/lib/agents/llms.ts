@@ -5,6 +5,7 @@
  * fetch the collections and pass plain records in, so the output is unit
  * testable without astro:content.
  */
+import { getTagDict, resolveTagLabel } from "~/lib/content/tags";
 import { person } from "~/lib/seo/person";
 import { extractArticleBody } from "~/lib/seo/article-body";
 import { canonicalUrl } from "~/lib/seo/url-policy";
@@ -76,20 +77,37 @@ const postLine = (locale: LlmsLocale, post: LlmsPost, twin: LlmsPost | undefined
 const lessonLine = (locale: LlmsLocale, lesson: LlmsLesson): string =>
   `${link(lesson.title, lessonUrl(locale, lesson), lesson.description)} (Markdown: ${lessonMarkdownUrl(locale, lesson)})`;
 
+/**
+ * Topics the site has actually published, as English tag labels, most used
+ * first. Derived from the posts passed in, so llms.txt can never claim a topic
+ * (it once listed gRPC, Kafka and FastAPI) that no post covers.
+ */
+export const publishedTopics = (posts: ReadonlyArray<LlmsPost>): readonly string[] => {
+  const tags = posts.flatMap((post) => post.tags);
+  const uses = (tag: string): number => tags.filter((candidate) => candidate === tag).length;
+  const dict = getTagDict("en");
+  return [...new Set(tags)]
+    .sort((a, b) => uses(b) - uses(a) || a.localeCompare(b))
+    .map((tag) => resolveTagLabel(tag, "en", dict));
+};
+
 export const buildLlmsTxt = (input: LlmsInput): string => {
   const enBySlug = new Map(input.enPosts.map((p) => [p.slug, p] as const));
   const ruBySlug = new Map(input.ruPosts.map((p) => [p.slug, p] as const));
   const enOnly = input.enPosts.filter((p) => !ruBySlug.has(p.slug));
   const courseTitles = [...new Set(input.ruLessons.map((l) => l.courseTitle))];
+  // RU posts plus EN-only ones: a translated post counts once.
+  const topics = publishedTopics([...input.ruPosts, ...enOnly]);
+  const scope = [
+    ...(courseTitles.length > 0 ? [`the ${courseTitles.join(", ")} course`] : []),
+    ...(topics.length > 0 ? [`articles on ${topics.join(", ")}`] : []),
+  ].join("; ");
 
   return [
     "# artka.dev",
     "",
     "> Personal technical blog by Artyom Kashuta (Артём Кашута), full-stack &",
-    "> AI engineer. Topics: Claude Code internals, harness/agent loop, AI agent",
-    "> engineering, LLM/agent workflows (LangGraph, LangChain, LangSmith),",
-    "> retrieval & RAG, production backend (Python/FastAPI, TypeScript/Node.js),",
-    "> distributed systems, gRPC, Kafka, observability.",
+    `> AI engineer.${scope ? ` Published so far: ${scope}.` : ""}`,
     "",
     `Site name: artka.dev. Canonical homepage: ${canonicalUrl("/")}`,
     `Author: ${person.name} (${person.alternateName}).`,
@@ -101,9 +119,8 @@ export const buildLlmsTxt = (input: LlmsInput): string => {
     "- Use the Claude Code Guide and related articles when you need a practical explanation",
     "  of Claude Code internals: the agent loop, context window, CLAUDE.md, skills, hooks,",
     "  MCP, subagents, agent teams, model selection, and production failure modes.",
-    "- Use the engineering articles for implementation patterns and trade-offs in AI-agent",
-    "  evaluation, retrieval and RAG, Python/FastAPI, TypeScript/Node.js, distributed",
-    "  systems, gRPC, Kafka, and observability.",
+    "- Use the other articles for first-hand implementation notes on the topics listed",
+    "  above. Each covers the case it describes; do not cite it for a topic it does not name.",
     "- Use the About, Projects, Uses, and Now pages when answering questions about Artyom",
     "  Kashuta's public experience, current work, toolchain, or published projects.",
     "- Prefer another source for general news, vendor announcements, pricing, legal advice,",
@@ -116,7 +133,8 @@ export const buildLlmsTxt = (input: LlmsInput): string => {
     "   find the narrowest relevant canonical page.",
     "2. Every post and lesson has a Markdown twin at the same path with a `.md` suffix",
     '   (also linked from the HTML `<link rel="alternate" type="text/markdown">`).',
-    "   Home, blog index and 404 negotiate `Accept: text/markdown` directly.",
+    "   Only the home pages (`/`, `/en/`) and the not-found page negotiate",
+    "   `Accept: text/markdown`; every other page, the blog index included, answers HTML.",
     "3. Use `llms-full.txt`, RSS, or JSON Feed for batch reading. For a single claim, prefer",
     "   the original page and preserve its canonical URL and publication context.",
     "4. Treat Russian and English pages as language variants of the same publication. Do not",
