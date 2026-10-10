@@ -81,8 +81,8 @@ describe("built utility routes", () => {
   // crawled one had no signal to drop it. Each twin must name its HTML page as
   // canonical and opt out of the index, and only a served response shows that.
   it("serves Markdown twins as noindex duplicates of their canonical HTML page", async () => {
-    // llms.txt names the RU post and lesson twins (and EN lessons); llms-full.txt
-    // names a twin for every post in both languages.
+    // llms.txt names the RU post twins; llms-full.txt names a twin for every
+    // post in both languages.
     const llms = [
       await fetchBuiltRoute(origin, "/llms.txt"),
       await fetchBuiltRoute(origin, "/llms-full.txt"),
@@ -93,8 +93,6 @@ describe("built utility routes", () => {
     const samples = [
       twinUrls.find((url) => url.pathname.startsWith("/blog/")),
       twinUrls.find((url) => url.pathname.startsWith("/en/blog/")),
-      twinUrls.find((url) => url.pathname.startsWith("/courses/")),
-      twinUrls.find((url) => url.pathname.startsWith("/en/courses/")),
     ];
 
     for (const sample of samples) {
@@ -110,12 +108,7 @@ describe("built utility routes", () => {
       expect(twin.body, sample!.pathname).toContain(`canonical: ${canonical}`);
     }
 
-    for (const missing of [
-      "/blog/__missing-twin__.md",
-      "/en/blog/__missing-twin__.md",
-      "/courses/claude-code-guide/__missing-twin__.md",
-      "/en/courses/claude-code-guide/__missing-twin__.md",
-    ]) {
+    for (const missing of ["/blog/__missing-twin__.md", "/en/blog/__missing-twin__.md"]) {
       const response = await fetchWithTimeout(`${origin}${missing}`, { redirect: "manual" });
       await response.body?.cancel();
       expect(response.status, missing).toBe(404);

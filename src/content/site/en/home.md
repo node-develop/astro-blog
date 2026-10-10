@@ -4,8 +4,7 @@ heroEyebrow: Personal blog · on writing code with AI
 heroTitle: Posts about Claude Code, AI agents, and production backend.
 heroHighlight: AI agents
 heroLede: >-
-  A fourteen-part series about how Claude Code works under the hood — context, skills, hooks, MCP, subagents, models,
-  and antipatterns.
+  Breakdowns of how Claude Code and AI agents work under the hood, and what of it holds up in production.
 heroCta: All articles →
 sealPhrase: Notes from production · since 2018 · Ankara
 tickerItems: |-
@@ -14,12 +13,6 @@ tickerItems: |-
   The eval harness comes first
   An MCP server across 688 pages
   Kafka outbox, the version that held
-courseEyebrow: Course
-courseTitle: Claude Code Guide
-courseLede: >-
-  14 lessons about Claude Code internals — harness, context, skills, hooks, MCP, subagents, models, and antipatterns.
-  With a Travel Agent example throughout.
-courseCta: Open course →
 latestLabel: Latest publications
 authorLabel: Author
 authorBio: >-
@@ -29,8 +22,7 @@ authorLinksAria: Links to author profiles
 metaTitle: artka.dev — Artyom Kashuta | AI agents and backend
 metaDescription: >-
   artka.dev — the personal technical blog of Artyom Kashuta. Notes on Claude Code, LLM agents, RAG pipelines, and production backend.
-  Claude Code Guide course — 14 lessons.
 lang: en
-sourceHash: c743a0b3a75eb535b35a56cdf72a59560e81f3949cfd3b08200fb1c0567d83ad
+sourceHash: 57835f8999ab2b5a93886a1011e7525ad7dcae9d20b6ea21f04f8b7cd02ff0c5
 manuallyEdited: false
 ---

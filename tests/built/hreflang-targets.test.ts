@@ -1,4 +1,4 @@
-// Every hreflang alternate on a built lesson/project page must point at a page
+// Every hreflang alternate on a built post/project page must point at a page
 // that was actually built, and a page advertises its twin exactly when the twin
 // exists. `checkCounterpartExists` is unit-tested in
 // tests/unit/i18n/counterpart-honesty.test.ts; this checks the real build.
@@ -9,8 +9,7 @@ import { getCounterpart, getLocaleFromPath } from "~/lib/i18n/routing";
 
 const CLIENT = join(process.cwd(), "dist", "client");
 const ORIGIN = "https://artka.dev";
-const COLLECTION_PAGE =
-  /^(?:en\/)?(?:courses\/[^/]+(?:\/[^/]+)?|projects\/[^/]+|blog\/[^/]+)\/index\.html$/;
+const COLLECTION_PAGE = /^(?:en\/)?(?:projects\/[^/]+|blog\/[^/]+)\/index\.html$/;
 
 const collectHtml = (dir: string): readonly string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -36,9 +35,9 @@ describe("hreflang targets of the built collection pages", () => {
     .filter((file) => COLLECTION_PAGE.test(file));
 
   it("every advertised alternate is a page that was built", () => {
-    const lessons = pages.filter((p) => /courses\/[^/]+\/[^/]+\/index\.html$/.test(p));
+    const posts = pages.filter((p) => /blog\/[^/]+\/index\.html$/.test(p));
     const projects = pages.filter((p) => /projects\/[^/]+\/index\.html$/.test(p));
-    expect(lessons.length).toBeGreaterThan(0);
+    expect(posts.length).toBeGreaterThan(0);
     expect(projects.length).toBeGreaterThan(0);
 
     const withCluster = pages.filter(

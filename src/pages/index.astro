@@ -6,7 +6,6 @@ import HomeMasthead from "~/components/HomeMasthead.astro";
 import Ticker from "~/components/Ticker.astro";
 import HomeFeaturedCard from "~/components/HomeFeaturedCard.astro";
 import PostCard from "~/components/PostCard.astro";
-import HomeCourseBand from "~/components/HomeCourseBand.astro";
 import HomeTopics from "~/components/HomeTopics.astro";
 import HomeAuthorCard from "~/components/HomeAuthorCard.astro";
 import { getOrderedPosts } from "~/lib/content/loader";
@@ -45,9 +44,6 @@ const grid = posts.slice(1, 7);
 const blogHref = canonicalPath(locale === "en" ? "/en/blog" : "/blog");
 // The booking section on the contact page; the masthead's secondary action.
 const bookHref = `${canonicalPath(locale === "en" ? "/en/contact" : "/contact")}#book`;
-const courseHref = canonicalPath(
-  locale === "en" ? "/en/courses/claude-code-guide" : "/courses/claude-code-guide",
-);
 const postHref = (id: string): string => canonicalPath(`${blogHref}${bareSlug(id)}`);
 const gridVariants = assignArtVariants(grid.map((p) => bareSlug(p.entry.id)));
 // Exactly the posts this page links, in the order it shows them: the featured
@@ -174,14 +170,6 @@ const webPageNode = buildWebPageNode({
         </section>
       )
     }
-
-    <HomeCourseBand
-      eyebrow={data.courseEyebrow}
-      title={data.courseTitle}
-      lede={data.courseLede}
-      cta={data.courseCta}
-      href={courseHref}
-    />
 
     <HomeAuthorCard
       label={data.authorLabel ?? ""}

@@ -3,14 +3,13 @@ export const prerender = false;
 
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import GenericTranslatePanel from "~/components/admin/GenericTranslatePanel";
-import { readdir, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { PATHS } from "~/lib/translate/site-config";
 
 /**
- * Generic translate page for collections without a full admin CRUD editor:
- * projects, courses (landings), lessons. The two top-of-funnel cases —
+ * Generic translate page for the collection without a full admin CRUD editor:
+ * projects. The two top-of-funnel cases —
  * posts and site pages — get the Translate/Publish controls inside their
  * existing per-slug editors (EditorShell, SiteEditor).
  *
@@ -25,46 +24,19 @@ const listMd = async (dir: string): Promise<ReadonlyArray<string>> => {
     .map((f) => f.replace(/\.md$/, ""));
 };
 
-const projectsSlugs = await listMd(PATHS.projectsDir);
-
-// courses: each direct subdirectory of `coursesDir` that contains _index.md.
-const coursesSlugs: string[] = [];
-const lessonsSlugs: string[] = [];
-if (existsSync(PATHS.coursesDir)) {
-  for (const entry of await readdir(PATHS.coursesDir)) {
-    const courseDir = join(PATHS.coursesDir, entry);
-    const courseStat = await stat(courseDir);
-    if (!courseStat.isDirectory()) continue;
-    if (existsSync(join(courseDir, "_index.md"))) coursesSlugs.push(entry);
-    // Lessons are direct .md files inside the course dir (excluding _index
-    // and the en/ subdir).
-    for (const file of await readdir(courseDir)) {
-      if (!/\.md$/.test(file)) continue;
-      if (file === "_index.md") continue;
-      lessonsSlugs.push(`${entry}/${file.replace(/\.md$/, "")}`);
-    }
-  }
-}
-
-const slugsByCollection = {
-  projects: projectsSlugs,
-  courses: coursesSlugs,
-  lessons: lessonsSlugs,
-} as const;
+const projectSlugs = await listMd(PATHS.projectsDir);
 ---
 
 <AdminLayout title="Переводы и публикация">
   <header class="admin-page-header">
     <h1>Переводы и публикация</h1>
     <p class="admin-page-header__lead">
-      Запуск перевода RU→EN и публикации (через GitHub API) для коллекций без полного админ-CRUD —
-      <code>projects</code>, <code>courses</code> (лендинги), <code>lessons</code>. Для <code
-        >posts</code
-      > и <code>site</code> кнопки встроены в редакторы.
+      Запуск перевода RU→EN и публикации (через GitHub API) для коллекции без полного админ-CRUD —
+      <code>projects</code>. Для <code>posts</code> и <code>site</code> кнопки встроены в редакторы.
     </p>
   </header>
 
-  <GenericTranslatePanel client:load slugsByCollection={slugsByCollection} />
+  <GenericTranslatePanel client:load projectSlugs={projectSlugs} />
 </AdminLayout>
 
 <style>

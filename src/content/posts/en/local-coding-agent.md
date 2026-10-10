@@ -26,7 +26,7 @@ keywords:
   - Claude Code local backend
   - vertical inference engine
 lang: en
-sourceHash: c27b9661f2d538d8a45c35bad74c7d89311dd2ed87d7641402056b6c2d30ffd5
+sourceHash: f38054f7cd2181663ea656e470633199cb6bbedcd102f4d11f9ec8ad00c451a1
 manuallyEdited: false
 updatedDate: 2026-09-07
 ---
@@ -79,4 +79,4 @@ A useful acceptance criterion could be: fix a selected regression, preserve the 
 
 When a task fails, preserve the specific failure: an invalid tool call, forgotten instruction, memory exhaustion or incorrect edit. Those details suggest the next experiment. “Replaces a cloud agent” tells a reader little without them.
 
-The [agent loop lesson](/en/courses/claude-code-guide/08-tool-calls-and-loop/) separates the model from tools and execution. The [CLAUDE.md template](/en/blog/claude-md-12-rules/) covers repository instructions.
+The [CLAUDE.md template](/en/blog/claude-md-12-rules/) covers repository instructions.

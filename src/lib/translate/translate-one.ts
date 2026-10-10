@@ -12,10 +12,9 @@
  *   4. Translate frontmatter strings + body prose via Claude Haiku.
  *   5. Re-serialize and atomically write the EN twin.
  *
- * The same code path handles all five collections (posts, site, projects,
- * courses, lessons) — they only differ in which frontmatter fields exist.
- * We dispatch on a per-collection schema rather than maintaining four
- * near-identical functions.
+ * The same code path handles all three collections (posts, site, projects)
+ * — they only differ in which frontmatter fields exist. We dispatch on a
+ * per-collection schema rather than maintaining near-identical functions.
  */
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -117,7 +116,6 @@ const applyTranslations = (
 /**
  * Build the `constraints` and `optionalKeys` for a given collection so that
  * `translateStrings` can enforce per-field length limits after translation.
- * courses/lessons have no limits defined yet — returns empty constraints.
  */
 const buildConstraints = (
   collection: TranslateCollection,
@@ -151,18 +149,14 @@ const buildConstraints = (
       optionalKeys: new Set(["description"]),
     };
   }
-  if (collection === "projects") {
-    return {
-      constraints: {
-        title: { min: PROJECT_LIMITS.title.min, max: PROJECT_LIMITS.title.max },
-        description: { min: PROJECT_LIMITS.description.min, max: PROJECT_LIMITS.description.max },
-        role: { min: PROJECT_LIMITS.role.min, max: PROJECT_LIMITS.role.max },
-      },
-      optionalKeys: new Set(["coverAlt"]),
-    };
-  }
-  // courses / lessons: no limits yet
-  return { constraints: {}, optionalKeys: new Set() };
+  return {
+    constraints: {
+      title: { min: PROJECT_LIMITS.title.min, max: PROJECT_LIMITS.title.max },
+      description: { min: PROJECT_LIMITS.description.min, max: PROJECT_LIMITS.description.max },
+      role: { min: PROJECT_LIMITS.role.min, max: PROJECT_LIMITS.role.max },
+    },
+    optionalKeys: new Set(["coverAlt"]),
+  };
 };
 
 /**

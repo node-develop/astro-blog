@@ -32,7 +32,7 @@ describe("buildHomePayload (dirty fields only)", () => {
     metaDescription: "Meta description text.",
     heroLede: "Old lede",
     authorBio: "Old bio",
-    courseTitle: "Course",
+    tickerItems: "One\nTwo",
   };
 
   it("always sends the required fields, and only the changed optional ones", () => {
@@ -47,7 +47,7 @@ describe("buildHomePayload (dirty fields only)", () => {
     });
     // Untouched fields are NOT sent, so a stale tab cannot overwrite them.
     expect("heroLede" in payload).toBe(false);
-    expect("courseTitle" in payload).toBe(false);
+    expect("tickerItems" in payload).toBe(false);
   });
 
   it("sends nothing optional when the form is unchanged", () => {

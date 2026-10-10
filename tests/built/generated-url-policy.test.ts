@@ -1,9 +1,8 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { APIContext } from "astro";
 import { GET as getLlmsFull } from "~/pages/llms-full.txt";
 import { GET as getLlmsTxt } from "~/pages/llms.txt";
-import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
 import { canonicalPath, isFileLikePath } from "~/lib/seo/url-policy";
 
 interface Violation {
@@ -220,65 +219,13 @@ it.each([
   ]);
 });
 
-it("resolves every generated RU and EN lesson link to a built course route", () => {
-  const lessonFiles = filesUnder(DIST, ".html").filter((file) =>
-    /(?:^|\/)courses\/claude-code-guide\/[^/]+\/index\.html$/.test(file),
-  );
-  const violations: Violation[] = [];
-  const gluedLinks: string[] = [];
-  let checkedLinks = 0;
-
-  expect(lessonFiles).toHaveLength(28);
-  for (const file of lessonFiles) {
-    const html = readFileSync(file, "utf8");
-    const canonical = html.match(
-      /<link\b(?=[^>]*\brel=["']canonical["'])[^>]*\bhref=["']([^"']+)/i,
-    )?.[1];
-    if (!canonical) throw new Error("Missing lesson canonical in " + relative(ROOT, file));
-
-    for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
-      const href = attribute(match[0], "href");
-      if (!href || href.startsWith("#") || /^(?:mailto|tel):/i.test(href)) continue;
-      const resolved = new URL(decodeHtml(href), canonical);
-      if (
-        resolved.origin !== ORIGIN ||
-        !resolved.pathname.includes("/courses/claude-code-guide/")
-      ) {
-        continue;
-      }
-
-      checkedLinks += 1;
-      // The link itself must be a built route. Following the redirect table
-      // here would forgive exactly the glued lesson pairs the table lists.
-      const sourcePath = canonicalPath(resolved.pathname);
-      if (resolveConcatenatedLessonPath(sourcePath) !== null) {
-        gluedLinks.push(`${relative(ROOT, file)}: ${href} glues two lesson slugs (${sourcePath})`);
-      }
-      const generatedFile = join(DIST, sourcePath.slice(1), "index.html");
-      if (!existsSync(generatedFile)) {
-        addViolation(violations, file, href, ORIGIN + sourcePath);
-      }
-    }
-  }
-
-  expect(checkedLinks).toBeGreaterThan(100);
-  expect(gluedLinks).toEqual([]);
-  expect(violations).toEqual([]);
-});
-
 it("emits one apex HTTPS slash identity for every internal document URL", async () => {
   const violations: Violation[] = [];
 
   filesUnder(DIST, ".html").forEach((file) => auditHtml(violations, file));
-  [
-    "sitemap-index.xml",
-    "sitemap-ru.xml",
-    "sitemap-en.xml",
-    "rss.xml",
-    "en/rss.xml",
-    "courses/claude-code-guide/rss.xml",
-    "en/courses/claude-code-guide/rss.xml",
-  ].forEach((file) => auditXmlArtifact(violations, join(DIST, file)));
+  ["sitemap-index.xml", "sitemap-ru.xml", "sitemap-en.xml", "rss.xml", "en/rss.xml"].forEach(
+    (file) => auditXmlArtifact(violations, join(DIST, file)),
+  );
   ["feed.json", "en/feed.json"].forEach((file) => auditJsonFeed(violations, join(DIST, file)));
   // llms.txt and llms-full.txt are generated at request time (no dist file).
   auditText(violations, "llms.txt", await (await getLlmsTxt({} as APIContext)).text());

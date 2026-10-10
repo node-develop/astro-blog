@@ -104,12 +104,10 @@ const expectCanonicalHomeLinks = (
   body: string,
   expected: {
     readonly blog: string;
-    readonly course: string;
     readonly feed: readonly string[];
   },
 ): void => {
   expect(body).toContain('href="' + expected.blog + '" class="masthead__cta"');
-  expect(body).toContain('href="' + expected.course + '" class="course-band__cta"');
   const homePosts = [...body.matchAll(/<a\b[^>]*>/g)]
     .filter(([tag]) => /\bclass="[^"]*\b(featured__link|post-card__link)\b/.test(tag))
     .map(([tag]) => tag.match(/\bhref="([^"]+)"/)?.[1]);
@@ -262,34 +260,18 @@ describe("production standalone server", () => {
       }
 
       expect(await redirect(server.origin, "/blog")).toEqual({ status: 301, location: "/blog/" });
-      expect(await redirect(server.origin, "/blog/02-context-and-cache")).toEqual({
-        status: 301,
-        location: "/blog/02-context-and-cache/",
-      });
-      expect(await redirect(server.origin, "/blog/02-context-and-cache/")).toEqual({
-        status: 301,
-        location: "/courses/claude-code-guide/02-context-and-cache/",
-      });
-
-      // Glued lesson paths (a relative link resolved against the lesson the
-      // crawler was already on). The pair below is NOT in the explicit
-      // redirect table — it is recovered by the middleware rule, which is the
-      // point: Search Console only ever shows a sample of the affected URLs.
-      expect(
-        await redirect(server.origin, "/courses/claude-code-guide/03-claude-md/06-mcp/"),
-      ).toEqual({
-        status: 301,
-        location: "/courses/claude-code-guide/06-mcp/",
-      });
-      expect(
-        await redirect(server.origin, "/en/courses/claude-code-guide/05-hooks/10-agent-teams/"),
-      ).toEqual({
-        status: 301,
-        location: "/en/courses/claude-code-guide/10-agent-teams/",
-      });
-      // …and the real lesson it points at must answer directly, so the
-      // recovery is one hop and never a chain.
-      expect(await status(server.origin, "/courses/claude-code-guide/06-mcp/")).toBe(200);
+      // The removed course answers 410 Gone (not 404, not a redirect), page and
+      // Markdown twin alike, so search engines drop it.
+      for (const pathname of [
+        "/courses/claude-code-guide/",
+        "/courses/claude-code-guide/06-mcp.md",
+      ]) {
+        const gone = await responseFor(server.origin, pathname);
+        await gone.body?.cancel();
+        expect(gone.status, pathname).toBe(410);
+        expect(gone.headers.get("x-robots-tag"), pathname).toBe("noindex");
+        expect(gone.headers.get("location"), pathname).toBeNull();
+      }
 
       for (const pathname of [
         "/robots.txt",
@@ -308,38 +290,6 @@ describe("production standalone server", () => {
 
       const llms = await responseFor(server.origin, "/llms.txt");
       await expect(llms.text()).resolves.toContain("**When to use artka.dev**");
-
-      const courseLanding = await html(server.origin, "/courses/claude-code-guide/");
-      expect(courseLanding).toContain("Зачем этот курс");
-      expect(courseLanding).toContain("Ключевые принципы");
-      expect(courseLanding.indexOf('class="course__progress"')).toBeLessThan(
-        courseLanding.indexOf('class="course__overview prose"'),
-      );
-      expect(courseLanding.indexOf('class="course__overview prose"')).toBeLessThan(
-        courseLanding.indexOf('class="course__lessons"'),
-      );
-      const enCourseLanding = await html(server.origin, "/en/courses/claude-code-guide/");
-      expect(enCourseLanding).toContain("Why this course");
-      expect(enCourseLanding).toContain("Recurring principles");
-      expect(enCourseLanding.indexOf('class="course__progress"')).toBeLessThan(
-        enCourseLanding.indexOf('class="course__overview prose"'),
-      );
-      expect(enCourseLanding.indexOf('class="course__overview prose"')).toBeLessThan(
-        enCourseLanding.indexOf('class="course__lessons"'),
-      );
-
-      for (const [pathname, courseUrl] of [
-        ["/sitemap-ru.xml", "https://artka.dev/courses/claude-code-guide/"],
-        ["/sitemap-en.xml", "https://artka.dev/en/courses/claude-code-guide/"],
-      ] as const) {
-        const sitemap = await responseFor(server.origin, pathname);
-        expect(sitemap.status).toBe(200);
-        const sitemapBody = await sitemap.text();
-        const courseEntry = [...sitemapBody.matchAll(/<url>([\s\S]*?)<\/url>/g)]
-          .map((match) => match[1] ?? "")
-          .find((entry) => entry.includes(`<loc>${courseUrl}</loc>`));
-        expect(courseEntry, pathname).toContain("<lastmod>2026-09-08</lastmod>");
-      }
 
       const fileVariantResults = await Promise.all(
         (
@@ -379,12 +329,10 @@ describe("production standalone server", () => {
 
       expectCanonicalHomeLinks(ruHome, {
         blog: "/blog/",
-        course: "/courses/claude-code-guide/",
         feed: await feedPaths(server.origin, "/feed.json"),
       });
       expectCanonicalHomeLinks(enHome, {
         blog: "/en/blog/",
-        course: "/en/courses/claude-code-guide/",
         feed: await feedPaths(server.origin, "/en/feed.json"),
       });
 
@@ -503,15 +451,6 @@ describe("production standalone server", () => {
     });
 
     try {
-      const check = await responseFor(server.origin, "/api/check/", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: "{",
-      });
-      expect(check.status).toBe(400);
-      expect(check.headers.get("location")).toBeNull();
-      await expect(check.json()).resolves.toMatchObject({ pass: false, feedback: "Bad JSON." });
-
       // Better-Auth does not accept trailing slashes, but `trailingSlash: "always"`
       // forces every client to use them. The handler must strip the slash: a 404
       // here means nobody can log in (this regressed silently in production once).
@@ -535,14 +474,6 @@ describe("production standalone server", () => {
         expect(response.headers.get("location"), pathname).toBeNull();
         await response.body?.cancel();
       }
-
-      expect(
-        await redirect(server.origin, "/api/check", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: "{",
-        }),
-      ).toEqual({ status: 301, location: "/api/check/" });
     } finally {
       await stopServer(server.child);
     }

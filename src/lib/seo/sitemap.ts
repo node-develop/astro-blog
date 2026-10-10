@@ -21,8 +21,6 @@ interface OrderedPost {
 export interface SitemapInput {
   readonly locale: Locale;
   readonly posts: readonly OrderedPost[];
-  readonly courseEntries: readonly ContentEntry[];
-  readonly lessonEntries: readonly ContentEntry[];
   readonly projectEntries: readonly ContentEntry[];
 }
 
@@ -45,17 +43,6 @@ export interface UrlEntry {
 const localePrefix = (locale: Locale): string => (locale === "en" ? "/en" : "");
 const bareSlug = (id: string): string => id.replace(/^en\//, "");
 const dateOnly = (value: Date): string => value.toISOString().slice(0, 10);
-
-const isLocaleCourse = (id: string, locale: Locale): boolean =>
-  locale === "en" ? id.endsWith("/en/_index") : !id.includes("/en/");
-
-const courseSlugFromId = (id: string): string => id.replace(/(?:\/en)?\/_index$/, "");
-
-const isLocaleLesson = (id: string, locale: Locale): boolean =>
-  locale === "en" ? id.includes("/en/") : !id.includes("/en/");
-
-const lessonCourseSlug = (id: string): string => id.replace(/\/(en\/)?[^/]+$/, "");
-const lessonBareSlug = (id: string): string => id.replace(/^.*\//, "");
 
 const isLocaleProject = (id: string, locale: Locale): boolean =>
   locale === "en" ? id.startsWith("en/") : !id.startsWith("en/");
@@ -107,24 +94,6 @@ export const buildLocaleSitemapEntries = (input: SitemapInput): readonly UrlEntr
           : {}),
       };
     }),
-    ...input.courseEntries
-      .filter((entry) => isLocaleCourse(entry.id, input.locale))
-      .map((entry) => ({
-        loc: canonicalUrl(`${prefix}/courses/${courseSlugFromId(entry.id)}/`),
-        lastmod: dateOnly(entry.data.updatedDate ?? entry.data.pubDate),
-        changefreq: "monthly",
-        priority: 0.9,
-      })),
-    ...input.lessonEntries
-      .filter((entry) => isLocaleLesson(entry.id, input.locale))
-      .map((entry) => ({
-        loc: canonicalUrl(
-          `${prefix}/courses/${lessonCourseSlug(entry.id)}/${lessonBareSlug(entry.id)}/`,
-        ),
-        lastmod: dateOnly(entry.data.updatedDate ?? entry.data.pubDate),
-        changefreq: "monthly",
-        priority: 0.7,
-      })),
     ...input.projectEntries
       .filter((entry) => isLocaleProject(entry.id, input.locale))
       .map((entry) => ({
@@ -247,19 +216,11 @@ ${items}
 };
 
 const loadLocaleEntries = async (locale: Locale): Promise<readonly UrlEntry[]> => {
-  const [posts, courseEntries, lessonEntries, projectEntries] = await Promise.all([
+  const [posts, projectEntries] = await Promise.all([
     getOrderedPosts({ locale }),
-    getCollection("course"),
-    getCollection("lesson"),
     getCollection("projects"),
   ]);
-  return buildLocaleSitemapEntries({
-    locale,
-    posts,
-    courseEntries,
-    lessonEntries,
-    projectEntries,
-  });
+  return buildLocaleSitemapEntries({ locale, posts, projectEntries });
 };
 
 export interface LocaleSitemaps {

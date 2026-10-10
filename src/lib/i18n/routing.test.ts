@@ -13,7 +13,6 @@ vi.mock("astro:content", () => {
     readonly data: {
       readonly draft?: boolean;
       readonly tags?: readonly string[];
-      readonly locale?: "ru" | "en";
     };
   }
   const posts: readonly MockEntry[] = [
@@ -41,31 +40,10 @@ vi.mock("astro:content", () => {
     { id: "now", data: {} },
     { id: "en/uses", data: {} },
   ];
-  const course: readonly MockEntry[] = [
-    { id: "guide/_index", data: { locale: "ru" } },
-    { id: "guide/en/_index", data: { locale: "en" } },
-    { id: "ru-only-course/_index", data: { locale: "ru" } },
-  ];
-  const lesson: readonly MockEntry[] = [
-    { id: "guide/01-paired", data: { locale: "ru" } },
-    { id: "guide/en/01-paired", data: { locale: "en" } },
-    { id: "guide/15-ru-only", data: { locale: "ru" } },
-    { id: "guide/en/16-en-only", data: { locale: "en" } },
-    // The EN file exists, but its frontmatter lacks `locale: en` (schema default
-    // is "ru"), so the EN lesson route does not build it.
-    { id: "guide/17-unflagged-twin", data: { locale: "ru" } },
-    { id: "guide/en/17-unflagged-twin", data: { locale: "ru" } },
-    // Both lesson files are fine, but the course has no EN landing, and lesson
-    // routes only iterate over courses of their own language.
-    { id: "ru-only-course/01-intro", data: { locale: "ru" } },
-    { id: "ru-only-course/en/01-intro", data: { locale: "en" } },
-  ];
   const collections: Readonly<Record<string, readonly MockEntry[]>> = {
     posts,
     projects,
     site,
-    course,
-    lesson,
   };
   return {
     getCollection: vi.fn(async (name: string, filter?: (e: MockEntry) => boolean) => {
@@ -182,25 +160,6 @@ describe("checkCounterpartExists", () => {
     expect(await checkCounterpartExists("/en/projects/en-only-project/", "en")).toBe(false);
   });
 
-  it("answers for course landings from the course collection", async () => {
-    expect(await checkCounterpartExists("/courses/guide/", "ru")).toBe(true);
-    expect(await checkCounterpartExists("/en/courses/guide/", "en")).toBe(true);
-    expect(await checkCounterpartExists("/courses/ru-only-course/", "ru")).toBe(false);
-  });
-
-  it("answers for lessons from the lesson collection", async () => {
-    expect(await checkCounterpartExists("/courses/guide/01-paired/", "ru")).toBe(true);
-    expect(await checkCounterpartExists("/en/courses/guide/01-paired/", "en")).toBe(true);
-    // The fifteenth lesson published in Russian only.
-    expect(await checkCounterpartExists("/courses/guide/15-ru-only/", "ru")).toBe(false);
-    expect(await checkCounterpartExists("/en/courses/guide/16-en-only/", "en")).toBe(false);
-  });
-
-  it("does not count an EN lesson file the EN route would not build", async () => {
-    expect(await checkCounterpartExists("/courses/guide/17-unflagged-twin/", "ru")).toBe(false);
-    expect(await checkCounterpartExists("/courses/ru-only-course/01-intro/", "ru")).toBe(false);
-  });
-
   it("answers for site entity pages from the site collection", async () => {
     expect(await checkCounterpartExists("/about/", "ru")).toBe(true);
     expect(await checkCounterpartExists("/en/about/", "en")).toBe(true);
@@ -209,14 +168,13 @@ describe("checkCounterpartExists", () => {
   });
 
   it("accepts the path with or without the trailing slash", async () => {
-    expect(await checkCounterpartExists("/courses/guide/01-paired", "ru")).toBe(true);
-    expect(await checkCounterpartExists("/courses/guide/15-ru-only", "ru")).toBe(false);
+    expect(await checkCounterpartExists("/projects/paired-project", "ru")).toBe(true);
     expect(await checkCounterpartExists("/projects/ru-only-project", "ru")).toBe(false);
   });
 
   // No unconditional "yes" is left for paths nobody vouches for: an unknown
   // address (what the runtime 404 renders) must not offer a second dead URL.
-  it.each(["/no-such-page/", "/courses/", "/courses/guide/01-paired/extra/", "/05-hooks"])(
+  it.each(["/no-such-page/", "/no-such-section/", "/projects/paired-project/extra/", "/05-hooks"])(
     "returns false for unknown path %s",
     async (pathname) => {
       expect(await checkCounterpartExists(pathname, "ru")).toBe(false);

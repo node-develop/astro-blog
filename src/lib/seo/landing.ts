@@ -30,7 +30,7 @@ export interface LandingScaffoldInput {
 
 /**
  * Pair of JSON-LD nodes to feed BaseLayout's `extraSchemaNodes` for any
- * landing-style page (entity, archive, course landing, …). The visible
+ * landing-style page (entity, archive, …). The visible
  * <Breadcrumbs> component should be rendered separately with the same
  * `breadcrumb` items so the visual trail and the JSON-LD agree.
  */

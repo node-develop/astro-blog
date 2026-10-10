@@ -4,7 +4,7 @@ description: What artka.dev processes and how analytics, browser settings, comme
 metaTitle: "Privacy: how this site handles your data"
 metaDescription: "What artka.dev collects: anonymous analytics, theme and language settings kept in your browser, and email enquiries. What it never collects, and why."
 lang: en
-sourceHash: d30cf0026b3acf0f78265712dbe1b45bf3adb28d1471658a6250aeb76233f453
+sourceHash: ec026e347967e71ae2701fa36165d826f3c9b4d531772aa2a451756ccce9dc0f
 manuallyEdited: false
 ---
 
@@ -27,18 +27,13 @@ produce aggregate page-view statistics. Hosting and security systems may also
 temporarily process an IP address, User-Agent, requested URL, and request time in
 technical logs in order to deliver pages, diagnose failures, and prevent abuse.
 
-Theme preferences and course progress are stored in your browser with
-`localStorage`; interactive exercise answers may use `sessionStorage`. The chosen
+Theme preferences are stored in your browser with `localStorage`. The chosen
 language is stored in the `lang-pref` cookie. These values support site features
 and are not an advertising profile. You can remove them in your browser settings,
-although doing so may reset your theme, language, exercise state, or course
-progress.
+although doing so may reset your theme or language.
 
 If a user signs in, Better Auth creates a session cookie and the server stores the
-account and session records required for authentication. Completed lessons may be
-synchronized to the database for an authenticated user so progress is available
-across devices. An anonymous reader's course progress remains in browser
-`localStorage`.
+account and session records required for authentication.
 
 ## External services and links
 

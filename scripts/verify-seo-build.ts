@@ -224,7 +224,7 @@ const OG_SCANNED_EXTENSIONS: ReadonlySet<string> = new Set([".ts"]);
 /**
  * Every file under the root, whatever its type: a file the scanner cannot
  * read must be reported, not dropped. A recursive readdir also lists the
- * folders themselves (`landing`, `[course]`), hence the Dirent filter.
+ * folders themselves (`landing`, `project`), hence the Dirent filter.
  *
  * The one exception is an extensionless dotfile (`.DS_Store`, `.gitkeep`): the
  * OS or git puts those there, no module can import them, and refusing them

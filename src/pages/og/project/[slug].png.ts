@@ -20,7 +20,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const projects: ReadonlyArray<Project> = await getCollection("projects");
 
   const paths: Array<{ params: { slug: string }; props: { title: string; eyebrow: string } }> = [];
-  // Same fail-loud guard as the post and lesson routes: a card silently taken
+  // Same fail-loud guard as the post route: a card silently taken
   // over by another project would be shared with the wrong title and the
   // wrong language, and the build would still say it succeeded.
   const claimedBy = new Map<string, string>();

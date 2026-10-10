@@ -16,17 +16,6 @@ const post = (locale: "ru" | "en", slug: string, words: number): LlmsInput["ruPo
 const small: LlmsInput = {
   ruPosts: [post("ru", "a", 200)],
   enPosts: [post("en", "a", 200)],
-  ruLessons: [
-    {
-      courseSlug: "c",
-      courseTitle: "Course",
-      slug: "01-x",
-      title: "01. X",
-      description: "d",
-      position: 1,
-    },
-  ],
-  enLessons: [],
 };
 
 describe("buildLlmsFull", () => {
@@ -43,7 +32,6 @@ describe("buildLlmsFull", () => {
     expect(out.text).toContain("Updated: 2026-06-01");
     expect(out.text).toContain("URL: https://artka.dev/en/blog/a/");
     expect(out.text).toContain("word199");
-    expect(out.text).toContain("1. 01. X → https://artka.dev/courses/c/01-x.md");
     expect(out.text).toContain("X-Robots-Tag: noindex");
   });
 

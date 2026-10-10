@@ -2,9 +2,9 @@
 title: Contact
 description: How to contact Artyom Kashuta about articles, AI agents, Claude Code, and engineering projects.
 metaTitle: "Contact: how to reach Artyom Kashuta by email"
-metaDescription: "How to reach the author of artka.dev: email, GitHub and other profiles. Write about the articles, the Claude Code Guide course or a bug on the site."
+metaDescription: "How to reach the author of artka.dev: email, GitHub and other profiles. Write about the articles, the projects, AI agents or a bug on the site."
 lang: en
-sourceHash: 76d1ae506eda105f5c61bcf6e79e4e24335df5d66b8140efa79309337ad34309
+sourceHash: dc4f205af7539f47969907cf9ca70b107b3885375440c9aa3c969eb0822ac2b9
 manuallyEdited: false
 ---
 
@@ -12,7 +12,7 @@ manuallyEdited: false
 
 The primary and most reliable contact channel is email:
 [a@artka.dev](mailto:a@artka.dev). Messages are read by Artyom Kashuta, the author
-of artka.dev. Please include the relevant article, course, or project URL and a
+of artka.dev. Please include the relevant article or project URL and a
 short description of the outcome you need. That context makes it much easier to
 give a useful answer without a long discovery exchange.
 

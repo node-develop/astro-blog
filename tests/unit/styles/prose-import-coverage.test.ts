@@ -10,20 +10,15 @@ import { join } from "node:path";
  * in src/styles/content.css, a second Tailwind entry split out of
  * global.css so non-content pages (/, /blog/, /tags, 404, /admin) don't
  * ship it. Every file that renders `class="prose"` must either import
- * content.css directly, or be one of the three layouts that already do
- * (PostLayout, LessonLayout, CourseLayout) — a page using those layouts
- * gets the styling transitively. This guards against a future `.prose`
+ * content.css directly, or be the layout that already does (PostLayout)
+ * — a page using that layout gets the styling transitively. This guards against a future `.prose`
  * page shipping unstyled markdown.
  */
 
 const PROSE_CLASS_RE = /class="[^"]*\bprose\b[^"]*"/;
 const CONTENT_IMPORT_RE = /import\s+["']~\/styles\/content\.css["']/;
 
-const LAYOUTS_THAT_IMPORT_CONTENT_CSS = [
-  "src/layouts/PostLayout.astro",
-  "src/layouts/LessonLayout.astro",
-  "src/layouts/CourseLayout.astro",
-] as const;
+const LAYOUTS_THAT_IMPORT_CONTENT_CSS = ["src/layouts/PostLayout.astro"] as const;
 
 const walkAstroFiles = (dir: string, acc: string[] = []): string[] => {
   for (const entry of readdirSync(dir)) {
@@ -35,8 +30,7 @@ const walkAstroFiles = (dir: string, acc: string[] = []): string[] => {
   return acc;
 };
 
-const usesOneOfTheProseLayouts = (source: string): boolean =>
-  /<(PostLayout|LessonLayout|CourseLayout)\b/.test(source);
+const usesOneOfTheProseLayouts = (source: string): boolean => /<PostLayout\b/.test(source);
 
 describe("every .prose consumer loads content.css (directly or via layout)", () => {
   const root = process.cwd();

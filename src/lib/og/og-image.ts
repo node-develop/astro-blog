@@ -10,7 +10,6 @@
  * template in a layout:
  *   - posts    → `postOgPath()`    in `./post-pages`    (/og/<slug>-<locale>.png)
  *   - landings → `landingOgPath()` in `./landing-pages` (/og/landing/<page>-<locale>.png)
- *   - lessons  → `lessonOgPath()`  in `./lesson-pages`  (/og/lesson/<course>/<lesson>-<locale>.png)
  *
  * The byline is NOT a free-form string: it defaults to the canonical author
  * from `~/lib/seo/person`. A hardcoded name here ships on every card of the
@@ -19,10 +18,8 @@
  *
  * Fonts live in `src/assets/og-fonts/` (never served publicly from
  * `public/`); the renderer needs the binary, not a CSS @font-face. Every
- * caller *here* runs at build time (SSG, no `prerender = false`). The same
- * four files are read at runtime by the one non-prerendered Satori route,
- * `/courses/<slug>/certificate.png`, which is why the Dockerfile copies that
- * directory into the runtime image.
+ * caller runs at build time (SSG, no `prerender = false`), so the runtime
+ * image does not need the font files.
  *
  * Layout: 1200×630 poster billboard — lime ground in a thick ink frame,
  * Unbounded title, Golos Text eyebrow and byline. The card is the article's

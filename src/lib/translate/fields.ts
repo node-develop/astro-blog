@@ -55,10 +55,6 @@ export const SCHEMAS: Record<TranslateCollection, CollectionSchema> = {
       "heroTitle",
       "heroLede",
       "heroCta",
-      "courseEyebrow",
-      "courseTitle",
-      "courseLede",
-      "courseCta",
       "latestLabel",
       "authorLabel",
       "authorBio",
@@ -73,17 +69,6 @@ export const SCHEMAS: Record<TranslateCollection, CollectionSchema> = {
     stringFields: ["title", "description", "role", "coverAlt"],
     arrayFields: ["outcomes"],
     linkLabels: true,
-    skipDrafts: false,
-  },
-  courses: {
-    // Course landing _index.md typically has title + blurb.
-    stringFields: ["title", "blurb", "description"],
-    arrayFields: [],
-    skipDrafts: false,
-  },
-  lessons: {
-    stringFields: ["title", "blurb", "description"],
-    arrayFields: [],
     skipDrafts: false,
   },
 };

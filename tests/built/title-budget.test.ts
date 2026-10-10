@@ -22,12 +22,6 @@ const readStrings = (rel: string): Record<string, string> =>
 const ruStrings = readStrings("src/i18n/strings.ru.json");
 const enStrings = readStrings("src/i18n/strings.en.json");
 
-/** Lesson files of a course directory, `_index.md` excluded, in lesson order. */
-const lessonFiles = (dir: string): readonly string[] =>
-  readdirSync(repoFile(dir))
-    .filter((file) => file.endsWith(".md") && file !== "_index.md")
-    .sort();
-
 const frontmatter = (rel: string): Record<string, unknown> => {
   const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(read(rel))?.[1];
   if (block === undefined) throw new Error(`No frontmatter in ${rel}`);
@@ -76,33 +70,6 @@ const metaContent = (html: string, attr: "property" | "name", key: string): stri
 /** File under dist/client that a built page's absolute `og:image` URL refers to. */
 const builtImageFile = (image: string | undefined): string =>
   join("dist/client", new URL(image ?? "", "https://artka.dev").pathname);
-
-/** Course content folders next to the folders their lesson pages are built into. */
-const builtCourses = [
-  {
-    content: "src/content/courses/claude-code-guide",
-    built: "dist/client/courses/claude-code-guide",
-  },
-  {
-    content: "src/content/courses/claude-code-guide/en",
-    built: "dist/client/en/courses/claude-code-guide",
-  },
-] as const;
-
-interface BuiltLesson {
-  readonly page: string;
-  /** The lesson's own `title` from its frontmatter. */
-  readonly own: string;
-  readonly html: string;
-}
-
-const builtLessons = (): readonly BuiltLesson[] =>
-  builtCourses.flatMap(({ content, built }) =>
-    lessonFiles(content).map((file) => {
-      const page = `${built}/${file.replace(/\.md$/, "")}/index.html`;
-      return { page, own: str(`${content}/${file}`, "title"), html: read(page) };
-    }),
-  );
 
 describe("landing and archive titles fit the budget", () => {
   const entityMeta = (page: string, locale: "ru" | "en"): string => {
@@ -168,47 +135,6 @@ describe("landing and archive titles fit the budget", () => {
   });
 });
 
-describe("lesson titles", () => {
-  const courseDirs = [
-    "src/content/courses/claude-code-guide",
-    "src/content/courses/claude-code-guide/en",
-  ] as const;
-
-  const lessons = courseDirs.flatMap((dir) => {
-    const course = str(`${dir}/_index.md`, "title");
-    return lessonFiles(dir).map((file) => ({
-      id: `${dir}/${file}`,
-      lesson: str(`${dir}/${file}`, "title"),
-      course,
-    }));
-  });
-
-  it("finds the course lessons", () => {
-    expect(lessons.length).toBeGreaterThan(0);
-  });
-
-  // Content check only: it shows the titles CAN fit if the layout applies the
-  // rule. What the layout actually renders is asserted on the built pages below.
-  it("renders every lesson <title> inside the budget, or as the lesson's own title and nothing more", () => {
-    const pages = builtLessons();
-    expect(pages.length).toBeGreaterThan(0);
-    for (const { page, own, html } of pages) {
-      const title = builtTitle(html);
-      expect(title, page).toBeDefined();
-      // Over budget is acceptable only when the layout added nothing at all:
-      // then the length is the writer's call, not something a layout can fix.
-      expect((title ?? "").length <= TITLE_BUDGET || title === own, `${page}: ${title}`).toBe(true);
-    }
-  });
-
-  it("only ever appends to the lesson's own title — no number or label in front of it", () => {
-    for (const { page, own, html } of builtLessons()) {
-      const title = builtTitle(html) ?? "";
-      expect(title.startsWith(own), `${page}: ${title}`).toBe(true);
-    }
-  });
-});
-
 // 6a37f98 fixed pages that ignored metadata they already had: the values were
 // in the frontmatter, the templates never read them. Scoring the frontmatter
 // (above) cannot see that bug coming back; only the rendered page can.
@@ -229,43 +155,6 @@ describe("entity pages render the metadata written for them", () => {
       ({ source }) => str(source, "metaTitle") !== str(source, "title"),
     );
     expect(distinct.length).toBeGreaterThan(0);
-  });
-});
-
-// Every lesson used to share the site-wide placeholder, so a lesson posted to
-// a social network looked like any other page. The rule is about what a
-// crawler receives, so it is asserted on the built pages, not on the layout
-// source: which helper builds the path is free to change, the outcome is not.
-describe("lessons get their own preview card", () => {
-  /** `og:image` of every built lesson page. */
-  const lessonCards = (): readonly {
-    readonly page: string;
-    readonly image: string | undefined;
-  }[] =>
-    builtLessons().map(({ page, html }) => ({
-      page,
-      image: metaContent(html, "property", "og:image"),
-    }));
-
-  it("never falls back to the site placeholder", () => {
-    const cards = lessonCards();
-    expect(cards.length).toBeGreaterThan(0);
-    for (const { page, image } of cards) {
-      expect(image, page).toBeDefined();
-      expect(image, page).not.toMatch(/og-default\.(svg|png)/);
-    }
-  });
-
-  it("points at an image the build actually produced", () => {
-    for (const { page, image } of lessonCards()) {
-      const file = builtImageFile(image);
-      expect(existsSync(repoFile(file)), `${page} -> ${file}`).toBe(true);
-    }
-  });
-
-  it("does not share one card between two lessons or two locales", () => {
-    const images = lessonCards().map(({ image }) => image);
-    expect(new Set(images).size).toBe(images.length);
   });
 });
 

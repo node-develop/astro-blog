@@ -7,8 +7,8 @@
  *   src/pages/og/landing/[slug].png.ts — which runs in Astro build context
  *   (getStaticPaths). getEntry from astro:content is safe there (C-2 confirmed).
  *
- * home and course-ccg titles are now read from home.md via getEntry so they
- * stay in sync with what the admin edits. tags.title remains in strings.json
+ * The home title is read from home.md via getEntry so it stays in sync with
+ * what the admin edits. tags.title remains in strings.json
  * (used on /tags, /en/tags, tags OG) — not touched here.
  */
 import { getEntry } from "astro:content";
@@ -20,16 +20,7 @@ import { OG_BRAND_UPPER } from "./brand";
 // card that says which section of the site they belong to, nothing more.
 // They are listed here rather than given a third mechanism of their own.
 export type LandingPage =
-  | "home"
-  | "blog"
-  | "tags"
-  | "about"
-  | "now"
-  | "uses"
-  | "projects"
-  | "course-ccg"
-  | "contact"
-  | "privacy";
+  "home" | "blog" | "tags" | "about" | "now" | "uses" | "projects" | "contact" | "privacy";
 
 interface LandingMeta {
   readonly page: LandingPage;
@@ -49,7 +40,6 @@ const RU_SECTIONS: Record<LandingPage, string> = {
   now: "СЕЙЧАС",
   uses: "USES",
   projects: "ПРОЕКТЫ",
-  "course-ccg": "КУРС",
   contact: "КОНТАКТЫ",
   privacy: "КОНФИДЕНЦИАЛЬНОСТЬ",
 };
@@ -62,7 +52,6 @@ const EN_SECTIONS: Record<LandingPage, string> = {
   now: "NOW",
   uses: "USES",
   projects: "PROJECTS",
-  "course-ccg": "COURSE",
   contact: "CONTACT",
   privacy: "PRIVACY",
 };
@@ -75,7 +64,6 @@ const PAGES: ReadonlyArray<LandingPage> = [
   "now",
   "uses",
   "projects",
-  "course-ccg",
   "contact",
   "privacy",
 ];
@@ -85,7 +73,7 @@ const eyebrowFor = (page: LandingPage, locale: Locale): string =>
 
 /**
  * Returns title strings for pages that still use strings.json.
- * home and course-ccg are handled via getEntry — excluded here.
+ * home is handled via getEntry — excluded here.
  */
 const staticTitleFor = (page: LandingPage, locale: Locale): string | null => {
   switch (page) {
@@ -111,8 +99,8 @@ const staticTitleFor = (page: LandingPage, locale: Locale): string | null => {
 };
 
 /**
- * Async — reads home.md / en/home.md for the title fields that are now
- * stored in content (home, course-ccg). All callsites must await this.
+ * Async — reads home.md / en/home.md for the home title, which is stored in
+ * content. All callsites must await this.
  *
  * C-1: one callsite in src/pages/og/landing/[slug].png.ts (getStaticPaths).
  * Updated to await in the same PR.
@@ -128,22 +116,10 @@ export const allLandingMeta = async (): Promise<ReadonlyArray<LandingMeta>> => {
     return entry?.data.metaTitle ?? (locale === "ru" ? "Главная" : "Home");
   };
 
-  const courseCcgTitle = (locale: Locale): string => {
-    const entry = locale === "en" ? homeEn : homeRu;
-    return entry?.data.courseTitle ?? (locale === "ru" ? "Курс" : "Course");
-  };
-
   const out: LandingMeta[] = [];
   for (const page of PAGES) {
     for (const locale of ["ru", "en"] as const) {
-      let title: string;
-      if (page === "home") {
-        title = homeTitle(locale);
-      } else if (page === "course-ccg") {
-        title = courseCcgTitle(locale);
-      } else {
-        title = staticTitleFor(page, locale) ?? page;
-      }
+      const title = page === "home" ? homeTitle(locale) : (staticTitleFor(page, locale) ?? page);
       out.push({ page, locale, title, eyebrow: eyebrowFor(page, locale) });
     }
   }

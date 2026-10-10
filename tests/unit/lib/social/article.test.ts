@@ -41,12 +41,6 @@ describe("loadFileArticle", () => {
     expect(article.hasEnTwin).toBe(true);
   });
 
-  it("populates hasEnTwin:false for a post without EN twin", async () => {
-    // claude.md has no EN twin in src/content/posts/en/
-    const article = await loadFileArticle("claude");
-    expect(article.hasEnTwin).toBe(false);
-  });
-
   it("hands social networks an absolute image URL, not the site-relative placeholder", async () => {
     // local-coding-agent has `cover: /og-default.png`: the draft must carry the
     // post's own card instead.

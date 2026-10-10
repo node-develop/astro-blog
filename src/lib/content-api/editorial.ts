@@ -86,7 +86,7 @@ export const checkSources = (document: ArticleDocument): readonly EditorialFindi
 
 // ── Internal links ─────────────────────────────────────────────────────────
 
-const INTERNAL = /^\/(?:en\/)?(blog|courses)\/([^?#]+)/;
+const INTERNAL = /^\/(?:en\/)?(blog)\/([^?#]+)/;
 /** `/blog/x/`, `/en/blog/x` and `/blog/x/#a` are one link: `blog/x`. A self link is no link. */
 const internalKey = (url: string, ownSlug: string): string | null => {
   const match = INTERNAL.exec(url);
@@ -98,7 +98,7 @@ const internalKey = (url: string, ownSlug: string): string | null => {
 };
 
 /**
- * Links to /blog/ and /courses/ (either language prefix: a translation keeps the RU links until
+ * Links to /blog/ (either language prefix: a translation keeps the RU links until
  * someone rewrites them) plus `relatedSlugs`, as one set of distinct targets.
  */
 export const checkInternalLinks = (
@@ -117,7 +117,7 @@ export const checkInternalLinks = (
         {
           code: "too_few_internal_links",
           key: "too_few_internal_links",
-          message: `The article links to ${targets.size} other pages of the site; publishing needs at least ${EDITORIAL_LIMITS.minInternalLinks} (body links to /blog/ or /courses/, or relatedSlugs).`,
+          message: `The article links to ${targets.size} other pages of the site; publishing needs at least ${EDITORIAL_LIMITS.minInternalLinks} (body links to /blog/, or relatedSlugs).`,
           context: { links: targets.size, min: EDITORIAL_LIMITS.minInternalLinks },
         },
       ];

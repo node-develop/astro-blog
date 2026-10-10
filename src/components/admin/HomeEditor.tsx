@@ -23,10 +23,6 @@ export interface HomeData {
   heroCta?: string;
   sealPhrase?: string;
   tickerItems?: string;
-  courseEyebrow?: string;
-  courseTitle?: string;
-  courseLede?: string;
-  courseCta?: string;
   latestLabel?: string;
   authorLabel?: string;
   authorBio?: string;
@@ -48,7 +44,6 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 const MULTILINE_FIELDS: ReadonlyArray<keyof HomeData> = [
   "heroLede",
   "tickerItems",
-  "courseLede",
   "authorBio",
   "metaDescription",
 ];
@@ -61,10 +56,6 @@ const FIELD_LABELS: Record<keyof HomeData, string> = {
   heroCta: "Hero CTA",
   sealPhrase: "Seal Phrase (текст по кругу печати)",
   tickerItems: "Ticker Items (по одному в строке)",
-  courseEyebrow: "Course Eyebrow",
-  courseTitle: "Course Title",
-  courseLede: "Course Lede",
-  courseCta: "Course CTA",
   latestLabel: "Latest Label",
   authorLabel: "Author Label",
   authorBio: "Author Bio",
@@ -81,10 +72,6 @@ const FIELD_ORDER: ReadonlyArray<keyof HomeData> = [
   "heroCta",
   "sealPhrase",
   "tickerItems",
-  "courseEyebrow",
-  "courseTitle",
-  "courseLede",
-  "courseCta",
   "latestLabel",
   "authorLabel",
   "authorBio",
@@ -101,10 +88,6 @@ const emptyData = (): HomeData => ({
   heroCta: "",
   sealPhrase: "",
   tickerItems: "",
-  courseEyebrow: "",
-  courseTitle: "",
-  courseLede: "",
-  courseCta: "",
   latestLabel: "",
   authorLabel: "",
   authorBio: "",

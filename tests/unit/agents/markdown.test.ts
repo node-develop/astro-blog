@@ -22,7 +22,7 @@ describe("agent-facing Markdown", () => {
     });
 
     expect(markdown).toMatch(/^# artka\.dev/m);
-    expect(markdown).toContain("https://artka.dev/en/courses/claude-code-guide/");
+    expect(markdown).toContain("https://artka.dev/en/projects/");
     expect(markdown).toContain("https://artka.dev/en/contact/");
     expect(markdown).toContain("https://artka.dev/llms.txt");
     expect(markdown).toContain("Context and cache");
@@ -51,7 +51,6 @@ describe("renderDocumentMarkdown", () => {
       pubDate: new Date("2026-05-01T10:00:00.000Z"),
       updatedDate: new Date("2026-06-01T10:00:00.000Z"),
       tags: ["claude-code", "guide"],
-      extra: [["lesson", "1 of 14"]],
       body: "\n\n## Раздел\n\nТекст.\n",
     });
 
@@ -67,7 +66,6 @@ describe("renderDocumentMarkdown", () => {
         "published: 2026-05-01",
         "updated: 2026-06-01",
         "tags: [claude-code, guide]",
-        "lesson: 1 of 14",
         "---",
         "",
         '# Заголовок "в кавычках"',

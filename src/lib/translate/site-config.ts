@@ -9,9 +9,6 @@ export const PATHS = {
   siteEnDir: join(ROOT, "src/content/site/en"),
   projectsDir: join(ROOT, "src/content/projects"),
   projectsEnDir: join(ROOT, "src/content/projects/en"),
-  // Courses collection holds both the course landing (`<slug>/_index.md`) and
-  // its lessons (`<slug>/<NN>-<title>.md`). EN twins go to `<slug>/en/...`.
-  coursesDir: join(ROOT, "src/content/courses"),
   i18nDir: join(ROOT, "src/i18n"),
 } as const;
 
@@ -23,12 +20,8 @@ export const PATHS = {
  *   - posts:    "json-ld-graph-astro"
  *   - site:     "about" | "now" | "uses"
  *   - projects: "astro-blog"
- *   - courses:  "claude-code-guide"
- *               (resolves to `<slug>/_index.md` — the landing page)
- *   - lessons:  "claude-code-guide/01-introduction"
- *               (course slug + lesson slug, slash-separated)
  */
-export type TranslateCollection = "posts" | "site" | "projects" | "courses" | "lessons";
+export type TranslateCollection = "posts" | "site" | "projects";
 
 export interface CollectionPaths {
   readonly ruPath: string;
@@ -59,26 +52,5 @@ export const resolveCollectionPaths = (
         enPath: join(PATHS.projectsEnDir, `${slug}.md`),
         extension: ".md",
       };
-    case "courses":
-      // Course landing page: <slug>/_index.md → en/<slug>/en/_index.md
-      return {
-        ruPath: join(PATHS.coursesDir, slug, "_index.md"),
-        enPath: join(PATHS.coursesDir, slug, "en", "_index.md"),
-        extension: ".md",
-      };
-    case "lessons": {
-      // "claude-code-guide/01-introduction" → split into course/lesson.
-      const idx = slug.indexOf("/");
-      if (idx <= 0 || idx === slug.length - 1) {
-        throw new Error(`Lesson slug must be '<course>/<lesson>'; got '${slug}'`);
-      }
-      const course = slug.slice(0, idx);
-      const lesson = slug.slice(idx + 1);
-      return {
-        ruPath: join(PATHS.coursesDir, course, `${lesson}.md`),
-        enPath: join(PATHS.coursesDir, course, "en", `${lesson}.md`),
-        extension: ".md",
-      };
-    }
   }
 };

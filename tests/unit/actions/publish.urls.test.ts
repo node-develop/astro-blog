@@ -22,12 +22,4 @@ describe("publishedUrlsFor (IndexNow url set)", () => {
   it("home maps to the two locale roots", () => {
     expect(publishedUrlsFor("site", "home", true)).toEqual(["/", "/en/"]);
   });
-
-  it("lesson pings the lesson pair and the course landing", () => {
-    expect(publishedUrlsFor("lessons", "claude-code-guide/01-introduction", true)).toEqual([
-      "/courses/claude-code-guide/01-introduction/",
-      "/en/courses/claude-code-guide/01-introduction/",
-      "/courses/claude-code-guide/",
-    ]);
-  });
 });

@@ -28,8 +28,6 @@ const posts = await getOrderedPosts({ locale });
 applyPublicHtmlCache(Astro.request, Astro.response.headers);
 const allTags = Array.from(new Set(posts.flatMap((p: PostWithMeta) => p.entry.data.tags))).sort();
 const blogHref = locale === "en" ? "/en/blog/" : "/blog/";
-const courseHref =
-  locale === "en" ? "/en/courses/claude-code-guide/" : "/courses/claude-code-guide/";
 const gridVariants = assignArtVariants(posts.map((p: PostWithMeta) => bareSlug(p.entry.id)));
 const initialPosts = posts.slice(0, BLOG_PAGE_SIZE);
 const hasMore = posts.length > BLOG_PAGE_SIZE;
@@ -100,12 +98,6 @@ const webPageNode = buildWebPageNode({
       <p class="list__eyebrow">{t(locale, "blog.eyebrow")}</p>
       <h1 class="list__title">{t(locale, "blog.title")}</h1>
     </header>
-
-    <a href={courseHref} class="list__course-banner">
-      <span class="list__course-label">{t(locale, "blog.courseBannerLabel")}</span>
-      <span class="list__course-title">{t(locale, "blog.courseBannerTitle")}</span>
-      <span class="list__course-cta">{t(locale, "blog.courseBannerCta")}</span>
-    </a>
 
     {
       allTags.length > 0 && (
@@ -188,52 +180,6 @@ const webPageNode = buildWebPageNode({
       margin: 0;
       color: var(--color-fg);
       letter-spacing: var(--tracking-tight);
-    }
-    .list__course-banner {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: var(--space-4);
-      align-items: baseline;
-      padding: var(--space-3) var(--space-4);
-      margin-bottom: var(--space-5);
-      border: 1px solid var(--color-accent);
-      border-radius: var(--radius-md);
-      background: var(--color-accent-subtle);
-      text-decoration: none;
-      transition: background var(--dur-fast) var(--ease-out);
-    }
-    .list__course-banner:hover {
-      background: var(--color-fill);
-      color: var(--color-on-fill);
-    }
-    .list__course-label {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
-      color: var(--color-fg);
-      font-weight: 700;
-    }
-    .list__course-title {
-      font-family: var(--font-serif);
-      font-size: var(--fs-base);
-      color: var(--color-fg);
-      line-height: var(--lh-snug);
-    }
-    .list__course-cta {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wide);
-      color: var(--color-fg);
-      white-space: nowrap;
-    }
-    @media (max-width: 600px) {
-      .list__course-banner {
-        grid-template-columns: 1fr;
-        gap: var(--space-2);
-      }
     }
     .list__tags {
       display: flex;

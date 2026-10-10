@@ -1,24 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("site navigation", () => {
-  test("course sidebar links to a lesson and marks it active", async ({ page }, testInfo) => {
-    // CourseSidebar is the only `slot="sidebar"` provider since the course
-    // launch (May 2026) retired the post list on "/". The desktop aside is
-    // hidden on phones, where the drawer test below covers navigation.
-    test.skip(testInfo.project.name === "iphone-se", "desktop-only sidebar");
-    await page.goto("/courses/claude-code-guide/");
-
-    const firstLink = page.locator(".layout__sidebar .sidebar__link").first();
-    const href = await firstLink.getAttribute("href");
-    expect(href).toBeTruthy();
-
-    await firstLink.click();
-    await expect(page).toHaveURL(href!);
-
-    const activeLink = page.locator('.sidebar__link[aria-current="page"]').first();
-    await expect(activeLink).toHaveAttribute("href", href!);
-  });
-
   test("TOC entry jumps to matching heading and highlights it", async ({ page }, testInfo) => {
     // BaseLayout hides .layout__toc under 1024px; the rail is desktop-only.
     test.skip(testInfo.project.name === "iphone-se", "desktop-only TOC rail");

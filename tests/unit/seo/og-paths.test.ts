@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { imageTypeOf, postOgPath, postOgSlug, postShareImage } from "~/lib/og/post-pages";
-import { lessonOgEyebrow, lessonOgPath, lessonOgSlug } from "~/lib/og/lesson-pages";
 import {
   bareProjectSlug,
   projectOgEyebrow,
@@ -38,28 +37,6 @@ describe("post OG image paths", () => {
     ] as const;
     const slugs = pairs.map(([slug, locale]) => postOgSlug(slug, locale));
     expect(new Set(slugs).size).toBe(pairs.length);
-  });
-});
-
-describe("lesson OG image paths", () => {
-  it("namespaces by course and locale", () => {
-    expect(lessonOgPath("claude-code-guide", "01-introduction", "ru")).toBe(
-      "/og/lesson/claude-code-guide/01-introduction-ru.png",
-    );
-    expect(lessonOgPath("claude-code-guide", "01-introduction", "en")).toBe(
-      "/og/lesson/claude-code-guide/01-introduction-en.png",
-    );
-    expect(lessonOgSlug("01-introduction", "ru")).not.toBe(lessonOgSlug("01-introduction", "en"));
-  });
-
-  it("labels the lesson position in the page's own language", () => {
-    const courseTitle = "Claude Code Guide";
-    expect(lessonOgEyebrow({ locale: "ru", index: 3, courseTitle })).toBe(
-      "УРОК 3 · CLAUDE CODE GUIDE",
-    );
-    expect(lessonOgEyebrow({ locale: "en", index: 3, courseTitle })).toBe(
-      "LESSON 3 · CLAUDE CODE GUIDE",
-    );
   });
 });
 

@@ -4,14 +4,9 @@ import {
   buildBreadcrumbListNode,
   buildWebPageNode,
   buildFaqPageNode,
-  buildCourseNode,
-  buildLearningResourceNode,
   buildPostItemListNode,
-  courseId,
   itemListId,
-  lessonId,
   minutesToIsoDuration,
-  parseWorkloadToIsoDuration,
 } from "~/lib/seo/nodes-page";
 import { graphIds } from "~/lib/seo/nodes-global";
 
@@ -203,133 +198,12 @@ describe("buildPostItemListNode", () => {
   });
 });
 
-describe("buildCourseNode / buildLearningResourceNode", () => {
-  const courseCanonical = "https://artka.dev/courses/claude-code-guide/";
-  const lessonUrls = [
-    "https://artka.dev/courses/claude-code-guide/01-introduction/",
-    "https://artka.dev/courses/claude-code-guide/02-context-and-cache/",
-  ];
-  const lessons = lessonUrls.map((url, index) => ({ url, name: `Lesson ${index + 1}` }));
-  const courseName = "Claude Code Guide";
-
-  it("emits a free online Course with workload, level and its lessons as defined parts", () => {
-    const node = buildCourseNode({
-      locale: "ru",
-      canonical: courseCanonical,
-      name: "Claude Code Guide",
-      description: "Курс",
-      level: "intermediate",
-      workload: "~6 часов",
-      lessons,
-      datePublished: new Date("2026-04-23T00:00:00.000Z"),
-      dateModified: new Date("2026-08-24T00:00:00.000Z"),
-    });
-    expect(node["@type"]).toBe("Course");
-    expect(node["@id"]).toBe(courseId(courseCanonical));
-    expect(node.url).toBe(courseCanonical);
-    expect(node.provider).toEqual({ "@id": graphIds.organization });
-    expect(node.author).toEqual({ "@id": graphIds.person });
-    expect(node.inLanguage).toBe("ru-RU");
-    expect(node.isAccessibleForFree).toBe(true);
-    expect(node.educationalLevel).toBe("Intermediate");
-    expect(node.numberOfLessons).toBe(2);
-    expect(node.hasCourseInstance).toEqual([
-      { "@type": "CourseInstance", courseMode: "online", courseWorkload: "PT6H" },
-    ]);
-    // Each part DEFINES the lesson under the id the lesson page uses: a bare
-    // {"@id"} would point at a node this page does not publish.
-    expect(node.hasPart).toEqual(
-      lessons.map((lesson, index) => ({
-        "@type": "LearningResource",
-        "@id": lessonId(lesson.url),
-        url: lesson.url,
-        name: lesson.name,
-        position: index + 1,
-      })),
-    );
-    expect(node.numberOfLessons).toBe(node.hasPart.length);
-    expect(node.dateModified).toBe("2026-08-24T00:00:00.000Z");
-  });
-
-  it("omits courseWorkload when the human duration is not parseable", () => {
-    const node = buildCourseNode({
-      locale: "en",
-      canonical: courseCanonical,
-      name: "C",
-      description: "D",
-      level: "beginner",
-      workload: "self-paced",
-      lessons: [],
-    });
-    expect(node.hasCourseInstance[0]).toEqual({ "@type": "CourseInstance", courseMode: "online" });
-    expect(node.educationalLevel).toBe("Beginner");
-  });
-
-  it("emits a LearningResource lesson that names its course as a defined node", () => {
-    const node = buildLearningResourceNode({
-      locale: "en",
-      canonical: lessonUrls[1]!,
-      courseCanonical,
-      courseName,
-      name: "02. Context",
-      description: "Lesson",
-      position: 2,
-      durationMinutes: 25,
-      datePublished: new Date("2026-04-23T00:00:00.000Z"),
-      dateModified: new Date("2026-09-08T00:00:00.000Z"),
-      teaches: ["claude-code", "guide"],
-    });
-    expect(node["@type"]).toBe("LearningResource");
-    expect(node["@id"]).toBe(`${lessonUrls[1]}#lesson`);
-    expect(node.learningResourceType).toBe("lesson");
-    expect(node.datePublished).toBe("2026-04-23T00:00:00.000Z");
-    expect(node.dateModified).toBe("2026-09-08T00:00:00.000Z");
-    expect(node.position).toBe(2);
-    expect(node.timeRequired).toBe("PT25M");
-    // Same id as the full Course node on the course page, but defined here too:
-    // the lesson page does not publish that node, so a bare reference dangles.
-    expect(node.isPartOf).toEqual({
-      "@type": "Course",
-      "@id": courseId(courseCanonical),
-      url: courseCanonical,
-      name: courseName,
-    });
-    expect(node.inLanguage).toBe("en-US");
-    expect(node.isAccessibleForFree).toBe(true);
-    expect(node.teaches).toBe("claude-code, guide");
-  });
-
-  it("omits timeRequired when the lesson has no duration", () => {
-    const node = buildLearningResourceNode({
-      locale: "ru",
-      canonical: lessonUrls[0]!,
-      courseCanonical,
-      courseName,
-      name: "01",
-      description: "L",
-      position: 1,
-    });
-    expect(node).not.toHaveProperty("timeRequired");
-    expect(node).not.toHaveProperty("dateModified");
-    expect(node).not.toHaveProperty("teaches");
-  });
-});
-
 describe("duration helpers", () => {
   it("formats minutes as ISO 8601", () => {
     expect(minutesToIsoDuration(1)).toBe("PT1M");
     expect(minutesToIsoDuration(60)).toBe("PT1H");
     expect(minutesToIsoDuration(90)).toBe("PT1H30M");
     expect(minutesToIsoDuration(0)).toBeNull();
-  });
-
-  it("parses RU and EN human workloads", () => {
-    expect(parseWorkloadToIsoDuration("~6 часов")).toBe("PT6H");
-    expect(parseWorkloadToIsoDuration("~6 hours")).toBe("PT6H");
-    expect(parseWorkloadToIsoDuration("1.5h")).toBe("PT1H30M");
-    expect(parseWorkloadToIsoDuration("45 мин")).toBe("PT45M");
-    expect(parseWorkloadToIsoDuration("self-paced")).toBeNull();
-    expect(parseWorkloadToIsoDuration(undefined)).toBeNull();
   });
 });
 

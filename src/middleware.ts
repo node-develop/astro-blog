@@ -4,7 +4,7 @@ import { canonicalHostRedirect, requiresAuthContext } from "~/lib/auth/request-c
 import { CAL_ORIGIN } from "~/lib/booking/config";
 import { i18nRootRedirect } from "~/lib/i18n/middleware";
 import { logger } from "~/lib/logger";
-import { resolveConcatenatedLessonPath } from "~/lib/seo/redirects";
+import { goneResponse, isGonePath } from "~/lib/seo/gone";
 
 const canonicalHostNormalization = defineMiddleware((context, next) => {
   if (context.isPrerendered) return next();
@@ -13,27 +13,17 @@ const canonicalHostNormalization = defineMiddleware((context, next) => {
 });
 
 /**
- * Recovers the "concatenated" lesson 404s Search Console reports, e.g.
- * /courses/claude-code-guide/08-tool-calls-and-loop/09-subagents/ ->
- * /courses/claude-code-guide/09-subagents/.
+ * Removed content (the Claude Code course, its project page, the draft post
+ * that duplicated it) answers 410 Gone so search engines drop it quickly; see
+ * `isGonePath`. None of those addresses has a route any more, so they reach
+ * this on-demand chain; a prerendered page that ever reuses one of them wins.
  *
- * The pair is combinatorial (14 x 14 lessons across five observed prefixes),
- * so it lives here as one rule instead of ~900 entries in
- * `buildLegacyRedirects()`. The explicit entries there stay as the pinned,
- * test-covered sample; this catches every pair Search Console has not shown
- * us yet, including lessons added later.
- *
- * `resolveConcatenatedLessonPath` never returns its own input, so this can
- * neither loop nor chain into another redirect.
+ * A slashless page URL never gets here: Astro's `trailingSlash: "always"`
+ * answers it with a 301 to the slashed form first, which then answers 410.
  */
-const concatenatedLessonRecovery = defineMiddleware((context, next) => {
+const removedContent = defineMiddleware((context, next) => {
   if (context.isPrerendered) return next();
-  const recovered = resolveConcatenatedLessonPath(context.url.pathname);
-  if (!recovered) return next();
-
-  const target = new URL(recovered, context.url);
-  target.search = context.url.search;
-  return context.redirect(target.pathname + target.search, 301);
+  return isGonePath(context.url.pathname) ? goneResponse(context.request) : next();
 });
 
 const authContext = defineMiddleware(async (context, next) => {
@@ -130,14 +120,14 @@ const htmlCharset = defineMiddleware(async (context, next) => {
 });
 
 // `securityHeaders` goes FIRST: it awaits `next()` and decorates whatever
-// comes back, so it must wrap the whole chain — otherwise the redirects and
-// the 403 short-circuits returned by the guards below skip it. `htmlCharset`
+// comes back, so it must wrap the whole chain — otherwise the redirects, the
+// 410s and the 403 short-circuits returned by the guards below skip it. `htmlCharset`
 // wraps everything after it for the same reason.
 export const onRequest = sequence(
   securityHeaders,
   htmlCharset,
   canonicalHostNormalization,
-  concatenatedLessonRecovery,
+  removedContent,
   i18nRootRedirect,
   authContext,
   adminGuard,

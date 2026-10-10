@@ -17,7 +17,7 @@ keywords:
 lang: en
 draft: false
 manuallyEdited: true
-sourceHash: 6f412ea43d3de2a0514d27fcb26481cf0f3eae6f04e7cf0dad885c40caa5aadb
+sourceHash: 086acd843543d36a47c0234fa9c16ae5cd9b8d314c41e5123e7868ced7d9c2e7
 ---
 
 Claude Code can help turn a script into a working video project: write scenes, set up export and revise a transition. In this guide, Canvas draws the frames, Playwright captures them as PNGs and FFmpeg encodes the MP4. Repeatable output depends on fixed inputs and a frame function driven by explicit time. Start with a short scene, check the complete path to a playable file, then develop the motion and sound.
@@ -30,7 +30,7 @@ The teaching example is Patchwork, a fictional release-preparation tool. Changes
 
 A code-based video project can separate content, design, timing and infrastructure. Content determines what the viewer should understand. Design defines objects, typography and visual hierarchy. The timeline connects changes to time. Infrastructure loads files, captures images and encodes them into video.
 
-Claude Code helps modify these parts through files and tools. The model does not replace a video codec, and generating code does not by itself make a composition good. Correcting a spelling mistake, finding an unloaded font and choosing an expressive pause require different checks. The relationship between the agent and its tools is covered in the [introduction to Claude Code](/en/courses/claude-code-guide/01-introduction/).
+Claude Code helps modify these parts through files and tools. The model does not replace a video codec, and generating code does not by itself make a composition good. Correcting a spelling mistake, finding an unloaded font and choosing an expressive pause require different checks.
 
 Programmatic video makes it possible to separate data from the scene. An approved template can then accept another heading, language or set of numbers. Reuse becomes useful after the template itself has been checked. If the first version has unreadable text, automatically producing twenty variants will repeat the same defect.
 
@@ -566,9 +566,9 @@ Return defects with timestamps and minimal corrections.
 Do not edit code, publish the file or call paid services.
 ```
 
-Calling `/motion-review` runs the described procedure. `disable-model-invocation` leaves invocation to the user; it does not restrict the process at the OS level or grant additional permissions. The [skills lesson](/en/courses/claude-code-guide/04-skills/) explains extension mechanics and placement.
+Calling `/motion-review` runs the described procedure. `disable-model-invocation` leaves invocation to the user; it does not restrict the process at the OS level or grant additional permissions.
 
-If you later add an external asset catalog or voice service, test its contract independently of the model. A successful connection does not establish a correct response or authorized spending. The [MCP lesson](/en/courses/claude-code-guide/06-mcp/) covers that engineering work. The local Canvas example needs no MCP connection.
+If you later add an external asset catalog or voice service, test its contract independently of the model. A successful connection does not establish a correct response or authorized spending. The local Canvas example needs no MCP connection.
 
 ## Parallelize scenes after establishing a shared example
 
@@ -576,7 +576,7 @@ A longer film can be divided into independent chapters once the visual language 
 
 One owner should control the shared timeline and final integration. Other contributors work on their scenes. If everyone writes a renderer, spring implementation and copy of the logo, integration begins with resolving incompatibilities. Check shared-component changes separately from visual revisions to individual chapters.
 
-A [subagent](/en/courses/claude-code-guide/09-subagents/) suits a bounded task, such as verifying an educational scene's facts or reviewing several transitions. An [agent team](/en/courses/claude-code-guide/10-agent-teams/) also needs explicit file ownership. A separate conversation context does not imply a separate filesystem or protection from conflicting writes.
+A subagent suits a bounded task, such as verifying an educational scene's facts or reviewing several transitions. An agent team also needs explicit file ownership. A separate conversation context does not imply a separate filesystem or protection from conflicting writes.
 
 After integration, inspect the beginning and end of affected scenes and render short clips around joins. Changing one duration can shift speech and music throughout the rest of the film. For autonomous work, define file, spending and action limits in advance. User silence must not become permission to publish, start a subscription or send materials elsewhere.
 

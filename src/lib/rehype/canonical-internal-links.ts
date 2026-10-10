@@ -35,12 +35,11 @@ export const canonicalInternalHref = (href: string): string => {
   const bare = collapsed.replace(/\/+$/, "");
   if (bare === "" || bare === ".") return href;
 
-  // A bare "09-subagents" and an explicit "./09-subagents" are the same
+  // A bare "other-post" and an explicit "./other-post" are the same
   // reference to a browser: both resolve against the CURRENT page. With
   // `trailingSlash: "always"` the current page is itself a directory, so the
   // browser glues the target onto the page path and produces
-  // /courses/<course>/<lesson-a>/<lesson-b>/ — exactly the 404s Search
-  // Console reported. A Markdown author writing either spelling always means
+  // /blog/<post-a>/<post-b>/ — the shape of 404s Search Console reported. A Markdown author writing either spelling always means
   // the sibling document, so both are normalized to the same `../<target>/`.
   const siblingRelative =
     bare === ".." || bare.startsWith("../") ? bare : `../${bare.replace(/^\.\//, "")}`;

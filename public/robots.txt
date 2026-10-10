@@ -5,7 +5,7 @@
 #
 # Agent resources: https://artka.dev/llms.txt (index) and
 # https://artka.dev/llms-full.txt (full-text digest, noindex but fetchable).
-# Every post and lesson also has a Markdown twin at <page-url minus slash>.md.
+# Every post also has a Markdown twin at <page-url minus slash>.md.
 # The twins are crawlable for every agent on purpose: each one answers with
 # `X-Robots-Tag: noindex` and `Link: <html url>; rel="canonical"`, and a
 # crawler can only see those headers if robots.txt lets it fetch the twin.

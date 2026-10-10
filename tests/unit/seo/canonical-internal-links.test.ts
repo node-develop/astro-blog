@@ -53,52 +53,50 @@ it("keeps files, fragments, query-only references, roots, and parent-relative li
       "./images/cover.svg?size=2#preview",
       "#section",
       "?view=compact",
-      "/courses/claude-code-guide/02-context-and-cache/",
-      "../02-context-and-cache/",
+      "/blog/json-ld-graph-astro/",
+      "../json-ld-graph-astro/",
     ]),
   ).toEqual([
     "./images/cover.svg?size=2#preview",
     "#section",
     "?view=compact",
-    "/courses/claude-code-guide/02-context-and-cache/",
-    "../02-context-and-cache/",
+    "/blog/json-ld-graph-astro/",
+    "../json-ld-graph-astro/",
   ]);
 });
 
-// Regression: a bare relative link inside a lesson ("09-subagents") used to
-// pass through untouched. With `trailingSlash: "always"` the browser resolved
-// it against the current lesson and produced
-// /courses/claude-code-guide/08-tool-calls-and-loop/09-subagents — the glued
-// 404s Search Console reported. Bare and "./" spellings mean the same thing to
+// Regression: a bare relative link inside a page ("json-ld-graph-astro") used
+// to pass through untouched. With `trailingSlash: "always"` the browser
+// resolved it against the current page and produced
+// /blog/local-coding-agent/json-ld-graph-astro — the glued 404s Search
+// Console reported. Bare and "./" spellings mean the same thing to
 // an author, so both must normalize to the sibling document.
 it("rewrites bare relative links so they cannot glue onto the current page", async () => {
   expect(
     await transformHrefs([
-      "09-subagents",
-      "09-subagents/",
-      "./09-subagents",
-      "12-travel-agent-blueprint#practice",
+      "json-ld-graph-astro",
+      "json-ld-graph-astro/",
+      "./json-ld-graph-astro",
+      "local-coding-agent#practice",
       "guide/chapter",
     ]),
   ).toEqual([
-    "../09-subagents/",
-    "../09-subagents/",
-    "../09-subagents/",
-    "../12-travel-agent-blueprint/#practice",
+    "../json-ld-graph-astro/",
+    "../json-ld-graph-astro/",
+    "../json-ld-graph-astro/",
+    "../local-coding-agent/#practice",
     "../guide/chapter/",
   ]);
 });
 
-it("resolves a rewritten lesson link to the course root, not to a child of the lesson", async () => {
-  const lessonPage = "https://artka.dev/courses/claude-code-guide/08-tool-calls-and-loop/";
-  const [rewritten] = await transformHrefs(["09-subagents"]);
+it("resolves a rewritten sibling link next to the page, not to a child of it", async () => {
+  const postPage = "https://artka.dev/blog/local-coding-agent/";
+  const [rewritten] = await transformHrefs(["json-ld-graph-astro"]);
 
-  expect(new URL("09-subagents", lessonPage).pathname).toBe(
-    "/courses/claude-code-guide/08-tool-calls-and-loop/09-subagents",
+  expect(new URL("json-ld-graph-astro", postPage).pathname).toBe(
+    "/blog/local-coding-agent/json-ld-graph-astro",
   );
-  expect(new URL(String(rewritten), lessonPage).pathname).toBe(
-    "/courses/claude-code-guide/09-subagents/",
-  );
+  expect(new URL(String(rewritten), postPage).pathname).toBe("/blog/json-ld-graph-astro/");
 });
 
 it("still refuses to touch hrefs that carry their own scheme", async () => {

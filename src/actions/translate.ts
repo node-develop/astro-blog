@@ -19,7 +19,7 @@ import { assertAdmin } from "./_auth";
 export const translate = {
   one: defineAction({
     input: z.object({
-      collection: z.enum(["posts", "site", "projects", "courses", "lessons"]),
+      collection: z.enum(["posts", "site", "projects"]),
       slug: z.string().min(1).max(200),
       force: z.boolean().default(false),
     }),
