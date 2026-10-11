@@ -4,7 +4,7 @@ description: "Artyom Kashuta is a full-stack and AI engineer. My background, app
 metaTitle: "Artyom Kashuta: full-stack and AI engineer"
 metaDescription: "Artyom Kashuta — full-stack and AI engineer: TypeScript, Python, AI agents and distributed systems. Background at TaxDome and 9RED, and how I work."
 lang: en
-sourceHash: 69e1bbe6a152c69cba53b36d4aefac1eade6d046789c0d7b8bd2cdfeabbad8b2
+sourceHash: daeabb7c8ccd7feaf74ecf145c24f2602886d19e523bd192b5668e711f593209
 manuallyEdited: true
 ---
 
@@ -16,7 +16,7 @@ I mostly write in Node, Python, TS, Rust, SQL, and I'm generally stack-agnostic.
 
 I can do microservices and high-load backends from stage zero all the way to production operation.
 
-I first paid for a ChatGPT subscription in March 2022.
+I first paid for a ChatGPT subscription in February 2023.
 
 ## What I do / did
 
