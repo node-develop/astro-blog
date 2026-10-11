@@ -23,7 +23,7 @@ const username = Astro.props.username ?? "kashuta";
 const locale = getLocaleFromPath(Astro.url.pathname);
 const labelEyebrow = locale === "en" ? "Newsletter" : "Рассылка";
 const headline =
-  locale === "en" ? "Notes from production, in your inbox." : "Заметки из production — на почту.";
+  locale === "en" ? "Won’t Build Itself, in your inbox." : "Само не соберётся — на почту.";
 const blurb =
   Astro.props.blurb ??
   (locale === "en"

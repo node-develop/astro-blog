@@ -6,7 +6,7 @@ heroHighlight: AI agents
 heroLede: >-
   Breakdowns of how Claude Code and AI agents work under the hood, and what of it holds up in production.
 heroCta: All articles →
-sealPhrase: Notes from production · since 2018 · Ankara
+sealPhrase: Won’t Build Itself · since 2018
 tickerItems: |-
   New · 8 pages out of 185
   Video with Claude Code: from brief to render
@@ -23,6 +23,6 @@ metaTitle: artka.dev — Artyom Kashuta | AI agents and backend
 metaDescription: >-
   artka.dev — the personal technical blog of Artyom Kashuta. Notes on Claude Code, LLM agents, RAG pipelines, and production backend.
 lang: en
-sourceHash: e5bdaea184663ef2eb41a02385d7d17606a49c99263a317bf1052b82b8343e83
+sourceHash: 28e8e116943bab13358052fe5aa687e0f41f8f4b1e77859c34f336b3677ee920
 manuallyEdited: true
 ---

@@ -6,7 +6,7 @@ heroHighlight: AI-агентов
 heroLede: >-
   Разборы того, как Claude Code и AI-агенты работают изнутри, и что из этого выдерживает production.
 heroCta: Все статьи →
-sealPhrase: Записки из продакшна · с 2018 · Анкара
+sealPhrase: Само не соберётся · с 2018
 tickerItems: |-
   Новое · 8 страниц из 185
   Видео с Claude Code: от брифа до рендера

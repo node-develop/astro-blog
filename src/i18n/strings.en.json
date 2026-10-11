@@ -42,7 +42,7 @@
   "footer.meta": "WCAG AA · view-transitions · static-first",
   "meta.blog.title": "All notes — Claude Code, AI agents, backend",
   "meta.about.description": "Artyom Kashuta — Full-stack & AI engineer. 7+ years in backend, AI automation and distributed systems. LangGraph, LangChain, Claude Code, Anthropic/OpenAI/Gemini APIs.",
-  "site.feedTitle": "artka.dev — Notes from production",
+  "site.feedTitle": "artka.dev — Won’t Build Itself",
   "site.feedDescription": "Notes on Claude Code, AI agents, RAG pipelines and production backend by Artyom Kashuta.",
   "breadcrumbs.aria": "Breadcrumbs",
   "footer.section.about": "About",
