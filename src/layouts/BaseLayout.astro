@@ -67,7 +67,7 @@ interface Props {
 
 const {
   title,
-  description = "Записки из продакшна — backend, AI agent engineering, distributed systems.",
+  description: descriptionProp,
   ogImage,
   ogImageAlt,
   ogImageWidth,
@@ -107,6 +107,11 @@ const fullTitle = brandedTitle(title);
 // second copy of it only eats the part of the headline that says something.
 
 const locale = getLocaleFromPath(Astro.url.pathname);
+const description =
+  descriptionProp ??
+  (locale === "en"
+    ? "Won’t Build Itself — AI, agents, code, and getting things built."
+    : "Само не соберётся — AI, агенты, немножко кода и проектики.");
 const canonical = canonicalUrl(Astro.url.pathname);
 
 const counterpartPath = getCounterpart(Astro.url.pathname, locale);

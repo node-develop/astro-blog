@@ -1,7 +1,7 @@
 {
   "name": "artka.dev",
   "short_name": "artka",
-  "description": "Записки из продакшна — backend, AI agent engineering, distributed systems.",
+  "description": "Само не соберётся — AI, агенты, немножко кода и проектики.",
   "start_url": "/",
   "display": "minimal-ui",
   "background_color": "#F3F1EA",

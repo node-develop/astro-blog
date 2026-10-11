@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="artka.dev — записки из продакшна">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="artka.dev — Само не соберётся">
   
   <rect width="1200" height="630" fill="#FAF8F5"></rect>
 
@@ -9,11 +9,11 @@
   <text x="80" y="130" font-family="ui-monospace, &#39;JetBrains Mono&#39;, monospace" font-size="22" font-weight="600" fill="#7A5A3F" letter-spacing="3">ARTKA.DEV</text>
 
   
-  <text x="80" y="320" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="92" font-weight="500" fill="#1A1814" letter-spacing="-2">записки из</text>
-  <text x="80" y="420" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="92" font-weight="500" fill="#1A1814" letter-spacing="-2">продакшна</text>
+  <text x="80" y="320" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="92" font-weight="500" fill="#1A1814" letter-spacing="-2">Само не</text>
+  <text x="80" y="420" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="92" font-weight="500" fill="#1A1814" letter-spacing="-2">соберётся</text>
 
   
-  <text x="80" y="500" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="32" font-weight="400" font-style="italic" fill="#5A4F42">backend · AI agent engineering · distributed systems</text>
+  <text x="80" y="500" font-family="&#39;Source Serif 4&#39;, &#39;Source Serif Pro&#39;, Georgia, serif" font-size="32" font-weight="400" font-style="italic" fill="#5A4F42">AI, агенты, немножко кода и проектики</text>
 
   
   <rect x="80" y="540" width="1040" height="1" fill="#D9D2C5"></rect>
