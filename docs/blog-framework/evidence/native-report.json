@@ -1,0 +1,700 @@
+{
+  "results": [
+    {
+      "path": "/blog/draft-boundaries/",
+      "lang": "ru",
+      "h1": [
+        "Граница черновика: draft и sourceHash в artka.dev"
+      ],
+      "canonical": "https://artka.dev/blog/draft-boundaries/",
+      "alternates": [
+        {
+          "lang": "ru",
+          "href": "https://artka.dev/blog/draft-boundaries/"
+        },
+        {
+          "lang": "en",
+          "href": "https://artka.dev/en/blog/draft-boundaries/"
+        },
+        {
+          "lang": "x-default",
+          "href": "https://artka.dev/blog/draft-boundaries/"
+        }
+      ],
+      "og": "https://artka.dev/og/draft-boundaries-ru.png",
+      "graph": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Person",
+              "@id": "https://artka.dev/#person",
+              "name": "Artyom Kashuta",
+              "alternateName": "Артём Кашута",
+              "url": "https://artka.dev/about/",
+              "image": "https://artka.dev/avatar-512.png",
+              "jobTitle": "Full-stack & AI engineer · LLM/agent workflows · backend",
+              "description": "Full-stack and AI engineer with 7+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
+              "knowsAbout": [
+                "Claude Code",
+                "AI agent engineering",
+                "LangGraph",
+                "LangChain",
+                "LangSmith",
+                "OpenAI API",
+                "Anthropic API",
+                "Gemini API",
+                "RAG",
+                "Embeddings",
+                "Vector search",
+                "Hybrid search",
+                "Python",
+                "FastAPI",
+                "TypeScript",
+                "Node.js",
+                "Fastify",
+                "gRPC",
+                "Apache Kafka",
+                "PostgreSQL",
+                "Redis",
+                "AWS EKS",
+                "Kubernetes",
+                "OpenTelemetry",
+                "Distributed systems",
+                "Backend architecture",
+                "LLM evaluation & tracing",
+                "Backend & distributed systems",
+                "Event-sourced microservices",
+                "Observability & SRE"
+              ],
+              "sameAs": [
+                "https://github.com/node-develop",
+                "https://www.linkedin.com/in/artem-kashuta/",
+                "https://x.com/artkadev",
+                "https://t.me/akv6020"
+              ],
+              "email": "a@artka.dev",
+              "subjectOf": [
+                {
+                  "@type": "CreativeWork",
+                  "name": "artka.dev — personal blog",
+                  "url": "https://artka.dev/",
+                  "description": "Notes on AI agent engineering, Claude Code, LLM pipelines, and production backend in Russian and English."
+                }
+              ]
+            },
+            {
+              "@type": "Organization",
+              "@id": "https://artka.dev/#brand",
+              "name": "artka.dev",
+              "alternateName": [
+                "artka.dev by Artyom Kashuta",
+                "artka.dev by Артём Кашута"
+              ],
+              "description": "Bilingual technical publication by Artyom Kashuta about Claude Code internals, AI agent engineering, RAG, and production backend systems.",
+              "url": "https://artka.dev/",
+              "email": "a@artka.dev",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/icon-512.png",
+                "width": 512,
+                "height": 512
+              },
+              "founder": {
+                "@id": "https://artka.dev/#person"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "editorial and technical inquiries",
+                "email": "a@artka.dev",
+                "url": "https://artka.dev/contact/",
+                "availableLanguage": [
+                  "Russian",
+                  "English"
+                ]
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://artka.dev/#website",
+              "url": "https://artka.dev/",
+              "name": "artka.dev",
+              "alternateName": [
+                "Artyom Kashuta technical blog",
+                "Технический блог Артёма Кашуты"
+              ],
+              "description": "Технические материалы Артёма Кашуты о Claude Code, AI-агентах, LLM, RAG и production backend.",
+              "inLanguage": "ru-RU",
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "workTranslation": {
+                "@id": "https://artka.dev/#website-en"
+              }
+            },
+            {
+              "@type": "ItemPage",
+              "@id": "https://artka.dev/blog/draft-boundaries/#webpage",
+              "url": "https://artka.dev/blog/draft-boundaries/",
+              "name": "Граница черновика: draft и sourceHash в artka.dev",
+              "description": "Учебный черновик для локальной проверки схемы, исключения из маршрутов и соответствия перевода исходнику.",
+              "inLanguage": "ru-RU",
+              "isPartOf": {
+                "@id": "https://artka.dev/#website"
+              },
+              "mainEntity": {
+                "@id": "https://artka.dev/blog/draft-boundaries/#blogposting"
+              },
+              "primaryImageOfPage": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/og/draft-boundaries-ru.png"
+              },
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "breadcrumb": {
+                "@id": "https://artka.dev/blog/draft-boundaries/#breadcrumbs"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://artka.dev/blog/draft-boundaries/#blogposting",
+              "url": "https://artka.dev/blog/draft-boundaries/",
+              "headline": "Граница черновика: draft и sourceHash в artka.dev",
+              "description": "Учебный черновик для локальной проверки схемы, исключения из маршрутов и соответствия перевода исходнику.",
+              "datePublished": "2026-10-11T00:00:00.000Z",
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "image": "https://artka.dev/og/draft-boundaries-ru.png",
+              "mainEntityOfPage": {
+                "@id": "https://artka.dev/blog/draft-boundaries/#webpage"
+              },
+              "inLanguage": "ru-RU",
+              "isPartOf": {
+                "@id": "https://artka.dev/#blog-ru"
+              },
+              "isAccessibleForFree": true,
+              "articleBody": "Этот учебный материал проверяет границы локального редакционного процесса. Он хранится среди тестовых данных и не предназначен для публикации.Как черновик остаётся вне маршрутовВ текущем проекте для русских и английских статей отбирает записи с . Поле управляет списками, но прямой маршрут статьи строится отдельно. Для временного файла нужен явный .Проверка опирается на русский маршрут статьи и его английский вариант. Префикс исключает некоторые тестовые файлы из проверки переводов; сам по себе он не запрещает публикацию.Что отслеживает переводФункция учитывает тело и переводимые поля frontmatter: заголовок, описание, summary, coverAlt и FAQ. Смена tags или даты не меняет этот хеш. Алгоритм описан в исходном модуле хеширования.Пример ниже — фрагмент для запуска из корня проекта. Его результат зависит от переданного файла; при проверке нельзя подменять синхронизацию текста механическим обновлением хеша.Какие проверки остаются отдельнымиСовпадение sourceHash показывает, какой исходник отмечен переводчиком. Смысловую точность перевода проверяет редактор. Digest редакционного пакета учитывает точные байты RU и EN: после правки одной версии старое ревью теряет актуальность.Сборка с проверяет компиляцию, но не показывает страницу статьи. Для визуальной проверки нужна отдельная локальная копия проекта и реальный Astro preview. Если браузер не запускался, в отчёте остаётся .",
+              "wordCount": 182,
+              "articleSection": "astro",
+              "timeRequired": "PT2M"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "@id": "https://artka.dev/blog/draft-boundaries/#breadcrumbs",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Главная",
+                  "item": "https://artka.dev/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Статьи",
+                  "item": "https://artka.dev/blog/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "Граница черновика: draft и sourceHash в artka.dev"
+                }
+              ]
+            },
+            {
+              "@type": "Blog",
+              "@id": "https://artka.dev/#blog-ru",
+              "url": "https://artka.dev/blog/",
+              "name": "artka.dev — блог",
+              "inLanguage": "ru-RU",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              }
+            }
+          ]
+        }
+      ],
+      "brokenImages": [],
+      "math": 0,
+      "mermaid": 0,
+      "headings": [
+        "как-черновик-остаётся-вне-маршрутов",
+        "что-отслеживает-перевод",
+        "какие-проверки-остаются-отдельными",
+        "related-heading",
+        "newsletter-heading",
+        "comments-heading"
+      ],
+      "ogStatus": 200,
+      "mobileOverflow": false
+    },
+    {
+      "path": "/en/blog/draft-boundaries/",
+      "lang": "en",
+      "h1": [
+        "Draft boundaries: draft and sourceHash in artka.dev"
+      ],
+      "canonical": "https://artka.dev/en/blog/draft-boundaries/",
+      "alternates": [
+        {
+          "lang": "ru",
+          "href": "https://artka.dev/blog/draft-boundaries/"
+        },
+        {
+          "lang": "en",
+          "href": "https://artka.dev/en/blog/draft-boundaries/"
+        },
+        {
+          "lang": "x-default",
+          "href": "https://artka.dev/blog/draft-boundaries/"
+        }
+      ],
+      "og": "https://artka.dev/og/draft-boundaries-en.png",
+      "graph": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Person",
+              "@id": "https://artka.dev/#person",
+              "name": "Artyom Kashuta",
+              "alternateName": "Артём Кашута",
+              "url": "https://artka.dev/about/",
+              "image": "https://artka.dev/avatar-512.png",
+              "jobTitle": "Full-stack & AI engineer · LLM/agent workflows · backend",
+              "description": "Full-stack and AI engineer with 7+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
+              "knowsAbout": [
+                "Claude Code",
+                "AI agent engineering",
+                "LangGraph",
+                "LangChain",
+                "LangSmith",
+                "OpenAI API",
+                "Anthropic API",
+                "Gemini API",
+                "RAG",
+                "Embeddings",
+                "Vector search",
+                "Hybrid search",
+                "Python",
+                "FastAPI",
+                "TypeScript",
+                "Node.js",
+                "Fastify",
+                "gRPC",
+                "Apache Kafka",
+                "PostgreSQL",
+                "Redis",
+                "AWS EKS",
+                "Kubernetes",
+                "OpenTelemetry",
+                "Distributed systems",
+                "Backend architecture",
+                "LLM evaluation & tracing",
+                "Backend & distributed systems",
+                "Event-sourced microservices",
+                "Observability & SRE"
+              ],
+              "sameAs": [
+                "https://github.com/node-develop",
+                "https://www.linkedin.com/in/artem-kashuta/",
+                "https://x.com/artkadev",
+                "https://t.me/akv6020"
+              ],
+              "email": "a@artka.dev",
+              "subjectOf": [
+                {
+                  "@type": "CreativeWork",
+                  "name": "artka.dev — personal blog",
+                  "url": "https://artka.dev/",
+                  "description": "Notes on AI agent engineering, Claude Code, LLM pipelines, and production backend in Russian and English."
+                }
+              ]
+            },
+            {
+              "@type": "Organization",
+              "@id": "https://artka.dev/#brand",
+              "name": "artka.dev",
+              "alternateName": [
+                "artka.dev by Artyom Kashuta",
+                "artka.dev by Артём Кашута"
+              ],
+              "description": "Bilingual technical publication by Artyom Kashuta about Claude Code internals, AI agent engineering, RAG, and production backend systems.",
+              "url": "https://artka.dev/",
+              "email": "a@artka.dev",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/icon-512.png",
+                "width": 512,
+                "height": 512
+              },
+              "founder": {
+                "@id": "https://artka.dev/#person"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "editorial and technical inquiries",
+                "email": "a@artka.dev",
+                "url": "https://artka.dev/contact/",
+                "availableLanguage": [
+                  "Russian",
+                  "English"
+                ]
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://artka.dev/#website-en",
+              "url": "https://artka.dev/en/",
+              "name": "artka.dev",
+              "alternateName": [
+                "Artyom Kashuta technical blog",
+                "Технический блог Артёма Кашуты"
+              ],
+              "description": "Technical writing by Artyom Kashuta about Claude Code, AI agents, LLMs, RAG, and production backend systems.",
+              "inLanguage": "en-US",
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "translationOfWork": {
+                "@id": "https://artka.dev/#website"
+              }
+            },
+            {
+              "@type": "ItemPage",
+              "@id": "https://artka.dev/en/blog/draft-boundaries/#webpage",
+              "url": "https://artka.dev/en/blog/draft-boundaries/",
+              "name": "Draft boundaries: draft and sourceHash in artka.dev",
+              "description": "A training draft for checking the native schema, exclusion from public routes, and translation correspondence.",
+              "inLanguage": "en-US",
+              "isPartOf": {
+                "@id": "https://artka.dev/#website-en"
+              },
+              "mainEntity": {
+                "@id": "https://artka.dev/en/blog/draft-boundaries/#blogposting"
+              },
+              "primaryImageOfPage": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/og/draft-boundaries-en.png"
+              },
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "breadcrumb": {
+                "@id": "https://artka.dev/en/blog/draft-boundaries/#breadcrumbs"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://artka.dev/en/blog/draft-boundaries/#blogposting",
+              "url": "https://artka.dev/en/blog/draft-boundaries/",
+              "headline": "Draft boundaries: draft and sourceHash in artka.dev",
+              "description": "A training draft for checking the native schema, exclusion from public routes, and translation correspondence.",
+              "datePublished": "2026-10-11T00:00:00.000Z",
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "image": "https://artka.dev/og/draft-boundaries-en.png",
+              "mainEntityOfPage": {
+                "@id": "https://artka.dev/en/blog/draft-boundaries/#webpage"
+              },
+              "inLanguage": "en-US",
+              "isPartOf": {
+                "@id": "https://artka.dev/#blog-en"
+              },
+              "isAccessibleForFree": true,
+              "articleBody": "This training article checks the boundaries of the local editorial workflow. It belongs in test fixtures and is not intended for publication.Keeping a draft out of public routesIn the current project, for Russian and English articles selects entries with . The field controls listings, while the direct article route is built separately. A temporary file needs an explicit .This finding comes from the Russian article route and its English counterpart. The prefix excludes some test files from translation checks; it does not itself prevent publication.What the translation hash tracksThe function covers the body and translatable frontmatter: title, description, summary, coverAlt, and FAQ. Changing tags or dates does not change this hash. The algorithm is documented in the hash module.The following example is a fragment to run from the repository root. Its result depends on the supplied file; updating a hash mechanically cannot replace synchronizing the translation.Checks that remain separateA matching sourceHash records which source the translator acknowledged. An editor checks whether the translation preserves its meaning. The editorial package digest covers the exact Russian and English bytes: changing either version invalidates an older review.A build with checks compilation without showing the article page. Visual review needs a separate local project copy and a real Astro preview. If no browser ran, the report keeps .",
+              "wordCount": 214,
+              "articleSection": "astro",
+              "timeRequired": "PT2M"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "@id": "https://artka.dev/en/blog/draft-boundaries/#breadcrumbs",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://artka.dev/en/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Articles",
+                  "item": "https://artka.dev/en/blog/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "Draft boundaries: draft and sourceHash in artka.dev"
+                }
+              ]
+            },
+            {
+              "@type": "Blog",
+              "@id": "https://artka.dev/#blog-en",
+              "url": "https://artka.dev/en/blog/",
+              "name": "artka.dev — blog",
+              "inLanguage": "en-US",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              }
+            }
+          ]
+        }
+      ],
+      "brokenImages": [],
+      "math": 0,
+      "mermaid": 0,
+      "headings": [
+        "keeping-a-draft-out-of-public-routes",
+        "what-the-translation-hash-tracks",
+        "checks-that-remain-separate",
+        "related-heading",
+        "newsletter-heading",
+        "comments-heading"
+      ],
+      "ogStatus": 200,
+      "mobileOverflow": false
+    },
+    {
+      "path": "/blog/e2e-framework-components/",
+      "lang": "ru",
+      "h1": [
+        "Локальная проверка Markdown и MDX"
+      ],
+      "canonical": "https://artka.dev/blog/e2e-framework-components/",
+      "alternates": [],
+      "og": "https://artka.dev/og/e2e-framework-components-ru.png",
+      "graph": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Person",
+              "@id": "https://artka.dev/#person",
+              "name": "Artyom Kashuta",
+              "alternateName": "Артём Кашута",
+              "url": "https://artka.dev/about/",
+              "image": "https://artka.dev/avatar-512.png",
+              "jobTitle": "Full-stack & AI engineer · LLM/agent workflows · backend",
+              "description": "Full-stack and AI engineer with 7+ years shipping production systems — APIs, data pipelines, LLM/agent workflows, and cloud infra. Daily user of Claude Code and Cursor; ships with OpenAI, Anthropic, and Gemini APIs, LangGraph, LangChain, and LangSmith.",
+              "knowsAbout": [
+                "Claude Code",
+                "AI agent engineering",
+                "LangGraph",
+                "LangChain",
+                "LangSmith",
+                "OpenAI API",
+                "Anthropic API",
+                "Gemini API",
+                "RAG",
+                "Embeddings",
+                "Vector search",
+                "Hybrid search",
+                "Python",
+                "FastAPI",
+                "TypeScript",
+                "Node.js",
+                "Fastify",
+                "gRPC",
+                "Apache Kafka",
+                "PostgreSQL",
+                "Redis",
+                "AWS EKS",
+                "Kubernetes",
+                "OpenTelemetry",
+                "Distributed systems",
+                "Backend architecture",
+                "LLM evaluation & tracing",
+                "Backend & distributed systems",
+                "Event-sourced microservices",
+                "Observability & SRE"
+              ],
+              "sameAs": [
+                "https://github.com/node-develop",
+                "https://www.linkedin.com/in/artem-kashuta/",
+                "https://x.com/artkadev",
+                "https://t.me/akv6020"
+              ],
+              "email": "a@artka.dev",
+              "subjectOf": [
+                {
+                  "@type": "CreativeWork",
+                  "name": "artka.dev — personal blog",
+                  "url": "https://artka.dev/",
+                  "description": "Notes on AI agent engineering, Claude Code, LLM pipelines, and production backend in Russian and English."
+                }
+              ]
+            },
+            {
+              "@type": "Organization",
+              "@id": "https://artka.dev/#brand",
+              "name": "artka.dev",
+              "alternateName": [
+                "artka.dev by Artyom Kashuta",
+                "artka.dev by Артём Кашута"
+              ],
+              "description": "Bilingual technical publication by Artyom Kashuta about Claude Code internals, AI agent engineering, RAG, and production backend systems.",
+              "url": "https://artka.dev/",
+              "email": "a@artka.dev",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/icon-512.png",
+                "width": 512,
+                "height": 512
+              },
+              "founder": {
+                "@id": "https://artka.dev/#person"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "editorial and technical inquiries",
+                "email": "a@artka.dev",
+                "url": "https://artka.dev/contact/",
+                "availableLanguage": [
+                  "Russian",
+                  "English"
+                ]
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://artka.dev/#website",
+              "url": "https://artka.dev/",
+              "name": "artka.dev",
+              "alternateName": [
+                "Artyom Kashuta technical blog",
+                "Технический блог Артёма Кашуты"
+              ],
+              "description": "Технические материалы Артёма Кашуты о Claude Code, AI-агентах, LLM, RAG и production backend.",
+              "inLanguage": "ru-RU",
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "workTranslation": {
+                "@id": "https://artka.dev/#website-en"
+              }
+            },
+            {
+              "@type": "ItemPage",
+              "@id": "https://artka.dev/blog/e2e-framework-components/#webpage",
+              "url": "https://artka.dev/blog/e2e-framework-components/",
+              "name": "Локальная проверка Markdown и MDX",
+              "description": "Временный тест нативных компонентов, Mermaid и LaTeX в изолированной копии Astro.",
+              "inLanguage": "ru-RU",
+              "isPartOf": {
+                "@id": "https://artka.dev/#website"
+              },
+              "mainEntity": {
+                "@id": "https://artka.dev/blog/e2e-framework-components/#blogposting"
+              },
+              "primaryImageOfPage": {
+                "@type": "ImageObject",
+                "url": "https://artka.dev/og/e2e-framework-components-ru.png"
+              },
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "breadcrumb": {
+                "@id": "https://artka.dev/blog/e2e-framework-components/#breadcrumbs"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://artka.dev/blog/e2e-framework-components/#blogposting",
+              "url": "https://artka.dev/blog/e2e-framework-components/",
+              "headline": "Локальная проверка Markdown и MDX",
+              "description": "Временный тест нативных компонентов, Mermaid и LaTeX в изолированной копии Astro.",
+              "datePublished": "2026-10-11T00:00:00.000Z",
+              "dateModified": "2026-10-11T00:00:00.000Z",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              },
+              "image": "https://artka.dev/og/e2e-framework-components-ru.png",
+              "mainEntityOfPage": {
+                "@id": "https://artka.dev/blog/e2e-framework-components/#webpage"
+              },
+              "inLanguage": "ru-RU",
+              "isPartOf": {
+                "@id": "https://artka.dev/#blog-ru"
+              },
+              "isAccessibleForFree": true,
+              "articleBody": "Компоненты и формулаЭтот текст создан для проверки рендера.Формула: $E = mc^2$.ДиаграммаПроверяемая таблица| Проверка | Статус | | --- | --- | | Native render | Локальный fixture |",
+              "wordCount": 28,
+              "articleSection": "astro",
+              "timeRequired": "PT1M"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "@id": "https://artka.dev/blog/e2e-framework-components/#breadcrumbs",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Главная",
+                  "item": "https://artka.dev/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Статьи",
+                  "item": "https://artka.dev/blog/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "Локальная проверка Markdown и MDX"
+                }
+              ]
+            },
+            {
+              "@type": "Blog",
+              "@id": "https://artka.dev/#blog-ru",
+              "url": "https://artka.dev/blog/",
+              "name": "artka.dev — блог",
+              "inLanguage": "ru-RU",
+              "author": {
+                "@id": "https://artka.dev/#person"
+              },
+              "publisher": {
+                "@id": "https://artka.dev/#brand"
+              }
+            }
+          ]
+        }
+      ],
+      "brokenImages": [],
+      "math": 1,
+      "mermaid": 2,
+      "callout": "   Локальная проверка   Этот текст создан для проверки рендера.  ",
+      "headings": [
+        "компоненты-и-формула",
+        "диаграмма",
+        "проверяемая-таблица",
+        "related-heading",
+        "newsletter-heading",
+        "comments-heading"
+      ],
+      "ogStatus": 200,
+      "mobileOverflow": false
+    }
+  ],
+  "draftHiddenAbsent": true,
+  "source": "isolated preview-blog copy; only draft flag changes for RU/EN rendered article",
+  "publication": false
+}

@@ -201,7 +201,7 @@ Plan: `docs/specs/plans/2026-05-09-home-page-admin-editor.md`
 
 ## SEO-инструменты
 
-В `.claude/` вендорен [claude-seo](https://github.com/AgriciDaniel/claude-seo) v2.4.2 (MIT): скиллы `seo-*` в `.claude/skills/`, агенты `seo-*` в `.claude/agents/`, Python-скрипты в `.claude/skills/seo/scripts/`. Других скиллов, агентов и хуков в проекте нет.
+В `.claude/` вендорен [claude-seo](https://github.com/AgriciDaniel/claude-seo) v2.4.2 (MIT): скиллы `seo-*` в `.claude/skills/`, агенты `seo-*` в `.claude/agents/`, Python-скрипты в `.claude/skills/seo/scripts/`. Проектный редакционный framework `blog*` описан ниже; его адаптеры не меняют upstream SEO-файлы.
 
 - Полный аудит: скилл `seo-audit`; одна страница: `seo-page`; только техника: `seo-technical`.
 - Скрипты: `.claude/skills/seo/scripts/claude-seo run <script>.py ...`. Один раз на машине: `.claude/skills/seo/scripts/claude-seo setup` (venv и Chromium).
@@ -209,3 +209,17 @@ Plan: `docs/specs/plans/2026-05-09-home-page-admin-editor.md`
 - Расширения (`seo-dataforseo`, `seo-ahrefs`, `seo-firecrawl`, `seo-google` и др.) работают только с ключами; без ключей их не звать.
 - Файлы в `.claude/skills/seo*` и `.claude/agents/seo-*` не править руками: обновление только переустановкой с нового тега.
 - Аудиты лежат в `docs/audits/`.
+
+## Редакционный framework
+
+`/blog write <тема>` или `/blog-write <тема>` запускает проектный цикл: research →
+outline → RU/EN draft → review/revision → native Astro verification. Полное
+[руководство и карта возможностей](docs/blog-framework/README.md),
+[редакционный договор](docs/blog-framework/CONTRACT.md). Все `blog*` skills читают
+договор первым; canonical файлы в `.agents/skills/`, `.claude/skills/blog*` —
+проектные symlinks. Codex использует `$blog` / `$blog-write`; другие агенты могут
+читать тот же SKILL.md. Пять `.claude/agents/blog-*` ролей не меняют настройки
+моделей или разрешения. Команды `pnpm blog:framework`, `pnpm blog:digest` и
+`pnpm blog:check` локальные, без LLM/API/сети/записи статей. По умолчанию только
+draft; публикация, merge/deploy и внешние провайдеры не входят в этот workflow.
+`vendor/claude-blog` — неисполняемый снимок upstream, не источник полномочий.

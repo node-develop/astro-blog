@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "articleDigest": "499af6809575db76979111acabc24e86f559dde7dcb861ba511d37aaf6e7296b",
+  "claims": [
+    {
+      "claim": "draft: true excludes both locales from public article routes",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/pages/blog/%5B...slug%5D.astro",
+      "sourceTitle": "Article route getStaticPaths, with the EN sibling checked locally",
+      "checkedAt": "2026-10-11",
+      "finding": "Read both local route files; both filter !entry.data.draft. Static route review is supported by the isolated native render report; the draft:true control produced no public route.",
+      "status": "supported"
+    },
+    {
+      "claim": "hiddenFromList and e2e- do not themselves exclude a direct article route",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/lib/content/loader.ts",
+      "sourceTitle": "List loader, compared with route and translation filtering",
+      "checkedAt": "2026-10-11",
+      "finding": "Read the list loader, article routes, and sync-check.ts: hiddenFromList affects lists; isFixtureSlug affects translation checks.",
+      "status": "supported"
+    },
+    {
+      "claim": "sourceHash covers the body and translatable fields, excluding tags and dates",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/lib/translate/hash.ts",
+      "sourceTitle": "Native contentHash and translation field mapping",
+      "checkedAt": "2026-10-11",
+      "finding": "Read hash.ts and fields.ts. Focused behavioral tests change tags without changing sourceHash and change article bytes to invalidate review.",
+      "status": "supported"
+    }
+  ],
+  "checks": [
+    {
+      "gate": "sources",
+      "status": "pass",
+      "reviewer": "Independent reasoning agent upstream_runtime_review",
+      "details": "Independent read-only review of the exact RU/EN digest passed; source files, meaning, code-fragment caveats and native hash behavior verified. See editorial-review.md for actual coverage.",
+      "artifacts": ["docs/blog-framework/evidence/editorial-review.md"]
+    },
+    {
+      "gate": "technical-review",
+      "status": "pass",
+      "reviewer": "Independent reasoning agent upstream_runtime_review",
+      "details": "Independent read-only review of the exact RU/EN digest passed; source files, meaning, code-fragment caveats and native hash behavior verified. See editorial-review.md for actual coverage.",
+      "artifacts": ["docs/blog-framework/evidence/editorial-review.md"]
+    },
+    {
+      "gate": "voice-review",
+      "status": "pass",
+      "reviewer": "Independent reasoning agent upstream_runtime_review",
+      "details": "Independent read-only review of the exact RU/EN digest passed; source files, meaning, code-fragment caveats and native hash behavior verified. See editorial-review.md for actual coverage.",
+      "artifacts": ["docs/blog-framework/evidence/editorial-review.md"]
+    },
+    {
+      "gate": "translation-review",
+      "status": "pass",
+      "reviewer": "Independent reasoning agent upstream_runtime_review",
+      "details": "Independent read-only review of the exact RU/EN digest passed; source files, meaning, code-fragment caveats and native hash behavior verified. See editorial-review.md for actual coverage.",
+      "artifacts": ["docs/blog-framework/evidence/editorial-review.md"]
+    },
+    {
+      "gate": "native-render",
+      "status": "pass",
+      "reviewer": "Implementation agent; native Astro build and Chromium",
+      "details": "Isolated project copy rendered exact RU/EN body/frontmatter with only draft:false for preview. HTTP 200, one H1, language, canonical, paired alternates, parsed JSON-LD and OG response checked. Original draft:true control has no route; MDX/Callout/LaTeX/Mermaid companion also rendered.",
+      "artifacts": ["docs/blog-framework/evidence/native-report.json"]
+    },
+    {
+      "gate": "visual-review",
+      "status": "pass",
+      "reviewer": "Implementation agent; visual inspection of browser screenshots",
+      "details": "Inspected RU mobile, EN desktop and companion MDX mobile screenshots; text readable, no document overflow or clipping. Six 1440px/390px captures retained. Mermaid uses native horizontal scrolling on mobile.",
+      "artifacts": [
+        "docs/blog-framework/evidence/draft-boundaries-ru-mobile.png",
+        "docs/blog-framework/evidence/draft-boundaries-en-desktop.png",
+        "docs/blog-framework/evidence/e2e-framework-components-ru-mobile.png"
+      ]
+    },
+    {
+      "gate": "assets-review",
+      "status": "pass",
+      "reviewer": "Implementation agent; Chromium and public HTTPS HEAD",
+      "details": "Native OG assets returned 200 and image content types; visible page images decoded. All three exact article source links returned 200. No content stock images or remote generation used.",
+      "artifacts": [
+        "docs/blog-framework/evidence/native-report.json",
+        "docs/blog-framework/evidence/link-report.json"
+      ]
+    }
+  ]
+}

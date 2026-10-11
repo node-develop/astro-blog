@@ -51,3 +51,6 @@ src/content/posts/e2enew*.md
 # Рабочие деревья агентов и черновики, созданные ассистентом
 .claude/worktrees/
 Claude outputs/
+
+# Local editorial work packets; reviewed fixtures live under tests/fixtures/.
+docs/blog-framework/work/

@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-11",
+  "method": "public HTTPS HEAD; exact fixture source links",
+  "results": [
+    {
+      "url": "https://github.com/node-develop/astro-blog/blob/main/src/pages/blog/%5B...slug%5D.astro",
+      "status": 200,
+      "finalUrl": "https://github.com/node-develop/astro-blog/blob/main/src/pages/blog/%5B...slug%5D.astro"
+    },
+    {
+      "url": "https://github.com/node-develop/astro-blog/blob/main/src/pages/en/blog/%5B...slug%5D.astro",
+      "status": 200,
+      "finalUrl": "https://github.com/node-develop/astro-blog/blob/main/src/pages/en/blog/%5B...slug%5D.astro"
+    },
+    {
+      "url": "https://github.com/node-develop/astro-blog/blob/main/src/lib/translate/hash.ts",
+      "status": 200,
+      "finalUrl": "https://github.com/node-develop/astro-blog/blob/main/src/lib/translate/hash.ts"
+    }
+  ]
+}

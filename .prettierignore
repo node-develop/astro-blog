@@ -24,3 +24,6 @@ src/content/posts/en/claude-md-12-rules.md
 
 # Vendored claude-seo: upstream bytes, updated only by reinstall.
 .claude/
+
+# Immutable claude-blog source snapshot and provenance hashes.
+vendor/claude-blog/

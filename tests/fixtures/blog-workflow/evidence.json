@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "articleDigest": "499af6809575db76979111acabc24e86f559dde7dcb861ba511d37aaf6e7296b",
+  "claims": [
+    {
+      "claim": "draft: true excludes both locales from public article routes",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/pages/blog/%5B...slug%5D.astro",
+      "sourceTitle": "Article route getStaticPaths, with the EN sibling checked locally",
+      "checkedAt": "2026-10-11",
+      "finding": "Read both local route files; both filter !entry.data.draft. This is static evidence; native-render remains pending.",
+      "status": "supported"
+    },
+    {
+      "claim": "hiddenFromList and e2e- do not themselves exclude a direct article route",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/lib/content/loader.ts",
+      "sourceTitle": "List loader, compared with route and translation filtering",
+      "checkedAt": "2026-10-11",
+      "finding": "Read the list loader, article routes, and sync-check.ts: hiddenFromList affects lists; isFixtureSlug affects translation checks.",
+      "status": "supported"
+    },
+    {
+      "claim": "sourceHash covers the body and translatable fields, excluding tags and dates",
+      "sourceUrl": "https://github.com/node-develop/astro-blog/blob/a2c9f435e6d9159745f513d5e9363815eef864df/src/lib/translate/hash.ts",
+      "sourceTitle": "Native contentHash and translation field mapping",
+      "checkedAt": "2026-10-11",
+      "finding": "Read hash.ts and fields.ts. Focused behavioral tests change tags without changing sourceHash and change article bytes to invalidate review.",
+      "status": "supported"
+    }
+  ],
+  "checks": [
+    {
+      "gate": "sources",
+      "status": "pass",
+      "reviewer": "Implementation agent self-review",
+      "details": "Read the local primary source files recorded in research.md. No external URL availability or ranking claim is made.",
+      "artifacts": ["tests/fixtures/blog-workflow/research.md"]
+    },
+    {
+      "gate": "technical-review",
+      "status": "pass",
+      "reviewer": "Implementation agent self-review",
+      "details": "The article's code is labelled a fragment with caller-supplied ruRaw; the native contentHash function was executed to create the EN hash. No production experiment is claimed.",
+      "artifacts": ["tests/fixtures/blog-workflow/revisions.md"]
+    },
+    {
+      "gate": "voice-review",
+      "status": "pass",
+      "reviewer": "Implementation agent self-review",
+      "details": "Checked the short fixture against the project voice and editorial rules; it makes no fabricated first-person claim, measurement or detector claim.",
+      "artifacts": ["tests/fixtures/blog-workflow/revisions.md"]
+    },
+    {
+      "gate": "translation-review",
+      "status": "pass",
+      "reviewer": "Implementation agent self-review",
+      "details": "Manually aligned RU/EN meaning, code fragment, source links and limitations; sourceHash was computed after that review. Independent editorial review is not claimed.",
+      "artifacts": ["tests/fixtures/blog-workflow/revisions.md"]
+    },
+    {
+      "gate": "native-render",
+      "status": "not-run",
+      "reviewer": "Implementation agent",
+      "details": "No fixture page has been rendered in a native Astro preview by this adapter run.",
+      "artifacts": []
+    },
+    {
+      "gate": "visual-review",
+      "status": "not-run",
+      "reviewer": "Implementation agent",
+      "details": "No browser inspection or screenshot is bundled with the fixture.",
+      "artifacts": []
+    },
+    {
+      "gate": "assets-review",
+      "status": "not-run",
+      "reviewer": "Implementation agent",
+      "details": "The fixture has no content images; its generated OG asset and source-link availability still need native/online review.",
+      "artifacts": []
+    }
+  ]
+}
