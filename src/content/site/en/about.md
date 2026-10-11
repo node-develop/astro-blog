@@ -4,39 +4,45 @@ description: "Artyom Kashuta is a full-stack and AI engineer. My background, app
 metaTitle: "Artyom Kashuta: full-stack and AI engineer"
 metaDescription: "Artyom Kashuta — full-stack and AI engineer: TypeScript, Python, AI agents and distributed systems. Background at TaxDome and 9RED, and how I work."
 lang: en
-sourceHash: a56b7dd757761a597e77e4a4c853bc4c49502895c898432f44b8a838a8fe2b6e
-manuallyEdited: false
+sourceHash: 69e1bbe6a152c69cba53b36d4aefac1eade6d046789c0d7b8bd2cdfeabbad8b2
+manuallyEdited: true
 ---
 
-I'm Artyom Kashuta, a full-stack and AI engineer. I build web applications, APIs, and tools that automate everyday work, mainly with TypeScript and Python.
+## Hi everyone!
 
-I enjoy taking a product from an initial idea to a working system: understanding the problem, designing a solution, writing the code, and getting it into use. Shipping brings another set of questions: how to find failures, assess quality, and keep improving the system.
+My name is Artyom. I'm a full-stack and AI engineer - I can build mobile and web applications, APIs and any tools that automate various tasks. I used to do only backend development, but with the arrival of frontier models the line has sort of blurred, and now I do both frontend and design.
 
-## Background
+I mostly write in Node, Python, TS, Rust, SQL, and I'm generally stack-agnostic.
 
-My experience includes AI automation at [TaxDome](https://taxdome.com) and working as a Staff Engineer and Team Lead at 9RED. I've worked on integrations, payment services, communication between microservices, and observability, and have led a development team.
+I can do microservices and high-load backends from stage zero all the way to production operation.
 
-In AI, I'm especially interested in agents that work with tools and data: searching documents, connecting external systems, and completing multi-step tasks. That involves both model behavior and familiar engineering concerns: API contracts, permissions, retries, and error handling.
+I first paid for a ChatGPT subscription in March 2022.
 
-## How I work
+## What I do / did
 
-I start by understanding what someone needs to accomplish. Then I look for the simplest solution that can deliver that result and be tested. A new library or service needs to justify the complexity it adds.
+Right now I'm building AI automations at [TaxDome](https://taxdome.com). Before that, I worked for several years as a Staff Engineer and Team Lead at [9RED](https://9red.com/). There I worked on various integrations, payment services, microservice communication and observability, and led the development team.
 
-I use AI development tools extensively, from exploring unfamiliar code to implementation and review. I want to keep changes understandable: a clear task, a manageable scope, tests, and a check of the running application. A successful build doesn't necessarily mean the original problem is solved.
+These days I'm interested in topics like multi-agent pipelines, verifying the results of agents' work, and where all of this is going to take us.
+And no, I don't believe in SDD.
 
-I prefer small functions, explicit dependencies, and code that makes sense without a long explanation. In a team, I value direct discussion, timely feedback, and taking responsibility for the outcome.
+## How it usually goes
 
-## Why this site exists
+First we figure out what result we want to get out of all this. Then we do research and choose the stack: what to code in and how. I usually try to get by with simple solutions; sometimes open source fits perfectly too.
 
-This is where I collect what I learn about software development, AI agents, and my own projects. I want each writeup to leave the reader with something useful: an idea, an example, or a way to test their own approach.
+For tools, I usually use Codex, Claude Code CLI, herdr/orca, codegraph, gitnexus, coderabbit and all sorts of other stuff - there are hundreds of them))
+Oh yes - pure functions and functional programming are our everything;
 
-- [Articles](/en/blog/) — notes on development tools, Astro, and working with AI.
-- [Projects](/en/projects/) — a closer look at things I've built, including this site.
+## Why this site
 
-I write in Russian and English. For current priorities, see [Now](/en/now/). My development tools are on [Uses](/en/uses/).
+Sometimes I write here about development, AI and my little projects.
+
+- [Articles](/en/blog/) — about all sorts of tools and various little problems from development and, naturally, AI.
+- [Projects](/en/projects/) — what I'm building now and (maybe) how it works.
+
+I write in Russian, with an English translation. What I'm doing now is on the [Now](/en/now/) page; what I use for work is in [Uses](/en/uses/).
 
 ## Get in touch
 
-Email me at [a@artka.dev](mailto:a@artka.dev) or reach out on [Telegram](https://t.me/akv6020) to talk about software, AI tools, or something you've read here.
+Write to [a@artka.dev](mailto:a@artka.dev) or on [Telegram](https://t.me/akv6020). We can discuss a project, you can ask something about AI and development, or write about an article.
 
-You can find my code on [GitHub](https://github.com/node-develop) and my professional profile on [LinkedIn](https://www.linkedin.com/in/artem-kashuta/).
+There's also [GitHub](https://github.com/node-develop) with my code and [LinkedIn](https://www.linkedin.com/in/artem-kashuta/).
